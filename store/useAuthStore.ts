@@ -30,9 +30,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   isInitialized: false,
 
-  login: async (email, password, location) => {
+  login: async (rawEmail, password, location) => {
     set({ isLoading: true });
     try {
+      const email = rawEmail.trim().toLowerCase();
       let sbUser: SupabaseUser;
       
       const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
@@ -41,6 +42,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (authErr) {
+         // If user exists in our 'users' table, then this is just a wrong password error
+         const { data: existingDbUser } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+         if (existingDbUser) {
+             throw new Error("Invalid login credentials");
+         }
+
          // Auto-register super users or pre-approved demo users if they don't exist yet
          if (
            (email === 'tomas@siroiforex.com' && password === 'T0mas94@#') ||
@@ -55,7 +62,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
            if (!createResult.user) throw new Error("Could not create user account.");
            sbUser = createResult.user;
          } else {
-           // Not super users, log access request
+           // Not super users and don't exist yet, log access request
            await supabase.from('accessRequests').insert([{
                email, 
                location, 
