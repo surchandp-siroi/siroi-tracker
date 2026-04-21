@@ -1,0 +1,6 @@
+{
+  "name": "Siroi Forex Dashboard",
+  "description": "Financial dashboard for tracking Siroi Forex revenue, branches, and KPI metrics via state heads data entry.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
