@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { Sparkles, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network } from 'lucide-react';
+import { Sparkles, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useDataStore } from '@/store/useDataStore';
 
@@ -31,14 +31,20 @@ export default function DataEntryTerminal() {
   
   const [hasExistingEntry, setHasExistingEntry] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
+  const [entryCreatedAt, setEntryCreatedAt] = useState<string | null>(null);
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [branchDetails, setBranchDetails] = useState<any>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Admin Context
   const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
 
-  // Global delete cutoff
-  const allowDeletion = user?.role === 'admin' || new Date() < new Date('2026-05-16T00:00:00Z');
+  // 60-day deletion window from entry creation date
+  const daysSinceCreation = entryCreatedAt
+    ? Math.floor((Date.now() - new Date(entryCreatedAt).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const allowDeletion = hasExistingEntry && (user?.role === 'admin' || daysSinceCreation < 60);
+  const daysRemaining = Math.max(0, 60 - daysSinceCreation);
 
   const activeBranchId = user?.role === 'admin' ? adminSelectedBranch : user?.branchId;
 
@@ -81,14 +87,15 @@ export default function DataEntryTerminal() {
               
               if (snap && snap.length > 0) {
                   setHasExistingEntry(true);
-                  // Load items to show them what they saved
                   const data = snap[0];
                   setItems(data.items || []);
                   setCurrentEntryId(data.id);
+                  setEntryCreatedAt(data.createdAt || null);
               } else {
                   setHasExistingEntry(false);
                   setItems([]);
                   setCurrentEntryId(null);
+                  setEntryCreatedAt(null);
               }
           } catch (err: any) {
               console.error("Failed to load context", err);
@@ -244,7 +251,6 @@ export default function DataEntryTerminal() {
 
   const handleDelete = async () => {
       if (!currentEntryId) return;
-      if (!window.confirm("Are you sure you want to permanently delete this logged record?")) return;
       
       setIsDeleting(true);
       setError('');
@@ -262,7 +268,9 @@ export default function DataEntryTerminal() {
           setHasExistingEntry(false);
           setItems([]);
           setCurrentEntryId(null);
+          setEntryCreatedAt(null);
           setSmartPrompt('');
+          setShowDeleteModal(false);
       } catch (err: any) {
           console.error("Delete error:", err);
           setError(err.message || "Failed to delete record.");
@@ -541,13 +549,18 @@ export default function DataEntryTerminal() {
                         {hasExistingEntry && allowDeletion && (
                              <Button 
                                 variant="danger" 
-                                onClick={handleDelete} 
+                                onClick={() => setShowDeleteModal(true)} 
                                 disabled={isDeleting}
                                 className="flex-1 sm:flex-none text-white font-medium shadow-none"
                              >
-                                 {isDeleting ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                                 <Trash2 className="w-4 h-4 mr-2" />
                                  Delete Record
                              </Button>
+                        )}
+                        {hasExistingEntry && !allowDeletion && daysSinceCreation >= 60 && (
+                             <span className="text-[10px] text-slate-500 uppercase tracking-widest bg-slate-500/10 px-3 py-2 rounded">
+                                 Deletion window expired (60 days)
+                             </span>
                         )}
                         {!hasExistingEntry && (
                              <Button variant="secondary" onClick={handleAddItem} className="flex-1 sm:flex-none border-slate-900/20 dark:border-white/20 text-xs font-medium">
@@ -568,6 +581,90 @@ export default function DataEntryTerminal() {
                 </div>
             </Card>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteModal(false)}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div 
+              className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/10 bg-red-50 dark:bg-red-950/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wider">Confirm Permanent Deletion</h3>
+                    <p className="text-[10px] text-red-700/70 dark:text-red-300/60 uppercase tracking-widest mt-0.5">
+                      {branchDetails?.name} • {dateStr} • {entryMode}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setShowDeleteModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Warning Message */}
+              <div className="px-5 pt-4">
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/20 rounded-lg">
+                  <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                    ⚠️ This action is <strong>irreversible</strong>. The following {items.length} line item{items.length !== 1 ? 's' : ''} totalling 
+                    <strong className="text-amber-700 dark:text-amber-300"> ₹{items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}</strong> will be 
+                    permanently erased from Supabase and cannot be recovered.
+                  </p>
+                  <p className="text-[10px] text-amber-700/70 dark:text-amber-400/60 mt-2 uppercase tracking-wider">
+                    Deletion window: {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining out of 60
+                  </p>
+                </div>
+              </div>
+
+              {/* Records Preview */}
+              <div className="px-5 pt-4 pb-2 flex-1 overflow-auto">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Records to be deleted</p>
+                <div className="space-y-2">
+                  {items.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-[10px] font-bold text-slate-400 w-5 text-center shrink-0">#{idx + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{item.product}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{item.category} • {item.channel}</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-red-600 dark:text-red-400 shrink-0 ml-3">
+                        ₹{Number(item.amount).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-5 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 flex gap-3">
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setShowDeleteModal(false)} 
+                  className="flex-1 border-slate-300 dark:border-white/20 text-xs font-medium"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="danger" 
+                  onClick={handleDelete} 
+                  disabled={isDeleting}
+                  className="flex-1 text-white font-medium shadow-none"
+                >
+                  {isDeleting ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                  Yes, Permanently Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
