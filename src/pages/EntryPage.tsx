@@ -190,8 +190,8 @@ export default function DataEntryTerminal() {
       
       try {
           const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-          
-          const { error: insertError } = await supabase.from('entries').insert([{
+
+          const payload = {
               branchId: activeBranchId,
               entryDate: dateStr,
               mode: entryMode,
@@ -200,13 +200,40 @@ export default function DataEntryTerminal() {
               authorId: user?.id,
               authorEmail: user?.email,
               location: user?.latestLocation || null,
-              createdAt: new Date().toISOString()
-          }]);
-          
-          if (insertError) throw new Error(insertError.message);
+          };
+
+          // Check if an entry already exists for this branch+date+mode
+          const { data: existing } = await supabase
+            .from('entries')
+            .select('id')
+            .eq('branchId', activeBranchId)
+            .eq('entryDate', dateStr)
+            .eq('mode', entryMode)
+            .limit(1);
+
+          let savedId: string | null = null;
+
+          if (existing && existing.length > 0) {
+              // Update the existing entry
+              const { error: updateError } = await supabase
+                .from('entries')
+                .update({ items, totalAmount, authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
+                .eq('id', existing[0].id);
+              if (updateError) throw new Error(updateError.message);
+              savedId = existing[0].id;
+          } else {
+              // Insert new entry and capture the returned ID
+              const { data: insertData, error: insertError } = await supabase
+                .from('entries')
+                .insert([{ ...payload, createdAt: new Date().toISOString() }])
+                .select('id');
+              if (insertError) throw new Error(insertError.message);
+              savedId = insertData?.[0]?.id || null;
+          }
           
           setSuccess("Tracking submitted successfully. Record locked.");
           setHasExistingEntry(true);
+          setCurrentEntryId(savedId);
       } catch (err: any) {
           console.error("Save error:", err);
           setError(err.message || "Failed to submit tracking data.");
