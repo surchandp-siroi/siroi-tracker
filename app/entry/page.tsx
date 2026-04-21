@@ -29,43 +29,55 @@ export default function DataEntryTerminal() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  // Track existing
   const [hasExistingEntry, setHasExistingEntry] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [branchDetails, setBranchDetails] = useState<any>(null);
+  
+  // Admin Context
+  const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
 
   // Global delete cutoff
-  const allowDeletion = new Date() < new Date('2026-05-16T00:00:00Z');
+  const allowDeletion = user?.role === 'admin' || new Date() < new Date('2026-05-16T00:00:00Z');
+
+  const activeBranchId = user?.role === 'admin' ? adminSelectedBranch : user?.branchId;
+
+  // Unsaved Guard
+  const isDirty = !hasExistingEntry && items.length > 0;
 
   useEffect(() => {
     if (isInitialized && !user) {
       router.push('/login');
     }
-  }, [user, isInitialized, router]);
+    // Auto-select first branch for admin
+    if (user?.role === 'admin' && branches.length > 0 && !adminSelectedBranch) {
+       setAdminSelectedBranch(branches[0].id);
+    }
+  }, [user, isInitialized, router, branches, adminSelectedBranch]);
 
   // Derived mode
   const isDailyMode = entryMode === 'daily';
   const modeLabel = isDailyMode ? 'Daily Direct Tracking' : 'Monthly Batch Tracking';
 
   useEffect(() => {
-      if (!user?.branchId) return;
+      if (!activeBranchId) return;
       
       const fetchContext = async () => {
           setIsLoadingExisting(true);
           setHasExistingEntry(false);
           
           try {
-              // Get branch info (currently static in store, but leaving hook open)
-              const b = branches.find(br => br.id === user.branchId);
+              // Get branch info
+              const b = branches.find(br => br.id === activeBranchId);
               if (b) setBranchDetails(b);
               
-              // Check if entry already exists for this exact date
+              // Check if entry already exists for this exact date AND mode
               const { data: snap } = await supabase
                 .from('entries')
                 .select('*')
-                .eq('branchId', user.branchId)
-                .eq('entryDate', dateStr);
+                .eq('branchId', activeBranchId)
+                .eq('entryDate', dateStr)
+                .eq('mode', entryMode);
               
               if (snap && snap.length > 0) {
                   setHasExistingEntry(true);
@@ -85,7 +97,7 @@ export default function DataEntryTerminal() {
           }
       };
       fetchContext();
-  }, [user?.branchId, dateStr, branches]);
+  }, [activeBranchId, dateStr, entryMode, branches]);
 
   const handleParse = async () => {
       if (!smartPrompt.trim()) return;
@@ -157,7 +169,7 @@ export default function DataEntryTerminal() {
   };
 
   const handleSubmit = async () => {
-      if (!user || !user.branchId) {
+      if (!activeBranchId) {
           setError("You do not have a branch assigned yet. Contact Administrator.");
           return;
       }
@@ -180,14 +192,14 @@ export default function DataEntryTerminal() {
           const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
           
           const { error: insertError } = await supabase.from('entries').insert([{
-              branchId: user.branchId,
+              branchId: activeBranchId,
               entryDate: dateStr,
-              mode: isDailyMode ? 'daily' : 'monthly',
+              mode: entryMode,
               items: items,
               totalAmount,
-              authorId: user.id,
-              authorEmail: user.email,
-              location: user.latestLocation || null,
+              authorId: user?.id,
+              authorEmail: user?.email,
+              location: user?.latestLocation || null,
               createdAt: new Date().toISOString()
           }]);
           
@@ -235,16 +247,6 @@ export default function DataEntryTerminal() {
   if (!isInitialized || !user) {
       return <div className="min-h-screen flex items-center justify-center text-slate-500"><Loader2 className="animate-spin mr-2" /> Initializing Identity...</div>;
   }
-  
-  if (user.role === 'admin') {
-      return (
-          <div className="min-h-screen flex items-center justify-center flex-col p-4">
-              <h1 className="text-xl font-bold mb-4 dark:text-white">Admin access to terminal blocked.</h1>
-              <p className="text-slate-500 mb-6 font-mono text-xs uppercase tracking-widest">Admins must use the dashboard.</p>
-              <Button onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
-          </div>
-      );
-  }
 
   const allowedProducts = (category: string) => products.filter((p: any) => p.category === category);
 
@@ -252,7 +254,9 @@ export default function DataEntryTerminal() {
     <div className="min-h-screen p-4 md:p-8 flex flex-col max-w-5xl mx-auto">
         <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">State Head Terminal</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
+                    {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
+                </h1>
                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
                    {branchDetails ? branchDetails.name : 'Unknown Branch'} • {user.email}
                 </div>
@@ -271,6 +275,26 @@ export default function DataEntryTerminal() {
                </CardHeader>
                <CardContent className="p-4 space-y-6">
                    <div className="space-y-4">
+                       {user.role === 'admin' && (
+                           <div className="mb-4">
+                               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between mb-2">
+                                   Admin Branch Override
+                               </label>
+                               <select 
+                                   className="w-full bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200"
+                                   value={adminSelectedBranch}
+                                   onChange={(e) => {
+                                       if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
+                                       setAdminSelectedBranch(e.target.value);
+                                   }}
+                               >
+                                   {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
+                                       <option key={b.id} value={b.id}>{b.name}</option>
+                                   ))}
+                               </select>
+                           </div>
+                       )}
+
                        <div>
                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between mb-2">
                                Tracking Mode
@@ -279,6 +303,7 @@ export default function DataEntryTerminal() {
                                <button 
                                    className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                    onClick={() => {
+                                       if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
                                        setEntryMode('monthly');
                                        setDateStr('2026-04-01');
                                    }}
@@ -288,6 +313,7 @@ export default function DataEntryTerminal() {
                                <button 
                                    className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                    onClick={() => {
+                                       if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
                                        setEntryMode('daily');
                                        const today = new Date().toISOString().split('T')[0];
                                        setDateStr(today >= '2026-05-01' ? today : '2026-05-01');
@@ -307,16 +333,24 @@ export default function DataEntryTerminal() {
                                    type="month" 
                                    max="2026-04"
                                    value={dateStr.substring(0, 7)}
-                                   onChange={(e) => setDateStr(e.target.value + '-01')}
-                                   className="bg-slate-900/5 dark:bg-black/20 font-medium"
+                                   onChange={(e) => {
+                                       if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                                       setDateStr(e.target.value + '-01');
+                                   }}
+                                   className="bg-slate-900/5 dark:bg-black/20 font-medium cursor-pointer"
+                                   style={{ colorScheme: 'dark' }}
                                />
                            ) : (
                                <Input 
                                    type="date" 
                                    min="2026-05-01"
                                    value={dateStr}
-                                   onChange={(e) => setDateStr(e.target.value)}
-                                   className="bg-slate-900/5 dark:bg-black/20 font-medium"
+                                   onChange={(e) => {
+                                       if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                                       setDateStr(e.target.value);
+                                   }}
+                                   className="bg-slate-900/5 dark:bg-black/20 font-medium cursor-pointer"
+                                   style={{ colorScheme: 'dark' }}
                                />
                            )}
                            <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">

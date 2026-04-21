@@ -12,11 +12,12 @@ import { GoogleGenAI } from '@google/genai';
 const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24']; // indigo-400, emerald-400, sky-400, amber-400
 
 export default function DashboardOverview() {
-  const { products, channels, branches } = useDataStore();
+  const { products, channels, branches, entries } = useDataStore();
   const { user, isInitialized } = useAuthStore();
   const router = useRouter();
 
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
   const [aiSummary, setAiSummary] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(true);
 
@@ -28,26 +29,60 @@ export default function DashboardOverview() {
      }
   }, [user, isInitialized, router]);
 
-  const totalRevenue = useMemo(() => products.reduce((acc, p) => acc + p.revenue, 0), [products]);
-  
-  const revenueByCategory = useMemo(() => {
-    const categories: Record<string, number> = {};
-    products.forEach(p => {
-      categories[p.category] = (categories[p.category] || 0) + p.revenue;
-    });
-    return Object.entries(categories).map(([name, value]) => ({ name, value }));
-  }, [products]);
-
-  const target = branches.reduce((acc, b) => acc + b.monthlyTarget, 0);
-
   // Financial Year Logic
   const dateObj = new Date(selectedDate);
-  const month = dateObj.getMonth();
-  const year = dateObj.getFullYear();
-  const isNewFY = month >= 3;
-  const fyStart = isNewFY ? year : year - 1;
+  const selectedMonth = dateObj.getMonth();
+  const selectedYear = dateObj.getFullYear();
+  const isNewFY = selectedMonth >= 3;
+  const fyStart = isNewFY ? selectedYear : selectedYear - 1;
   const fyEnd = (fyStart + 1).toString().slice(-2);
   const financialYear = `FY ${fyStart}-${fyEnd}`;
+
+  // Filter entries based on the viewMode
+  const filteredEntries = useMemo(() => {
+     return entries.filter(entry => {
+         const entryDate = new Date(entry.entryDate);
+         if (viewMode === 'month') {
+             return entryDate.getMonth() === selectedMonth && entryDate.getFullYear() === selectedYear;
+         } else {
+             // FY logic
+             const em = entryDate.getMonth();
+             const ey = entryDate.getFullYear();
+             const eIsNewFY = em >= 3;
+             const eFyStart = eIsNewFY ? ey : ey - 1;
+             return eFyStart === fyStart;
+         }
+     });
+  }, [entries, selectedDate, viewMode, selectedMonth, selectedYear, fyStart]);
+
+  const { filteredBranches, totalRevenue, revenueByCategory } = useMemo(() => {
+     const branchMap = new Map();
+     branches.forEach(b => branchMap.set(b.id, { ...b, dailyAchievement: 0 }));
+
+     let total = 0;
+     const catMap = new Map();
+
+     filteredEntries.forEach(entry => {
+          const b = branchMap.get(entry.branchId);
+          if (b) b.dailyAchievement += entry.totalAmount;
+          total += entry.totalAmount;
+          
+          entry.items.forEach(item => {
+              catMap.set(item.category, (catMap.get(item.category) || 0) + item.amount);
+          });
+     });
+
+     // Filter Test Branch and HO
+     const fb = Array.from(branchMap.values()).filter(b => b.name !== 'Test Branch' && b.name !== 'HO');
+     const rbC = Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
+
+     return { filteredBranches: fb, totalRevenue: total, revenueByCategory: rbC };
+  }, [filteredEntries, branches]);
+
+  const target = filteredBranches.reduce((acc, b) => acc + b.monthlyTarget, 0);
+
+  // Financial Year Logic
+
 
   // Time metrics relative to selected date (scaled for demonstration)
   const ytdRevenue = totalRevenue;
@@ -94,15 +129,29 @@ export default function DashboardOverview() {
               {financialYear}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 dark:text-slate-400 text-slate-500" />
-            <Input 
-              type="date" 
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-auto h-8 text-xs bg-slate-900/10 dark:bg-black/20 dark:border-white/10 border-slate-900/10 text-slate-900 dark:text-white"
-            />
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden sm:inline-block ml-2">Select Date Tracker</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+                <button 
+                  onClick={() => setViewMode('month')}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >Month Wise</button>
+                <button 
+                  onClick={() => setViewMode('year')}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >Year Wise</button>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-slate-900 dark:bg-black text-white px-3 py-1.5 rounded-lg border border-slate-800 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer">
+              <Calendar className="w-4 h-4 text-slate-400" />
+              <Input 
+                type="date" 
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-auto h-auto p-0 border-none bg-transparent text-xs text-white focus:ring-0 [&::-webkit-calendar-picker-indicator]:invert cursor-pointer"
+                style={{ colorScheme: 'dark' }}
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden sm:inline-block ml-2 shrink-0">Select Date Tracker</span>
           </div>
         </div>
         <div className="flex gap-6 sm:gap-8">
@@ -152,7 +201,7 @@ export default function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
-                ₹{branches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString()}
+                ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString()}
             </div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">All branches</p>
           </CardContent>
@@ -167,7 +216,7 @@ export default function DashboardOverview() {
           </CardHeader>
           <CardContent className="min-h-[300px] flex-1 p-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={branches} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={filteredBranches} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
                 <XAxis dataKey="name" tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} />
                 <YAxis tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
