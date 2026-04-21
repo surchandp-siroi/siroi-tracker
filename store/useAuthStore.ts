@@ -3,6 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { useDataStore } from './useDataStore';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
+// Login lock: prevents onAuthStateChange from overwriting state mid-login
+let isLoginInProgress = false;
+
 export type UserRole = 'admin' | 'statehead';
 
 export interface UserProfile {
@@ -31,6 +34,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isInitialized: false,
 
   login: async (rawEmail, password, location) => {
+    isLoginInProgress = true;
     set({ isLoading: true });
     try {
       const email = rawEmail.trim().toLowerCase();
@@ -114,8 +118,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
       
-      set({ user: profile, supabaseUser: sbUser, isLoading: false });
+      set({ user: profile, supabaseUser: sbUser, isLoading: false, isInitialized: true });
+      // Keep lock briefly so the async onAuthStateChange callback doesn't overwrite
+      setTimeout(() => { isLoginInProgress = false; }, 1500);
     } catch (error: any) {
+      isLoginInProgress = false;
       set({ isLoading: false });
       throw new Error(error.message || "Failed to authenticate");
     }
@@ -128,6 +135,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initAuth: () => {
     supabase.auth.onAuthStateChange(async (event, session) => {
+      // Skip if login() is handling auth — prevents race condition
+      if (isLoginInProgress) return;
+
       if (session?.user) {
         const { data: userDoc, error: userDocErr } = await supabase
           .from('users')

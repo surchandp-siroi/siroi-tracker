@@ -16,12 +16,17 @@ export function InitProvider({ children }: { children: React.ReactNode }) {
     }, [initAuth]);
 
     useEffect(() => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
         if (isInitialized && user) {
-            initSync(user.role, user.branchId);
-        } else {
-            unsubscribeSync();
+            // Defer data sync so navigation completes first
+            timer = setTimeout(() => {
+                initSync(user.role, user.branchId);
+            }, 50);
         }
+
         return () => {
+            if (timer) clearTimeout(timer);
             unsubscribeSync();
         };
     }, [user, isInitialized, initSync, unsubscribeSync]);
