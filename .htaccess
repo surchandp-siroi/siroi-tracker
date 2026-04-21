@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/out/
+RewriteRule ^(.*)$ out/$1 [L]
