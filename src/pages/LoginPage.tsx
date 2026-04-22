@@ -4,6 +4,7 @@ import { useDataStore } from '@/store/useDataStore';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
 import { TrendingUp, MapPin, Loader2 } from 'lucide-react';
+import siroiLogo from '../Logo/WebsiteLogo.svg';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
@@ -53,7 +54,7 @@ export default function LoginPage() {
         <CardHeader className="space-y-4 text-center border-b-0 pb-0">
             <div className="mx-auto w-40 flex items-center justify-center mb-2">
                 <img 
-                   src="https://siroiforex.com/wp-content/uploads/2022/04/Siroi-Logo-300x127.png" 
+                   src={siroiLogo} 
                    alt="Siroi Forex Logo" 
                    className="w-full object-contain filter brightness-0 invert opacity-90"
                    onError={(e) => {
