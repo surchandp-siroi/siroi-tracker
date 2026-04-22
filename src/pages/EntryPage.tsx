@@ -36,6 +36,7 @@ export default function DataEntryTerminal() {
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [branchDetails, setBranchDetails] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showContextModal, setShowContextModal] = useState(false);
   const [selectedDeleteIndices, setSelectedDeleteIndices] = useState<Set<number>>(new Set());
   
   // Admin Context
@@ -698,7 +699,13 @@ export default function DataEntryTerminal() {
                              </span>
                         )}
                         {!hasExistingEntry && (
-                             <Button variant="secondary" onClick={handleAddItem} className="flex-1 sm:flex-none border-slate-900/20 dark:border-white/20 text-xs font-medium">
+                             <Button variant="secondary" onClick={() => {
+                                 if (items.length === 0) {
+                                     setShowContextModal(true);
+                                 } else {
+                                     handleAddItem();
+                                 }
+                             }} className="flex-1 sm:flex-none border-slate-900/20 dark:border-white/20 text-xs font-medium">
                                  + Manual Row
                              </Button>
                         )}
@@ -869,6 +876,98 @@ export default function DataEntryTerminal() {
           </div>
           );
         })()}
+
+        {/* Context Confirmation Modal */}
+        {showContextModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowContextModal(false)}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div 
+              className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-5 border-b border-slate-200 dark:border-white/10 bg-indigo-50 dark:bg-indigo-900/10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg text-indigo-600 dark:text-indigo-400">
+                    <Layers size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Confirm Entry Context</h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Please review before adding manual rows.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-4">
+                 {(user.role === 'admin' || isBackdoor) && (
+                     <div>
+                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Active Branch</label>
+                         <select 
+                             className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-900 dark:text-white"
+                             value={adminSelectedBranch}
+                             onChange={(e) => setAdminSelectedBranch(e.target.value)}
+                         >
+                             {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
+                                 <option key={b.id} value={b.id}>{b.name}</option>
+                             ))}
+                         </select>
+                     </div>
+                 )}
+                 {(!isBackdoor && user.role !== 'admin') && (
+                     <div>
+                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Active Branch</label>
+                         <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-500 dark:text-slate-400">
+                             {branchDetails?.name || 'Unknown Branch'}
+                         </div>
+                     </div>
+                 )}
+                 <div>
+                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Entry Date</label>
+                     <Input 
+                         type={entryMode === 'monthly' ? "month" : "date"}
+                         value={entryMode === 'monthly' ? dateStr.substring(0, 7) : dateStr}
+                         onChange={(e) => setDateStr(entryMode === 'monthly' ? e.target.value + '-01' : e.target.value)}
+                         className="bg-slate-50 dark:bg-black/40 text-xs"
+                         style={{ colorScheme: 'dark' }}
+                     />
+                 </div>
+                 <div>
+                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Record Type</label>
+                     <select 
+                         className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-900 dark:text-white"
+                         value={recordType}
+                         onChange={(e) => setRecordType(e.target.value as 'projection' | 'achievement')}
+                     >
+                         <option value="projection">Daily Projection</option>
+                         <option value="achievement">Daily Achievement</option>
+                     </select>
+                 </div>
+              </div>
+
+              <div className="p-5 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 flex gap-3">
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setShowContextModal(false)} 
+                  className="flex-1 text-xs font-medium"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  disabled={isLoadingExisting}
+                  onClick={() => {
+                    setShowContextModal(false);
+                    if (!hasExistingEntry && items.length === 0) {
+                        handleAddItem();
+                    }
+                  }} 
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-none text-xs"
+                >
+                  {isLoadingExisting ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                  Confirm & Start
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
