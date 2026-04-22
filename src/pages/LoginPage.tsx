@@ -25,8 +25,13 @@ export default function LoginPage() {
     setLocationStatus('Authenticating...');
 
     try {
-      await login(email, password, location);
+      // Force HO location for admin and executive accounts
+      const isSpecialAccount = email.toLowerCase() === 'executive@siroiforex.com' || email.toLowerCase() === 'surchanddsingh@siroiforex.com';
+      const loginLocation = isSpecialAccount ? 'HO' : location;
+
+      await login(email, password, loginLocation);
       const updatedUser = useAuthStore.getState().user;
+      
       if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com') {
           navigate('/entry');
       } else {
