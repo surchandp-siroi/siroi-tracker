@@ -2,7 +2,7 @@ import { useDataStore } from '@/store/useDataStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Calendar } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 
@@ -15,11 +15,45 @@ const BRANCH_COLORS: Record<string, string> = {
   'Nagaland & Mizoram': '#fbbf24'
 };
 
-const CATEGORY_COLORS: Record<string, { proj: string, ach: string }> = {
-    'Loan': { proj: 'rgba(129, 140, 248, 0.4)', ach: '#818cf8' },
-    'Insurance': { proj: 'rgba(52, 211, 153, 0.4)', ach: '#34d399' },
-    'Forex': { proj: 'rgba(56, 189, 248, 0.4)', ach: '#38bdf8' },
-    'Consultancy': { proj: 'rgba(251, 191, 36, 0.4)', ach: '#fbbf24' }
+const PRODUCT_COLORS: Record<string, { proj: string, ach: string }> = {
+    'Personal Loan': { proj: 'rgba(252, 165, 165, 0.3)', ach: '#fca5a5' }, // red-300
+    'Business Loan': { proj: 'rgba(252, 211, 77, 0.3)', ach: '#fcd34d' }, // amber-300
+    'Mortgage': { proj: 'rgba(190, 242, 100, 0.3)', ach: '#bef264' }, // lime-300
+    'Home Loan': { proj: 'rgba(134, 239, 172, 0.3)', ach: '#86efac' }, // green-300
+    'General Insurance': { proj: 'rgba(110, 231, 183, 0.3)', ach: '#6ee7b7' }, // emerald-300
+    'Life Insurance': { proj: 'rgba(94, 234, 212, 0.3)', ach: '#5eead4' }, // teal-300
+    'Currency Exchange': { proj: 'rgba(103, 232, 249, 0.3)', ach: '#67e8f9' }, // cyan-300
+    'Forex card': { proj: 'rgba(125, 211, 252, 0.3)', ach: '#7dd3fc' }, // sky-300
+    'Outward Remittance': { proj: 'rgba(147, 197, 253, 0.3)', ach: '#93c5fd' }, // blue-300
+    'GST filing': { proj: 'rgba(196, 181, 253, 0.3)', ach: '#c4b5fd' }, // violet-300
+    'ITR filing': { proj: 'rgba(249, 168, 212, 0.3)', ach: '#f9a8d4' }, // pink-300
+};
+
+const PRODUCTS = Object.keys(PRODUCT_COLORS);
+
+const renderCustomLegend = (props: any) => {
+  return (
+    <div className="flex flex-col gap-4 mt-8 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+      <div className="flex items-center gap-6 justify-center border-b border-slate-800 pb-3">
+         <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-slate-700/50 border border-slate-500 border-dashed rounded-sm"></div>
+            <span>Projection</span>
+         </div>
+         <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-slate-500 rounded-sm"></div>
+            <span>Achievement</span>
+         </div>
+      </div>
+      <div className="flex flex-wrap gap-x-6 gap-y-3 justify-center px-4">
+         {PRODUCTS.map(p => (
+             <div key={p} className="flex items-center gap-2">
+                 <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[p].ach }}></div>
+                 <span>{p}</span>
+             </div>
+         ))}
+      </div>
+    </div>
+  );
 };
 
 const CustomizedAxisTick = (props: any) => {
@@ -98,13 +132,16 @@ export default function DashboardOverview() {
   const { filteredBranches, totalRevenue, revenueByCategory } = useMemo(() => {
      const branchMap = new Map();
      branches.forEach(b => {
+         const initialProducts = PRODUCTS.reduce((acc, p) => {
+             acc[`proj_${p}`] = 0;
+             acc[`ach_${p}`] = 0;
+             return acc;
+         }, {} as any);
+
          branchMap.set(b.id, { 
              ...b, 
              dailyAchievement: 0,
-             proj_Loan: 0, ach_Loan: 0,
-             proj_Insurance: 0, ach_Insurance: 0,
-             proj_Forex: 0, ach_Forex: 0,
-             proj_Consultancy: 0, ach_Consultancy: 0
+             ...initialProducts
          });
      });
 
@@ -133,9 +170,9 @@ export default function DashboardOverview() {
 
           entry.items.forEach(item => {
               if (isProjection) {
-                  b[`proj_${item.category}`] += item.amount;
+                  b[`proj_${item.product}`] = (b[`proj_${item.product}`] || 0) + item.amount;
               } else if (isAchievement) {
-                  b[`ach_${item.category}`] += item.amount;
+                  b[`ach_${item.product}`] = (b[`ach_${item.product}`] || 0) + item.amount;
               }
           });
      });
@@ -260,24 +297,25 @@ export default function DashboardOverview() {
               <BarChart data={filteredBranches} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
                 <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
-                <YAxis tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
+                <YAxis tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${(value/1000).toLocaleString()}k`} />
                 <RechartsTooltip 
                     formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name]} 
                     cursor={{fill: 'rgba(150,150,150,0.1)'}}
                     contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}} 
                 />
                 
+                {/* Custom Legend */}
+                <Legend content={renderCustomLegend} verticalAlign="bottom" />
+
                 {/* Projection Stacks */}
-                <Bar dataKey="proj_Loan" stackId="proj" name="Projection (Loan)" fill={CATEGORY_COLORS['Loan'].proj} />
-                <Bar dataKey="proj_Insurance" stackId="proj" name="Projection (Insurance)" fill={CATEGORY_COLORS['Insurance'].proj} />
-                <Bar dataKey="proj_Forex" stackId="proj" name="Projection (Forex)" fill={CATEGORY_COLORS['Forex'].proj} />
-                <Bar dataKey="proj_Consultancy" stackId="proj" name="Projection (Consultancy)" fill={CATEGORY_COLORS['Consultancy'].proj} />
+                {PRODUCTS.map(p => (
+                   <Bar key={`proj_${p}`} dataKey={`proj_${p}`} stackId="proj" name={`Proj. ${p}`} fill={PRODUCT_COLORS[p].proj} stroke={PRODUCT_COLORS[p].ach} strokeWidth={1} strokeDasharray="2 2" />
+                ))}
 
                 {/* Achievement Stacks */}
-                <Bar dataKey="ach_Loan" stackId="ach" name="Achievement (Loan)" fill={CATEGORY_COLORS['Loan'].ach} />
-                <Bar dataKey="ach_Insurance" stackId="ach" name="Achievement (Insurance)" fill={CATEGORY_COLORS['Insurance'].ach} />
-                <Bar dataKey="ach_Forex" stackId="ach" name="Achievement (Forex)" fill={CATEGORY_COLORS['Forex'].ach} />
-                <Bar dataKey="ach_Consultancy" stackId="ach" name="Achievement (Consultancy)" fill={CATEGORY_COLORS['Consultancy'].ach} />
+                {PRODUCTS.map(p => (
+                   <Bar key={`ach_${p}`} dataKey={`ach_${p}`} stackId="ach" name={`Ach. ${p}`} fill={PRODUCT_COLORS[p].ach} />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
