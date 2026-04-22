@@ -45,7 +45,18 @@ export default function DashboardOverview() {
 
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
-  const [selectedRevenueBranch, setSelectedRevenueBranch] = useState<string>('all');
+  const [selectedRevenueBranch, setSelectedRevenueBranch] = useState<string>('');
+
+  useEffect(() => {
+    if (branches.length > 0 && !selectedRevenueBranch) {
+        const guwahati = branches.find(b => b.name === 'Guwahati');
+        if (guwahati) {
+            setSelectedRevenueBranch(guwahati.id);
+        } else {
+            setSelectedRevenueBranch('all');
+        }
+    }
+  }, [branches, selectedRevenueBranch]);
 
   // Secure routing
   useEffect(() => {
@@ -171,8 +182,11 @@ export default function DashboardOverview() {
                 >Year Wise</button>
             </div>
             
-            <div className="flex items-center gap-2 bg-slate-900 dark:bg-black text-white px-3 py-1.5 rounded-lg border border-slate-800 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer">
-              <Calendar className="w-4 h-4 text-slate-400" />
+            <label 
+              className="flex items-center gap-2 bg-slate-900 dark:bg-black text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
+              onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+            >
+              <Calendar className="w-4 h-4 text-indigo-400" />
               <Input 
                 type="date" 
                 value={selectedDate}
@@ -180,7 +194,7 @@ export default function DashboardOverview() {
                 className="w-auto h-auto p-0 border-none bg-transparent text-xs text-white focus:ring-0 [&::-webkit-calendar-picker-indicator]:invert cursor-pointer"
                 style={{ colorScheme: 'dark' }}
               />
-            </div>
+            </label>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden sm:inline-block ml-2 shrink-0">Select Date Tracker</span>
           </div>
         </div>
@@ -281,11 +295,12 @@ export default function DashboardOverview() {
                 <select 
                     value={selectedRevenueBranch}
                     onChange={(e) => setSelectedRevenueBranch(e.target.value)}
-                    className="text-[10px] bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold"
+                    className="text-[10px] bg-transparent dark:bg-[#0f172a] border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold cursor-pointer"
+                    style={{ colorScheme: 'dark' }}
                 >
-                    <option value="all">All Branches</option>
+                    <option value="all" className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">All Branches</option>
                     {branches.filter(b => b.name !== 'Test Branch' && b.name !== 'HO').map(b => (
-                        <option key={b.id} value={b.id}>{b.name}</option>
+                        <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">{b.name}</option>
                     ))}
                 </select>
               </CardHeader>
