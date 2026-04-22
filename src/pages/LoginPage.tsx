@@ -4,7 +4,7 @@ import { useDataStore } from '@/store/useDataStore';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
 import { TrendingUp, MapPin, Loader2 } from 'lucide-react';
-import siroiLogo from '../Logo/WebsiteLogo.svg';
+import { LogoIcon } from '@/components/LogoIcon';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
@@ -53,20 +53,8 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center border-b-0 pb-0">
             <div className="mx-auto w-40 flex flex-col items-center justify-center mb-2">
-                <div className="bg-indigo-500/10 dark:bg-indigo-500/20 p-4 rounded-full w-20 h-20 flex items-center justify-center">
-                    <div 
-                      className="w-full h-full bg-indigo-500 dark:bg-indigo-400 transition-colors"
-                      style={{
-                        maskImage: `url(${siroiLogo})`,
-                        maskSize: 'contain',
-                        maskRepeat: 'no-repeat',
-                        maskPosition: 'center',
-                        WebkitMaskImage: `url(${siroiLogo})`,
-                        WebkitMaskSize: 'contain',
-                        WebkitMaskRepeat: 'no-repeat',
-                        WebkitMaskPosition: 'center',
-                      }}
-                    />
+                <div className="bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 p-4 rounded-full w-20 h-20 flex items-center justify-center">
+                    <LogoIcon className="w-12 h-12" />
                 </div>
             </div>
             <h1 className="text-2xl font-bold tracking-tight dark:text-white text-slate-900 mb-1">SIROI FOREX</h1>
