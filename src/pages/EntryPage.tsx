@@ -53,6 +53,9 @@ export default function DataEntryTerminal() {
   const daysRemaining = Math.max(0, 60 - daysSinceCreation);
 
   const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
+  const isExecutive = user?.email === 'executive@siroiforex.com';
+  const isExecutiveOverride = hasExistingEntry && isExecutive && recordType === 'projection';
+  const canModify = !hasExistingEntry || isExecutiveOverride;
   const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
   // Unsaved Guard
@@ -593,13 +596,13 @@ export default function DataEntryTerminal() {
                            <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider">Smart Assist</label>
                        </div>
                        <textarea 
-                          disabled={hasExistingEntry}
+                          disabled={!canModify}
                           value={smartPrompt}
                           onChange={(e) => setSmartPrompt(e.target.value)}
                           placeholder="E.g., Did 2 lakhs in Axis Home loans and 50k in GST filing..."
                           className="w-full h-24 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-500/20 rounded-md p-3 text-sm focus:outline-none focus:border-indigo-500/50 resize-none disabled:opacity-50 text-slate-900 dark:text-white"
                        />
-                       <Button disabled={hasExistingEntry || isParsing || !smartPrompt.trim()} onClick={handleParse} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm">
+                       <Button disabled={!canModify || isParsing || !smartPrompt.trim()} onClick={handleParse} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm">
                            {isParsing ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : 'Extract Items from Text'}
                        </Button>
                    </div>
@@ -680,7 +683,7 @@ export default function DataEntryTerminal() {
                             <TableBody>
                                 {items.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest">
+                                        <TableCell colSpan={recordType === 'projection' ? 8 : 5} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest">
                                             No items formulated for {dateStr}
                                         </TableCell>
                                     </TableRow>
@@ -688,7 +691,7 @@ export default function DataEntryTerminal() {
                                     <TableRow key={index} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <TableCell className="py-2 pl-4 pr-2 align-top">
                                             <Input 
-                                                disabled={hasExistingEntry || (recordType === 'achievement' && !item.isManual)}
+                                                disabled={(!canModify && !item.isManual) || (recordType === 'achievement' && !item.isManual)}
                                                 type="text"
                                                 className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
                                                 value={item.staffName || ''}
@@ -698,7 +701,7 @@ export default function DataEntryTerminal() {
                                         {recordType === 'projection' && (
                                             <TableCell className="py-2 px-2 align-top">
                                                 <Input 
-                                                    disabled={hasExistingEntry}
+                                                    disabled={!canModify && !item.isManual}
                                                     type="text"
                                                     className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
                                                     value={item.customerName || ''}
@@ -708,7 +711,7 @@ export default function DataEntryTerminal() {
                                         )}
                                         <TableCell className="py-2 px-2 align-top">
                                             <select 
-                                                disabled={hasExistingEntry || (recordType === 'achievement' && !item.isManual)}
+                                                disabled={(!canModify && !item.isManual) || (recordType === 'achievement' && !item.isManual)}
                                                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
                                                 value={item.category || 'Loan'}
                                                 onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
@@ -722,7 +725,7 @@ export default function DataEntryTerminal() {
                                         {recordType === 'projection' && (
                                             <TableCell className="py-2 px-2 align-top">
                                                 <select 
-                                                    disabled={hasExistingEntry}
+                                                    disabled={!canModify && !item.isManual}
                                                     className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
                                                     value={item.product || ''}
                                                     onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
@@ -737,7 +740,7 @@ export default function DataEntryTerminal() {
                                         {recordType === 'projection' && (
                                             <TableCell className="py-2 px-2 align-top">
                                                 <select 
-                                                    disabled={hasExistingEntry}
+                                                    disabled={!canModify && !item.isManual}
                                                     className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
                                                     value={item.channel || ''}
                                                     onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
@@ -753,7 +756,7 @@ export default function DataEntryTerminal() {
                                             <TableCell className="py-2 px-2 align-top">
                                                 {item.isManual ? (
                                                     <Input 
-                                                        disabled={hasExistingEntry}
+                                                        disabled={!canModify}
                                                         type="number"
                                                         className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
                                                         value={item.projectionAmt === 0 ? '' : item.projectionAmt}
@@ -768,7 +771,7 @@ export default function DataEntryTerminal() {
                                         )}
                                         <TableCell className="py-2 px-2 align-top">
                                             <Input 
-                                                disabled={hasExistingEntry}
+                                                disabled={!canModify && !item.isManual}
                                                 type="number"
                                                 className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
                                                 value={item.amount === 0 ? '' : item.amount}
@@ -778,7 +781,7 @@ export default function DataEntryTerminal() {
                                         {recordType === 'projection' && (
                                             <TableCell className="py-2 px-2 align-top">
                                                 <Input 
-                                                    disabled={hasExistingEntry}
+                                                    disabled={!canModify && !item.isManual}
                                                     type="text"
                                                     className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
                                                     value={item.status || ''}
@@ -787,9 +790,9 @@ export default function DataEntryTerminal() {
                                             </TableCell>
                                         )}
                                         <TableCell className="py-2 pr-4 pl-2 align-top text-right">
-                                            {!hasExistingEntry && (
-                                                <button onClick={() => handleRemoveItem(index)} className="text-slate-400 hover:text-red-500 pt-2 px-1">
-                                                    &times;
+                                            {canModify && (
+                                                <button onClick={() => handleRemoveItem(index)} className="mt-1 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors">
+                                                    <X size={16} />
                                                 </button>
                                             )}
                                         </TableCell>
@@ -836,7 +839,7 @@ export default function DataEntryTerminal() {
                                  Deletion window expired (60 days)
                              </span>
                         )}
-                        {!hasExistingEntry && (
+                        {canModify && (
                              <Button variant="secondary" onClick={() => {
                                  if (items.length === 0) {
                                      setShowContextModal(true);
@@ -847,14 +850,14 @@ export default function DataEntryTerminal() {
                                  + Manual Row
                              </Button>
                         )}
-                        {!hasExistingEntry && (
+                        {canModify && (
                             <Button 
                                 disabled={isSaving || items.length === 0} 
                                 onClick={handleSubmit} 
                                 className="bg-emerald-600 hover:bg-emerald-500 text-white flex-1 sm:flex-none font-medium"
                             >
                                 {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                                Permanently Lodge Record
+                                {isExecutiveOverride ? 'Update Record' : 'Permanently Lodge Record'}
                             </Button>
                         )}
                     </div>
