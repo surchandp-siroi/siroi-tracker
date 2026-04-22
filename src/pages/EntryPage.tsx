@@ -156,14 +156,14 @@ export default function DataEntryTerminal() {
                       if (projData && !projData.empty && projData.items && projData.items.length > 0) {
                           const grouped = new Map<string, any>();
                           projData.items.forEach((pItem: any) => {
-                              const key = `${pItem.staffName}_${pItem.product}`;
+                              const key = `${pItem.staffName}_${pItem.category}`;
                               if (!grouped.has(key)) {
                                   grouped.set(key, {
                                       date: dateStr,
                                       staffName: pItem.staffName,
                                       customerName: 'Grouped', // dummy
                                       category: pItem.category,
-                                      product: pItem.product,
+                                      product: 'Grouped', // dummy
                                       channel: 'Grouped', // dummy
                                       amount: 0, // achievement starts at 0
                                       status: 'Grouped', // dummy
@@ -640,9 +640,11 @@ export default function DataEntryTerminal() {
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap"><Layers size={14} className="opacity-70" /> Category</div>
                                     </TableHead>
-                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap"><Tag size={14} className="opacity-70" /> Product</div>
-                                    </TableHead>
+                                    {recordType === 'projection' && (
+                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap"><Tag size={14} className="opacity-70" /> Product</div>
+                                        </TableHead>
+                                    )}
                                     {recordType === 'projection' && (
                                         <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                             <div className="flex items-center gap-1.5 whitespace-nowrap"><Network size={14} className="opacity-70" /> Channel</div>
@@ -706,19 +708,21 @@ export default function DataEntryTerminal() {
                                                 <option value="Consultancy">Consultancy</option>
                                             </select>
                                         </TableCell>
-                                        <TableCell className="py-2 px-2 align-top">
-                                            <select 
-                                                disabled={hasExistingEntry || recordType === 'achievement'}
-                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
-                                                value={item.product || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
-                                            >
-                                                <option value="">Select...</option>
-                                                {allowedProducts(item.category || 'Loan').map((p: any) => (
-                                                    <option key={p.id} value={p.name}>{p.name}</option>
-                                                ))}
-                                            </select>
-                                        </TableCell>
+                                        {recordType === 'projection' && (
+                                            <TableCell className="py-2 px-2 align-top">
+                                                <select 
+                                                    disabled={hasExistingEntry}
+                                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
+                                                    value={item.product || ''}
+                                                    onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
+                                                >
+                                                    <option value="">Select...</option>
+                                                    {allowedProducts(item.category || 'Loan').map((p: any) => (
+                                                        <option key={p.id} value={p.name}>{p.name}</option>
+                                                    ))}
+                                                </select>
+                                            </TableCell>
+                                        )}
                                         {recordType === 'projection' && (
                                             <TableCell className="py-2 px-2 align-top">
                                                 <select 
@@ -772,10 +776,10 @@ export default function DataEntryTerminal() {
                                 ))}
                                 {items.length > 0 && (
                                     <TableRow className="bg-slate-900/5 dark:bg-white/5 font-bold hover:bg-slate-900/5 dark:hover:bg-white/5">
-                                        <TableCell colSpan={5} className="text-right p-4 text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+                                        <TableCell colSpan={recordType === 'achievement' ? 3 : 6} className="text-right p-4 text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                                             Total Amount:
                                         </TableCell>
-                                        <TableCell colSpan={3} className="p-4 text-sm text-indigo-600 dark:text-indigo-400">
+                                        <TableCell colSpan={2} className="p-4 text-sm text-indigo-600 dark:text-indigo-400">
                                             ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
                                         </TableCell>
                                     </TableRow>
