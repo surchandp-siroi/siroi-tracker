@@ -1,17 +1,8 @@
 <IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteBase /
-
-# 1. If it's a request for the root, serve dist/index.html
-RewriteRule ^$ dist/index.html [L]
-
-# 2. If the request is NOT for the dist directory, rewrite to dist/
-RewriteCond %{REQUEST_URI} !^/dist/
-RewriteRule ^(.*)$ dist/$1 [L]
-
-# 3. If the request IS for the dist directory but the file isn't found, fallback to index.html (SPA routing)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^dist/ dist/index.html [L]
-
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
 </IfModule>
