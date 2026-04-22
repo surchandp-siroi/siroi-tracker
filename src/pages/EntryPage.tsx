@@ -48,7 +48,8 @@ export default function DataEntryTerminal() {
   const allowDeletion = hasExistingEntry && (user?.role === 'admin' || daysSinceCreation < 60);
   const daysRemaining = Math.max(0, 60 - daysSinceCreation);
 
-  const activeBranchId = user?.role === 'admin' ? adminSelectedBranch : user?.branchId;
+  const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
+  const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
   // Unsaved Guard
   const isDirty = !hasExistingEntry && items.length > 0;
@@ -57,11 +58,14 @@ export default function DataEntryTerminal() {
     if (isInitialized && !user) {
       navigate('/login');
     }
-    // Auto-select first branch for admin
-    if (user?.role === 'admin' && branches.length > 0 && !adminSelectedBranch) {
-       setAdminSelectedBranch(branches[0].id);
+    // Auto-select first branch for admin / backdoor
+    if (isBackdoor && branches.length > 0 && !adminSelectedBranch) {
+       const available = branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch');
+       if (available.length > 0) {
+           setAdminSelectedBranch(available[0].id);
+       }
     }
-  }, [user, isInitialized, navigate, branches, adminSelectedBranch]);
+  }, [user, isInitialized, navigate, branches, adminSelectedBranch, isBackdoor]);
 
   // Derived mode
   const isDailyMode = entryMode === 'daily';
@@ -203,9 +207,36 @@ export default function DataEntryTerminal() {
           return;
       }
       
-      if (items.some(i => !i.category || !i.product || !i.channel || i.amount <= 0)) {
-          setError("Please ensure all items have a valid category, product, channel and amount > 0.");
-          return;
+      for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (!item.staffName || !item.staffName.trim()) {
+              setError(`Row ${i + 1} is missing Staff Name. Please fill it before logging.`);
+              return;
+          }
+          if (!item.customerName || !item.customerName.trim()) {
+              setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
+              return;
+          }
+          if (!item.category) {
+              setError(`Row ${i + 1} is missing Category. Please select one before logging.`);
+              return;
+          }
+          if (!item.product) {
+              setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
+              return;
+          }
+          if (!item.channel) {
+              setError(`Row ${i + 1} is missing Channel. Please select one before logging.`);
+              return;
+          }
+          if (item.amount <= 0) {
+              setError(`Row ${i + 1} requires an amount greater than 0.`);
+              return;
+          }
+          if (!item.status || !item.status.trim()) {
+              setError(`Row ${i + 1} is missing Status. Please fill it before logging.`);
+              return;
+          }
       }
 
       setIsSaving(true);
@@ -357,10 +388,10 @@ export default function DataEntryTerminal() {
                </CardHeader>
                <CardContent className="p-4 space-y-6">
                    <div className="space-y-4">
-                       {user.role === 'admin' && (
+                       {(user.role === 'admin' || isBackdoor) && (
                            <div className="mb-4">
                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between mb-2">
-                                   Admin Branch Override
+                                   {isBackdoor ? 'Branch Override (Testing Mode)' : 'Admin Branch Override'}
                                </label>
                                <select 
                                    className="w-full bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200"
