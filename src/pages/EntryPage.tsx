@@ -15,11 +15,11 @@ export default function DataEntryTerminal() {
   const { products, channels, branches } = useDataStore();
 
   const [entryMode, setEntryMode] = useState<'daily'|'monthly'>(
-      new Date() >= new Date('2026-05-01T00:00:00Z') ? 'daily' : 'monthly'
+      new Date() >= new Date('2026-01-01T00:00:00Z') ? 'daily' : 'monthly'
   );
   const [dateStr, setDateStr] = useState<string>(() => {
       const today = new Date().toISOString().split('T')[0];
-      return today >= '2026-05-01' ? today : '2026-04-01';
+      return today >= '2026-01-01' ? today : '2026-01-01';
   });
   const [recordType, setRecordType] = useState<'projection' | 'achievement'>('achievement');
   const [items, setItems] = useState<Array<{date: string, staffName: string, customerName: string, category: string, product: string, channel: string, amount: number, status: string}>>([]);
@@ -333,7 +333,7 @@ export default function DataEntryTerminal() {
   const allowedProducts = (category: string) => products.filter((p: any) => p.category === category);
 
   return (
-    <div className="min-h-screen p-4 md:p-8 flex flex-col max-w-5xl mx-auto">
+    <div className="min-h-screen p-4 md:p-8 flex flex-col max-w-7xl mx-auto">
         <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
@@ -398,7 +398,7 @@ export default function DataEntryTerminal() {
                                        if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
                                        setEntryMode('daily');
                                        const today = new Date().toISOString().split('T')[0];
-                                       setDateStr(today >= '2026-05-01' ? today : '2026-05-01');
+                                       setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
                                    }}
                                >
                                    Daily
@@ -425,7 +425,7 @@ export default function DataEntryTerminal() {
                            ) : (
                                <Input 
                                    type="date" 
-                                   min="2026-05-01"
+                                   min="2026-01-01"
                                    value={dateStr}
                                    onChange={(e) => {
                                        if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
@@ -508,9 +508,6 @@ export default function DataEntryTerminal() {
                         <Table>
                             <TableHeader className="bg-slate-900/5 dark:bg-white/5 sticky top-0 z-10 box-border border-b border-slate-900/10 dark:border-white/10">
                                 <TableRow>
-                                    <TableHead className="text-xs font-semibold py-3 pl-4 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Date</div>
-                                    </TableHead>
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap">Staff Name</div>
                                     </TableHead>
@@ -545,15 +542,6 @@ export default function DataEntryTerminal() {
                                 ) : items.map((item, index) => (
                                     <TableRow key={index} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <TableCell className="py-2 pl-4 pr-2 align-top">
-                                            <Input 
-                                                disabled={hasExistingEntry}
-                                                type="date"
-                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
-                                                value={item.date || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'date', e.target.value)}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="py-2 px-2 align-top">
                                             <Input 
                                                 disabled={hasExistingEntry}
                                                 type="text"
@@ -639,7 +627,7 @@ export default function DataEntryTerminal() {
                                 ))}
                                 {items.length > 0 && (
                                     <TableRow className="bg-slate-900/5 dark:bg-white/5 font-bold hover:bg-slate-900/5 dark:hover:bg-white/5">
-                                        <TableCell colSpan={6} className="text-right p-4 text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+                                        <TableCell colSpan={5} className="text-right p-4 text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                                             Total Amount:
                                         </TableCell>
                                         <TableCell colSpan={3} className="p-4 text-sm text-indigo-600 dark:text-indigo-400">
