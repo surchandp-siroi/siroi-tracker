@@ -51,8 +51,17 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center border-b-0 pb-0">
-            <div className="mx-auto bg-indigo-500/20 text-indigo-400 p-3 rounded-full w-16 h-16 flex items-center justify-center mb-2">
-                <TrendingUp size={32} />
+            <div className="mx-auto w-40 flex items-center justify-center mb-2">
+                <img 
+                   src="https://siroiforex.com/wp-content/uploads/2022/04/Siroi-Logo-300x127.png" 
+                   alt="Siroi Forex Logo" 
+                   className="w-full object-contain filter brightness-0 invert opacity-90"
+                   onError={(e) => {
+                     // Fallback to text if image fails to load
+                     e.currentTarget.style.display = 'none';
+                     e.currentTarget.parentElement!.innerHTML = '<span class="text-3xl font-black tracking-tight dark:text-white text-slate-900">SIROI</span>';
+                   }}
+                />
             </div>
             <h1 className="text-2xl font-bold tracking-tight dark:text-white text-slate-900 mb-1">SIROI FOREX</h1>
             <p className="text-sm dark:text-slate-400 text-slate-500 uppercase tracking-widest">Internal Portal</p>

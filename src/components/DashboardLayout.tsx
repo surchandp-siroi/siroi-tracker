@@ -16,8 +16,13 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    try {
+      await logout();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      navigate('/login');
+    }
   };
 
   // Extract display name from email (before @)
@@ -86,9 +91,11 @@ export default function DashboardLayout() {
 
           {/* User Profile */}
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-              {initials}
-            </div>
+            <img 
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || displayName}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`} 
+              alt="Avatar" 
+              className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0 object-cover border border-slate-200 dark:border-white/10" 
+            />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {displayName}
@@ -98,6 +105,7 @@ export default function DashboardLayout() {
               </p>
             </div>
             <button
+              type="button"
               onClick={handleLogout}
               className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               title="Log out"
