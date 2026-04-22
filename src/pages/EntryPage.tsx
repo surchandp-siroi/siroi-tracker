@@ -22,7 +22,7 @@ export default function DataEntryTerminal() {
       return today >= '2026-01-01' ? today : '2026-01-01';
   });
   const [recordType, setRecordType] = useState<'projection' | 'achievement'>('achievement');
-  const [items, setItems] = useState<Array<{date: string, staffName: string, customerName: string, category: string, product: string, channel: string, amount: number, status: string, projectionAmt?: number}>>([]);
+  const [items, setItems] = useState<Array<{date: string, staffName: string, customerName: string, category: string, product: string, channel: string, amount: number, status: string, projectionAmt?: number, isManual?: boolean}>>([]);
   const [smartPrompt, setSmartPrompt] = useState<string>('');
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -253,7 +253,7 @@ export default function DataEntryTerminal() {
   };
 
   const handleAddItem = () => {
-      setItems([...items, { date: dateStr, staffName: '', customerName: '', category: 'Loan', product: '', channel: '', amount: 0, status: '' }]);
+      setItems([...items, { date: dateStr, staffName: '', customerName: '', category: 'Loan', product: '', channel: '', amount: 0, status: '', isManual: true, projectionAmt: 0 }]);
   };
   
   const handleUpdateItem = (index: number, key: string, val: string | number) => {
@@ -303,29 +303,40 @@ export default function DataEntryTerminal() {
               setError(`Row ${i + 1} is missing Staff Name. Please fill it before logging.`);
               return;
           }
-          if (!item.customerName || !item.customerName.trim()) {
-              setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
-              return;
-          }
           if (!item.category) {
               setError(`Row ${i + 1} is missing Category. Please select one before logging.`);
               return;
           }
-          if (!item.product) {
-              setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
-              return;
-          }
-          if (!item.channel) {
-              setError(`Row ${i + 1} is missing Channel. Please select one before logging.`);
-              return;
-          }
-          if (item.amount <= 0) {
-              setError(`Row ${i + 1} requires an amount greater than 0.`);
-              return;
-          }
-          if (!item.status || !item.status.trim()) {
-              setError(`Row ${i + 1} is missing Status. Please fill it before logging.`);
-              return;
+          if (recordType === 'projection') {
+              if (!item.customerName || !item.customerName.trim()) {
+                  setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
+                  return;
+              }
+              if (!item.product) {
+                  setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
+                  return;
+              }
+              if (!item.channel) {
+                  setError(`Row ${i + 1} is missing Channel. Please select one before logging.`);
+                  return;
+              }
+              if (item.amount <= 0) {
+                  setError(`Row ${i + 1} requires an amount greater than 0.`);
+                  return;
+              }
+              if (!item.status || !item.status.trim()) {
+                  setError(`Row ${i + 1} is missing Status. Please fill it before logging.`);
+                  return;
+              }
+          } else {
+              if (item.amount < 0) {
+                  setError(`Row ${i + 1} requires a valid achieved amount.`);
+                  return;
+              }
+              if (item.isManual && (item.projectionAmt === undefined || item.projectionAmt < 0)) {
+                  setError(`Row ${i + 1} requires a valid projection amount.`);
+                  return;
+              }
           }
       }
 
@@ -677,7 +688,7 @@ export default function DataEntryTerminal() {
                                     <TableRow key={index} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <TableCell className="py-2 pl-4 pr-2 align-top">
                                             <Input 
-                                                disabled={hasExistingEntry || recordType === 'achievement'}
+                                                disabled={hasExistingEntry || (recordType === 'achievement' && !item.isManual)}
                                                 type="text"
                                                 className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
                                                 value={item.staffName || ''}
@@ -697,7 +708,7 @@ export default function DataEntryTerminal() {
                                         )}
                                         <TableCell className="py-2 px-2 align-top">
                                             <select 
-                                                disabled={hasExistingEntry || recordType === 'achievement'}
+                                                disabled={hasExistingEntry || (recordType === 'achievement' && !item.isManual)}
                                                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
                                                 value={item.category || 'Loan'}
                                                 onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
@@ -740,9 +751,19 @@ export default function DataEntryTerminal() {
                                         )}
                                         {recordType === 'achievement' && (
                                             <TableCell className="py-2 px-2 align-top">
-                                                <div className="h-[34px] px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md text-slate-600 dark:text-slate-300 min-w-[100px] flex items-center">
-                                                    {item.projectionAmt?.toLocaleString('en-IN') || '0'}
-                                                </div>
+                                                {item.isManual ? (
+                                                    <Input 
+                                                        disabled={hasExistingEntry}
+                                                        type="number"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
+                                                        value={item.projectionAmt === 0 ? '' : item.projectionAmt}
+                                                        onChange={(e) => handleUpdateItem(index, 'projectionAmt', parseInt(e.target.value) || 0)}
+                                                    />
+                                                ) : (
+                                                    <div className="h-[34px] px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md text-slate-600 dark:text-slate-300 min-w-[100px] flex items-center">
+                                                        {item.projectionAmt?.toLocaleString('en-IN') || '0'}
+                                                    </div>
+                                                )}
                                             </TableCell>
                                         )}
                                         <TableCell className="py-2 px-2 align-top">
