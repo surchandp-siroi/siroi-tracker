@@ -27,10 +27,14 @@ export interface Branch {
 }
 
 export interface EntryItem {
+    date: string;
+    staffName: string;
+    customerName: string;
     category: ProductCategory;
     product: string;
     channel: string;
     amount: number;
+    status: string;
 }
 
 export interface BranchEntry {
@@ -38,6 +42,7 @@ export interface BranchEntry {
     branchId: string;
     entryDate: string;
     mode: 'daily' | 'monthly';
+    recordType: 'projection' | 'achievement';
     items: EntryItem[];
     totalAmount: number;
     authorId: string;
@@ -133,20 +138,36 @@ export const useDataStore = create<DataState>((set) => ({
       const computeStats = (entries: BranchEntry[]) => {
         const productRevenues: Record<string, number> = {};
         const branchAchievements: Record<string, number> = {};
+        const branchProjections: Record<string, number> = {};
         const channelRevenues: Record<string, number> = {};
         
+        // Use today's date for daily projections check
+        const todayStr = new Date().toISOString().split('T')[0];
+        
         entries.forEach(entry => {
-            branchAchievements[entry.branchId] = (branchAchievements[entry.branchId] || 0) + entry.totalAmount;
+            const isAchievement = !entry.recordType || entry.recordType === 'achievement';
+            const isProjection = entry.recordType === 'projection';
             
-            entry.items.forEach(item => {
-                productRevenues[item.product] = (productRevenues[item.product] || 0) + item.amount;
-                channelRevenues[item.channel] = (channelRevenues[item.channel] || 0) + item.amount;
-            });
+            if (isAchievement) {
+                branchAchievements[entry.branchId] = (branchAchievements[entry.branchId] || 0) + entry.totalAmount;
+                
+                entry.items.forEach(item => {
+                    productRevenues[item.product] = (productRevenues[item.product] || 0) + item.amount;
+                    channelRevenues[item.channel] = (channelRevenues[item.channel] || 0) + item.amount;
+                });
+            } else if (isProjection && entry.entryDate === todayStr) {
+                // If it's a projection for today, sum it up
+                branchProjections[entry.branchId] = (branchProjections[entry.branchId] || 0) + entry.totalAmount;
+            }
         });
 
         set((state) => ({
             entries,
-            branches: state.branches.map(b => ({ ...b, dailyAchievement: branchAchievements[b.id] || 0 })),
+            branches: state.branches.map(b => ({ 
+                ...b, 
+                dailyAchievement: branchAchievements[b.id] || 0,
+                dailyProjection: branchProjections[b.id] !== undefined ? branchProjections[b.id] : b.dailyProjection
+            })),
             products: state.products.map(p => ({ ...p, revenue: productRevenues[p.name] || 0 })),
             channels: state.channels.map(c => ({ ...c, revenue: channelRevenues[c.name] || 0 })),
             isLoading: false

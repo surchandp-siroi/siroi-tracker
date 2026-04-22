@@ -16,6 +16,7 @@ CREATE TABLE public.entries (
   "branchId" TEXT NOT NULL,
   "entryDate" TEXT NOT NULL,  -- Kept as text to match application logic, or change to DATE
   mode TEXT NOT NULL CHECK (mode IN ('daily', 'monthly')),
+  "recordType" TEXT NOT NULL DEFAULT 'achievement' CHECK ("recordType" IN ('projection', 'achievement')),
   items JSONB NOT NULL DEFAULT '[]'::jsonb,
   "totalAmount" NUMERIC NOT NULL DEFAULT 0,
   "authorId" UUID REFERENCES auth.users NOT NULL,

@@ -21,7 +21,8 @@ export default function DataEntryTerminal() {
       const today = new Date().toISOString().split('T')[0];
       return today >= '2026-05-01' ? today : '2026-04-01';
   });
-  const [items, setItems] = useState<Array<{category: string, product: string, channel: string, amount: number}>>([]);
+  const [recordType, setRecordType] = useState<'projection' | 'achievement'>('achievement');
+  const [items, setItems] = useState<Array<{date: string, staffName: string, customerName: string, category: string, product: string, channel: string, amount: number, status: string}>>([]);
   const [smartPrompt, setSmartPrompt] = useState<string>('');
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -78,13 +79,14 @@ export default function DataEntryTerminal() {
               const b = branches.find(br => br.id === activeBranchId);
               if (b) setBranchDetails(b);
               
-              // Check if entry already exists for this exact date AND mode
+              // Check if entry already exists for this exact date AND mode AND recordType
               const { data: snap } = await supabase
                 .from('entries')
                 .select('*')
                 .eq('branchId', activeBranchId)
                 .eq('entryDate', dateStr)
-                .eq('mode', entryMode);
+                .eq('mode', entryMode)
+                .eq('recordType', recordType);
               
               if (snap && snap.length > 0) {
                   setHasExistingEntry(true);
@@ -105,7 +107,7 @@ export default function DataEntryTerminal() {
           }
       };
       fetchContext();
-  }, [activeBranchId, dateStr, entryMode, branches]);
+  }, [activeBranchId, dateStr, entryMode, recordType, branches]);
 
   const handleParse = async () => {
       if (!smartPrompt.trim()) return;
@@ -157,7 +159,7 @@ export default function DataEntryTerminal() {
   };
 
   const handleAddItem = () => {
-      setItems([...items, { category: 'Loan', product: '', channel: '', amount: 0 }]);
+      setItems([...items, { date: dateStr, staffName: '', customerName: '', category: 'Loan', product: '', channel: '', amount: 0, status: '' }]);
   };
   
   const handleUpdateItem = (index: number, key: string, val: string | number) => {
@@ -182,6 +184,20 @@ export default function DataEntryTerminal() {
           return;
       }
       
+      // 11:00 AM restriction check for Projections (Post May 15, 2026)
+      if (recordType === 'projection') {
+          const now = new Date();
+          // Convert to IST: UTC + 5:30
+          const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+          const istTime = new Date(utcMs + (330 * 60000));
+          const isPast11AM_IST = istTime.getHours() > 11 || (istTime.getHours() === 11 && istTime.getMinutes() > 0);
+          
+          if (isPast11AM_IST && new Date() > new Date('2026-05-15T00:00:00Z')) {
+             setError("Daily Projections must be submitted before 11:00 AM IST.");
+             return;
+          }
+      }
+      
       if (items.length === 0) {
           setError("Please add at least one line item.");
           return;
@@ -203,6 +219,7 @@ export default function DataEntryTerminal() {
               branchId: activeBranchId,
               entryDate: dateStr,
               mode: entryMode,
+              recordType: recordType,
               items: items,
               totalAmount,
               authorId: user?.id,
@@ -210,13 +227,14 @@ export default function DataEntryTerminal() {
               location: user?.latestLocation || null,
           };
 
-          // Check if an entry already exists for this branch+date+mode
+          // Check if an entry already exists for this branch+date+mode+recordType
           const { data: existing } = await supabase
             .from('entries')
             .select('id')
             .eq('branchId', activeBranchId)
             .eq('entryDate', dateStr)
             .eq('mode', entryMode)
+            .eq('recordType', recordType)
             .limit(1);
 
           let savedId: string | null = null;
@@ -458,7 +476,25 @@ export default function DataEntryTerminal() {
             
             <Card className="lg:col-span-2 glass border-slate-900/10 dark:border-white/10 overflow-hidden flex flex-col h-[600px]">
                 <CardHeader className="border-b border-slate-900/10 dark:border-white/10 p-4 bg-slate-900/5 dark:bg-white/5 flex flex-row items-center justify-between">
-                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 shrink-0">Line Items</h3>
+                   <div className="flex items-center gap-4">
+                       <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 shrink-0">Line Items</h3>
+                       <div className="flex bg-slate-900/5 dark:bg-black/40 p-1 rounded-md">
+                           <button 
+                               className={`text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'projection' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                               onClick={() => {
+                                   if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
+                                   setRecordType('projection');
+                               }}
+                           >Daily Projection</button>
+                           <button 
+                               className={`text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'achievement' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                               onClick={() => {
+                                   if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
+                                   setRecordType('achievement');
+                               }}
+                           >Daily Achievement</button>
+                       </div>
+                   </div>
                    {hasExistingEntry && (
                        <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/30 shrink-0">
                            Locked & Processed
@@ -473,6 +509,15 @@ export default function DataEntryTerminal() {
                             <TableHeader className="bg-slate-900/5 dark:bg-white/5 sticky top-0 z-10 box-border border-b border-slate-900/10 dark:border-white/10">
                                 <TableRow>
                                     <TableHead className="text-xs font-semibold py-3 pl-4 text-slate-700 dark:text-slate-300">
+                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Date</div>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Staff Name</div>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Customer Name</div>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap"><Layers size={14} className="opacity-70" /> Category</div>
                                     </TableHead>
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
@@ -483,6 +528,9 @@ export default function DataEntryTerminal() {
                                     </TableHead>
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap"><IndianRupee size={14} className="opacity-70" /> Amount</div>
+                                    </TableHead>
+                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Status</div>
                                     </TableHead>
                                     <TableHead className="w-[40px] px-2"></TableHead>
                                 </TableRow>
@@ -497,10 +545,37 @@ export default function DataEntryTerminal() {
                                 ) : items.map((item, index) => (
                                     <TableRow key={index} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <TableCell className="py-2 pl-4 pr-2 align-top">
+                                            <Input 
+                                                disabled={hasExistingEntry}
+                                                type="date"
+                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
+                                                value={item.date || ''}
+                                                onChange={(e) => handleUpdateItem(index, 'date', e.target.value)}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="py-2 px-2 align-top">
+                                            <Input 
+                                                disabled={hasExistingEntry}
+                                                type="text"
+                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
+                                                value={item.staffName || ''}
+                                                onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="py-2 px-2 align-top">
+                                            <Input 
+                                                disabled={hasExistingEntry}
+                                                type="text"
+                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
+                                                value={item.customerName || ''}
+                                                onChange={(e) => handleUpdateItem(index, 'customerName', e.target.value)}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="py-2 px-2 align-top">
                                             <select 
                                                 disabled={hasExistingEntry}
-                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
-                                                value={item.category}
+                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
+                                                value={item.category || 'Loan'}
                                                 onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
                                             >
                                                 <option value="Loan">Loan</option>
@@ -512,12 +587,12 @@ export default function DataEntryTerminal() {
                                         <TableCell className="py-2 px-2 align-top">
                                             <select 
                                                 disabled={hasExistingEntry}
-                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
-                                                value={item.product}
+                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
+                                                value={item.product || ''}
                                                 onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
                                             >
                                                 <option value="">Select...</option>
-                                                {allowedProducts(item.category).map((p: any) => (
+                                                {allowedProducts(item.category || 'Loan').map((p: any) => (
                                                     <option key={p.id} value={p.name}>{p.name}</option>
                                                 ))}
                                             </select>
@@ -525,8 +600,8 @@ export default function DataEntryTerminal() {
                                         <TableCell className="py-2 px-2 align-top">
                                             <select 
                                                 disabled={hasExistingEntry}
-                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
-                                                value={item.channel}
+                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
+                                                value={item.channel || ''}
                                                 onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
                                             >
                                                 <option value="">Select...</option>
@@ -539,9 +614,18 @@ export default function DataEntryTerminal() {
                                             <Input 
                                                 disabled={hasExistingEntry}
                                                 type="number"
-                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
                                                 value={item.amount === 0 ? '' : item.amount}
                                                 onChange={(e) => handleUpdateItem(index, 'amount', parseInt(e.target.value) || 0)}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="py-2 px-2 align-top">
+                                            <Input 
+                                                disabled={hasExistingEntry}
+                                                type="text"
+                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
+                                                value={item.status || ''}
+                                                onChange={(e) => handleUpdateItem(index, 'status', e.target.value)}
                                             />
                                         </TableCell>
                                         <TableCell className="py-2 pr-4 pl-2 align-top text-right">
@@ -555,10 +639,10 @@ export default function DataEntryTerminal() {
                                 ))}
                                 {items.length > 0 && (
                                     <TableRow className="bg-slate-900/5 dark:bg-white/5 font-bold hover:bg-slate-900/5 dark:hover:bg-white/5">
-                                        <TableCell colSpan={3} className="text-right p-4 text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+                                        <TableCell colSpan={6} className="text-right p-4 text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
                                             Total Amount:
                                         </TableCell>
-                                        <TableCell colSpan={2} className="p-4 text-sm text-indigo-600 dark:text-indigo-400">
+                                        <TableCell colSpan={3} className="p-4 text-sm text-indigo-600 dark:text-indigo-400">
                                             ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
                                         </TableCell>
                                     </TableRow>
