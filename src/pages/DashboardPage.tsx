@@ -18,10 +18,10 @@ const BRANCH_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, { proj: string, ach: string }> = {
-  'Loan': { proj: 'rgba(129, 140, 248, 0.4)', ach: '#818cf8' },
-  'Insurance': { proj: 'rgba(52, 211, 153, 0.4)', ach: '#34d399' },
-  'Forex': { proj: 'rgba(56, 189, 248, 0.4)', ach: '#38bdf8' },
-  'Consultancy': { proj: 'rgba(251, 191, 36, 0.4)', ach: '#fbbf24' }
+    'Loan': { proj: 'rgba(129, 140, 248, 0.4)', ach: '#818cf8' },
+    'Insurance': { proj: 'rgba(52, 211, 153, 0.4)', ach: '#34d399' },
+    'Forex': { proj: 'rgba(56, 189, 248, 0.4)', ach: '#38bdf8' },
+    'Consultancy': { proj: 'rgba(251, 191, 36, 0.4)', ach: '#fbbf24' }
 };
 
 const CustomizedAxisTick = (props: any) => {
@@ -49,21 +49,21 @@ export default function DashboardOverview() {
 
   useEffect(() => {
     if (branches.length > 0 && !selectedRevenueBranch) {
-      const guwahati = branches.find(b => b.name === 'Guwahati');
-      if (guwahati) {
-        setSelectedRevenueBranch(guwahati.id);
-      } else {
-        setSelectedRevenueBranch('all');
-      }
+        const guwahati = branches.find(b => b.name === 'Guwahati');
+        if (guwahati) {
+            setSelectedRevenueBranch(guwahati.id);
+        } else {
+            setSelectedRevenueBranch('all');
+        }
     }
   }, [branches, selectedRevenueBranch]);
 
   // Secure routing
   useEffect(() => {
-    if (isInitialized) {
-      if (!user) navigate('/login');
-      else if (user.role !== 'admin') navigate('/entry');
-    }
+     if (isInitialized) {
+         if (!user) navigate('/login');
+         else if (user.role !== 'admin') navigate('/entry');
+     }
   }, [user, isInitialized, navigate]);
 
   // Financial Year Logic
@@ -77,76 +77,76 @@ export default function DashboardOverview() {
 
   // Filter entries based on the viewMode
   const filteredEntries = useMemo(() => {
-    return entries.filter(entry => {
-      const entryDateStr = entry.entryDate;
-      if (viewMode === 'daily') {
-        return entryDateStr === selectedDate;
-      } else {
-        const entryDate = new Date(entryDateStr);
-        if (viewMode === 'month') {
-          return entryDate.getMonth() === selectedMonth && entryDate.getFullYear() === selectedYear;
-        } else {
-          // FY logic
-          const em = entryDate.getMonth();
-          const ey = entryDate.getFullYear();
-          const eIsNewFY = em >= 3;
-          const eFyStart = eIsNewFY ? ey : ey - 1;
-          return eFyStart === fyStart;
-        }
-      }
-    });
+     return entries.filter(entry => {
+         const entryDateStr = entry.entryDate;
+         if (viewMode === 'daily') {
+             return entryDateStr === selectedDate;
+         } else {
+             const entryDate = new Date(entryDateStr);
+             if (viewMode === 'month') {
+                 return entryDate.getMonth() === selectedMonth && entryDate.getFullYear() === selectedYear;
+             } else {
+                 // FY logic
+                 const em = entryDate.getMonth();
+                 const ey = entryDate.getFullYear();
+                 const eIsNewFY = em >= 3;
+                 const eFyStart = eIsNewFY ? ey : ey - 1;
+                 return eFyStart === fyStart;
+             }
+         }
+     });
   }, [entries, selectedDate, viewMode, selectedMonth, selectedYear, fyStart]);
 
   const { filteredBranches, totalRevenue, revenueByCategory } = useMemo(() => {
-    const branchMap = new Map();
-    branches.forEach(b => {
-      branchMap.set(b.id, {
-        ...b,
-        dailyAchievement: 0,
-        proj_Loan: 0, ach_Loan: 0,
-        proj_Insurance: 0, ach_Insurance: 0,
-        proj_Forex: 0, ach_Forex: 0,
-        proj_Consultancy: 0, ach_Consultancy: 0
-      });
-    });
+     const branchMap = new Map();
+     branches.forEach(b => {
+         branchMap.set(b.id, { 
+             ...b, 
+             dailyAchievement: 0,
+             proj_Loan: 0, ach_Loan: 0,
+             proj_Insurance: 0, ach_Insurance: 0,
+             proj_Forex: 0, ach_Forex: 0,
+             proj_Consultancy: 0, ach_Consultancy: 0
+         });
+     });
 
-    let total = 0;
-    const catMap = new Map();
+     let total = 0;
+     const catMap = new Map();
 
-    filteredEntries.forEach(entry => {
-      const b = branchMap.get(entry.branchId);
-      if (!b) return;
+     filteredEntries.forEach(entry => {
+          const b = branchMap.get(entry.branchId);
+          if (!b) return;
 
-      const isAchievement = !entry.recordType || entry.recordType === 'achievement';
-      const isProjection = entry.recordType === 'projection';
+          const isAchievement = !entry.recordType || entry.recordType === 'achievement';
+          const isProjection = entry.recordType === 'projection';
 
-      if (isAchievement) {
-        b.dailyAchievement += entry.totalAmount;
-        total += entry.totalAmount;
-      }
+          if (isAchievement) {
+              b.dailyAchievement += entry.totalAmount;
+              total += entry.totalAmount;
+          }
+          
+          if (selectedRevenueBranch === 'all' || selectedRevenueBranch === b.id) {
+              if (isAchievement) {
+                  entry.items.forEach(item => {
+                      catMap.set(item.category, (catMap.get(item.category) || 0) + item.amount);
+                  });
+              }
+          }
 
-      if (selectedRevenueBranch === 'all' || selectedRevenueBranch === b.id) {
-        if (isAchievement) {
           entry.items.forEach(item => {
-            catMap.set(item.category, (catMap.get(item.category) || 0) + item.amount);
+              if (isProjection) {
+                  b[`proj_${item.category}`] += item.amount;
+              } else if (isAchievement) {
+                  b[`ach_${item.category}`] += item.amount;
+              }
           });
-        }
-      }
+     });
 
-      entry.items.forEach(item => {
-        if (isProjection) {
-          b[`proj_${item.category}`] += item.amount;
-        } else if (isAchievement) {
-          b[`ach_${item.category}`] += item.amount;
-        }
-      });
-    });
+     // Filter Test Branch and HO
+     const fb = Array.from(branchMap.values()).filter(b => b.name !== 'Test Branch' && b.name !== 'HO');
+     const rbC = Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
 
-    // Filter Test Branch and HO
-    const fb = Array.from(branchMap.values()).filter(b => b.name !== 'Test Branch' && b.name !== 'HO');
-    const rbC = Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
-
-    return { filteredBranches: fb, totalRevenue: total, revenueByCategory: rbC };
+     return { filteredBranches: fb, totalRevenue: total, revenueByCategory: rbC };
   }, [filteredEntries, branches, selectedRevenueBranch]);
 
   const target = filteredBranches.reduce((acc, b) => acc + b.monthlyTarget, 0);
@@ -168,27 +168,27 @@ export default function DashboardOverview() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
-              <button
-                onClick={() => setViewMode('daily')}
-                className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-              >Daily</button>
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-              >Month Wise</button>
-              <button
-                onClick={() => setViewMode('year')}
-                className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-              >Year Wise</button>
+                <button 
+                  onClick={() => setViewMode('daily')}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >Daily</button>
+                <button 
+                  onClick={() => setViewMode('month')}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >Month Wise</button>
+                <button 
+                  onClick={() => setViewMode('year')}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                >Year Wise</button>
             </div>
-
-            <label
+            
+            <label 
               className="flex items-center gap-2 bg-slate-900 dark:bg-black text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
-              onClick={(e) => { const input = e.currentTarget.querySelector('input'); if (input && 'showPicker' in input) (input as any).showPicker(); }}
+              onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
             >
               <Calendar className="w-4 h-4 text-indigo-400" />
-              <Input
-                type="date"
+              <Input 
+                type="date" 
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-auto h-auto p-0 border-none bg-transparent text-xs text-white focus:ring-0 [&::-webkit-calendar-picker-indicator]:invert cursor-pointer"
@@ -199,14 +199,14 @@ export default function DashboardOverview() {
           </div>
         </div>
         <div className="flex gap-6 sm:gap-8">
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Monthly</span>
-            <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{target.toLocaleString()}</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Revenue</span>
-            <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{totalRevenue.toLocaleString()}</span>
-          </div>
+            <div className="flex flex-col">
+                <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Monthly</span>
+                <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{target.toLocaleString()}</span>
+            </div>
+            <div className="flex flex-col">
+                <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Revenue</span>
+                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{totalRevenue.toLocaleString()}</span>
+            </div>
         </div>
       </header>
 
@@ -245,7 +245,7 @@ export default function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
-              ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString()}
+                ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString()}
             </div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">All branches</p>
           </CardContent>
@@ -263,13 +263,13 @@ export default function DashboardOverview() {
               <BarChart data={filteredBranches} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
                 <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value / 1000}k`} />
-                <RechartsTooltip
-                  formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name]}
-                  cursor={{ fill: 'rgba(150,150,150,0.1)' }}
-                  contentStyle={{ backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px' }}
+                <YAxis tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
+                <RechartsTooltip 
+                    formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name]} 
+                    cursor={{fill: 'rgba(150,150,150,0.1)'}}
+                    contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}} 
                 />
-
+                
                 {/* Projection Stacks */}
                 <Bar dataKey="proj_Loan" stackId="proj" name="Projection (Loan)" fill={CATEGORY_COLORS['Loan'].proj} />
                 <Bar dataKey="proj_Insurance" stackId="proj" name="Projection (Insurance)" fill={CATEGORY_COLORS['Insurance'].proj} />
@@ -288,55 +288,55 @@ export default function DashboardOverview() {
 
         {/* Right Column: Mix */}
         <div className="lg:col-span-3 flex flex-col gap-6">
-          {/* Revenue Mix */}
-          <Card className="flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
-            <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
-              <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Revenue Mix</span>
-              <select
-                value={selectedRevenueBranch}
-                onChange={(e) => setSelectedRevenueBranch(e.target.value)}
-                className="text-[10px] bg-transparent dark:bg-[#0f172a] border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold cursor-pointer"
-                style={{ colorScheme: 'dark' }}
-              >
-                <option value="all" className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">All Branches</option>
-                {branches.filter(b => b.name !== 'Test Branch' && b.name !== 'HO').map(b => (
-                  <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">{b.name}</option>
-                ))}
-              </select>
-            </CardHeader>
-            <CardContent className="flex-1 flex justify-center items-center p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={revenueByCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {revenueByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            {/* Revenue Mix */}
+            <Card className="flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
+              <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
+                <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Revenue Mix</span>
+                <select 
+                    value={selectedRevenueBranch}
+                    onChange={(e) => setSelectedRevenueBranch(e.target.value)}
+                    className="text-[10px] bg-transparent dark:bg-[#0f172a] border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold cursor-pointer"
+                    style={{ colorScheme: 'dark' }}
+                >
+                    <option value="all" className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">All Branches</option>
+                    {branches.filter(b => b.name !== 'Test Branch' && b.name !== 'HO').map(b => (
+                        <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">{b.name}</option>
                     ))}
-                  </Pie>
-                  <RechartsTooltip
-                    formatter={(value: any) => `₹${Number(value || 0).toLocaleString()}`}
-                    contentStyle={{ backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-            <div className="px-6 pb-6 flex flex-wrap gap-4 justify-center mt-auto shrink-0 pt-4">
-              {revenueByCategory.map((entry, index) => (
-                <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
-                  <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
-                  {entry.name}
-                </div>
-              ))}
-            </div>
-          </Card>
+                </select>
+              </CardHeader>
+              <CardContent className="flex-1 flex justify-center items-center p-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={revenueByCategory}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {revenueByCategory.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                        formatter={(value: any) => `₹${Number(value || 0).toLocaleString()}`}
+                        contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}}  
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+              <div className="px-6 pb-6 flex flex-wrap gap-4 justify-center mt-auto shrink-0 pt-4">
+                  {revenueByCategory.map((entry, index) => (
+                      <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
+                          <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                          {entry.name}
+                      </div>
+                  ))}
+              </div>
+            </Card>
         </div>
       </div>
     </>
