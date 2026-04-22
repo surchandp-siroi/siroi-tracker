@@ -31,31 +31,6 @@ const PRODUCT_COLORS: Record<string, { proj: string, ach: string }> = {
 
 const PRODUCTS = Object.keys(PRODUCT_COLORS);
 
-const renderCustomLegend = (props: any) => {
-  return (
-    <div className="flex flex-col gap-4 mt-8 text-[10px] uppercase font-bold tracking-widest text-slate-400">
-      <div className="flex items-center gap-6 justify-center border-b border-slate-800 pb-3">
-         <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-slate-700/50 border border-slate-500 border-dashed rounded-sm"></div>
-            <span>Projection</span>
-         </div>
-         <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-slate-500 rounded-sm"></div>
-            <span>Achievement</span>
-         </div>
-      </div>
-      <div className="flex flex-wrap gap-x-6 gap-y-3 justify-center px-4">
-         {PRODUCTS.map(p => (
-             <div key={p} className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[p].ach }}></div>
-                 <span>{p}</span>
-             </div>
-         ))}
-      </div>
-    </div>
-  );
-};
-
 const CustomizedAxisTick = (props: any) => {
   const { x, y, payload } = props;
   const branchName = payload.value;
@@ -63,7 +38,7 @@ const CustomizedAxisTick = (props: any) => {
   return (
     <g transform={`translate(${x},${y})`}>
       <circle cx={0} cy={12} r={4} fill={color} />
-      <text x={0} y={28} dy={0} textAnchor="middle" fill="#94a3b8" fontSize={11}>
+      <text x={0} y={16} dy={16} textAnchor="middle" fill="#94a3b8" fontSize={11} fontWeight={500}>
         {branchName}
       </text>
     </g>
@@ -190,6 +165,54 @@ export default function DashboardOverview() {
   const mtdRevenue = Math.round(totalRevenue * 0.12);
   const ftdRevenue = Math.round(totalRevenue * 0.008);
 
+  const activeProducts = useMemo(() => {
+     return PRODUCTS.filter(p => 
+         filteredBranches.some((b: any) => (b[`proj_${p}`] || 0) > 0 || (b[`ach_${p}`] || 0) > 0)
+     );
+  }, [filteredBranches]);
+
+  const maxYValue = useMemo(() => {
+     let max = 0;
+     filteredBranches.forEach((b: any) => {
+         let projSum = 0;
+         let achSum = 0;
+         PRODUCTS.forEach(p => {
+             projSum += (b[`proj_${p}`] || 0);
+             achSum += (b[`ach_${p}`] || 0);
+         });
+         max = Math.max(max, projSum, achSum);
+     });
+     return max > 0 ? max : 1000; // Provide a default if 0
+  }, [filteredBranches]);
+
+  const renderCustomLegend = (props: any) => {
+    // If no active products, maybe don't show the product legend, but still show Projection/Achievement
+    return (
+      <div className="flex flex-col gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+        <div className="flex items-center gap-6 justify-center border-b border-slate-800/50 pb-2">
+           <div className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 bg-slate-700/50 border border-slate-500 border-dashed rounded-[2px]"></div>
+              <span>Projection</span>
+           </div>
+           <div className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 bg-slate-500 rounded-[2px]"></div>
+              <span>Achievement</span>
+           </div>
+        </div>
+        {activeProducts.length > 0 && (
+          <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center px-2">
+             {activeProducts.map(p => (
+                 <div key={p} className="flex items-center gap-1.5">
+                     <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[p].ach }}></div>
+                     <span className="text-[9px]">{p}</span>
+                 </div>
+             ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -288,16 +311,23 @@ export default function DashboardOverview() {
 
       <div className="grid gap-6 lg:grid-cols-7 flex-1 pb-8">
         {/* Branches Performance */}
-        <Card className="lg:col-span-4 flex flex-col border-slate-900/10 dark:border-white/10">
+        <Card className="lg:col-span-4 flex flex-col border-slate-900/10 dark:border-white/10 min-h-[450px]">
           <CardHeader className="flex justify-between items-center py-4 border-slate-900/10 dark:border-white/10 uppercase">
             <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300">Branch Performance ({viewMode === 'daily' ? 'Daily' : viewMode === 'month' ? 'Monthly' : 'Yearly'})</span>
           </CardHeader>
-          <CardContent className="min-h-[300px] flex-1 p-4">
+          <CardContent className="flex-1 p-4 pb-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={filteredBranches} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <BarChart data={filteredBranches} margin={{ top: 20, right: 10, left: 0, bottom: 0 }} barGap={4} barCategoryGap="25%">
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
                 <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
-                <YAxis tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${(value/1000).toLocaleString()}k`} />
+                <YAxis 
+                    domain={[0, Math.ceil(maxYValue * 1.1)]} 
+                    tick={{fill: '#94a3b8', fontSize: 11}} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tickFormatter={(value) => `₹${(value/1000).toLocaleString()}k`} 
+                    width={60}
+                />
                 <RechartsTooltip 
                     formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name]} 
                     cursor={{fill: 'rgba(150,150,150,0.1)'}}
@@ -305,16 +335,16 @@ export default function DashboardOverview() {
                 />
                 
                 {/* Custom Legend */}
-                <Legend content={renderCustomLegend} verticalAlign="bottom" />
+                <Legend content={renderCustomLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
 
                 {/* Projection Stacks */}
-                {PRODUCTS.map(p => (
-                   <Bar key={`proj_${p}`} dataKey={`proj_${p}`} stackId="proj" name={`Proj. ${p}`} fill={PRODUCT_COLORS[p].proj} stroke={PRODUCT_COLORS[p].ach} strokeWidth={1} strokeDasharray="2 2" />
+                {activeProducts.map(p => (
+                   <Bar key={`proj_${p}`} dataKey={`proj_${p}`} stackId="proj" name={`Proj. ${p}`} fill={PRODUCT_COLORS[p].proj} stroke={PRODUCT_COLORS[p].ach} strokeWidth={1} strokeDasharray="2 2" maxBarSize={50} />
                 ))}
 
                 {/* Achievement Stacks */}
-                {PRODUCTS.map(p => (
-                   <Bar key={`ach_${p}`} dataKey={`ach_${p}`} stackId="ach" name={`Ach. ${p}`} fill={PRODUCT_COLORS[p].ach} />
+                {activeProducts.map(p => (
+                   <Bar key={`ach_${p}`} dataKey={`ach_${p}`} stackId="ach" name={`Ach. ${p}`} fill={PRODUCT_COLORS[p].ach} maxBarSize={50} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
