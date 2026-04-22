@@ -8,6 +8,7 @@ import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCe
 import { Sparkles, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useDataStore } from '@/store/useDataStore';
+import { NumericFormat } from 'react-number-format';
 
 export default function DataEntryTerminal() {
   const { user, isInitialized, logout } = useAuthStore();
@@ -755,12 +756,14 @@ export default function DataEntryTerminal() {
                                         {recordType === 'achievement' && (
                                             <TableCell className="py-2 px-2 align-top">
                                                 {item.isManual ? (
-                                                    <Input 
+                                                    <NumericFormat 
+                                                        customInput={Input}
                                                         disabled={!canModify}
-                                                        type="number"
                                                         className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
                                                         value={item.projectionAmt === 0 ? '' : item.projectionAmt}
-                                                        onChange={(e) => handleUpdateItem(index, 'projectionAmt', parseInt(e.target.value) || 0)}
+                                                        onValueChange={(values) => handleUpdateItem(index, 'projectionAmt', values.floatValue || 0)}
+                                                        thousandSeparator=","
+                                                        thousandsGroupStyle="lakh"
                                                     />
                                                 ) : (
                                                     <div className="h-[34px] px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md text-slate-600 dark:text-slate-300 min-w-[100px] flex items-center">
@@ -770,12 +773,14 @@ export default function DataEntryTerminal() {
                                             </TableCell>
                                         )}
                                         <TableCell className="py-2 px-2 align-top">
-                                            <Input 
+                                            <NumericFormat 
+                                                customInput={Input}
                                                 disabled={!canModify && !item.isManual}
-                                                type="number"
                                                 className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
                                                 value={item.amount === 0 ? '' : item.amount}
-                                                onChange={(e) => handleUpdateItem(index, 'amount', parseInt(e.target.value) || 0)}
+                                                onValueChange={(values) => handleUpdateItem(index, 'amount', values.floatValue || 0)}
+                                                thousandSeparator=","
+                                                thousandsGroupStyle="lakh"
                                             />
                                         </TableCell>
                                         {recordType === 'projection' && (

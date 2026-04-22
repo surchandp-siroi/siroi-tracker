@@ -175,7 +175,7 @@ export default function BranchesPage() {
                     </div>
                     <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-lg px-3 py-2 border border-slate-200 dark:border-white/10">
                       <span className={`text-sm font-medium ${accent.badgeText}`}>₹</span>
-                      <span className="text-sm font-mono text-slate-800 dark:text-slate-200">{branch.dailyProjection.toLocaleString()}</span>
+                      <span className="text-sm font-mono text-slate-800 dark:text-slate-200">{branch.dailyProjection.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 
@@ -199,7 +199,7 @@ export default function BranchesPage() {
                     </div>
                     <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 rounded-lg px-3 py-2 border border-slate-200 dark:border-white/10">
                       <span className="text-sm text-emerald-500 font-medium">₹</span>
-                      <span className="text-sm font-mono text-slate-800 dark:text-slate-200">{achievement.toLocaleString()}</span>
+                      <span className="text-sm font-mono text-slate-800 dark:text-slate-200">{achievement.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
                 </div>

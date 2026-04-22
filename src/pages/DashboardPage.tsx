@@ -285,12 +285,12 @@ export default function DashboardOverview() {
         <div className="flex gap-6 sm:gap-8">
             <div className="flex flex-col items-end">
                 <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Total Business Today</span>
-                <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString()}</span>
+                <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString('en-IN')}</span>
                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
             </div>
             <div className="flex flex-col items-end">
                 <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
-                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{ftdBusiness.toLocaleString()}</span>
+                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{ftdBusiness.toLocaleString('en-IN')}</span>
                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
             </div>
         </div>
@@ -303,7 +303,7 @@ export default function DashboardOverview() {
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD Business</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ftdBusiness.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ftdBusiness.toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">For the day</p>
           </CardContent>
         </Card>
@@ -312,7 +312,7 @@ export default function DashboardOverview() {
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD Business</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{mtdBusiness.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{mtdBusiness.toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Month to date</p>
           </CardContent>
         </Card>
@@ -321,7 +321,7 @@ export default function DashboardOverview() {
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD Business</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ytdBusiness.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ytdBusiness.toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Year to date</p>
           </CardContent>
         </Card>
@@ -331,7 +331,7 @@ export default function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
-                ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString()}
+                ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
             </div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">All branches</p>
           </CardContent>
@@ -354,11 +354,11 @@ export default function DashboardOverview() {
                     tick={{fill: '#94a3b8', fontSize: 11}} 
                     axisLine={false} 
                     tickLine={false} 
-                    tickFormatter={(value) => `₹${(value/1000).toLocaleString()}k`} 
+                    tickFormatter={(value) => `₹${(value/1000).toLocaleString('en-IN')}k`} 
                     width={60}
                 />
                 <RechartsTooltip 
-                    formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name]} 
+                    formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, name]} 
                     cursor={{fill: 'rgba(150,150,150,0.1)'}}
                     contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}} 
                 />
@@ -416,7 +416,7 @@ export default function DashboardOverview() {
                       ))}
                     </Pie>
                     <RechartsTooltip 
-                        formatter={(value: any) => `₹${Number(value || 0).toLocaleString()}`}
+                        formatter={(value: any) => `₹${Number(value || 0).toLocaleString('en-IN')}`}
                         contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}}  
                     />
                   </PieChart>

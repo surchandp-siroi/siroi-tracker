@@ -110,8 +110,8 @@ export default function ProductsPage() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD Acquired</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{ftdBusiness.toLocaleString()}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">vs target ₹{target.toLocaleString()}</p>
+            <div className="text-2xl font-mono font-bold dark:text-white">₹{ftdBusiness.toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">vs target ₹{target.toLocaleString('en-IN')}</p>
           </CardContent>
         </Card>
         <Card className="border-slate-900/10 dark:border-white/10">
@@ -119,7 +119,7 @@ export default function ProductsPage() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD Volume</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{mtdBusiness.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold dark:text-white">₹{mtdBusiness.toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Month to date</p>
           </CardContent>
         </Card>
@@ -128,7 +128,7 @@ export default function ProductsPage() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD Bookings</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{ytdBusiness.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold dark:text-white">₹{ytdBusiness.toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Year to date</p>
           </CardContent>
         </Card>
@@ -177,13 +177,13 @@ export default function ProductsPage() {
         <Card className="border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Loan Portfolio</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal(loanProducts).toLocaleString()}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal(loanProducts).toLocaleString('en-IN')}</span>
           </CardHeader>
           <CardContent className="p-0">
             {loanProducts.map(p => (
               <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
                 <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString()}</span>
+                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
               </div>
             ))}
           </CardContent>
@@ -193,13 +193,13 @@ export default function ProductsPage() {
         <Card className="border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Insurance Plans</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal(insuranceProducts).toLocaleString()}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal(insuranceProducts).toLocaleString('en-IN')}</span>
           </CardHeader>
           <CardContent className="p-0">
             {insuranceProducts.map(p => (
               <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
                 <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString()}</span>
+                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
               </div>
             ))}
           </CardContent>
@@ -215,7 +215,7 @@ export default function ProductsPage() {
             {forexProducts.map(p => (
               <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
                 <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString()}</span>
+                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
               </div>
             ))}
           </CardContent>
@@ -231,7 +231,7 @@ export default function ProductsPage() {
             {consultancyProducts.map(p => (
               <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
                 <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString()}</span>
+                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
               </div>
             ))}
           </CardContent>
