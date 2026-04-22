@@ -12,9 +12,7 @@ const BRANCH_COLORS: Record<string, string> = {
   'Guwahati': '#818cf8',
   'Manipur': '#34d399',
   'Itanagar': '#38bdf8',
-  'Nagaland & Mizoram': '#fbbf24',
-  'HO': '#a78bfa',
-  'Test Branch': '#f87171'
+  'Nagaland & Mizoram': '#fbbf24'
 };
 
 const CATEGORY_COLORS: Record<string, { proj: string, ach: string }> = {
@@ -142,8 +140,7 @@ export default function DashboardOverview() {
           });
      });
 
-     // Filter Test Branch and HO
-     const fb = Array.from(branchMap.values()).filter(b => b.name !== 'Test Branch' && b.name !== 'HO');
+     const fb = Array.from(branchMap.values());
      const rbC = Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
 
      return { filteredBranches: fb, totalRevenue: total, revenueByCategory: rbC };
@@ -299,7 +296,7 @@ export default function DashboardOverview() {
                     style={{ colorScheme: 'dark' }}
                 >
                     <option value="all" className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">All Branches</option>
-                    {branches.filter(b => b.name !== 'Test Branch' && b.name !== 'HO').map(b => (
+                    {branches.map(b => (
                         <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">{b.name}</option>
                     ))}
                 </select>
