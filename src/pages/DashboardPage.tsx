@@ -249,9 +249,9 @@ export default function DashboardOverview() {
               <BarChart data={filteredBranches} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
                 <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
-                <YAxis tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(value) => \`₹\${value/1000}k\`} />
+                <YAxis tick={{fill: '#94a3b8', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
                 <RechartsTooltip 
-                    formatter={(value: any, name: string) => [\`₹\${Number(value || 0).toLocaleString()}\`, name]} 
+                    formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString()}`, name]} 
                     cursor={{fill: 'rgba(150,150,150,0.1)'}}
                     contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}} 
                 />
@@ -303,11 +303,11 @@ export default function DashboardOverview() {
                       stroke="none"
                     >
                       {revenueByCategory.map((entry, index) => (
-                        <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <RechartsTooltip 
-                        formatter={(value: any) => \`₹\${Number(value || 0).toLocaleString()}\`}
+                        formatter={(value: any) => `₹${Number(value || 0).toLocaleString()}`}
                         contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}}  
                     />
                   </PieChart>
