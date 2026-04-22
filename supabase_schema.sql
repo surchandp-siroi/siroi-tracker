@@ -54,3 +54,8 @@ CREATE POLICY "Enable insert access for authenticated users" ON public.entries
 -- Allow inserting into accessRequests for unauthenticated users (since they sign up and get rejected initially)
 CREATE POLICY "Enable insert for access Requests" ON public."accessRequests"
   FOR INSERT TO anon, authenticated WITH CHECK (true);
+
+-- Admin can update any entry
+CREATE POLICY "Admin update access" ON public.entries
+  FOR UPDATE TO public USING (get_user_role() = 'admin'::text) WITH CHECK (get_user_role() = 'admin'::text);
+
