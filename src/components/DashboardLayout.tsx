@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/dashboard/products', label: 'Products', icon: Package },
   { to: '/dashboard/channels', label: 'Channels', icon: Network },
   { to: '/dashboard/branches', label: 'Branches', icon: GitBranch },
+  { to: '/dashboard/organigram', label: 'Organigram', icon: Users, adminOnly: true },
 ];
 
 export default function DashboardLayout() {
@@ -49,27 +50,31 @@ export default function DashboardLayout() {
             Management
           </p>
           <div className="space-y-0.5">
-            {navItems.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === '/dashboard'}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                    isActive
-                      ? 'bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent'
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
-                    {label}
-                  </>
-                )}
-              </NavLink>
-            ))}
+            {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
+              if (adminOnly && user?.role !== 'admin') return null;
+              
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/dashboard'}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                      isActive
+                        ? 'bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+                      {label}
+                    </>
+                  )}
+                </NavLink>
+              );
+            })}
           </div>
         </nav>
 
