@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Tree, TreeNode } from 'react-organizational-chart';
-import { Card, CardContent, CardHeader } from '@/components/ui';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Trash2, Plus, Info, Calendar } from 'lucide-react';
+import { Trash2, Plus, Info, Calendar, Network } from 'lucide-react';
 
 interface OrgNode {
   id: string;
@@ -24,7 +23,7 @@ export default function OrganigramPage() {
   const [selectedNode, setSelectedNode] = useState<OrgNode | null>(null);
 
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com';
 
   useEffect(() => {
     fetchNodes();

@@ -51,7 +51,8 @@ export default function DashboardLayout() {
           </p>
           <div className="space-y-0.5">
             {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
-              if (adminOnly && user?.role !== 'admin') return null;
+              const isSuperAdmin = user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com';
+              if (adminOnly && user?.role !== 'admin' && !isSuperAdmin) return null;
               
               return (
                 <NavLink
