@@ -35,6 +35,7 @@ export default function DataEntryTerminal() {
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [branchDetails, setBranchDetails] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedDeleteIndices, setSelectedDeleteIndices] = useState<Set<number>>(new Set());
   
   // Admin Context
   const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
@@ -257,19 +258,47 @@ export default function DataEntryTerminal() {
       setSuccess('');
       
       try {
-          const { error: deleteError } = await supabase
-              .from('entries')
-              .delete()
-              .eq('id', currentEntryId);
-              
-          if (deleteError) throw new Error(deleteError.message);
+          const selectedCount = selectedDeleteIndices.size;
+          const totalCount = items.length;
           
-          setSuccess("Record permanently deleted.");
-          setHasExistingEntry(false);
-          setItems([]);
-          setCurrentEntryId(null);
-          setEntryCreatedAt(null);
-          setSmartPrompt('');
+          if (selectedCount === 0) {
+              setError("Please select at least one line item to delete.");
+              setIsDeleting(false);
+              return;
+          }
+          
+          if (selectedCount === totalCount) {
+              // Delete entire entry
+              const { error: deleteError } = await supabase
+                  .from('entries')
+                  .delete()
+                  .eq('id', currentEntryId);
+                  
+              if (deleteError) throw new Error(deleteError.message);
+              
+              setSuccess("Entire record permanently deleted.");
+              setHasExistingEntry(false);
+              setItems([]);
+              setCurrentEntryId(null);
+              setEntryCreatedAt(null);
+              setSmartPrompt('');
+          } else {
+              // Delete selected line items only — update the entry with remaining items
+              const remainingItems = items.filter((_, idx) => !selectedDeleteIndices.has(idx));
+              const newTotal = remainingItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+              
+              const { error: updateError } = await supabase
+                  .from('entries')
+                  .update({ items: remainingItems, totalAmount: newTotal })
+                  .eq('id', currentEntryId);
+                  
+              if (updateError) throw new Error(updateError.message);
+              
+              setSuccess(`${selectedCount} line item${selectedCount > 1 ? 's' : ''} permanently deleted. ${remainingItems.length} remaining.`);
+              setItems(remainingItems);
+          }
+          
+          setSelectedDeleteIndices(new Set());
           setShowDeleteModal(false);
       } catch (err: any) {
           console.error("Delete error:", err);
@@ -549,7 +578,10 @@ export default function DataEntryTerminal() {
                         {hasExistingEntry && allowDeletion && (
                              <Button 
                                 variant="danger" 
-                                onClick={() => setShowDeleteModal(true)} 
+                                onClick={() => { 
+                                  setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
+                                  setShowDeleteModal(true); 
+                                }} 
                                 disabled={isDeleting}
                                 className="flex-1 sm:flex-none text-white font-medium shadow-none"
                              >
@@ -583,7 +615,13 @@ export default function DataEntryTerminal() {
         </div>
 
         {/* Delete Confirmation Modal */}
-        {showDeleteModal && (
+        {showDeleteModal && (() => {
+          const selectedTotal = items.reduce((s, item, idx) => s + (selectedDeleteIndices.has(idx) ? (Number(item.amount) || 0) : 0), 0);
+          const selectedCount = selectedDeleteIndices.size;
+          const allSelected = selectedCount === items.length;
+          const noneSelected = selectedCount === 0;
+
+          return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteModal(false)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div 
@@ -597,7 +635,7 @@ export default function DataEntryTerminal() {
                     <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wider">Confirm Permanent Deletion</h3>
+                    <h3 className="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wider">Select Items to Delete</h3>
                     <p className="text-[10px] text-red-700/70 dark:text-red-300/60 uppercase tracking-widest mt-0.5">
                       {branchDetails?.name} • {dateStr} • {entryMode}
                     </p>
@@ -612,9 +650,11 @@ export default function DataEntryTerminal() {
               <div className="px-5 pt-4">
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/20 rounded-lg">
                   <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
-                    ⚠️ This action is <strong>irreversible</strong>. The following {items.length} line item{items.length !== 1 ? 's' : ''} totalling 
-                    <strong className="text-amber-700 dark:text-amber-300"> ₹{items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}</strong> will be 
-                    permanently erased from Supabase and cannot be recovered.
+                    ⚠️ This action is <strong>irreversible</strong>. Select the line items you want to permanently erase. 
+                    {allSelected 
+                      ? <> Selecting all will delete the <strong>entire record</strong>.</>
+                      : <> Unselected items will be preserved in the record.</>
+                    }
                   </p>
                   <p className="text-[10px] text-amber-700/70 dark:text-amber-400/60 mt-2 uppercase tracking-wider">
                     Deletion window: {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining out of 60
@@ -622,24 +662,79 @@ export default function DataEntryTerminal() {
                 </div>
               </div>
 
-              {/* Records Preview */}
-              <div className="px-5 pt-4 pb-2 flex-1 overflow-auto">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Records to be deleted</p>
+              {/* Select All / Deselect All Toggle */}
+              <div className="px-5 pt-3 flex items-center justify-between">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  {selectedCount} of {items.length} item{items.length !== 1 ? 's' : ''} selected
+                  {selectedCount > 0 && (
+                    <span className="text-red-500 ml-2">
+                      (₹{selectedTotal.toLocaleString('en-IN')})
+                    </span>
+                  )}
+                </p>
+                <button
+                  onClick={() => {
+                    if (allSelected) {
+                      setSelectedDeleteIndices(new Set());
+                    } else {
+                      setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
+                    }
+                  }}
+                  className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider hover:underline"
+                >
+                  {allSelected ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
+              {/* Records Preview with Checkboxes */}
+              <div className="px-5 pt-3 pb-2 flex-1 overflow-auto">
                 <div className="space-y-2">
-                  {items.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10">
-                      <div className="flex items-center gap-3 min-w-0">
+                  {items.map((item, idx) => {
+                    const isSelected = selectedDeleteIndices.has(idx);
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          const next = new Set(selectedDeleteIndices);
+                          if (isSelected) { next.delete(idx); } else { next.add(idx); }
+                          setSelectedDeleteIndices(next);
+                        }}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all duration-150 text-left ${
+                          isSelected 
+                            ? 'bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-500/30 ring-1 ring-red-500/20'
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                        }`}
+                      >
+                        {/* Checkbox */}
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected
+                            ? 'bg-red-500 border-red-500'
+                            : 'border-slate-300 dark:border-slate-600'
+                        }`}>
+                          {isSelected && (
+                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        
+                        {/* Item Number */}
                         <span className="text-[10px] font-bold text-slate-400 w-5 text-center shrink-0">#{idx + 1}</span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{item.product}</p>
+                        
+                        {/* Item Details */}
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-xs font-semibold truncate ${isSelected ? 'text-red-900 dark:text-red-200 line-through' : 'text-slate-900 dark:text-white'}`}>{item.product}</p>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{item.category} • {item.channel}</p>
                         </div>
-                      </div>
-                      <span className="text-sm font-mono font-bold text-red-600 dark:text-red-400 shrink-0 ml-3">
-                        ₹{Number(item.amount).toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  ))}
+                        
+                        {/* Amount */}
+                        <span className={`text-sm font-mono font-bold shrink-0 ml-3 ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                          ₹{Number(item.amount).toLocaleString('en-IN')}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -655,16 +750,22 @@ export default function DataEntryTerminal() {
                 <Button 
                   variant="danger" 
                   onClick={handleDelete} 
-                  disabled={isDeleting}
+                  disabled={isDeleting || noneSelected}
                   className="flex-1 text-white font-medium shadow-none"
                 >
                   {isDeleting ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
-                  Yes, Permanently Delete
+                  {noneSelected 
+                    ? 'Select items to delete'
+                    : allSelected 
+                      ? 'Delete Entire Record'
+                      : `Delete ${selectedCount} Item${selectedCount > 1 ? 's' : ''}`
+                  }
                 </Button>
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
     </div>
   );
 }
