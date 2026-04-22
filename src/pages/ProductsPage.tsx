@@ -10,6 +10,7 @@ export default function ProductsPage() {
 
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedBranch, setSelectedBranch] = useState('all');
+  const [viewMode, setViewMode] = useState<'achievement' | 'projection'>('achievement');
 
   const dateObj = new Date(selectedDate);
   const selectedMonth = dateObj.getMonth();
@@ -19,9 +20,17 @@ export default function ProductsPage() {
   const fyEnd = (fyStart + 1).toString().slice(-2);
   const financialYear = `FY ${fyStart}-${fyEnd}`;
 
-  const { ftdBusiness, mtdBusiness, ytdBusiness, productBusiness } = useMemo(() => {
-    let ftd = 0, mtd = 0, ytd = 0;
-    const map: Record<string, number> = {};
+  const { 
+    ftdAchievement, mtdAchievement, ytdAchievement, productAchievement, categoryAchievement,
+    ftdProjection, mtdProjection, ytdProjection, productProjection, categoryProjection 
+  } = useMemo(() => {
+    let ftdA = 0, mtdA = 0, ytdA = 0;
+    let ftdP = 0, mtdP = 0, ytdP = 0;
+    const mapA: Record<string, number> = {};
+    const catMapA: Record<string, number> = {};
+    const mapP: Record<string, number> = {};
+    const catMapP: Record<string, number> = {};
+
     const sd = new Date(selectedDate);
     const sdYear = sd.getFullYear();
     const sdMonth = sd.getMonth();
@@ -30,8 +39,7 @@ export default function ProductsPage() {
 
     entries.forEach(entry => {
       const isAchievement = !entry.recordType || entry.recordType === 'achievement';
-      if (!isAchievement) return;
-
+      
       const branchMatch = selectedBranch === 'all' || entry.branchId === selectedBranch;
       if (!branchMatch) return;
 
@@ -42,28 +50,52 @@ export default function ProductsPage() {
       const edFyStart = edIsNewFY ? edYear : edYear - 1;
 
       if (edFyStart === sdFyStart && ed <= sd) {
-          ytd += entry.totalAmount;
+          if (isAchievement) ytdA += entry.totalAmount;
+          else ytdP += entry.totalAmount;
+          
           if (edMonth === sdMonth && edYear === sdYear) {
-              mtd += entry.totalAmount;
+              if (isAchievement) mtdA += entry.totalAmount;
+              else mtdP += entry.totalAmount;
               
               entry.items.forEach(item => {
-                 map[item.product] = (map[item.product] || 0) + item.amount;
+                 if (isAchievement) {
+                    if (item.product && item.product !== 'Grouped') mapA[item.product] = (mapA[item.product] || 0) + item.amount;
+                    if (item.category) catMapA[item.category] = (catMapA[item.category] || 0) + item.amount;
+                 } else {
+                    if (item.product && item.product !== 'Grouped') mapP[item.product] = (mapP[item.product] || 0) + item.amount;
+                    if (item.category) catMapP[item.category] = (catMapP[item.category] || 0) + item.amount;
+                 }
               });
 
               if (entry.entryDate === selectedDate) {
-                  ftd += entry.totalAmount;
+                  if (isAchievement) ftdA += entry.totalAmount;
+                  else ftdP += entry.totalAmount;
               }
           }
       }
     });
-    return { ftdBusiness: ftd, mtdBusiness: mtd, ytdBusiness: ytd, productBusiness: map };
+    return { 
+        ftdAchievement: ftdA, mtdAchievement: mtdA, ytdAchievement: ytdA, productAchievement: mapA, categoryAchievement: catMapA,
+        ftdProjection: ftdP, mtdProjection: mtdP, ytdProjection: ytdP, productProjection: mapP, categoryProjection: catMapP
+    };
   }, [entries, selectedDate, selectedBranch]);
 
-  const target = branches
-    .filter(b => selectedBranch === 'all' || b.id === selectedBranch)
-    .filter(b => b.name !== 'Test Branch' && b.name !== 'HO')
-    .reduce((acc, b) => acc + b.dailyProjection, 0);
-  const achvPct = target > 0 ? ((ftdBusiness / target) * 100).toFixed(1) : '0';
+  let target = ftdProjection;
+  if (target === 0) {
+      target = branches
+        .filter(b => selectedBranch === 'all' || b.id === selectedBranch)
+        .filter(b => b.name !== 'Test Branch' && b.name !== 'HO')
+        .reduce((acc, b) => acc + b.dailyProjection, 0);
+  }
+  const achvPct = target > 0 ? ((ftdAchievement / target) * 100).toFixed(1) : '0';
+
+  const ftdGap = ftdAchievement - target;
+
+  const currentFTD = viewMode === 'achievement' ? ftdAchievement : ftdProjection;
+  const currentMTD = viewMode === 'achievement' ? mtdAchievement : mtdProjection;
+  const currentYTD = viewMode === 'achievement' ? ytdAchievement : ytdProjection;
+  const productData = viewMode === 'achievement' ? productAchievement : productProjection;
+  const categoryData = viewMode === 'achievement' ? categoryAchievement : categoryProjection;
 
   // Group products by category
   const loanProducts = products.filter(p => p.category === 'Loan');
@@ -71,8 +103,7 @@ export default function ProductsPage() {
   const forexProducts = products.filter(p => p.category === 'Forex');
   const consultancyProducts = products.filter(p => p.category === 'Consultancy');
 
-  const getCategoryTotal = (prods: typeof products) =>
-    prods.reduce((sum, p) => sum + (productBusiness[p.name] || 0), 0);
+  const getCategoryTotal = (catName: string) => categoryData[catName] || 0;
 
   const displayBranches = branches.filter(b => b.name !== 'Test Branch' && b.name !== 'HO');
 
@@ -88,6 +119,28 @@ export default function ProductsPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex items-center bg-slate-900 dark:bg-black rounded-lg border border-slate-800 p-1">
+              <button
+                onClick={() => setViewMode('achievement')}
+                className={`px-3 py-1 text-xs font-bold uppercase rounded-md transition-colors ${
+                  viewMode === 'achievement'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'text-slate-500 hover:text-white'
+                }`}
+              >
+                Achieved
+              </button>
+              <button
+                onClick={() => setViewMode('projection')}
+                className={`px-3 py-1 text-xs font-bold uppercase rounded-md transition-colors ${
+                  viewMode === 'projection'
+                    ? 'bg-indigo-500/20 text-indigo-400'
+                    : 'text-slate-500 hover:text-white'
+                }`}
+              >
+                Projected
+              </button>
+            </div>
             <div className="flex items-center gap-2 bg-slate-900 dark:bg-black text-white px-3 py-1.5 rounded-lg border border-slate-800 shadow-sm">
               <Calendar className="w-4 h-4 text-slate-400" />
               <Input
@@ -98,20 +151,19 @@ export default function ProductsPage() {
                 style={{ colorScheme: 'dark' }}
               />
             </div>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest hidden sm:inline-block ml-2">Product Tracker Mode</span>
           </div>
         </div>
       </header>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="border-slate-900/10 dark:border-white/10">
           <CardHeader className="pb-2 border-b-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD Acquired</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {viewMode === 'achievement' ? 'Acquired' : 'Projected'}</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{ftdBusiness.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">vs target ₹{target.toLocaleString('en-IN')}</p>
+            <div className="text-2xl font-mono font-bold dark:text-white">₹{currentFTD.toLocaleString('en-IN')}</div>
+            {viewMode === 'achievement' && <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">vs target ₹{target.toLocaleString('en-IN')}</p>}
           </CardContent>
         </Card>
         <Card className="border-slate-900/10 dark:border-white/10">
@@ -119,7 +171,7 @@ export default function ProductsPage() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD Volume</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{mtdBusiness.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-mono font-bold dark:text-white">₹{currentMTD.toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Month to date</p>
           </CardContent>
         </Card>
@@ -128,7 +180,7 @@ export default function ProductsPage() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD Bookings</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{ytdBusiness.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-mono font-bold dark:text-white">₹{currentYTD.toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Year to date</p>
           </CardContent>
         </Card>
@@ -139,6 +191,17 @@ export default function ProductsPage() {
           <CardContent>
             <div className="text-2xl font-mono font-bold dark:text-white">{achvPct}%</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">FTD vs daily target</p>
+          </CardContent>
+        </Card>
+        <Card className="border-slate-900/10 dark:border-white/10">
+          <CardHeader className="pb-2 border-b-0">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">FTD Gap</span>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-mono font-bold ${ftdGap >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+              {ftdGap > 0 ? '+' : ''}₹{ftdGap.toLocaleString('en-IN')}
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">{ftdGap >= 0 ? 'Over Achieved' : 'Shortfall'}</p>
           </CardContent>
         </Card>
       </div>
@@ -177,64 +240,72 @@ export default function ProductsPage() {
         <Card className="border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Loan Portfolio</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal(loanProducts).toLocaleString('en-IN')}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Loan').toLocaleString('en-IN')}</span>
           </CardHeader>
-          <CardContent className="p-0">
-            {loanProducts.map(p => (
-              <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
-              </div>
-            ))}
-          </CardContent>
+          {viewMode === 'projection' && (
+            <CardContent className="p-0">
+              {loanProducts.map(p => (
+                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
+                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
+                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+            </CardContent>
+          )}
         </Card>
 
         {/* Insurance Plans */}
         <Card className="border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Insurance Plans</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal(insuranceProducts).toLocaleString('en-IN')}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Insurance').toLocaleString('en-IN')}</span>
           </CardHeader>
-          <CardContent className="p-0">
-            {insuranceProducts.map(p => (
-              <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
-              </div>
-            ))}
-          </CardContent>
+          {viewMode === 'projection' && (
+            <CardContent className="p-0">
+              {insuranceProducts.map(p => (
+                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
+                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
+                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+            </CardContent>
+          )}
         </Card>
 
         {/* Forex Services */}
         <Card className="border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Forex Services</span>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-bold">{forexProducts.length}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Forex').toLocaleString('en-IN')}</span>
           </CardHeader>
-          <CardContent className="p-0">
-            {forexProducts.map(p => (
-              <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
-              </div>
-            ))}
-          </CardContent>
+          {viewMode === 'projection' && (
+            <CardContent className="p-0">
+              {forexProducts.map(p => (
+                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
+                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
+                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+            </CardContent>
+          )}
         </Card>
 
         {/* Consultancy Services */}
         <Card className="border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
             <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">Consultancy Services</span>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-bold">{consultancyProducts.length}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Consultancy').toLocaleString('en-IN')}</span>
           </CardHeader>
-          <CardContent className="p-0">
-            {consultancyProducts.map(p => (
-              <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productBusiness[p.name] || 0).toLocaleString('en-IN')}</span>
-              </div>
-            ))}
-          </CardContent>
+          {viewMode === 'projection' && (
+            <CardContent className="p-0">
+              {consultancyProducts.map(p => (
+                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
+                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
+                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+            </CardContent>
+          )}
         </Card>
       </div>
     </>
