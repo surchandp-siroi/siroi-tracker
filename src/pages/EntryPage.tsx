@@ -1,6 +1,6 @@
 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -22,7 +22,7 @@ export default function DataEntryTerminal() {
       return today >= '2026-01-01' ? today : '2026-01-01';
   });
   const [recordType, setRecordType] = useState<'projection' | 'achievement'>('achievement');
-  const [items, setItems] = useState<Array<{date: string, staffName: string, customerName: string, category: string, product: string, channel: string, amount: number, status: string}>>([]);
+  const [items, setItems] = useState<Array<{date: string, staffName: string, customerName: string, category: string, product: string, channel: string, amount: number, status: string, projectionAmt?: number}>>([]);
   const [smartPrompt, setSmartPrompt] = useState<string>('');
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,6 +41,9 @@ export default function DataEntryTerminal() {
   
   // Admin Context
   const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
+  
+  const fetchCache = useRef<Record<string, any>>({});
+  const [fetchError, setFetchError] = useState(false);
 
   // 60-day deletion window from entry creation date
   const daysSinceCreation = entryCreatedAt
@@ -75,38 +78,124 @@ export default function DataEntryTerminal() {
   useEffect(() => {
       if (!activeBranchId) return;
       
+      const cacheKey = `${activeBranchId}_${dateStr}_${entryMode}_${recordType}`;
+      
       const fetchContext = async () => {
           setIsLoadingExisting(true);
           setHasExistingEntry(false);
+          setFetchError(false);
           
           try {
               // Get branch info
               const b = branches.find(br => br.id === activeBranchId);
               if (b) setBranchDetails(b);
               
-              // Check if entry already exists for this exact date AND mode AND recordType
-              const { data: snap } = await supabase
+              if (fetchCache.current[cacheKey]) {
+                  const data = fetchCache.current[cacheKey];
+                  if (data.empty) {
+                      setHasExistingEntry(false);
+                      setItems(data.items || []);
+                      setCurrentEntryId(null);
+                      setEntryCreatedAt(null);
+                  } else {
+                      setHasExistingEntry(true);
+                      setItems(data.items || []);
+                      setCurrentEntryId(data.id);
+                      setEntryCreatedAt(data.createdAt || null);
+                  }
+                  setIsLoadingExisting(false);
+                  return;
+              }
+              
+              const fetchPromise = supabase
                 .from('entries')
                 .select('*')
                 .eq('branchId', activeBranchId)
                 .eq('entryDate', dateStr)
                 .eq('mode', entryMode)
                 .eq('recordType', recordType);
+                
+              const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('TIMEOUT')), 3000)
+              );
+              
+              const { data: snap } = await Promise.race([fetchPromise, timeoutPromise]) as any;
               
               if (snap && snap.length > 0) {
                   setHasExistingEntry(true);
                   const data = snap[0];
+                  fetchCache.current[cacheKey] = data;
                   setItems(data.items || []);
                   setCurrentEntryId(data.id);
                   setEntryCreatedAt(data.createdAt || null);
               } else {
+                  // If it's an achievement and no entry exists, auto-populate from projection
+                  if (recordType === 'achievement') {
+                      const projKey = `${activeBranchId}_${dateStr}_${entryMode}_projection`;
+                      let projData = fetchCache.current[projKey];
+                      
+                      if (!projData || projData.empty) {
+                          const pFetchPromise = supabase
+                            .from('entries')
+                            .select('*')
+                            .eq('branchId', activeBranchId)
+                            .eq('entryDate', dateStr)
+                            .eq('mode', entryMode)
+                            .eq('recordType', 'projection');
+                            
+                          const { data: pSnap } = await Promise.race([pFetchPromise, timeoutPromise]) as any;
+                          
+                          if (pSnap && pSnap.length > 0) {
+                              projData = pSnap[0];
+                              fetchCache.current[projKey] = projData;
+                          } else {
+                              fetchCache.current[projKey] = { empty: true, items: [] };
+                          }
+                      }
+                      
+                      if (projData && !projData.empty && projData.items && projData.items.length > 0) {
+                          const grouped = new Map<string, any>();
+                          projData.items.forEach((pItem: any) => {
+                              const key = `${pItem.staffName}_${pItem.product}`;
+                              if (!grouped.has(key)) {
+                                  grouped.set(key, {
+                                      date: dateStr,
+                                      staffName: pItem.staffName,
+                                      customerName: 'Grouped', // dummy
+                                      category: pItem.category,
+                                      product: pItem.product,
+                                      channel: 'Grouped', // dummy
+                                      amount: 0, // achievement starts at 0
+                                      status: 'Grouped', // dummy
+                                      projectionAmt: Number(pItem.amount) || 0
+                                  });
+                              } else {
+                                  const existing = grouped.get(key);
+                                  existing.projectionAmt += (Number(pItem.amount) || 0);
+                              }
+                          });
+                          
+                          const newItems = Array.from(grouped.values());
+                          fetchCache.current[cacheKey] = { empty: true, items: newItems };
+                          setItems(newItems);
+                      } else {
+                          fetchCache.current[cacheKey] = { empty: true, items: [] };
+                          setItems([]);
+                      }
+                  } else {
+                      fetchCache.current[cacheKey] = { empty: true, items: [] };
+                      setItems([]);
+                  }
+                  
                   setHasExistingEntry(false);
-                  setItems([]);
                   setCurrentEntryId(null);
                   setEntryCreatedAt(null);
               }
           } catch (err: any) {
               console.error("Failed to load context", err);
+              if (err.message === 'TIMEOUT') {
+                  setFetchError(true);
+              }
           } finally {
               setIsLoadingExisting(false);
           }
@@ -543,24 +632,35 @@ export default function DataEntryTerminal() {
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap">Staff Name</div>
                                     </TableHead>
-                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Customer Name</div>
-                                    </TableHead>
+                                    {recordType === 'projection' && (
+                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap">Customer Name</div>
+                                        </TableHead>
+                                    )}
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap"><Layers size={14} className="opacity-70" /> Category</div>
                                     </TableHead>
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap"><Tag size={14} className="opacity-70" /> Product</div>
                                     </TableHead>
+                                    {recordType === 'projection' && (
+                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap"><Network size={14} className="opacity-70" /> Channel</div>
+                                        </TableHead>
+                                    )}
+                                    {recordType === 'achievement' && (
+                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap"><IndianRupee size={14} className="opacity-70" /> Projection Amt</div>
+                                        </TableHead>
+                                    )}
                                     <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap"><Network size={14} className="opacity-70" /> Channel</div>
+                                        <div className="flex items-center gap-1.5 whitespace-nowrap"><IndianRupee size={14} className="opacity-70" /> {recordType === 'achievement' ? 'Achieved Amt' : 'Amount'}</div>
                                     </TableHead>
-                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap"><IndianRupee size={14} className="opacity-70" /> Amount</div>
-                                    </TableHead>
-                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Status</div>
-                                    </TableHead>
+                                    {recordType === 'projection' && (
+                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap">Status</div>
+                                        </TableHead>
+                                    )}
                                     <TableHead className="w-[40px] px-2"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -575,25 +675,27 @@ export default function DataEntryTerminal() {
                                     <TableRow key={index} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <TableCell className="py-2 pl-4 pr-2 align-top">
                                             <Input 
-                                                disabled={hasExistingEntry}
+                                                disabled={hasExistingEntry || recordType === 'achievement'}
                                                 type="text"
                                                 className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
                                                 value={item.staffName || ''}
                                                 onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
                                             />
                                         </TableCell>
-                                        <TableCell className="py-2 px-2 align-top">
-                                            <Input 
-                                                disabled={hasExistingEntry}
-                                                type="text"
-                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
-                                                value={item.customerName || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'customerName', e.target.value)}
-                                            />
-                                        </TableCell>
+                                        {recordType === 'projection' && (
+                                            <TableCell className="py-2 px-2 align-top">
+                                                <Input 
+                                                    disabled={hasExistingEntry}
+                                                    type="text"
+                                                    className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
+                                                    value={item.customerName || ''}
+                                                    onChange={(e) => handleUpdateItem(index, 'customerName', e.target.value)}
+                                                />
+                                            </TableCell>
+                                        )}
                                         <TableCell className="py-2 px-2 align-top">
                                             <select 
-                                                disabled={hasExistingEntry}
+                                                disabled={hasExistingEntry || recordType === 'achievement'}
                                                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
                                                 value={item.category || 'Loan'}
                                                 onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
@@ -606,7 +708,7 @@ export default function DataEntryTerminal() {
                                         </TableCell>
                                         <TableCell className="py-2 px-2 align-top">
                                             <select 
-                                                disabled={hasExistingEntry}
+                                                disabled={hasExistingEntry || recordType === 'achievement'}
                                                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
                                                 value={item.product || ''}
                                                 onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
@@ -617,19 +719,28 @@ export default function DataEntryTerminal() {
                                                 ))}
                                             </select>
                                         </TableCell>
-                                        <TableCell className="py-2 px-2 align-top">
-                                            <select 
-                                                disabled={hasExistingEntry}
-                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
-                                                value={item.channel || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
-                                            >
-                                                <option value="">Select...</option>
-                                                {channels.map((c: any) => (
-                                                    <option key={c.id} value={c.name}>{c.name}</option>
-                                                ))}
-                                            </select>
-                                        </TableCell>
+                                        {recordType === 'projection' && (
+                                            <TableCell className="py-2 px-2 align-top">
+                                                <select 
+                                                    disabled={hasExistingEntry}
+                                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
+                                                    value={item.channel || ''}
+                                                    onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
+                                                >
+                                                    <option value="">Select...</option>
+                                                    {channels.map((c: any) => (
+                                                        <option key={c.id} value={c.name}>{c.name}</option>
+                                                    ))}
+                                                </select>
+                                            </TableCell>
+                                        )}
+                                        {recordType === 'achievement' && (
+                                            <TableCell className="py-2 px-2 align-top">
+                                                <div className="h-[34px] px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md text-slate-600 dark:text-slate-300 min-w-[100px] flex items-center">
+                                                    {item.projectionAmt?.toLocaleString('en-IN') || '0'}
+                                                </div>
+                                            </TableCell>
+                                        )}
                                         <TableCell className="py-2 px-2 align-top">
                                             <Input 
                                                 disabled={hasExistingEntry}
@@ -639,15 +750,17 @@ export default function DataEntryTerminal() {
                                                 onChange={(e) => handleUpdateItem(index, 'amount', parseInt(e.target.value) || 0)}
                                             />
                                         </TableCell>
-                                        <TableCell className="py-2 px-2 align-top">
-                                            <Input 
-                                                disabled={hasExistingEntry}
-                                                type="text"
-                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
-                                                value={item.status || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'status', e.target.value)}
-                                            />
-                                        </TableCell>
+                                        {recordType === 'projection' && (
+                                            <TableCell className="py-2 px-2 align-top">
+                                                <Input 
+                                                    disabled={hasExistingEntry}
+                                                    type="text"
+                                                    className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
+                                                    value={item.status || ''}
+                                                    onChange={(e) => handleUpdateItem(index, 'status', e.target.value)}
+                                                />
+                                            </TableCell>
+                                        )}
                                         <TableCell className="py-2 pr-4 pl-2 align-top text-right">
                                             {!hasExistingEntry && (
                                                 <button onClick={() => handleRemoveItem(index)} className="text-slate-400 hover:text-red-500 pt-2 px-1">
