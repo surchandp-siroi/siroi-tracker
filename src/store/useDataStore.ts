@@ -7,13 +7,13 @@ export interface Product {
   id: string;
   name: string;
   category: ProductCategory;
-  revenue: number; // This will now be computed
+  business: number; // This will now be computed
 }
 
 export interface Channel {
   id: string;
   name: string;
-  revenue: number;
+  business: number;
 }
 
 export interface Branch {
@@ -55,7 +55,7 @@ const staticChannels: Channel[] = [
   'ICICI BANK', 'IDFC FIRST BANK', 'INCRED', 'INDUSIND BANK', 'L&T',
   'PIRAMAL CAPITAL', 'POONAWALA', 'TATA CAPITAL', 'YES BANK', 'INDIFI',
   'Credit SAISON', 'SLICE'
-].map((name, i) => ({ id: `ch-${i}`, name, revenue: 0 }));
+].map((name, i) => ({ id: `ch-${i}`, name, business: 0 }));
 
 const staticBranches: Branch[] = [
   { id: 'b1', name: 'Guwahati', managerName: 'Aroop Sharma', managerEmail: 'aroop.sharma@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 1500000 },
@@ -64,7 +64,7 @@ const staticBranches: Branch[] = [
   { id: 'b4', name: 'Nagaland & Mizoram', managerName: 'Ramesh Singh', managerEmail: 'ramesh@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 150000 },
 ];
 
-const staticProducts: Omit<Product, 'revenue'>[] = [
+const staticProducts: Omit<Product, 'business'>[] = [
   { id: 'p1', name: 'Personal Loan', category: 'Loan' },
   { id: 'p2', name: 'Business Loan', category: 'Loan' },
   { id: 'p3', name: 'Mortgage', category: 'Loan' },
@@ -88,7 +88,7 @@ interface DataState {
   unsubscribeSync: () => void;
   addChannel: (name: string) => void;
   deleteChannel: (id: string) => void;
-  addProduct: (product: Omit<Product, 'id' | 'revenue'>) => void;
+  addProduct: (product: Omit<Product, 'id' | 'business'>) => void;
   deleteProduct: (id: string) => void;
   addBranch: (branch: Omit<Branch, 'id' | 'dailyAchievement'>) => void;
   deleteBranch: (id: string) => void;
@@ -97,7 +97,7 @@ interface DataState {
 let globalSubscription: any = null;
 
 export const useDataStore = create<DataState>((set) => ({
-  products: staticProducts.map(p => ({ ...p, revenue: 0 })),
+  products: staticProducts.map(p => ({ ...p, business: 0 })),
   channels: staticChannels,
   branches: staticBranches,
   entries: [],
@@ -134,10 +134,10 @@ export const useDataStore = create<DataState>((set) => ({
       if (error) throw error;
       
       const computeStats = (entries: BranchEntry[]) => {
-        const productRevenues: Record<string, number> = {};
+        const productBusiness: Record<string, number> = {};
         const branchAchievements: Record<string, number> = {};
         const branchProjections: Record<string, number> = {};
-        const channelRevenues: Record<string, number> = {};
+        const channelBusiness: Record<string, number> = {};
         
         // Use today's date for daily projections check
         const todayStr = new Date().toISOString().split('T')[0];
@@ -150,8 +150,8 @@ export const useDataStore = create<DataState>((set) => ({
                 branchAchievements[entry.branchId] = (branchAchievements[entry.branchId] || 0) + entry.totalAmount;
                 
                 entry.items.forEach(item => {
-                    productRevenues[item.product] = (productRevenues[item.product] || 0) + item.amount;
-                    channelRevenues[item.channel] = (channelRevenues[item.channel] || 0) + item.amount;
+                    productBusiness[item.product] = (productBusiness[item.product] || 0) + item.amount;
+                    channelBusiness[item.channel] = (channelBusiness[item.channel] || 0) + item.amount;
                 });
             } else if (isProjection && entry.entryDate === todayStr) {
                 // If it's a projection for today, sum it up
@@ -166,8 +166,8 @@ export const useDataStore = create<DataState>((set) => ({
                 dailyAchievement: branchAchievements[b.id] || 0,
                 dailyProjection: branchProjections[b.id] !== undefined ? branchProjections[b.id] : b.dailyProjection
             })),
-            products: state.products.map(p => ({ ...p, revenue: productRevenues[p.name] || 0 })),
-            channels: state.channels.map(c => ({ ...c, revenue: channelRevenues[c.name] || 0 })),
+            products: state.products.map(p => ({ ...p, business: productBusiness[p.name] || 0 })),
+            channels: state.channels.map(c => ({ ...c, business: channelBusiness[c.name] || 0 })),
             isLoading: false
         }));
       };

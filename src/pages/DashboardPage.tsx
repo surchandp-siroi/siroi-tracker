@@ -15,21 +15,14 @@ const BRANCH_COLORS: Record<string, string> = {
   'Nagaland & Mizoram': '#fbbf24'
 };
 
-const PRODUCT_COLORS: Record<string, { proj: string, ach: string }> = {
-    'Personal Loan': { proj: 'rgba(252, 165, 165, 0.3)', ach: '#fca5a5' }, // red-300
-    'Business Loan': { proj: 'rgba(252, 211, 77, 0.3)', ach: '#fcd34d' }, // amber-300
-    'Mortgage': { proj: 'rgba(190, 242, 100, 0.3)', ach: '#bef264' }, // lime-300
-    'Home Loan': { proj: 'rgba(134, 239, 172, 0.3)', ach: '#86efac' }, // green-300
-    'General Insurance': { proj: 'rgba(110, 231, 183, 0.3)', ach: '#6ee7b7' }, // emerald-300
-    'Life Insurance': { proj: 'rgba(94, 234, 212, 0.3)', ach: '#5eead4' }, // teal-300
-    'Currency Exchange': { proj: 'rgba(103, 232, 249, 0.3)', ach: '#67e8f9' }, // cyan-300
-    'Forex card': { proj: 'rgba(125, 211, 252, 0.3)', ach: '#7dd3fc' }, // sky-300
-    'Outward Remittance': { proj: 'rgba(147, 197, 253, 0.3)', ach: '#93c5fd' }, // blue-300
-    'GST filing': { proj: 'rgba(196, 181, 253, 0.3)', ach: '#c4b5fd' }, // violet-300
-    'ITR filing': { proj: 'rgba(249, 168, 212, 0.3)', ach: '#f9a8d4' }, // pink-300
+const CATEGORY_COLORS: Record<string, { proj: string, ach: string }> = {
+    'Loan': { proj: 'rgba(252, 165, 165, 0.3)', ach: '#fca5a5' }, // red-300
+    'Insurance': { proj: 'rgba(110, 231, 183, 0.3)', ach: '#6ee7b7' }, // emerald-300
+    'Forex': { proj: 'rgba(125, 211, 252, 0.3)', ach: '#7dd3fc' }, // sky-300
+    'Consultancy': { proj: 'rgba(196, 181, 253, 0.3)', ach: '#c4b5fd' }, // violet-300
 };
 
-const PRODUCTS = Object.keys(PRODUCT_COLORS);
+const CATEGORIES = Object.keys(CATEGORY_COLORS);
 
 const CustomizedAxisTick = (props: any) => {
   const { x, y, payload } = props;
@@ -52,18 +45,18 @@ export default function DashboardOverview() {
 
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
-  const [selectedRevenueBranch, setSelectedRevenueBranch] = useState<string>('');
+  const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('');
 
   useEffect(() => {
-    if (branches.length > 0 && !selectedRevenueBranch) {
+    if (branches.length > 0 && !selectedBusinessBranch) {
         const guwahati = branches.find(b => b.name === 'Guwahati');
         if (guwahati) {
-            setSelectedRevenueBranch(guwahati.id);
+            setSelectedBusinessBranch(guwahati.id);
         } else {
-            setSelectedRevenueBranch('all');
+            setSelectedBusinessBranch('all');
         }
     }
-  }, [branches, selectedRevenueBranch]);
+  }, [branches, selectedBusinessBranch]);
 
   // Secure routing
   useEffect(() => {
@@ -104,19 +97,58 @@ export default function DashboardOverview() {
      });
   }, [entries, selectedDate, viewMode, selectedMonth, selectedYear, fyStart]);
 
-  const { filteredBranches, totalRevenue, revenueByCategory } = useMemo(() => {
+  const { ftdBusiness, mtdBusiness, ytdBusiness, projectedTotalBusinessToday } = useMemo(() => {
+     let ftd = 0, mtd = 0, ytd = 0, projToday = 0;
+     const sd = new Date(selectedDate);
+     const sdYear = sd.getFullYear();
+     const sdMonth = sd.getMonth();
+     
+     const sdIsNewFY = sdMonth >= 3;
+     const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
+     
+     entries.forEach(entry => {
+         const isAchievement = !entry.recordType || entry.recordType === 'achievement';
+         const isProjection = entry.recordType === 'projection';
+
+         if (isProjection && entry.entryDate === selectedDate) {
+             projToday += entry.totalAmount;
+         }
+
+         if (!isAchievement) return;
+
+         const ed = new Date(entry.entryDate);
+         const edYear = ed.getFullYear();
+         const edMonth = ed.getMonth();
+         const edIsNewFY = edMonth >= 3;
+         const edFyStart = edIsNewFY ? edYear : edYear - 1;
+
+         if (edFyStart === sdFyStart && ed <= sd) {
+             ytd += entry.totalAmount;
+             if (edMonth === sdMonth && edYear === sdYear) {
+                 mtd += entry.totalAmount;
+                 if (entry.entryDate === selectedDate) {
+                     ftd += entry.totalAmount;
+                 }
+             }
+         }
+     });
+     return { ftdBusiness: ftd, mtdBusiness: mtd, ytdBusiness: ytd, projectedTotalBusinessToday: projToday };
+  }, [entries, selectedDate]);
+
+  const { filteredBranches, totalBusiness, businessByCategory } = useMemo(() => {
      const branchMap = new Map();
      branches.forEach(b => {
-         const initialProducts = PRODUCTS.reduce((acc, p) => {
-             acc[`proj_${p}`] = 0;
-             acc[`ach_${p}`] = 0;
+         const initialCategories = CATEGORIES.reduce((acc, c) => {
+             acc[`proj_${c}`] = 0;
+             acc[`ach_${c}`] = 0;
              return acc;
          }, {} as any);
 
          branchMap.set(b.id, { 
              ...b, 
              dailyAchievement: 0,
-             ...initialProducts
+             dailyProjection: 0,
+             ...initialCategories
          });
      });
 
@@ -134,8 +166,11 @@ export default function DashboardOverview() {
               b.dailyAchievement += entry.totalAmount;
               total += entry.totalAmount;
           }
+          if (isProjection) {
+              b.dailyProjection += entry.totalAmount;
+          }
           
-          if (selectedRevenueBranch === 'all' || selectedRevenueBranch === b.id) {
+          if (selectedBusinessBranch === 'all' || selectedBusinessBranch === b.id) {
               if (isAchievement) {
                   entry.items.forEach(item => {
                       catMap.set(item.category, (catMap.get(item.category) || 0) + item.amount);
@@ -145,9 +180,9 @@ export default function DashboardOverview() {
 
           entry.items.forEach(item => {
               if (isProjection) {
-                  b[`proj_${item.product}`] = (b[`proj_${item.product}`] || 0) + item.amount;
+                  b[`proj_${item.category}`] = (b[`proj_${item.category}`] || 0) + item.amount;
               } else if (isAchievement) {
-                  b[`ach_${item.product}`] = (b[`ach_${item.product}`] || 0) + item.amount;
+                  b[`ach_${item.category}`] = (b[`ach_${item.category}`] || 0) + item.amount;
               }
           });
      });
@@ -155,19 +190,12 @@ export default function DashboardOverview() {
      const fb = Array.from(branchMap.values());
      const rbC = Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
 
-     return { filteredBranches: fb, totalRevenue: total, revenueByCategory: rbC };
-  }, [filteredEntries, branches, selectedRevenueBranch]);
+     return { filteredBranches: fb, totalBusiness: total, businessByCategory: rbC };
+  }, [filteredEntries, branches, selectedBusinessBranch]);
 
-  const target = filteredBranches.reduce((acc, b) => acc + b.monthlyTarget, 0);
-
-  // Time metrics relative to selected date (scaled for demonstration)
-  const ytdRevenue = totalRevenue;
-  const mtdRevenue = Math.round(totalRevenue * 0.12);
-  const ftdRevenue = Math.round(totalRevenue * 0.008);
-
-  const activeProducts = useMemo(() => {
-     return PRODUCTS.filter(p => 
-         filteredBranches.some((b: any) => (b[`proj_${p}`] || 0) > 0 || (b[`ach_${p}`] || 0) > 0)
+  const activeCategories = useMemo(() => {
+     return CATEGORIES.filter(c => 
+         filteredBranches.some((b: any) => (b[`proj_${c}`] || 0) > 0 || (b[`ach_${c}`] || 0) > 0)
      );
   }, [filteredBranches]);
 
@@ -176,17 +204,16 @@ export default function DashboardOverview() {
      filteredBranches.forEach((b: any) => {
          let projSum = 0;
          let achSum = 0;
-         PRODUCTS.forEach(p => {
-             projSum += (b[`proj_${p}`] || 0);
-             achSum += (b[`ach_${p}`] || 0);
+         CATEGORIES.forEach(c => {
+             projSum += (b[`proj_${c}`] || 0);
+             achSum += (b[`ach_${c}`] || 0);
          });
          max = Math.max(max, projSum, achSum);
      });
-     return max > 0 ? max : 1000; // Provide a default if 0
+     return max > 0 ? max : 1000;
   }, [filteredBranches]);
 
   const renderCustomLegend = (props: any) => {
-    // If no active products, maybe don't show the product legend, but still show Projection/Achievement
     return (
       <div className="flex flex-col gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
         <div className="flex items-center gap-6 justify-center border-b border-slate-800/50 pb-2">
@@ -199,12 +226,12 @@ export default function DashboardOverview() {
               <span>Achievement</span>
            </div>
         </div>
-        {activeProducts.length > 0 && (
+        {activeCategories.length > 0 && (
           <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center px-2">
-             {activeProducts.map(p => (
-                 <div key={p} className="flex items-center gap-1.5">
-                     <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[p].ach }}></div>
-                     <span className="text-[9px]">{p}</span>
+             {activeCategories.map(c => (
+                 <div key={c} className="flex items-center gap-1.5">
+                     <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: CATEGORY_COLORS[c].ach }}></div>
+                     <span className="text-[9px]">{c}</span>
                  </div>
              ))}
           </div>
@@ -256,13 +283,15 @@ export default function DashboardOverview() {
           </div>
         </div>
         <div className="flex gap-6 sm:gap-8">
-            <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Monthly</span>
-                <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{target.toLocaleString()}</span>
+            <div className="flex flex-col items-end">
+                <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Total Business Today</span>
+                <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString()}</span>
+                <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
             </div>
-            <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Revenue</span>
-                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{totalRevenue.toLocaleString()}</span>
+            <div className="flex flex-col items-end">
+                <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
+                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{ftdBusiness.toLocaleString()}</span>
+                <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
             </div>
         </div>
       </header>
@@ -271,28 +300,28 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD Revenue</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD Business</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ftdRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ftdBusiness.toLocaleString()}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">For the day</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD Revenue</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD Business</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{mtdRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{mtdBusiness.toLocaleString()}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Month to date</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD Revenue</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD Business</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ytdRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ytdBusiness.toLocaleString()}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Year to date</p>
           </CardContent>
         </Card>
@@ -338,13 +367,13 @@ export default function DashboardOverview() {
                 <Legend content={renderCustomLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
 
                 {/* Projection Stacks */}
-                {activeProducts.map(p => (
-                   <Bar key={`proj_${p}`} dataKey={`proj_${p}`} stackId="proj" name={`Proj. ${p}`} fill={PRODUCT_COLORS[p].proj} stroke={PRODUCT_COLORS[p].ach} strokeWidth={1} strokeDasharray="2 2" maxBarSize={50} />
+                {activeCategories.map(c => (
+                   <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={CATEGORY_COLORS[c].proj} stroke={CATEGORY_COLORS[c].ach} strokeWidth={1} strokeDasharray="2 2" maxBarSize={50} />
                 ))}
 
                 {/* Achievement Stacks */}
-                {activeProducts.map(p => (
-                   <Bar key={`ach_${p}`} dataKey={`ach_${p}`} stackId="ach" name={`Ach. ${p}`} fill={PRODUCT_COLORS[p].ach} maxBarSize={50} />
+                {activeCategories.map(c => (
+                   <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={CATEGORY_COLORS[c].ach} maxBarSize={50} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -353,13 +382,13 @@ export default function DashboardOverview() {
 
         {/* Right Column: Mix */}
         <div className="lg:col-span-3 flex flex-col gap-6">
-            {/* Revenue Mix */}
+            {/* Business Mix */}
             <Card className="flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
-                <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Revenue Mix</span>
+                <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
                 <select 
-                    value={selectedRevenueBranch}
-                    onChange={(e) => setSelectedRevenueBranch(e.target.value)}
+                    value={selectedBusinessBranch}
+                    onChange={(e) => setSelectedBusinessBranch(e.target.value)}
                     className="text-[10px] bg-transparent dark:bg-[#0f172a] border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold cursor-pointer"
                     style={{ colorScheme: 'dark' }}
                 >
@@ -373,7 +402,7 @@ export default function DashboardOverview() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={revenueByCategory}
+                      data={businessByCategory}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -382,7 +411,7 @@ export default function DashboardOverview() {
                       dataKey="value"
                       stroke="none"
                     >
-                      {revenueByCategory.map((entry, index) => (
+                      {businessByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -394,7 +423,7 @@ export default function DashboardOverview() {
                 </ResponsiveContainer>
               </CardContent>
               <div className="px-6 pb-6 flex flex-wrap gap-4 justify-center mt-auto shrink-0 pt-4">
-                  {revenueByCategory.map((entry, index) => (
+                  {businessByCategory.map((entry, index) => (
                       <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
                           <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
                           {entry.name}

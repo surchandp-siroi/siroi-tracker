@@ -133,7 +133,7 @@ export default function BranchesPage() {
               </div>
 
               <CardContent className="flex-1 flex flex-col gap-4 px-5 pb-5">
-                {/* Revenue Stats */}
+                {/* Business Stats */}
                 <div className="flex items-baseline justify-between">
                   <span className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
                     ₹{achievement.toLocaleString('en-IN')}

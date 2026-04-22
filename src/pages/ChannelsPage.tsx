@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 export default function ChannelsPage() {
   const { channels, entries } = useDataStore();
 
-  // Compute channel revenues from all entries
-  const channelRevenues = useMemo(() => {
+  // Compute channel business from all entries
+  const channelBusiness = useMemo(() => {
     const map: Record<string, number> = {};
     entries.forEach(entry => {
       entry.items.forEach(item => {
@@ -20,7 +20,7 @@ export default function ChannelsPage() {
       {/* Header */}
       <header className="glass px-6 py-5">
         <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Loan Channel Partners</h1>
-        <p className="text-[10px] uppercase tracking-widest text-slate-500 mt-1 font-semibold">Revenue Tracking &amp; Closures</p>
+        <p className="text-[10px] uppercase tracking-widest text-slate-500 mt-1 font-semibold">Business Tracking &amp; Closures</p>
       </header>
 
       {/* Channel Table */}
@@ -28,12 +28,12 @@ export default function ChannelsPage() {
         {/* Table Header */}
         <div className="grid grid-cols-[1fr_auto] px-5 py-3 bg-slate-100/80 dark:bg-white/5 border-b border-slate-200 dark:border-white/5">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Partner Name</span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-right">Total Revenue</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 text-right">Total Business</span>
         </div>
 
         {/* Table Rows */}
         {channels.map((channel, idx) => {
-          const revenue = channelRevenues[channel.name] || 0;
+          const business = channelBusiness[channel.name] || 0;
           return (
             <div
               key={channel.id}
@@ -43,9 +43,9 @@ export default function ChannelsPage() {
             >
               <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{channel.name}</span>
               <span className={`text-sm font-mono font-semibold text-right ${
-                revenue > 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-600'
+                business > 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-600'
               }`}>
-                ₹{revenue.toLocaleString('en-IN')}
+                ₹{business.toLocaleString('en-IN')}
               </span>
             </div>
           );
