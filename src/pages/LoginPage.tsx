@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       await login(email, password, location);
       const updatedUser = useAuthStore.getState().user;
-      if (updatedUser?.role === 'statehead') {
+      if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com') {
           navigate('/entry');
       } else {
           navigate('/dashboard');
