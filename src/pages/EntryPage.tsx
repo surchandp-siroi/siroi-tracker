@@ -54,7 +54,7 @@ export default function DataEntryTerminal() {
 
   const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
   const isExecutive = user?.email === 'executive@siroiforex.com';
-  const isExecutiveOverride = hasExistingEntry && isExecutive && recordType === 'projection';
+  const isExecutiveOverride = hasExistingEntry && isExecutive;
   const canModify = !hasExistingEntry || isExecutiveOverride;
   const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
@@ -820,7 +820,7 @@ export default function DataEntryTerminal() {
                         {success && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-3 py-2 rounded">{success}</span>}
                     </div>
                     <div className="flex gap-3 w-full sm:w-auto shrink-0 justify-end">
-                        {hasExistingEntry && allowDeletion && (
+                        {hasExistingEntry && (recordType === 'achievement' ? isExecutive : (allowDeletion || isExecutive)) && (
                              <Button 
                                 variant="danger" 
                                 onClick={() => { 
@@ -834,12 +834,12 @@ export default function DataEntryTerminal() {
                                  Delete Record
                              </Button>
                         )}
-                        {hasExistingEntry && !allowDeletion && daysSinceCreation >= 60 && (
+                        {hasExistingEntry && !(recordType === 'achievement' ? isExecutive : (allowDeletion || isExecutive)) && daysSinceCreation >= 60 && (
                              <span className="text-[10px] text-slate-500 uppercase tracking-widest bg-slate-500/10 px-3 py-2 rounded">
                                  Deletion window expired (60 days)
                              </span>
                         )}
-                        {canModify && (
+                        {canModify && (recordType === 'achievement' ? isExecutive : true) && (
                              <Button variant="secondary" onClick={() => {
                                  if (items.length === 0) {
                                      setShowContextModal(true);
