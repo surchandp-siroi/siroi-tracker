@@ -681,7 +681,7 @@ export default function DataEntryTerminal() {
                                 <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">2. Category</TableHead>
                                 <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">3. Product</TableHead>
                                 <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">4. File Login</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">5. Bank Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">5. Channel Partner</TableHead>
                                 <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">6. Branch</TableHead>
                                 <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">7. Customer Name</TableHead>
                                 <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">8. DOB</TableHead>
@@ -763,7 +763,7 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 5. Bank Name */}
+                                    {/* 5. Channel Partner */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
@@ -771,10 +771,18 @@ export default function DataEntryTerminal() {
                                             value={item.channel || ''}
                                             onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
                                         >
-                                            <option value="">Select Bank...</option>
-                                            {channels.map((c: any) => (
-                                                <option key={c.id} value={c.name}>{c.name}</option>
-                                            ))}
+                                            <option value="">Select Channel...</option>
+                                            {item.category === 'Insurance' ? (
+                                                <>
+                                                    <option value="Bajaj Allianz">Bajaj Allianz</option>
+                                                    <option value="Aditya Birla">Aditya Birla</option>
+                                                    <option value="LIC">LIC</option>
+                                                </>
+                                            ) : (
+                                                channels.map((c: any) => (
+                                                    <option key={c.id} value={c.name}>{c.name}</option>
+                                                ))
+                                            )}
                                         </select>
                                     </TableCell>
 
