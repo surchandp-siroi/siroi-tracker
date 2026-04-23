@@ -32,9 +32,28 @@ export interface EntryItem {
     customerName: string;
     category: ProductCategory;
     product: string;
-    channel: string;
-    amount: number;
+    channel: string; // Used as Bank Name
+    amount: number; // Used as Login Amount
     status: string;
+    projectionAmt?: number;
+    isManual?: boolean;
+    
+    // Expanded schema fields
+    fileLogin?: 'WBO' | 'EXPRESS LINK' | 'ILENS' | '';
+    branchLocation?: string;
+    customerDOB?: string;
+    phoneNumber?: string;
+    emailId?: string;
+    customerAddress?: string;
+    firmName?: string;
+    fileStatus?: 'Login' | 'Processing' | 'Sanctioned' | 'Disbursed' | 'Rejected' | '';
+    sanctionedAmount?: number;
+    disbursedAmount?: number;
+    disbursedDate?: string;
+    emiDate?: string;
+    repaymentBank?: string;
+    managerName?: string;
+    consultantName?: string;
 }
 
 export interface BranchEntry {

@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
 import { Sparkles, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
-import { useDataStore } from '@/store/useDataStore';
+import { useDataStore, EntryItem } from '@/store/useDataStore';
 import { NumericFormat } from 'react-number-format';
 
 export default function DataEntryTerminal() {
@@ -23,7 +21,7 @@ export default function DataEntryTerminal() {
       return today >= '2026-01-01' ? today : '2026-01-01';
   });
   const [recordType, setRecordType] = useState<'projection' | 'achievement'>('achievement');
-  const [items, setItems] = useState<Array<{date: string, staffName: string, customerName: string, category: string, product: string, channel: string, amount: number, status: string, projectionAmt?: number, isManual?: boolean}>>([]);
+  const [items, setItems] = useState<EntryItem[]>([]);
   const [smartPrompt, setSmartPrompt] = useState<string>('');
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -181,7 +179,7 @@ export default function DataEntryTerminal() {
                           
                           const newItems = Array.from(grouped.values());
                           fetchCache.current[cacheKey] = { empty: true, items: newItems };
-                          setItems(newItems);
+                          setItems(newItems as any);
                       } else {
                           fetchCache.current[cacheKey] = { empty: true, items: [] };
                           setItems([]);
@@ -257,7 +255,33 @@ export default function DataEntryTerminal() {
   };
 
   const handleAddItem = () => {
-      setItems([...items, { date: dateStr, staffName: '', customerName: '', category: 'Loan', product: '', channel: '', amount: 0, status: '', isManual: true, projectionAmt: 0 }]);
+      setItems([...items, { 
+          date: dateStr, 
+          staffName: '', 
+          customerName: '', 
+          category: 'Loan', 
+          product: '', 
+          channel: '', 
+          amount: 0, 
+          status: '', 
+          isManual: true, 
+          projectionAmt: 0,
+          fileLogin: '',
+          branchLocation: branchDetails?.name || '',
+          customerDOB: '',
+          phoneNumber: '',
+          emailId: '',
+          customerAddress: '',
+          firmName: '',
+          fileStatus: '',
+          sanctionedAmount: 0,
+          disbursedAmount: 0,
+          disbursedDate: '',
+          emiDate: '',
+          repaymentBank: '',
+          managerName: '',
+          consultantName: ''
+      }]);
   };
   
   const handleUpdateItem = (index: number, key: string, val: string | number) => {
@@ -267,6 +291,9 @@ export default function DataEntryTerminal() {
       // Auto-update product if category changes
       if (key === 'category') {
           arr[index].product = ''; // reset
+          if (val !== 'Loan') {
+              arr[index].fileLogin = ''; // reset if not Loan
+          }
       }
       
       setItems(arr);
@@ -321,15 +348,15 @@ export default function DataEntryTerminal() {
                   return;
               }
               if (!item.channel) {
-                  setError(`Row ${i + 1} is missing Channel. Please select one before logging.`);
+                  setError(`Row ${i + 1} is missing Bank Name / Channel. Please select one before logging.`);
                   return;
               }
               if (item.amount <= 0) {
-                  setError(`Row ${i + 1} requires an amount greater than 0.`);
+                  setError(`Row ${i + 1} requires a Login amount greater than 0.`);
                   return;
               }
-              if (!item.status || !item.status.trim()) {
-                  setError(`Row ${i + 1} is missing Status. Please fill it before logging.`);
+              if (!item.fileStatus || !item.fileStatus.trim()) {
+                  setError(`Row ${i + 1} is missing File Status. Please fill it before logging.`);
                   return;
               }
           } else {
@@ -467,10 +494,21 @@ export default function DataEntryTerminal() {
   }
 
   const allowedProducts = (category: string) => products.filter((p: any) => p.category === category);
+  
+  const getFileStatusColor = (status: string) => {
+      switch (status) {
+          case 'Login': return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+          case 'Processing': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+          case 'Sanctioned': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+          case 'Disbursed': return 'bg-green-500/20 text-green-400 border-green-500/30';
+          case 'Rejected': return 'bg-red-500/20 text-red-400 border-red-500/30';
+          default: return 'bg-slate-900/50 text-slate-300 border-slate-700';
+      }
+  };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 flex flex-col max-w-7xl mx-auto">
-        <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+    <div className="min-h-screen p-4 md:p-8 flex flex-col w-full">
+        <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 rounded-xl">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
                     {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
@@ -486,389 +524,554 @@ export default function DataEntryTerminal() {
             </div>
         </header>
         
-        <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-1 glass border-slate-900/10 dark:border-white/10 self-start">
-               <CardHeader className="border-b border-slate-900/10 dark:border-white/10 p-4 bg-slate-900/5 dark:bg-white/5">
-                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300">Tracking Controls</h3>
-               </CardHeader>
-               <CardContent className="p-4 space-y-6">
-                   <div className="space-y-4">
-                       {(user.role === 'admin' || isBackdoor) && (
-                           <div className="mb-4">
-                               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between mb-2">
-                                   {isBackdoor ? 'Branch Override (Testing Mode)' : 'Admin Branch Override'}
-                               </label>
-                               <select 
-                                   className="w-full bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200"
-                                   value={adminSelectedBranch}
-                                   onChange={(e) => {
-                                       if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
-                                       setAdminSelectedBranch(e.target.value);
-                                   }}
-                               >
-                                   {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
-                                       <option key={b.id} value={b.id}>{b.name}</option>
-                                   ))}
-                               </select>
-                           </div>
-                       )}
+        {/* Sticky Top Control Bar */}
+        <div className="sticky top-0 z-20 glass bg-slate-900/80 dark:bg-black/80 backdrop-blur-md border border-slate-900/10 dark:border-white/10 p-4 mb-6 rounded-xl shadow-lg flex flex-wrap items-end gap-4">
+           {(user.role === 'admin' || isBackdoor) && (
+               <div className="flex-1 min-w-[200px]">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                       {isBackdoor ? 'Branch Override (Test)' : 'Admin Branch Override'}
+                   </label>
+                   <select 
+                       className="w-full bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-900 dark:text-white"
+                       value={adminSelectedBranch}
+                       onChange={(e) => {
+                           if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
+                           setAdminSelectedBranch(e.target.value);
+                       }}
+                   >
+                       {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
+                           <option key={b.id} value={b.id}>{b.name}</option>
+                       ))}
+                   </select>
+               </div>
+           )}
 
-                       <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between mb-2">
-                               Tracking Mode
-                           </label>
-                           <div className="flex bg-slate-900/5 dark:bg-black/40 p-1 rounded-md">
-                               <button 
-                                   className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                                   onClick={() => {
-                                       if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                       setEntryMode('monthly');
-                                       setDateStr('2026-04-01');
-                                   }}
-                               >
-                                   Monthly
-                               </button>
-                               <button 
-                                   className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                                   onClick={() => {
-                                       if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                       setEntryMode('daily');
-                                       const today = new Date().toISOString().split('T')[0];
-                                       setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
-                                   }}
-                               >
-                                   Daily
-                               </button>
-                           </div>
-                       </div>
-                       
-                       <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex justify-between mb-2">
-                               Date Context
-                           </label>
-                           {entryMode === 'monthly' ? (
-                               <Input 
-                                   type="month" 
-                                   max="2026-04"
-                                   value={dateStr.substring(0, 7)}
-                                   onChange={(e) => {
-                                       if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                       setDateStr(e.target.value + '-01');
-                                   }}
-                                   className="bg-slate-900/5 dark:bg-black/20 font-medium cursor-pointer"
-                                   style={{ colorScheme: 'dark' }}
-                               />
-                           ) : (
-                               <Input 
-                                   type="date" 
-                                   min="2026-01-01"
-                                   value={dateStr}
-                                   onChange={(e) => {
-                                       if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                       setDateStr(e.target.value);
-                                   }}
-                                   className="bg-slate-900/5 dark:bg-black/20 font-medium cursor-pointer"
-                                   style={{ colorScheme: 'dark' }}
-                               />
-                           )}
-                           <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-                               Selected mode: <strong className="text-indigo-600 dark:text-indigo-400">{modeLabel}</strong><br/>
-                           </p>
-                       </div>
-                       
-                       <div className="pt-2">
-                           <div className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
-                               <div className="flex justify-between items-center mb-2 pb-2 border-b border-indigo-100 dark:border-indigo-500/20">
-                                   <span className="text-[10px] font-bold text-indigo-800/70 dark:text-indigo-300/70 uppercase tracking-widest">Daily Projection</span>
-                                   <span className="text-sm font-bold text-indigo-900 dark:text-indigo-100">₹ {(branchDetails?.dailyProjection || 0).toLocaleString('en-IN')}</span>
-                               </div>
-                               <div className="flex justify-between items-center">
-                                   <span className="text-[10px] font-bold text-indigo-800/70 dark:text-indigo-300/70 uppercase tracking-widest">Monthly Target</span>
-                                   <span className="text-sm font-bold text-indigo-900 dark:text-indigo-100">₹ {(branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}</span>
-                               </div>
-                           </div>
-                       </div>
-                   </div>
-                   
-                   {/* Gemini Component */}
-                   <div className="pt-4 border-t border-slate-900/10 dark:border-white/10 space-y-3">
-                       <div className="flex items-center gap-2">
-                           <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400" />
-                           <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider">Smart Assist</label>
-                       </div>
-                       <textarea 
-                          disabled={!canModify}
-                          value={smartPrompt}
-                          onChange={(e) => setSmartPrompt(e.target.value)}
-                          placeholder="E.g., Did 2 lakhs in Axis Home loans and 50k in GST filing..."
-                          className="w-full h-24 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-500/20 rounded-md p-3 text-sm focus:outline-none focus:border-indigo-500/50 resize-none disabled:opacity-50 text-slate-900 dark:text-white"
-                       />
-                       <Button disabled={!canModify || isParsing || !smartPrompt.trim()} onClick={handleParse} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm">
-                           {isParsing ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : 'Extract Items from Text'}
-                       </Button>
-                   </div>
-               </CardContent>
-            </Card>
-            
-            <Card className="lg:col-span-2 glass border-slate-900/10 dark:border-white/10 overflow-hidden flex flex-col h-[600px]">
-                <CardHeader className="border-b border-slate-900/10 dark:border-white/10 p-4 bg-slate-900/5 dark:bg-white/5 flex flex-row items-center justify-between">
-                   <div className="flex items-center gap-4">
-                       <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 shrink-0">Line Items</h3>
-                       <div className="flex bg-slate-900/5 dark:bg-black/40 p-1 rounded-md">
-                           <button 
-                               className={`text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'projection' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                               onClick={() => {
-                                   if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
-                                   setRecordType('projection');
-                               }}
-                           >Daily Projection</button>
-                           <button 
-                               className={`text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'achievement' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                               onClick={() => {
-                                   if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
-                                   setRecordType('achievement');
-                               }}
-                           >Daily Achievement</button>
-                       </div>
-                   </div>
+           <div className="flex-1 min-w-[200px]">
+               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                   Tracking Mode
+               </label>
+               <div className="flex bg-slate-900/5 dark:bg-black/40 p-1 rounded-md">
+                   <button 
+                       className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                       onClick={() => {
+                           if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                           setEntryMode('monthly');
+                           setDateStr('2026-04-01');
+                       }}
+                   >
+                       Monthly
+                   </button>
+                   <button 
+                       className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                       onClick={() => {
+                           if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                           setEntryMode('daily');
+                           const today = new Date().toISOString().split('T')[0];
+                           setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
+                       }}
+                   >
+                       Daily
+                   </button>
+               </div>
+           </div>
+           
+           <div className="flex-1 min-w-[150px]">
+               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                   Date Context
+               </label>
+               {entryMode === 'monthly' ? (
+                   <Input 
+                       type="month" 
+                       max="2026-04"
+                       value={dateStr.substring(0, 7)}
+                       onChange={(e) => {
+                           if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                           setDateStr(e.target.value + '-01');
+                       }}
+                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10"
+                       style={{ colorScheme: 'dark' }}
+                   />
+               ) : (
+                   <Input 
+                       type="date" 
+                       min="2026-01-01"
+                       value={dateStr}
+                       onChange={(e) => {
+                           if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                           setDateStr(e.target.value);
+                       }}
+                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10"
+                       style={{ colorScheme: 'dark' }}
+                   />
+               )}
+           </div>
+
+           <div className="flex-1 min-w-[200px]">
+               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                   Record Type
+               </label>
+               <div className="flex bg-slate-900/5 dark:bg-black/40 p-1 rounded-md">
+                   <button 
+                       className={`flex-1 text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'projection' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                       onClick={() => {
+                           if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
+                           setRecordType('projection');
+                       }}
+                   >Projection</button>
+                   <button 
+                       className={`flex-1 text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'achievement' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                       onClick={() => {
+                           if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
+                           setRecordType('achievement');
+                       }}
+                   >Achievement</button>
+               </div>
+           </div>
+
+           <div className="flex-[2] min-w-[300px] flex items-end gap-2">
+               <div className="flex-1">
+                   <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                       <Sparkles size={12} /> Smart Assist
+                   </label>
+                   <Input 
+                      disabled={!canModify}
+                      value={smartPrompt}
+                      onChange={(e) => setSmartPrompt(e.target.value)}
+                      placeholder="E.g., Did 2 lakhs in Axis Home loans..."
+                      className="bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-500/20 text-xs h-[34px] text-slate-900 dark:text-white"
+                   />
+               </div>
+               <Button disabled={!canModify || isParsing || !smartPrompt.trim()} onClick={handleParse} className="h-[34px] bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm text-xs px-4">
+                   {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : 'Extract'}
+               </Button>
+           </div>
+        </div>
+
+        {/* Data Grid Section */}
+        <div className="flex-1 flex flex-col min-h-0 bg-white/5 dark:bg-black/20 rounded-xl border border-slate-900/10 dark:border-white/10 overflow-hidden relative">
+            <div className="flex items-center justify-between p-4 border-b border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 shrink-0">
+               <div className="flex items-center gap-3">
+                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300">
+                       Line Items ({items.length})
+                   </h3>
                    {hasExistingEntry && (
-                       <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/30 shrink-0">
+                       <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/30">
                            Locked & Processed
                        </span>
                    )}
-                </CardHeader>
-                <CardContent className="p-0 flex-1 overflow-auto">
-                    {isLoadingExisting ? (
-                        <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin text-slate-300" /></div>
-                    ) : (
-                        <Table>
-                            <TableHeader className="bg-slate-900/5 dark:bg-white/5 sticky top-0 z-10 box-border border-b border-slate-900/10 dark:border-white/10">
+               </div>
+               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
+                   <div className="text-slate-500">
+                       Projection: <span className="text-indigo-600 dark:text-indigo-400 ml-1">₹{(branchDetails?.dailyProjection || 0).toLocaleString('en-IN')}</span>
+                   </div>
+                   <div className="text-slate-500">
+                       Target: <span className="text-indigo-600 dark:text-indigo-400 ml-1">₹{(branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}</span>
+                   </div>
+               </div>
+            </div>
+
+            <div className="flex-1 overflow-x-auto overflow-y-auto">
+                {isLoadingExisting ? (
+                    <div className="flex justify-center items-center h-full min-h-[200px]"><Loader2 className="animate-spin text-slate-300" /></div>
+                ) : (
+                    <Table className="min-w-max border-collapse">
+                        <TableHeader className="bg-slate-900/5 dark:bg-white/5 sticky top-0 z-10 box-border">
+                            <TableRow className="border-b border-slate-900/10 dark:border-white/10 hover:bg-transparent">
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[120px]">1. Login Date</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">2. Category</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">3. Product</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">4. File Login</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">5. Bank Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">6. Branch</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">7. Customer Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">8. DOB</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">9. Phone No.</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">10. Email ID</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[200px]">11. Customer Address</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">12. Firm Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">13. Login Amt (₹)</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">14. File Status</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">15. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">16. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">17. Disbursed Dt</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">18. EMI Date</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">19. Repayment Bank</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[150px]">20. Staff Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[150px]">21. Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[150px]">22. Consultant</TableHead>
+                                <TableHead className="w-[50px] px-2 sticky right-0 bg-white/5 backdrop-blur z-10"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {items.length === 0 ? (
                                 <TableRow>
-                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap">Staff Name</div>
-                                    </TableHead>
-                                    {recordType === 'projection' && (
-                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                            <div className="flex items-center gap-1.5 whitespace-nowrap">Customer Name</div>
-                                        </TableHead>
-                                    )}
-                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap"><Layers size={14} className="opacity-70" /> Category</div>
-                                    </TableHead>
-                                    {recordType === 'projection' && (
-                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                            <div className="flex items-center gap-1.5 whitespace-nowrap"><Tag size={14} className="opacity-70" /> Product</div>
-                                        </TableHead>
-                                    )}
-                                    {recordType === 'projection' && (
-                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                            <div className="flex items-center gap-1.5 whitespace-nowrap"><Network size={14} className="opacity-70" /> Channel</div>
-                                        </TableHead>
-                                    )}
-                                    {recordType === 'achievement' && (
-                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                            <div className="flex items-center gap-1.5 whitespace-nowrap"><IndianRupee size={14} className="opacity-70" /> Projection Amt</div>
-                                        </TableHead>
-                                    )}
-                                    <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap"><IndianRupee size={14} className="opacity-70" /> {recordType === 'achievement' ? 'Achieved Amt' : 'Amount'}</div>
-                                    </TableHead>
-                                    {recordType === 'projection' && (
-                                        <TableHead className="text-xs font-semibold py-3 px-2 text-slate-700 dark:text-slate-300">
-                                            <div className="flex items-center gap-1.5 whitespace-nowrap">Status</div>
-                                        </TableHead>
-                                    )}
-                                    <TableHead className="w-[40px] px-2"></TableHead>
+                                    <TableCell colSpan={23} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest border-b-0">
+                                        No items formulated for {dateStr}
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {items.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={recordType === 'projection' ? 8 : 5} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest">
-                                            No items formulated for {dateStr}
-                                        </TableCell>
-                                    </TableRow>
-                                ) : items.map((item, index) => (
-                                    <TableRow key={index} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                                        <TableCell className="py-2 pl-4 pr-2 align-top">
-                                            <Input 
-                                                disabled={(!canModify && !item.isManual) || (recordType === 'achievement' && !item.isManual)}
-                                                type="text"
-                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
-                                                value={item.staffName || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
-                                            />
-                                        </TableCell>
-                                        {recordType === 'projection' && (
-                                            <TableCell className="py-2 px-2 align-top">
-                                                <Input 
-                                                    disabled={!canModify && !item.isManual}
-                                                    type="text"
-                                                    className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[120px]"
-                                                    value={item.customerName || ''}
-                                                    onChange={(e) => handleUpdateItem(index, 'customerName', e.target.value)}
-                                                />
-                                            </TableCell>
+                            ) : items.map((item, index) => (
+                                <TableRow key={index} className="hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border-b border-slate-900/5 dark:border-white/5">
+                                    {/* 1. Login Date */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center">
+                                            {item.date}
+                                        </div>
+                                    </TableCell>
+
+                                    {/* 2. Category */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <select 
+                                            disabled={!canModify && !item.isManual}
+                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
+                                            value={item.category || 'Loan'}
+                                            onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
+                                        >
+                                            <option value="Loan">Loan</option>
+                                            <option value="Insurance">Insurance</option>
+                                            <option value="Forex">Forex</option>
+                                            <option value="Consultancy">Consultancy</option>
+                                        </select>
+                                    </TableCell>
+
+                                    {/* 3. Product */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <select 
+                                            disabled={!canModify && !item.isManual}
+                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
+                                            value={item.product || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
+                                        >
+                                            <option value="">Select...</option>
+                                            {allowedProducts(item.category || 'Loan').map((p: any) => (
+                                                <option key={p.id} value={p.name}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                    </TableCell>
+
+                                    {/* 4. File Login */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <select 
+                                            disabled={(!canModify && !item.isManual) || item.category !== 'Loan'}
+                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
+                                            value={item.fileLogin || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'fileLogin', e.target.value)}
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="WBO">WBO</option>
+                                            <option value="EXPRESS LINK">EXPRESS LINK</option>
+                                            <option value="ILENS">ILENS</option>
+                                        </select>
+                                    </TableCell>
+
+                                    {/* 5. Bank Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <select 
+                                            disabled={!canModify && !item.isManual}
+                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
+                                            value={item.channel || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
+                                        >
+                                            <option value="">Select Bank...</option>
+                                            {channels.map((c: any) => (
+                                                <option key={c.id} value={c.name}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </TableCell>
+
+                                    {/* 6. Branch Location */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center truncate">
+                                            {branchDetails?.name || ''}
+                                        </div>
+                                    </TableCell>
+
+                                    {/* 7. Customer Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.customerName || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'customerName', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 8. Customer DOB */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="date"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            style={{ colorScheme: 'dark' }}
+                                            value={item.customerDOB || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'customerDOB', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 9. Phone Number */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.phoneNumber || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'phoneNumber', e.target.value.replace(/\D/g,''))}
+                                        />
+                                    </TableCell>
+
+                                    {/* 10. Email ID */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="email"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.emailId || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'emailId', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 11. Customer Address */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.customerAddress || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'customerAddress', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 12. Firm Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.firmName || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'firmName', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 13. Login Amount */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <NumericFormat 
+                                            customInput={Input}
+                                            disabled={!canModify && !item.isManual}
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.amount === 0 ? '' : item.amount}
+                                            onValueChange={(values) => handleUpdateItem(index, 'amount', values.floatValue || 0)}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                        />
+                                    </TableCell>
+
+                                    {/* 14. File Status */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <select 
+                                            disabled={!canModify && !item.isManual}
+                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'}`}
+                                            value={item.fileStatus || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'fileStatus', e.target.value)}
+                                        >
+                                            <option value="" className="bg-slate-800 text-white">Select...</option>
+                                            <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
+                                            <option value="Processing" className="bg-slate-800 text-blue-400">Processing</option>
+                                            <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
+                                            <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
+                                            <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                        </select>
+                                    </TableCell>
+
+                                    {/* 15. Sanctioned Amount */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <NumericFormat 
+                                            customInput={Input}
+                                            disabled={!canModify && !item.isManual}
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.sanctionedAmount === 0 ? '' : item.sanctionedAmount}
+                                            onValueChange={(values) => handleUpdateItem(index, 'sanctionedAmount', values.floatValue || 0)}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                        />
+                                    </TableCell>
+
+                                    {/* 16. Disbursed Amount */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <NumericFormat 
+                                            customInput={Input}
+                                            disabled={!canModify && !item.isManual}
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.disbursedAmount === 0 ? '' : item.disbursedAmount}
+                                            onValueChange={(values) => handleUpdateItem(index, 'disbursedAmount', values.floatValue || 0)}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                        />
+                                    </TableCell>
+
+                                    {/* 17. Disbursed Date */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="date"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            style={{ colorScheme: 'dark' }}
+                                            value={item.disbursedDate || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'disbursedDate', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 18. EMI Date */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="date"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            style={{ colorScheme: 'dark' }}
+                                            value={item.emiDate || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'emiDate', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 19. Repayment Bank */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            list="repayment-banks"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.repaymentBank || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'repaymentBank', e.target.value)}
+                                            placeholder="Enter or select..."
+                                        />
+                                        <datalist id="repayment-banks">
+                                            <option value="State Bank of India (SBI)" />
+                                            <option value="Punjab National Bank (PNB)" />
+                                            <option value="Bank of Baroda (BOB)" />
+                                            <option value="Canara Bank" />
+                                            <option value="Union Bank of India" />
+                                            <option value="Bank of India (BOI)" />
+                                            <option value="Indian Bank" />
+                                            <option value="Central Bank of India" />
+                                            <option value="Indian Overseas Bank" />
+                                            <option value="UCO Bank" />
+                                            <option value="Bank of Maharashtra" />
+                                            <option value="Punjab & Sind Bank" />
+                                            <option value="HDFC Bank" />
+                                            <option value="ICICI Bank" />
+                                            <option value="Axis Bank" />
+                                        </datalist>
+                                    </TableCell>
+
+                                    {/* 20. Staff Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.staffName || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 21. Manager Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.managerName || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'managerName', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 22. Consultant Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.consultantName || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'consultantName', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* Remove Button */}
+                                    <TableCell className="py-2 px-2 align-top text-right sticky right-0 bg-white dark:bg-slate-900/90 backdrop-blur z-10 border-l border-slate-900/10 dark:border-white/10">
+                                        {canModify && (
+                                            <button onClick={() => handleRemoveItem(index)} className="mt-1 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors">
+                                                <X size={16} />
+                                            </button>
                                         )}
-                                        <TableCell className="py-2 px-2 align-top">
-                                            <select 
-                                                disabled={(!canModify && !item.isManual) || (recordType === 'achievement' && !item.isManual)}
-                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
-                                                value={item.category || 'Loan'}
-                                                onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
-                                            >
-                                                <option value="Loan">Loan</option>
-                                                <option value="Insurance">Insurance</option>
-                                                <option value="Forex">Forex</option>
-                                                <option value="Consultancy">Consultancy</option>
-                                            </select>
-                                        </TableCell>
-                                        {recordType === 'projection' && (
-                                            <TableCell className="py-2 px-2 align-top">
-                                                <select 
-                                                    disabled={!canModify && !item.isManual}
-                                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
-                                                    value={item.product || ''}
-                                                    onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
-                                                >
-                                                    <option value="">Select...</option>
-                                                    {allowedProducts(item.category || 'Loan').map((p: any) => (
-                                                        <option key={p.id} value={p.name}>{p.name}</option>
-                                                    ))}
-                                                </select>
-                                            </TableCell>
-                                        )}
-                                        {recordType === 'projection' && (
-                                            <TableCell className="py-2 px-2 align-top">
-                                                <select 
-                                                    disabled={!canModify && !item.isManual}
-                                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 min-w-[120px]"
-                                                    value={item.channel || ''}
-                                                    onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
-                                                >
-                                                    <option value="">Select...</option>
-                                                    {channels.map((c: any) => (
-                                                        <option key={c.id} value={c.name}>{c.name}</option>
-                                                    ))}
-                                                </select>
-                                            </TableCell>
-                                        )}
-                                        {recordType === 'achievement' && (
-                                            <TableCell className="py-2 px-2 align-top">
-                                                {item.isManual ? (
-                                                    <NumericFormat 
-                                                        customInput={Input}
-                                                        disabled={!canModify}
-                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
-                                                        value={item.projectionAmt === 0 ? '' : item.projectionAmt}
-                                                        onValueChange={(values) => handleUpdateItem(index, 'projectionAmt', values.floatValue || 0)}
-                                                        thousandSeparator=","
-                                                        thousandsGroupStyle="lakh"
-                                                    />
-                                                ) : (
-                                                    <div className="h-[34px] px-3 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md text-slate-600 dark:text-slate-300 min-w-[100px] flex items-center">
-                                                        {item.projectionAmt?.toLocaleString('en-IN') || '0'}
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                        )}
-                                        <TableCell className="py-2 px-2 align-top">
-                                            <NumericFormat 
-                                                customInput={Input}
-                                                disabled={!canModify && !item.isManual}
-                                                className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
-                                                value={item.amount === 0 ? '' : item.amount}
-                                                onValueChange={(values) => handleUpdateItem(index, 'amount', values.floatValue || 0)}
-                                                thousandSeparator=","
-                                                thousandsGroupStyle="lakh"
-                                            />
-                                        </TableCell>
-                                        {recordType === 'projection' && (
-                                            <TableCell className="py-2 px-2 align-top">
-                                                <Input 
-                                                    disabled={!canModify && !item.isManual}
-                                                    type="text"
-                                                    className="h-[34px] text-xs bg-white dark:bg-slate-900 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[100px]"
-                                                    value={item.status || ''}
-                                                    onChange={(e) => handleUpdateItem(index, 'status', e.target.value)}
-                                                />
-                                            </TableCell>
-                                        )}
-                                        <TableCell className="py-2 pr-4 pl-2 align-top text-right">
-                                            {canModify && (
-                                                <button onClick={() => handleRemoveItem(index)} className="mt-1 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors">
-                                                    <X size={16} />
-                                                </button>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {items.length > 0 && (
-                                    <TableRow className="bg-slate-900/5 dark:bg-white/5 font-bold hover:bg-slate-900/5 dark:hover:bg-white/5">
-                                        <TableCell colSpan={recordType === 'achievement' ? 3 : 6} className="text-right p-4 text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
-                                            Total Amount:
-                                        </TableCell>
-                                        <TableCell colSpan={2} className="p-4 text-sm text-indigo-600 dark:text-indigo-400">
-                                            ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    )}
-                </CardContent>
-                
-                {/* Footer Controls */}
-                <div className="border-t border-slate-900/10 dark:border-white/10 p-4 bg-slate-900/5 dark:bg-black/20 flex flex-col sm:flex-row justify-between items-center shrink-0 gap-4">
-                    <div className="w-full sm:w-auto flex-1">
-                        {error && <span className="text-xs text-red-500 font-bold bg-red-500/10 px-3 py-2 rounded">{error}</span>}
-                        {success && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-3 py-2 rounded">{success}</span>}
-                    </div>
-                    <div className="flex gap-3 w-full sm:w-auto shrink-0 justify-end">
-                        {hasExistingEntry && (recordType === 'achievement' ? isExecutive : (allowDeletion || isExecutive)) && (
-                             <Button 
-                                variant="danger" 
-                                onClick={() => { 
-                                  setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
-                                  setShowDeleteModal(true); 
-                                }} 
-                                disabled={isDeleting}
-                                className="flex-1 sm:flex-none text-white font-medium shadow-none"
-                             >
-                                 <Trash2 className="w-4 h-4 mr-2" />
-                                 Delete Record
-                             </Button>
-                        )}
-                        {hasExistingEntry && !(recordType === 'achievement' ? isExecutive : (allowDeletion || isExecutive)) && daysSinceCreation >= 60 && (
-                             <span className="text-[10px] text-slate-500 uppercase tracking-widest bg-slate-500/10 px-3 py-2 rounded">
-                                 Deletion window expired (60 days)
-                             </span>
-                        )}
-                        {canModify && (recordType === 'achievement' ? isExecutive : true) && (
-                             <Button variant="secondary" onClick={() => {
-                                 if (items.length === 0) {
-                                     setShowContextModal(true);
-                                 } else {
-                                     handleAddItem();
-                                 }
-                             }} className="flex-1 sm:flex-none border-slate-900/20 dark:border-white/20 text-xs font-medium">
-                                 + Manual Row
-                             </Button>
-                        )}
-                        {canModify && (
-                            <Button 
-                                disabled={isSaving || items.length === 0} 
-                                onClick={handleSubmit} 
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white flex-1 sm:flex-none font-medium"
-                            >
-                                {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                                {isExecutiveOverride ? 'Update Record' : 'Permanently Lodge Record'}
-                            </Button>
-                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </div>
+            
+            {items.length > 0 && (
+                <div className="border-t border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-black/40 p-4 shrink-0 flex justify-end">
+                    <div className="flex gap-4 items-center">
+                        <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Total Login Amount:</span>
+                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                            ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
+                        </span>
                     </div>
                 </div>
-            </Card>
+            )}
         </div>
+
+        {/* Sticky Bottom Actions */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 z-30 pointer-events-none">
+            <div className="max-w-7xl mx-auto flex justify-end gap-3 pointer-events-auto">
+                <div className="flex-1 max-w-[400px]">
+                    {error && <div className="text-xs text-red-500 font-bold bg-white dark:bg-slate-900 border border-red-500/20 px-4 py-3 rounded-lg shadow-xl shadow-red-500/10">{error}</div>}
+                    {success && <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-white dark:bg-slate-900 border border-emerald-500/20 px-4 py-3 rounded-lg shadow-xl shadow-emerald-500/10">{success}</div>}
+                </div>
+                
+                {hasExistingEntry && (recordType === 'achievement' ? isExecutive : (allowDeletion || isExecutive)) && (
+                     <Button 
+                        variant="danger" 
+                        onClick={() => { 
+                          setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
+                          setShowDeleteModal(true); 
+                        }} 
+                        disabled={isDeleting}
+                        className="shadow-xl"
+                     >
+                         <Trash2 className="w-4 h-4 mr-2" />
+                         Delete
+                     </Button>
+                )}
+                
+                {canModify && (recordType === 'achievement' ? isExecutive : true) && (
+                     <Button variant="secondary" onClick={() => {
+                         if (items.length === 0) {
+                             setShowContextModal(true);
+                         } else {
+                             handleAddItem();
+                         }
+                     }} className="shadow-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-700">
+                         + Manual Row
+                     </Button>
+                )}
+                
+                {canModify && (
+                    <Button 
+                        disabled={isSaving || items.length === 0} 
+                        onClick={handleSubmit} 
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-600/20"
+                    >
+                        {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                        {isExecutiveOverride ? 'Update Record' : 'Permanently Lodge Record'}
+                    </Button>
+                )}
+            </div>
+        </div>
+
+        {/* Padding to allow scrolling past sticky footer */}
+        <div className="h-24"></div>
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && (() => {
@@ -878,13 +1081,12 @@ export default function DataEntryTerminal() {
           const noneSelected = selectedCount === 0;
 
           return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteModal(false)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setShowDeleteModal(false)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div 
               className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
               <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/10 bg-red-50 dark:bg-red-950/30">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
@@ -892,57 +1094,28 @@ export default function DataEntryTerminal() {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wider">Select Items to Delete</h3>
-                    <p className="text-[10px] text-red-700/70 dark:text-red-300/60 uppercase tracking-widest mt-0.5">
-                      {branchDetails?.name} • {dateStr} • {entryMode}
-                    </p>
                   </div>
                 </div>
-                <button onClick={() => setShowDeleteModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                <button onClick={() => setShowDeleteModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg">
                   <X size={18} />
                 </button>
               </div>
 
-              {/* Warning Message */}
-              <div className="px-5 pt-4">
-                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/20 rounded-lg">
-                  <p className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
-                    ⚠️ This action is <strong>irreversible</strong>. Select the line items you want to permanently erase. 
-                    {allSelected 
-                      ? <> Selecting all will delete the <strong>entire record</strong>.</>
-                      : <> Unselected items will be preserved in the record.</>
-                    }
-                  </p>
-                  <p className="text-[10px] text-amber-700/70 dark:text-amber-400/60 mt-2 uppercase tracking-wider">
-                    Deletion window: {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining out of 60
-                  </p>
-                </div>
-              </div>
-
-              {/* Select All / Deselect All Toggle */}
               <div className="px-5 pt-3 flex items-center justify-between">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  {selectedCount} of {items.length} item{items.length !== 1 ? 's' : ''} selected
-                  {selectedCount > 0 && (
-                    <span className="text-red-500 ml-2">
-                      (₹{selectedTotal.toLocaleString('en-IN')})
-                    </span>
-                  )}
+                  {selectedCount} selected
                 </p>
                 <button
                   onClick={() => {
-                    if (allSelected) {
-                      setSelectedDeleteIndices(new Set());
-                    } else {
-                      setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
-                    }
+                    if (allSelected) setSelectedDeleteIndices(new Set());
+                    else setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
                   }}
-                  className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider hover:underline"
+                  className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider"
                 >
                   {allSelected ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
 
-              {/* Records Preview with Checkboxes */}
               <div className="px-5 pt-3 pb-2 flex-1 overflow-auto">
                 <div className="space-y-2">
                   {items.map((item, idx) => {
@@ -953,164 +1126,36 @@ export default function DataEntryTerminal() {
                         type="button"
                         onClick={() => {
                           const next = new Set(selectedDeleteIndices);
-                          if (isSelected) { next.delete(idx); } else { next.add(idx); }
+                          if (isSelected) next.delete(idx); else next.add(idx);
                           setSelectedDeleteIndices(next);
                         }}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all duration-150 text-left ${
-                          isSelected 
-                            ? 'bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-500/30 ring-1 ring-red-500/20'
-                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
-                        }`}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left ${isSelected ? 'bg-red-50 dark:bg-red-950/20 border-red-300' : 'bg-slate-50 border-slate-200'}`}
                       >
-                        {/* Checkbox */}
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          isSelected
-                            ? 'bg-red-500 border-red-500'
-                            : 'border-slate-300 dark:border-slate-600'
-                        }`}>
-                          {isSelected && (
-                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        
-                        {/* Item Number */}
-                        <span className="text-[10px] font-bold text-slate-400 w-5 text-center shrink-0">#{idx + 1}</span>
-                        
-                        {/* Item Details */}
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-semibold truncate ${isSelected ? 'text-red-900 dark:text-red-200 line-through' : 'text-slate-900 dark:text-white'}`}>{item.product}</p>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{item.category} • {item.channel}</p>
-                        </div>
-                        
-                        {/* Amount */}
-                        <span className={`text-sm font-mono font-bold shrink-0 ml-3 ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}`}>
-                          ₹{Number(item.amount).toLocaleString('en-IN')}
-                        </span>
+                         <span className="text-sm ml-3">₹{Number(item.amount).toLocaleString('en-IN')}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Modal Footer */}
-              <div className="p-5 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 flex gap-3">
-                <Button 
-                  variant="secondary" 
-                  onClick={() => setShowDeleteModal(false)} 
-                  className="flex-1 border-slate-300 dark:border-white/20 text-xs font-medium"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  variant="danger" 
-                  onClick={handleDelete} 
-                  disabled={isDeleting || noneSelected}
-                  className="flex-1 text-white font-medium shadow-none"
-                >
-                  {isDeleting ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
-                  {noneSelected 
-                    ? 'Select items to delete'
-                    : allSelected 
-                      ? 'Delete Entire Record'
-                      : `Delete ${selectedCount} Item${selectedCount > 1 ? 's' : ''}`
-                  }
-                </Button>
+              <div className="p-5 border-t border-slate-200 flex gap-3">
+                <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="flex-1">Cancel</Button>
+                <Button variant="danger" onClick={handleDelete} disabled={isDeleting || noneSelected} className="flex-1">Delete</Button>
               </div>
             </div>
           </div>
           );
         })()}
 
-        {/* Context Confirmation Modal */}
+        {/* Context Modal */}
         {showContextModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowContextModal(false)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setShowContextModal(false)}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div 
-              className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-5 border-b border-slate-200 dark:border-white/10 bg-indigo-50 dark:bg-indigo-900/10">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg text-indigo-600 dark:text-indigo-400">
-                    <Layers size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Confirm Entry Context</h3>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Please review before adding manual rows.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5 space-y-4">
-                 {(user.role === 'admin' || isBackdoor) && (
-                     <div>
-                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Active Branch</label>
-                         <select 
-                             className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-900 dark:text-white"
-                             value={adminSelectedBranch}
-                             onChange={(e) => setAdminSelectedBranch(e.target.value)}
-                         >
-                             {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
-                                 <option key={b.id} value={b.id}>{b.name}</option>
-                             ))}
-                         </select>
-                     </div>
-                 )}
-                 {(!isBackdoor && user.role !== 'admin') && (
-                     <div>
-                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Active Branch</label>
-                         <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-500 dark:text-slate-400">
-                             {branchDetails?.name || 'Unknown Branch'}
-                         </div>
-                     </div>
-                 )}
-                 <div>
-                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Entry Date</label>
-                     <Input 
-                         type={entryMode === 'monthly' ? "month" : "date"}
-                         value={entryMode === 'monthly' ? dateStr.substring(0, 7) : dateStr}
-                         onChange={(e) => setDateStr(entryMode === 'monthly' ? e.target.value + '-01' : e.target.value)}
-                         className="bg-slate-50 dark:bg-black/40 text-xs"
-                         style={{ colorScheme: 'dark' }}
-                     />
-                 </div>
-                 <div>
-                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Record Type</label>
-                     <select 
-                         className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-900 dark:text-white"
-                         value={recordType}
-                         onChange={(e) => setRecordType(e.target.value as 'projection' | 'achievement')}
-                     >
-                         <option value="projection">Daily Projection</option>
-                         <option value="achievement">Daily Achievement</option>
-                     </select>
-                 </div>
-              </div>
-
-              <div className="p-5 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 flex gap-3">
-                <Button 
-                  variant="secondary" 
-                  onClick={() => setShowContextModal(false)} 
-                  className="flex-1 text-xs font-medium"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  disabled={isLoadingExisting}
-                  onClick={() => {
-                    setShowContextModal(false);
-                    if (!hasExistingEntry && items.length === 0) {
-                        handleAddItem();
-                    }
-                  }} 
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-none text-xs"
-                >
-                  {isLoadingExisting ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                  Confirm & Start
-                </Button>
-              </div>
+            <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+               <div className="p-5 flex gap-3">
+                  <Button variant="secondary" onClick={() => setShowContextModal(false)} className="flex-1">Cancel</Button>
+                  <Button onClick={() => { setShowContextModal(false); if(items.length===0) handleAddItem(); }} className="flex-1 bg-indigo-600 text-white">Start</Button>
+               </div>
             </div>
           </div>
         )}

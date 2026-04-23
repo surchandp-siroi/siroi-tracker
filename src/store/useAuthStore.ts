@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .from('users')
         .select('*')
         .eq('id', sbUser.id)
-        .single();
+        .maybeSingle();
       
       let profile: UserProfile;
       
@@ -134,33 +134,61 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   initAuth: () => {
+    if (get().isInitialized) return;
+
+    let initialSessionHandled = false;
+
+    const handleSession = async (session: Session | null) => {
+        if (isLoginInProgress) return;
+
+        if (session?.user) {
+            const { data: userDoc, error: userDocErr } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+              
+            if (userDoc) {
+                set({ user: userDoc as UserProfile, supabaseUser: session.user, isInitialized: true });
+            } else {
+                // Bootstrapping logic if profile is missing on load
+                const email = session.user.email!;
+                const isFirstAdmin = email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com';
+                const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
+                
+                const profile: UserProfile = {
+                  id: session.user.id,
+                  email: email,
+                  role: isFirstAdmin ? 'admin' : 'statehead',
+                  branchId: branchMatch ? branchMatch.id : null,
+                  latestLocation: undefined
+                };
+                
+                const { error: insertError } = await supabase.from('users').insert([profile]);
+                if (insertError && !insertError.message.includes("duplicate key value")) {
+                   console.warn("Auth sync: Profile not found in 'users' table, and insert failed.", insertError);
+                   set({ supabaseUser: session.user, user: null, isInitialized: true });
+                } else {
+                   set({ user: profile, supabaseUser: session.user, isInitialized: true });
+                }
+            }
+        } else {
+            set({ user: null, supabaseUser: null, isInitialized: true });
+        }
+    };
+
     supabase.auth.onAuthStateChange(async (event, session) => {
       // Skip if login() is handling auth — prevents race condition
       if (isLoginInProgress) return;
-
-      if (session?.user) {
-        const { data: userDoc, error: userDocErr } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (userDoc) {
-            set({ user: userDoc as UserProfile, supabaseUser: session.user, isInitialized: true });
-        } else {
-            console.warn("Auth sync: Profile not found in 'users' table.", userDocErr || "No error returned, just null data.");
-            // Do NOT sign out immediately. The login() function might be in the middle of provisioning the user profile.
-            set({ supabaseUser: session.user, user: null, isInitialized: true });
-        }
-      } else {
-        set({ user: null, supabaseUser: null, isInitialized: true });
-      }
+      initialSessionHandled = true;
+      await handleSession(session);
     });
 
     // Also check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-       if (!session?.user) {
-          set({ isInitialized: true });
+       if (!initialSessionHandled) {
+          initialSessionHandled = true;
+          await handleSession(session);
        }
     });
   }
