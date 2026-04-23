@@ -3,9 +3,10 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { Sparkles, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
+import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
 
 export default function DataEntryTerminal() {
@@ -28,6 +29,7 @@ export default function DataEntryTerminal() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   
   const [hasExistingEntry, setHasExistingEntry] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
@@ -205,10 +207,9 @@ export default function DataEntryTerminal() {
       fetchContext();
   }, [activeBranchId, dateStr, entryMode, recordType, branches]);
 
-  const handleParse = async () => {
-      if (!smartPrompt.trim()) return;
+  const processFile = async (file: File) => {
       if (!import.meta.env.VITE_GEMINI_API_KEY) {
-          setError("Smart fill unavailable. Contact admin to set Gemini API key.");
+          setError("Smart upload unavailable. Contact admin to set Gemini API key.");
           return;
       }
       
@@ -216,19 +217,50 @@ export default function DataEntryTerminal() {
       setError('');
       
       try {
+          const buffer = await file.arrayBuffer();
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+          
+          if (json.length === 0) {
+              setError("The uploaded file appears to be empty.");
+              setIsParsing(false);
+              return;
+          }
+
           const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
           const prompt = `
-            Extract the financial entry data from the following text and format it as a JSON array of objects.
-            Each object MUST have these EXACT keys: "category", "product", "channel", and "amount".
+            You are a strict data extraction AI. Extract financial entry data from the following raw JSON representing an uploaded Excel/CSV file.
+            Ignore junk rows like headers, footers, totals, or blank lines.
             
-            Valid Categories: "Loan", "Insurance", "Forex", "Consultancy"
-            Valid Products: ${products.map(p => p.name).join(', ')}
-            Valid Channels: ${channels.map(c => c.name).join(', ')}
-            Amount MUST be a positive number.
+            Return ONLY a valid JSON array of objects without markdown formatting.
+            Each object MUST represent a valid row and have these EXACT keys:
+            - "date": Map to Login Date (format YYYY-MM-DD). Use the specific date for the row. Do NOT assume a global date.
+            - "staffName": string
+            - "customerName": string
+            - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy"].
+            - "product": Must be one of: ${products.map((p: any) => p.name).join(', ')}
+            - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty if not applicable.
+            - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC if Insurance.
+            - "branchLocation": Map to Branch name exactly as: ${branches.map((b: any) => b.name).join(', ')}. Use the specific branch for the row.
+            - "customerDOB": string
+            - "phoneNumber": string
+            - "emailId": string
+            - "customerAddress": string
+            - "firmName": string
+            - "amount": Positive number (Login Amount).
+            - "fileStatus": string
+            - "sanctionedAmount": number
+            - "disbursedAmount": number
+            - "disbursedDate": string
+            - "emiDate": string
+            - "repaymentBank": string
+            - "managerName": string
+            - "consultantName": string
             
-            Text: "${smartPrompt}"
-            
-            Return ONLY the valid JSON array without markdown formatting. Example: [{"category": "Loan", "product": "Home Loan", "channel": "HDFC BANK", "amount": 200000}]
+            Raw Spreadsheet JSON:
+            ${JSON.stringify(json).substring(0, 50000)} // Limiting to ~50k chars to avoid token limits
           `;
           
           const response = await ai.models.generateContent({
@@ -237,21 +269,54 @@ export default function DataEntryTerminal() {
           });
           
           const text = response.text || "[]";
-          const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
-          const parsed = JSON.parse(_clean);
+          const _clean = text.replace(new RegExp('\`\`\`json', 'g'), '').replace(new RegExp('\`\`\`', 'g'), '').trim();
+          let parsed = JSON.parse(_clean);
           
           if (Array.isArray(parsed) && parsed.length > 0) {
+              // Mark them as manual/imported so they can be modified
+              parsed = parsed.map((p: any) => ({ ...p, isManual: true, projectionAmt: p.projectionAmt || 0 }));
               setItems(prev => [...prev, ...parsed]);
-              setSmartPrompt('');
           } else {
-              setError("Could not extract numerical items. Try adjusting your phrasing.");
+              setError("Could not extract valid entries from the file.");
           }
       } catch (e: any) {
           console.error("AI Parse Error:", e);
-          setError("Failed to process text. You can add items manually.");
+          setError("Failed to process file. Ensure it's a valid Excel/CSV with readable data.");
       } finally {
           setIsParsing(false);
       }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      await processFile(file);
+      e.target.value = ''; // Reset file input
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (canModify && !isParsing) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      
+      if (!canModify || isParsing) return;
+
+      const file = e.dataTransfer.files?.[0];
+      if (!file) return;
+      
+      await processFile(file);
   };
 
   const handleAddItem = () => {
@@ -506,6 +571,22 @@ export default function DataEntryTerminal() {
       }
   };
 
+  const isFieldMissing = (item: any, field: string) => {
+      if (!item.isManual) return false;
+      if (field === 'staffName' && (!item.staffName || !item.staffName.trim())) return true;
+      if (field === 'category' && !item.category) return true;
+      if (recordType === 'projection') {
+          if (field === 'customerName' && (!item.customerName || !item.customerName.trim())) return true;
+          if (field === 'product' && !item.product) return true;
+          if (field === 'channel' && !item.channel) return true;
+          if (field === 'amount' && (!item.amount || item.amount <= 0)) return true;
+          if (field === 'fileStatus' && (!item.fileStatus || !item.fileStatus.trim())) return true;
+      } else {
+          if (field === 'amount' && (item.amount === undefined || item.amount < 0)) return true;
+      }
+      return false;
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8 flex flex-col w-full">
         <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 rounded-xl">
@@ -631,19 +712,26 @@ export default function DataEntryTerminal() {
            <div className="flex-[2] min-w-[300px] flex items-end gap-2">
                <div className="flex-1">
                    <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                       <Sparkles size={12} /> Smart Assist
+                       <UploadCloud size={12} /> Bulk Upload (AI Extractor)
                    </label>
-                   <Input 
-                      disabled={!canModify}
-                      value={smartPrompt}
-                      onChange={(e) => setSmartPrompt(e.target.value)}
-                      placeholder="E.g., Did 2 lakhs in Axis Home loans..."
-                      className="bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-500/20 text-xs h-[34px] text-slate-900 dark:text-white"
-                   />
+                   <label 
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`flex items-center justify-center gap-2 h-[34px] text-xs font-medium rounded-md border border-dashed transition-colors cursor-pointer
+                        ${!canModify || isParsing ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400 opacity-50 cursor-not-allowed' : isDragging ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-500 text-indigo-800 dark:text-indigo-200 shadow-sm scale-[1.02]' : 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
+                    >
+                        {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : <FileSpreadsheet className="w-4 h-4" />}
+                        {isParsing ? 'Processing File...' : isDragging ? 'Drop File Here' : 'Drag & Drop or Select Excel/CSV'}
+                       <input 
+                           type="file" 
+                           accept=".xlsx, .xls, .csv" 
+                           className="hidden" 
+                           disabled={!canModify || isParsing}
+                           onChange={handleFileUpload}
+                       />
+                   </label>
                </div>
-               <Button disabled={!canModify || isParsing || !smartPrompt.trim()} onClick={handleParse} className="h-[34px] bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm text-xs px-4">
-                   {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : 'Extract'}
-               </Button>
            </div>
         </div>
 
@@ -722,7 +810,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
-                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
+                                            className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'category') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.category || 'Loan'}
                                             onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
                                         >
@@ -737,7 +825,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
-                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
+                                            className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'product') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.product || ''}
                                             onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
                                         >
@@ -767,7 +855,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
-                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
+                                            className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'channel') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.channel || ''}
                                             onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
                                         >
@@ -798,7 +886,7 @@ export default function DataEntryTerminal() {
                                         <Input 
                                             disabled={!canModify && !item.isManual}
                                             type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
                                             value={item.customerName || ''}
                                             onChange={(e) => handleUpdateItem(index, 'customerName', e.target.value)}
                                         />
@@ -865,7 +953,7 @@ export default function DataEntryTerminal() {
                                         <NumericFormat 
                                             customInput={Input}
                                             disabled={!canModify && !item.isManual}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
                                             value={item.amount === 0 ? '' : item.amount}
                                             onValueChange={(values) => handleUpdateItem(index, 'amount', values.floatValue || 0)}
                                             thousandSeparator=","
@@ -877,7 +965,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
-                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'}`}
+                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'} ${isFieldMissing(item, 'fileStatus') ? 'border-red-500/50 focus:border-red-500 bg-red-500/5' : ''}`}
                                             value={item.fileStatus || ''}
                                             onChange={(e) => handleUpdateItem(index, 'fileStatus', e.target.value)}
                                         >
@@ -975,7 +1063,7 @@ export default function DataEntryTerminal() {
                                         <Input 
                                             disabled={!canModify && !item.isManual}
                                             type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
                                             value={item.staffName || ''}
                                             onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
                                         />
