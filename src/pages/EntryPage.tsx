@@ -37,6 +37,7 @@ export default function DataEntryTerminal() {
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
   const [lodgeName, setLodgeName] = useState('');
   const [lodgeEmail, setLodgeEmail] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
   
   const [hasExistingEntry, setHasExistingEntry] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
@@ -68,6 +69,20 @@ export default function DataEntryTerminal() {
 
   // Unsaved Guard
   const isDirty = !hasExistingEntry && items.length > 0;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        setCurrentTime(`${dateStr}, ${timeStr}`);
+    }, 1000);
+    
+    const initialNow = new Date();
+    setCurrentTime(`${initialNow.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}, ${initialNow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (isInitialized && !user) {
@@ -752,9 +767,10 @@ export default function DataEntryTerminal() {
            </div>
            
            <div className="flex-1 min-w-[150px]">
-               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
-                   Date Context
-               </label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex justify-between items-center">
+                    <span>Date Context</span>
+                    <span className="text-[9px] font-mono text-slate-400 font-normal normal-case">{currentTime}</span>
+                </label>
                {entryMode === 'monthly' ? (
                    <Input 
                        type="month" 
