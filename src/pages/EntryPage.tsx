@@ -73,13 +73,13 @@ export default function DataEntryTerminal() {
   useEffect(() => {
     const timer = setInterval(() => {
         const now = new Date();
-        const dateStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         setCurrentTime(`${dateStr}, ${timeStr}`);
     }, 1000);
     
     const initialNow = new Date();
-    setCurrentTime(`${initialNow.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}, ${initialNow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`);
+    setCurrentTime(`${initialNow.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, ${initialNow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`);
     
     return () => clearInterval(timer);
   }, []);
@@ -796,7 +796,7 @@ export default function DataEntryTerminal() {
                         style={{ colorScheme: 'dark' }}
                     />
                 )}
-                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500 pointer-events-none">
+                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 pointer-events-none">
                         {currentTime}
                     </span>
                 </div>
