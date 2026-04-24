@@ -892,6 +892,7 @@ export default function DataEntryTerminal() {
                                             <option value="Insurance">Insurance</option>
                                             <option value="Forex">Forex</option>
                                             <option value="Consultancy">Consultancy</option>
+                                            <option value="Investments">Investments</option>
                                         </select>
                                     </TableCell>
 
