@@ -91,3 +91,4 @@ body {
 ::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; border: 2px solid #0f172a; }
 ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
+input[type="date"] { color-scheme: light; } :is(.dark input[type="date"]) { color-scheme: dark; }

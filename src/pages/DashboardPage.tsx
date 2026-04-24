@@ -3,10 +3,10 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Calendar } from 'lucide-react';
+import { Calendar, X } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 
-const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24']; // indigo-400, emerald-400, sky-400, amber-400
+const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
 
 const BRANCH_COLORS: Record<string, string> = {
   'Guwahati': '#818cf8',
@@ -15,12 +15,12 @@ const BRANCH_COLORS: Record<string, string> = {
   'Nagaland & Mizoram': '#fbbf24'
 };
 
-const CATEGORY_COLORS: Record<string, { proj: string, ach: string }> = {
-    'Loan': { proj: 'rgba(252, 165, 165, 0.3)', ach: '#fca5a5' }, // red-300
-    'Insurance': { proj: 'rgba(110, 231, 183, 0.3)', ach: '#6ee7b7' }, // emerald-300
-    'Forex': { proj: 'rgba(125, 211, 252, 0.3)', ach: '#7dd3fc' }, // sky-300
-    'Consultancy': { proj: 'rgba(196, 181, 253, 0.3)', ach: '#c4b5fd' }, // violet-300
-    'Investments': { proj: 'rgba(253, 224, 71, 0.3)', ach: '#fde047' }, // yellow-300
+const CATEGORY_COLORS: Record<string, { proj: string, ach: string, textDark: string }> = {
+    'Loan': { proj: 'rgba(252, 165, 165, 0.3)', ach: '#fca5a5', textDark: '#991b1b' }, // red-300 / red-800
+    'Insurance': { proj: 'rgba(110, 231, 183, 0.3)', ach: '#6ee7b7', textDark: '#065f46' }, // emerald-300 / emerald-800
+    'Forex': { proj: 'rgba(125, 211, 252, 0.3)', ach: '#7dd3fc', textDark: '#075985' }, // sky-300 / sky-800
+    'Consultancy': { proj: 'rgba(196, 181, 253, 0.3)', ach: '#c4b5fd', textDark: '#5b21b6' }, // violet-300 / violet-800
+    'Investments': { proj: 'rgba(253, 224, 71, 0.3)', ach: '#fde047', textDark: '#854d0e' }, // yellow-300 / yellow-800
 };
 
 const CATEGORIES = Object.keys(CATEGORY_COLORS);
@@ -39,25 +39,71 @@ const CustomizedAxisTick = (props: any) => {
   );
 };
 
+const formatYAxis = (value: number) => {
+    if (value === 0) return '₹0';
+    if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`;
+    if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
+    if (value >= 1000) return `₹${(value / 1000).toFixed(1)}k`;
+    return `₹${value}`;
+};
+
+const CustomBarTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const validPayloads = payload.filter((p: any) => p.value > 0);
+        if (validPayloads.length === 0) return null;
+        return (
+            <div className="bg-[#1e293b] border border-white/10 p-3 rounded-lg shadow-xl">
+                <p className="text-white font-bold mb-2 border-b border-white/10 pb-1">{label}</p>
+                <div className="flex flex-col gap-1">
+                    {validPayloads.map((p: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between gap-4 text-xs">
+                            <span className="flex items-center gap-1.5" style={{ color: p.color }}>
+                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></span>
+                                {p.name.replace('Proj.', 'Projection').replace('Ach.', 'Achievement')}:
+                            </span>
+                            <span className="text-white font-mono font-semibold">₹{Number(p.value).toLocaleString('en-IN')}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
+const RADIAN = Math.PI / 180;
+const renderCustomizedPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name }: any) => {
+  if (!percent) return null;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  
+  if (percent * 100 < 3) return null;
+  
+  const fontColor = CATEGORY_COLORS[name]?.textDark || '#0f172a';
+  
+  return (
+    <text x={x} y={y} fill={fontColor} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight="900">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
 export default function DashboardOverview() {
   const { products, channels, branches, entries } = useDataStore();
   const { user, isInitialized } = useAuthStore();
   const navigate = useNavigate();
 
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
-  const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    if (branches.length > 0 && !selectedBusinessBranch) {
-        const guwahati = branches.find(b => b.name === 'Guwahati');
-        if (guwahati) {
-            setSelectedBusinessBranch(guwahati.id);
-        } else {
-            setSelectedBusinessBranch('all');
-        }
-    }
-  }, [branches, selectedBusinessBranch]);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
+  const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('all');
+  const [showLoanModal, setShowLoanModal] = useState(false);
 
   // Secure routing
   useEffect(() => {
@@ -108,14 +154,15 @@ export default function DashboardOverview() {
      const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
      
      entries.forEach(entry => {
-         const isAchievement = !entry.recordType || entry.recordType === 'achievement';
-         const isProjection = entry.recordType === 'projection';
+         const isProj = entry.recordType === 'projection';
+         const isAch = !entry.recordType || entry.recordType === 'achievement';
+         
+         const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+         const entryAch = isAch ? entry.items.reduce((sum, i) => sum + (Number(i.disbursedAmount) || 0), 0) : 0;
 
-         if (isProjection && entry.entryDate === selectedDate) {
-             projToday += entry.totalAmount;
+         if (isProj && entry.entryDate === selectedDate) {
+             projToday += entryProj;
          }
-
-         if (!isAchievement) return;
 
          const ed = new Date(entry.entryDate);
          const edYear = ed.getFullYear();
@@ -124,11 +171,11 @@ export default function DashboardOverview() {
          const edFyStart = edIsNewFY ? edYear : edYear - 1;
 
          if (edFyStart === sdFyStart && ed <= sd) {
-             ytd += entry.totalAmount;
+             ytd += entryAch;
              if (edMonth === sdMonth && edYear === sdYear) {
-                 mtd += entry.totalAmount;
+                 mtd += entryAch;
                  if (entry.entryDate === selectedDate) {
-                     ftd += entry.totalAmount;
+                     ftd += entryAch;
                  }
              }
          }
@@ -160,32 +207,27 @@ export default function DashboardOverview() {
           const b = branchMap.get(entry.branchId);
           if (!b) return;
 
-          const isAchievement = !entry.recordType || entry.recordType === 'achievement';
-          const isProjection = entry.recordType === 'projection';
+          const isProj = entry.recordType === 'projection';
+          const isAch = !entry.recordType || entry.recordType === 'achievement';
 
-          if (isAchievement) {
-              b.dailyAchievement += entry.totalAmount;
-              total += entry.totalAmount;
-          }
-          if (isProjection) {
-              b.dailyProjection += entry.totalAmount;
-          }
+          const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+          const entryAch = isAch ? entry.items.reduce((sum, i) => sum + (Number(i.disbursedAmount) || 0), 0) : 0;
+
+          b.dailyAchievement += entryAch;
+          b.dailyProjection += entryProj;
+          total += entryAch;
           
           if (selectedBusinessBranch === 'all' || selectedBusinessBranch === b.id) {
-              if (isAchievement) {
-                  entry.items.forEach(item => {
-                      catMap.set(item.category, (catMap.get(item.category) || 0) + item.amount);
-                  });
-              }
+              entry.items.forEach(item => {
+                  if (isAch) {
+                      catMap.set(item.category, (catMap.get(item.category) || 0) + (Number(item.disbursedAmount) || 0));
+                      b[`ach_${item.category}`] = (b[`ach_${item.category}`] || 0) + (Number(item.disbursedAmount) || 0);
+                  }
+                  if (isProj) {
+                      b[`proj_${item.category}`] = (b[`proj_${item.category}`] || 0) + (Number(item.amount) || 0);
+                  }
+              });
           }
-
-          entry.items.forEach(item => {
-              if (isProjection) {
-                  b[`proj_${item.category}`] = (b[`proj_${item.category}`] || 0) + item.amount;
-              } else if (isAchievement) {
-                  b[`ach_${item.category}`] = (b[`ach_${item.category}`] || 0) + item.amount;
-              }
-          });
      });
 
      const fb = Array.from(branchMap.values());
@@ -193,6 +235,50 @@ export default function DashboardOverview() {
 
      return { filteredBranches: fb, totalBusiness: total, businessByCategory: rbC };
   }, [filteredEntries, branches, selectedBusinessBranch]);
+
+  const loanFunnelData = useMemo(() => {
+     let loggedCount = 0, loggedVal = 0;
+     let sanctionedCount = 0, sanctionedVal = 0;
+     let disbursedCount = 0, disbursedVal = 0;
+
+     filteredEntries.forEach(entry => {
+         if (selectedBusinessBranch !== 'all' && entry.branchId !== selectedBusinessBranch) return;
+
+         const isAch = !entry.recordType || entry.recordType === 'achievement';
+         if (!isAch) return;
+
+         entry.items.forEach(item => {
+             if (item.category === 'Loan') {
+                 const amt = Number(item.amount) || 0;
+                 const sanc = Number(item.sanctionedAmount) || 0;
+                 const disb = Number(item.disbursedAmount) || 0;
+                 const status = item.fileStatus || '';
+
+                 loggedCount++;
+                 loggedVal += amt;
+
+                 if (sanc > 0 || disb > 0 || ['Sanctioned', 'Disbursed'].includes(status)) {
+                     sanctionedCount++;
+                     sanctionedVal += sanc > 0 ? sanc : amt;
+                 }
+
+                 if (disb > 0 || status === 'Disbursed') {
+                     disbursedCount++;
+                     disbursedVal += disb > 0 ? disb : (sanc > 0 ? sanc : amt);
+                 }
+             }
+         });
+     });
+
+     const sancPct = loggedCount > 0 ? ((sanctionedCount / loggedCount) * 100).toFixed(1) : '0.0';
+     const disbPct = sanctionedCount > 0 ? ((disbursedCount / sanctionedCount) * 100).toFixed(1) : '0.0';
+
+     return {
+         logged: { count: loggedCount, value: loggedVal },
+         sanctioned: { count: sanctionedCount, value: sanctionedVal, conversion: sancPct },
+         disbursed: { count: disbursedCount, value: disbursedVal, conversion: disbPct }
+     };
+  }, [filteredEntries, selectedBusinessBranch]);
 
   const activeCategories = useMemo(() => {
      return CATEGORIES.filter(c => 
@@ -255,32 +341,41 @@ export default function DashboardOverview() {
             <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
                 <button 
                   onClick={() => setViewMode('daily')}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
                 >Daily</button>
                 <button 
                   onClick={() => setViewMode('month')}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
                 >Month Wise</button>
                 <button 
                   onClick={() => setViewMode('year')}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
                 >Year Wise</button>
             </div>
             
-            <label 
-              className="flex items-center gap-2 bg-slate-900 dark:bg-black text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
-              onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
-            >
-              <Calendar className="w-4 h-4 text-indigo-400" />
-              <Input 
-                type="date" 
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-auto h-auto p-0 border-none bg-transparent text-xs text-white focus:ring-0 [&::-webkit-calendar-picker-indicator]:invert cursor-pointer"
-                style={{ colorScheme: 'dark' }}
-              />
-            </label>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden sm:inline-block ml-2 shrink-0">Select Date Tracker</span>
+            <div className="flex items-center gap-3">
+              <label 
+                className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
+                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+              >
+                <Calendar className="w-5 h-5 text-indigo-400" />
+                <Input 
+                  type="date" 
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
+                />
+                <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </span>
+                </div>
+              </label>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden lg:inline-block shrink-0">Select Date Tracker</span>
+            </div>
           </div>
         </div>
         <div className="flex gap-6 sm:gap-8">
@@ -355,13 +450,12 @@ export default function DashboardOverview() {
                     tick={{fill: '#94a3b8', fontSize: 11}} 
                     axisLine={false} 
                     tickLine={false} 
-                    tickFormatter={(value) => `₹${(value/1000).toLocaleString('en-IN')}k`} 
+                    tickFormatter={formatYAxis} 
                     width={60}
                 />
                 <RechartsTooltip 
-                    formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, name]} 
                     cursor={{fill: 'rgba(150,150,150,0.1)'}}
-                    contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}} 
+                    content={<CustomBarTooltip />}
                 />
                 
                 {/* Custom Legend */}
@@ -387,17 +481,21 @@ export default function DashboardOverview() {
             <Card className="flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
                 <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
-                <select 
-                    value={selectedBusinessBranch}
-                    onChange={(e) => setSelectedBusinessBranch(e.target.value)}
-                    className="text-[10px] bg-transparent dark:bg-[#0f172a] border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold cursor-pointer"
-                    style={{ colorScheme: 'dark' }}
-                >
-                    <option value="all" className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">All Branches</option>
-                    {branches.map(b => (
-                        <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">{b.name}</option>
-                    ))}
-                </select>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => setShowLoanModal(true)} className="px-2 py-1 text-[9px] bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 transition-colors rounded uppercase font-bold tracking-widest">
+                      Loan Funnel
+                    </button>
+                    <select 
+                        value={selectedBusinessBranch}
+                        onChange={(e) => setSelectedBusinessBranch(e.target.value)}
+                        className="text-[10px] bg-transparent dark:bg-[#0f172a] border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold cursor-pointer"
+                    >
+                        <option value="all" className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">All Branches</option>
+                        {branches.map(b => (
+                            <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">{b.name}</option>
+                        ))}
+                    </select>
+                </div>
               </CardHeader>
               <CardContent className="flex-1 flex justify-center items-center p-4">
                 <ResponsiveContainer width="100%" height="100%">
@@ -406,15 +504,19 @@ export default function DashboardOverview() {
                       data={businessByCategory}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
+                      innerRadius={90}
+                      outerRadius={140}
                       paddingAngle={5}
                       dataKey="value"
                       stroke="none"
+                      labelLine={false}
+                      isAnimationActive={false}
+                      label={renderCustomizedPieLabel}
                     >
-                      {businessByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
+                      {businessByCategory.map((entry, index) => {
+                        const color = CATEGORY_COLORS[entry.name]?.ach || '#94a3b8';
+                        return <Cell key={`cell-${index}`} fill={color} />
+                      })}
                     </Pie>
                     <RechartsTooltip 
                         formatter={(value: any) => `₹${Number(value || 0).toLocaleString('en-IN')}`}
@@ -424,16 +526,81 @@ export default function DashboardOverview() {
                 </ResponsiveContainer>
               </CardContent>
               <div className="px-6 pb-6 flex flex-wrap gap-4 justify-center mt-auto shrink-0 pt-4">
-                  {businessByCategory.map((entry, index) => (
-                      <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
-                          <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
-                          {entry.name}
-                      </div>
-                  ))}
+                  {businessByCategory.map((entry) => {
+                      const color = CATEGORY_COLORS[entry.name]?.ach || '#94a3b8';
+                      return (
+                          <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
+                              <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: color }}></span>
+                              {entry.name}
+                          </div>
+                      )
+                  })}
               </div>
             </Card>
         </div>
       </div>
+
+      {/* Loan Deep-Dive Modal */}
+      {showLoanModal && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-slate-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-3xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+               {/* Modal Header */}
+               <div className="px-6 py-4 bg-white dark:bg-black/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+                  <div className="flex flex-col">
+                      <h2 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Loan Conversion Pipeline</h2>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Timeframe: {viewMode} • Branch: {selectedBusinessBranch === 'all' ? 'Consolidated' : branches.find(b => b.id === selectedBusinessBranch)?.name}</p>
+                  </div>
+                  <button onClick={() => setShowLoanModal(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors">
+                      <X className="w-5 h-5" />
+                  </button>
+               </div>
+               {/* Modal Body with Funnel */}
+               <div className="p-8 overflow-y-auto flex-1 flex items-center justify-center">
+                   <div className="flex flex-col items-center w-full max-w-xl mx-auto py-4">
+                       
+                       {/* Stage 1: Logged */}
+                       <div className="w-full relative h-36 bg-gradient-to-b from-indigo-400 to-indigo-600 flex flex-col items-center justify-center text-white shadow-xl transition-all hover:scale-[1.02]" style={{ clipPath: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)' }}>
+                           <span className="text-xs font-bold uppercase tracking-widest opacity-90 mb-1">Logged</span>
+                           <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.logged.value.toLocaleString('en-IN')}</span>
+                           <span className="text-xs font-medium bg-black/20 px-2.5 py-1 rounded-md mt-2 shadow-inner">{loanFunnelData.logged.count} Applications</span>
+                       </div>
+
+                       {/* Conversion Arrow 1 */}
+                       <div className="h-16 flex items-center justify-center relative w-full my-1">
+                           <div className="w-0.5 h-full bg-slate-300 dark:bg-slate-700"></div>
+                           <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conversion</span>
+                              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{loanFunnelData.sanctioned.conversion}%</span>
+                           </div>
+                       </div>
+
+                       {/* Stage 2: Sanctioned */}
+                       <div className="w-[60%] relative h-36 bg-gradient-to-b from-emerald-400 to-emerald-600 flex flex-col items-center justify-center text-white shadow-xl transition-all hover:scale-[1.02]" style={{ clipPath: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)' }}>
+                           <span className="text-xs font-bold uppercase tracking-widest opacity-90 mb-1">Sanctioned</span>
+                           <span className="text-3xl font-mono font-bold tracking-tight">₹{loanFunnelData.sanctioned.value.toLocaleString('en-IN')}</span>
+                           <span className="text-[10px] font-medium bg-black/20 px-2.5 py-1 rounded-md mt-2 shadow-inner">{loanFunnelData.sanctioned.count} Approvals</span>
+                       </div>
+
+                       {/* Conversion Arrow 2 */}
+                       <div className="h-16 flex items-center justify-center relative w-full my-1">
+                           <div className="w-0.5 h-full bg-slate-300 dark:bg-slate-700"></div>
+                           <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conversion</span>
+                              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{loanFunnelData.disbursed.conversion}%</span>
+                           </div>
+                       </div>
+
+                       {/* Stage 3: Disbursed */}
+                       <div className="w-[36%] relative h-36 bg-gradient-to-b from-sky-400 to-sky-600 flex flex-col items-center justify-center text-white shadow-xl transition-all hover:scale-[1.02]" style={{ clipPath: 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                           <span className="text-[10px] font-bold uppercase tracking-widest opacity-90 mb-1">Disbursed</span>
+                           <span className="text-2xl font-mono font-bold tracking-tight">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
+                           <span className="text-[10px] font-medium bg-black/20 px-2 py-0.5 rounded-md mt-2 shadow-inner">{loanFunnelData.disbursed.count} Funded</span>
+                       </div>
+                   </div>
+               </div>
+            </div>
+         </div>
+      )}
     </>
   );
 }

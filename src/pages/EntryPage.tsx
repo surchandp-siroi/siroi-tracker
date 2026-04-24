@@ -280,7 +280,7 @@ export default function DataEntryTerminal() {
                           }
                       }
                   }
-                  return { ...p, product: prod, isManual: true, projectionAmt: p.projectionAmt || 0 };
+                  return { ...p, product: prod, isManual: true, projectionAmt: Number(p.amount) || 0, amount: Number(p.disbursedAmount) || 0 };
               });
               setStagedItems(parsed);
               setStagedFile(file);
@@ -781,7 +781,6 @@ export default function DataEntryTerminal() {
                            setDateStr(e.target.value + '-01');
                        }}
                        className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10 w-full pr-28"
-                        style={{ colorScheme: 'dark' }}
                     />
                 ) : (
                    <Input 
@@ -793,7 +792,6 @@ export default function DataEntryTerminal() {
                            setDateStr(e.target.value);
                        }}
                        className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10 w-full pr-28"
-                        style={{ colorScheme: 'dark' }}
                     />
                 )}
                     <span className="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 pointer-events-none">

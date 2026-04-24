@@ -141,18 +141,38 @@ export const useDataStore = create<DataState>((set) => ({
         return;
     }
 
-    let query = supabase.from('entries').select('*');
-    if (role === 'statehead' && branchId) {
-        query = query.eq('branchId', branchId);
-    } else if (role !== 'admin') {
+    if (role !== 'admin' && role !== 'statehead') {
         set({ isLoading: false });
-        return; // fallback
+        return;
     }
-    
-    // Initial fetch
+
     try {
-      const { data: initialEntries, error } = await query;
-      if (error) throw error;
+      let allEntries: BranchEntry[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+          let pageQuery = supabase.from('entries').select('*').range(page * pageSize, (page + 1) * pageSize - 1);
+          if (role === 'statehead' && branchId) {
+              pageQuery = pageQuery.eq('branchId', branchId);
+          }
+          
+          const { data, error } = await pageQuery;
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+              allEntries = [...allEntries, ...data] as any as BranchEntry[];
+          }
+          
+          if (!data || data.length < pageSize) {
+              hasMore = false;
+          } else {
+              page++;
+          }
+      }
+      
+      const initialEntries = allEntries;
       
       const computeStats = (entries: BranchEntry[]) => {
         const productBusiness: Record<string, number> = {};
@@ -196,8 +216,9 @@ export const useDataStore = create<DataState>((set) => ({
       computeStats((initialEntries || []) as any as BranchEntry[]);
 
       // Subscribe to changes
+      const channelName = `entries_changes_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       globalSubscription = supabase
-        .channel('entries_changes')
+        .channel(channelName)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'entries' },

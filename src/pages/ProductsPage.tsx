@@ -2,13 +2,19 @@ import { useDataStore } from '@/store/useDataStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, Input } from '@/components/ui';
 import { Calendar } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 export default function ProductsPage() {
   const { products, channels, branches, entries } = useDataStore();
   const { user } = useAuthStore();
 
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
   const [selectedBranch, setSelectedBranch] = useState('all');
   const [viewMode, setViewMode] = useState<'achievement' | 'projection'>('achievement');
 
@@ -22,7 +28,8 @@ export default function ProductsPage() {
 
   const { 
     ftdAchievement, mtdAchievement, ytdAchievement, productAchievement, categoryAchievement,
-    ftdProjection, mtdProjection, ytdProjection, productProjection, categoryProjection 
+    ftdProjection, mtdProjection, ytdProjection, productProjection, categoryProjection,
+    productAchievementCount, productProjectionCount, categoryAchievementCount, categoryProjectionCount
   } = useMemo(() => {
     let ftdA = 0, mtdA = 0, ytdA = 0;
     let ftdP = 0, mtdP = 0, ytdP = 0;
@@ -30,6 +37,11 @@ export default function ProductsPage() {
     const catMapA: Record<string, number> = {};
     const mapP: Record<string, number> = {};
     const catMapP: Record<string, number> = {};
+    
+    const mapACount: Record<string, number> = {};
+    const catMapACount: Record<string, number> = {};
+    const mapPCount: Record<string, number> = {};
+    const catMapPCount: Record<string, number> = {};
 
     const sd = new Date(selectedDate);
     const sdYear = sd.getFullYear();
@@ -38,10 +50,14 @@ export default function ProductsPage() {
     const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
 
     entries.forEach(entry => {
-      const isAchievement = !entry.recordType || entry.recordType === 'achievement';
-      
       const branchMatch = selectedBranch === 'all' || entry.branchId === selectedBranch;
       if (!branchMatch) return;
+
+      const isProj = entry.recordType === 'projection';
+      const isAch = !entry.recordType || entry.recordType === 'achievement';
+
+      const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+      const entryAch = isAch ? entry.items.reduce((sum, i) => sum + (Number(i.disbursedAmount) || 0), 0) : 0;
 
       const ed = new Date(entry.entryDate);
       const edYear = ed.getFullYear();
@@ -50,33 +66,50 @@ export default function ProductsPage() {
       const edFyStart = edIsNewFY ? edYear : edYear - 1;
 
       if (edFyStart === sdFyStart && ed <= sd) {
-          if (isAchievement) ytdA += entry.totalAmount;
-          else ytdP += entry.totalAmount;
+          ytdA += entryAch;
+          ytdP += entryProj;
           
           if (edMonth === sdMonth && edYear === sdYear) {
-              if (isAchievement) mtdA += entry.totalAmount;
-              else mtdP += entry.totalAmount;
+              mtdA += entryAch;
+              mtdP += entryProj;
               
               entry.items.forEach(item => {
-                 if (isAchievement) {
-                    if (item.product && item.product !== 'Grouped') mapA[item.product] = (mapA[item.product] || 0) + item.amount;
-                    if (item.category) catMapA[item.category] = (catMapA[item.category] || 0) + item.amount;
-                 } else {
-                    if (item.product && item.product !== 'Grouped') mapP[item.product] = (mapP[item.product] || 0) + item.amount;
-                    if (item.category) catMapP[item.category] = (catMapP[item.category] || 0) + item.amount;
-                 }
+                  const projAmt = Number(item.amount) || 0;
+                  const achAmt = Number(item.disbursedAmount) || 0;
+
+                  if (item.product && item.product !== 'Grouped') {
+                      if (isAch) {
+                          mapA[item.product] = (mapA[item.product] || 0) + achAmt;
+                          mapACount[item.product] = (mapACount[item.product] || 0) + 1;
+                      }
+                      if (isProj) {
+                          mapP[item.product] = (mapP[item.product] || 0) + projAmt;
+                          mapPCount[item.product] = (mapPCount[item.product] || 0) + 1;
+                      }
+                  }
+                  if (item.category) {
+                      if (isAch) {
+                          catMapA[item.category] = (catMapA[item.category] || 0) + achAmt;
+                          catMapACount[item.category] = (catMapACount[item.category] || 0) + 1;
+                      }
+                      if (isProj) {
+                          catMapP[item.category] = (catMapP[item.category] || 0) + projAmt;
+                          catMapPCount[item.category] = (catMapPCount[item.category] || 0) + 1;
+                      }
+                  }
               });
 
               if (entry.entryDate === selectedDate) {
-                  if (isAchievement) ftdA += entry.totalAmount;
-                  else ftdP += entry.totalAmount;
+                  ftdA += entryAch;
+                  ftdP += entryProj;
               }
           }
       }
     });
     return { 
         ftdAchievement: ftdA, mtdAchievement: mtdA, ytdAchievement: ytdA, productAchievement: mapA, categoryAchievement: catMapA,
-        ftdProjection: ftdP, mtdProjection: mtdP, ytdProjection: ytdP, productProjection: mapP, categoryProjection: catMapP
+        ftdProjection: ftdP, mtdProjection: mtdP, ytdProjection: ytdP, productProjection: mapP, categoryProjection: catMapP,
+        productAchievementCount: mapACount, productProjectionCount: mapPCount, categoryAchievementCount: catMapACount, categoryProjectionCount: catMapPCount
     };
   }, [entries, selectedDate, selectedBranch]);
 
@@ -96,14 +129,67 @@ export default function ProductsPage() {
   const currentYTD = viewMode === 'achievement' ? ytdAchievement : ytdProjection;
   const productData = viewMode === 'achievement' ? productAchievement : productProjection;
   const categoryData = viewMode === 'achievement' ? categoryAchievement : categoryProjection;
+  const productCountData = viewMode === 'achievement' ? productAchievementCount : productProjectionCount;
+  const categoryCountData = viewMode === 'achievement' ? categoryAchievementCount : categoryProjectionCount;
+
+  const getCountLabel = (category: string, count: number) => {
+    switch (category) {
+        case 'Loan': return `${count} Logins`;
+        case 'Insurance': return `${count} Policies`;
+        case 'Forex': return `${count} Txns`;
+        case 'Investments': return `${count} SIP/MFs`;
+        default: return `${count} Records`;
+    }
+  };
 
   // Group products by category
   const loanProducts = products.filter(p => p.category === 'Loan');
   const insuranceProducts = products.filter(p => p.category === 'Insurance');
   const forexProducts = products.filter(p => p.category === 'Forex');
   const consultancyProducts = products.filter(p => p.category === 'Consultancy');
+  const investmentProducts = products.filter(p => p.category === 'Investments');
 
   const getCategoryTotal = (catName: string) => categoryData[catName] || 0;
+
+  const categoryCards = [
+    {
+      id: 'Loan',
+      title: 'Loan Portfolio',
+      colorClass: 'text-indigo-600 dark:text-indigo-400',
+      total: getCategoryTotal('Loan'),
+      products: loanProducts,
+    },
+    {
+      id: 'Insurance',
+      title: 'Insurance Plans',
+      colorClass: 'text-amber-600 dark:text-amber-400',
+      total: getCategoryTotal('Insurance'),
+      products: insuranceProducts,
+    },
+    {
+      id: 'Forex',
+      title: 'Forex Services',
+      colorClass: 'text-emerald-600 dark:text-emerald-400',
+      total: getCategoryTotal('Forex'),
+      products: forexProducts,
+    },
+    {
+      id: 'Consultancy',
+      title: 'Consultancy Services',
+      colorClass: 'text-sky-600 dark:text-sky-400',
+      total: getCategoryTotal('Consultancy'),
+      products: consultancyProducts,
+    },
+    {
+      id: 'Investments',
+      title: 'Investments',
+      colorClass: 'text-purple-600 dark:text-purple-400',
+      total: getCategoryTotal('Investments'),
+      products: investmentProducts,
+    }
+  ];
+
+  const sortedCategoryCards = [...categoryCards].sort((a, b) => b.total - a.total);
 
   const displayBranches = branches.filter(b => b.name !== 'Test Branch' && b.name !== 'HO');
 
@@ -119,13 +205,13 @@ export default function ProductsPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-slate-900 dark:bg-black rounded-lg border border-slate-800 p-1">
+            <div className="flex items-center bg-slate-100 dark:bg-black rounded-lg border border-slate-200 dark:border-slate-800 p-1">
               <button
                 onClick={() => setViewMode('achievement')}
                 className={`px-3 py-1 text-xs font-bold uppercase rounded-md transition-colors ${
                   viewMode === 'achievement'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'text-slate-500 hover:text-white'
+                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                    : 'text-slate-500 hover:text-emerald-600 dark:hover:text-white'
                 }`}
               >
                 Achieved
@@ -134,22 +220,34 @@ export default function ProductsPage() {
                 onClick={() => setViewMode('projection')}
                 className={`px-3 py-1 text-xs font-bold uppercase rounded-md transition-colors ${
                   viewMode === 'projection'
-                    ? 'bg-indigo-500/20 text-indigo-400'
-                    : 'text-slate-500 hover:text-white'
+                    ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                    : 'text-slate-500 hover:text-indigo-600 dark:hover:text-white'
                 }`}
               >
                 Projected
               </button>
             </div>
-            <div className="flex items-center gap-2 bg-slate-900 dark:bg-black text-white px-3 py-1.5 rounded-lg border border-slate-800 shadow-sm">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-auto h-auto p-0 border-none bg-transparent text-xs text-white focus:ring-0 [&::-webkit-calendar-picker-indicator]:invert cursor-pointer"
-                style={{ colorScheme: 'dark' }}
-              />
+            <div className="flex items-center gap-3">
+              <label 
+                className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
+                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+              >
+                <Calendar className="w-5 h-5 text-indigo-400" />
+                <Input 
+                  type="date" 
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white focus:ring-0 cursor-pointer"
+                />
+                <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </span>
+                </div>
+              </label>
             </div>
           </div>
         </div>
@@ -214,7 +312,7 @@ export default function ProductsPage() {
           className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
             selectedBranch === 'all'
               ? 'bg-indigo-500 text-white shadow-sm'
-              : 'text-slate-500 dark:text-slate-400 hover:text-white hover:bg-white/5'
+              : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }`}
         >
           Consolidated
@@ -226,7 +324,7 @@ export default function ProductsPage() {
             className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
               selectedBranch === b.id
                 ? 'bg-indigo-500 text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-white hover:bg-white/5'
+                : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
             }`}
           >
             {b.name}
@@ -235,78 +333,34 @@ export default function ProductsPage() {
       </div>
 
       {/* Product Category Grids */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Loan Portfolio */}
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Loan Portfolio</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Loan').toLocaleString('en-IN')}</span>
-          </CardHeader>
-          {viewMode === 'projection' && (
-            <CardContent className="p-0">
-              {loanProducts.map(p => (
-                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
-                </div>
-              ))}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {sortedCategoryCards.map(cat => (
+          <Card key={cat.id} className="border-slate-900/10 dark:border-white/10 flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between py-3 border-b border-slate-900/10 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${cat.colorClass}`}>{cat.title}</span>
+              <div className="flex flex-col items-end">
+                <span className="text-xs font-mono font-bold text-emerald-400">₹{cat.total.toLocaleString('en-IN')}</span>
+                <span className="text-[9px] text-slate-500 font-medium">{getCountLabel(cat.id, categoryCountData[cat.id] || 0)}</span>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1">
+              {cat.products.map(p => {
+                const pValue = productData[p.name] || 0;
+                const pCount = productCountData[p.name] || 0;
+                if (pValue === 0 && pCount === 0) return null; // Hide 0 value products for cleaner UI
+                return (
+                  <div key={p.id} className="flex items-center justify-between px-3 py-2.5 border-b border-slate-900/5 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                    <span className="text-[10px] uppercase font-bold text-slate-800 dark:text-slate-300 w-1/2 pr-2 leading-tight">{p.name}</span>
+                    <div className="flex flex-col items-end justify-center">
+                      <span className="text-xs font-mono font-bold text-emerald-500 dark:text-emerald-400 leading-none">₹{pValue.toLocaleString('en-IN')}</span>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-wider">{getCountLabel(cat.id, pCount)}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </CardContent>
-          )}
-        </Card>
-
-        {/* Insurance Plans */}
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Insurance Plans</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Insurance').toLocaleString('en-IN')}</span>
-          </CardHeader>
-          {viewMode === 'projection' && (
-            <CardContent className="p-0">
-              {insuranceProducts.map(p => (
-                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
-                </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Forex Services */}
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Forex Services</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Forex').toLocaleString('en-IN')}</span>
-          </CardHeader>
-          {viewMode === 'projection' && (
-            <CardContent className="p-0">
-              {forexProducts.map(p => (
-                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
-                </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-
-        {/* Consultancy Services */}
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between py-3 border-slate-900/10 dark:border-white/10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">Consultancy Services</span>
-            <span className="text-xs font-mono font-bold text-emerald-400">₹{getCategoryTotal('Consultancy').toLocaleString('en-IN')}</span>
-          </CardHeader>
-          {viewMode === 'projection' && (
-            <CardContent className="p-0">
-              {consultancyProducts.map(p => (
-                <div key={p.id} className="flex items-center justify-between px-5 py-3 border-t border-slate-900/5 dark:border-white/5">
-                  <span className="text-sm text-slate-800 dark:text-slate-200">{p.name}</span>
-                  <span className="text-sm font-mono text-emerald-500 dark:text-emerald-400">₹{(productData[p.name] || 0).toLocaleString('en-IN')}</span>
-                </div>
-              ))}
-            </CardContent>
-          )}
-        </Card>
+          </Card>
+        ))}
       </div>
     </>
   );
