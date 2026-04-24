@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 
-export type ProductCategory = 'Loan' | 'Insurance' | 'Forex' | 'Consultancy';
+export type ProductCategory = 'Loan' | 'Insurance' | 'Forex' | 'Consultancy' | 'Investments';
 
 export interface Product {
   id: string;
@@ -96,6 +96,7 @@ const staticProducts: Omit<Product, 'business'>[] = [
   { id: 'p9', name: 'Outward Remittance', category: 'Forex' },
   { id: 'p10', name: 'GST filing', category: 'Consultancy' },
   { id: 'p11', name: 'ITR filing', category: 'Consultancy' },
+  { id: 'p12', name: 'SIP & Mutual Fund', category: 'Investments' },
 ];
 
 interface DataState {

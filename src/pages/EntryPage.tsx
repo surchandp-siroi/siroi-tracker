@@ -21,7 +21,7 @@ export default function DataEntryTerminal() {
       const today = new Date().toISOString().split('T')[0];
       return today >= '2026-01-01' ? today : '2026-01-01';
   });
-  const [recordType, setRecordType] = useState<'projection' | 'achievement'>('achievement');
+  
   const [items, setItems] = useState<EntryItem[]>([]);
   const [smartPrompt, setSmartPrompt] = useState<string>('');
   const [isParsing, setIsParsing] = useState(false);
@@ -89,7 +89,7 @@ export default function DataEntryTerminal() {
   useEffect(() => {
       if (!activeBranchId) return;
       
-      const cacheKey = `${activeBranchId}_${dateStr}_${entryMode}_${recordType}`;
+      const cacheKey = `${activeBranchId}_${dateStr}_${entryMode}`;
       
       const fetchContext = async () => {
           setIsLoadingExisting(true);
@@ -124,7 +124,7 @@ export default function DataEntryTerminal() {
                 .eq('branchId', activeBranchId)
                 .eq('entryDate', dateStr)
                 .eq('mode', entryMode)
-                .eq('recordType', recordType);
+                ;
                 
               const timeoutPromise = new Promise((_, reject) => 
                   setTimeout(() => reject(new Error('TIMEOUT')), 3000)
@@ -140,63 +140,8 @@ export default function DataEntryTerminal() {
                   setCurrentEntryId(data.id);
                   setEntryCreatedAt(data.createdAt || null);
               } else {
-                  // If it's an achievement and no entry exists, auto-populate from projection
-                  if (recordType === 'achievement') {
-                      const projKey = `${activeBranchId}_${dateStr}_${entryMode}_projection`;
-                      let projData = fetchCache.current[projKey];
-                      
-                      if (!projData || projData.empty) {
-                          const pFetchPromise = supabase
-                            .from('entries')
-                            .select('*')
-                            .eq('branchId', activeBranchId)
-                            .eq('entryDate', dateStr)
-                            .eq('mode', entryMode)
-                            .eq('recordType', 'projection');
-                            
-                          const { data: pSnap } = await Promise.race([pFetchPromise, timeoutPromise]) as any;
-                          
-                          if (pSnap && pSnap.length > 0) {
-                              projData = pSnap[0];
-                              fetchCache.current[projKey] = projData;
-                          } else {
-                              fetchCache.current[projKey] = { empty: true, items: [] };
-                          }
-                      }
-                      
-                      if (projData && !projData.empty && projData.items && projData.items.length > 0) {
-                          const grouped = new Map<string, any>();
-                          projData.items.forEach((pItem: any) => {
-                              const key = `${pItem.staffName}_${pItem.category}`;
-                              if (!grouped.has(key)) {
-                                  grouped.set(key, {
-                                      date: dateStr,
-                                      staffName: pItem.staffName,
-                                      customerName: 'Grouped', // dummy
-                                      category: pItem.category,
-                                      product: 'Grouped', // dummy
-                                      channel: 'Grouped', // dummy
-                                      amount: 0, // achievement starts at 0
-                                      status: 'Grouped', // dummy
-                                      projectionAmt: Number(pItem.amount) || 0
-                                  });
-                              } else {
-                                  const existing = grouped.get(key);
-                                  existing.projectionAmt += (Number(pItem.amount) || 0);
-                              }
-                          });
-                          
-                          const newItems = Array.from(grouped.values());
-                          fetchCache.current[cacheKey] = { empty: true, items: newItems };
-                          setItems(newItems as any);
-                      } else {
-                          fetchCache.current[cacheKey] = { empty: true, items: [] };
-                          setItems([]);
-                      }
-                  } else {
-                      fetchCache.current[cacheKey] = { empty: true, items: [] };
-                      setItems([]);
-                  }
+                  fetchCache.current[cacheKey] = { empty: true, items: [] };
+                  setItems([]);
                   
                   setHasExistingEntry(false);
                   setCurrentEntryId(null);
@@ -212,7 +157,7 @@ export default function DataEntryTerminal() {
           }
       };
       fetchContext();
-  }, [activeBranchId, dateStr, entryMode, recordType, branches]);
+  }, [activeBranchId, dateStr, entryMode, branches]);
 
   const processFile = async (file: File) => {
       if (!import.meta.env.VITE_GEMINI_API_KEY) {
@@ -268,7 +213,7 @@ export default function DataEntryTerminal() {
             - "date": Map to Login Date (format YYYY-MM-DD). Use the specific date for the row. Do NOT assume a global date.
             - "staffName": string
             - "customerName": string
-            - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy"].
+            - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy", "Investments"].
             - "product": Must be one of: ${products.map((p: any) => p.name).join(', ')}
             - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty if not applicable.
             - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC if Insurance.
@@ -278,10 +223,10 @@ export default function DataEntryTerminal() {
             - "emailId": string
             - "customerAddress": string
             - "firmName": string
-            - "amount": Positive number (Login Amount).
+            - "amount": Positive number. Extract directly from the "Login Amount" or "Login Amt" column. This serves as the Projection.
             - "fileStatus": string
             - "sanctionedAmount": number
-            - "disbursedAmount": number
+            - "disbursedAmount": Positive number. Extract directly from the "Disbursed Amount" or "Disbursed Amt" column. This serves as the Achievement.
             - "disbursedDate": string
             - "emiDate": string
             - "repaymentBank": string
@@ -426,18 +371,7 @@ export default function DataEntryTerminal() {
       }
       
       // 11:00 AM restriction check for Projections (Post May 15, 2026)
-      if (recordType === 'projection') {
-          const now = new Date();
-          // Convert to IST: UTC + 5:30
-          const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
-          const istTime = new Date(utcMs + (330 * 60000));
-          const isPast11AM_IST = istTime.getHours() > 11 || (istTime.getHours() === 11 && istTime.getMinutes() > 0);
-          
-          if (isPast11AM_IST && new Date() > new Date('2026-05-15T00:00:00Z')) {
-             setError("Daily Projections must be submitted before 11:00 AM IST.");
-             return;
-          }
-      }
+      // 11:00 AM restriction check removed due to unified entry logic
       
       if (items.length === 0) {
           setError("Please add at least one line item.");
@@ -454,36 +388,25 @@ export default function DataEntryTerminal() {
               setError(`Row ${i + 1} is missing Category. Please select one before logging.`);
               return;
           }
-          if (recordType === 'projection') {
-              if (!item.customerName || !item.customerName.trim()) {
-                  setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
-                  return;
-              }
-              if (!item.product) {
-                  setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
-                  return;
-              }
-              if (!item.channel) {
-                  setError(`Row ${i + 1} is missing Bank Name / Channel. Please select one before logging.`);
-                  return;
-              }
-              if (item.amount <= 0) {
-                  setError(`Row ${i + 1} requires a Login amount greater than 0.`);
-                  return;
-              }
-              if (!item.fileStatus || !item.fileStatus.trim()) {
-                  setError(`Row ${i + 1} is missing File Status. Please fill it before logging.`);
-                  return;
-              }
-          } else {
-              if (item.amount < 0) {
-                  setError(`Row ${i + 1} requires a valid achieved amount.`);
-                  return;
-              }
-              if (item.isManual && (item.projectionAmt === undefined || item.projectionAmt < 0)) {
-                  setError(`Row ${i + 1} requires a valid projection amount.`);
-                  return;
-              }
+          if (!item.customerName || !item.customerName.trim()) {
+              setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
+              return;
+          }
+          if (!item.product) {
+              setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
+              return;
+          }
+          if (!item.channel) {
+              setError(`Row ${i + 1} is missing Bank Name / Channel. Please select one before logging.`);
+              return;
+          }
+          if ((item.amount || 0) < 0 || (item.disbursedAmount || 0) < 0) {
+              setError(`Row ${i + 1} requires valid amounts (>= 0).`);
+              return;
+          }
+          if (!item.fileStatus || !item.fileStatus.trim()) {
+              setError(`Row ${i + 1} is missing File Status. Please fill it before logging.`);
+              return;
           }
       }
 
@@ -498,7 +421,7 @@ export default function DataEntryTerminal() {
               branchId: activeBranchId,
               entryDate: dateStr,
               mode: entryMode,
-              recordType: recordType,
+              
               items: items,
               totalAmount,
               authorId: user?.id,
@@ -513,7 +436,7 @@ export default function DataEntryTerminal() {
             .eq('branchId', activeBranchId)
             .eq('entryDate', dateStr)
             .eq('mode', entryMode)
-            .eq('recordType', recordType)
+            
             .limit(1);
 
           let savedId: string | null = null;
@@ -652,7 +575,7 @@ export default function DataEntryTerminal() {
                 .eq('branchId', activeBranchId)
                 .eq('entryDate', rowDate)
                 .eq('mode', entryMode)
-                .eq('recordType', recordType)
+                
                 .limit(1);
                 
               let mergedItems = rItems;
@@ -692,7 +615,7 @@ export default function DataEntryTerminal() {
                   branchId: activeBranchId,
                   entryDate: rowDate,
                   mode: entryMode,
-                  recordType: recordType,
+                  
                   items: mergedItems,
                   totalAmount: mergedTotal,
                   authorId: user?.id,
@@ -743,21 +666,18 @@ export default function DataEntryTerminal() {
       }
   };
 
-  const isFieldMissing = (item: any, field: string) => {
-      if (!item.isManual) return false;
-      if (field === 'staffName' && (!item.staffName || !item.staffName.trim())) return true;
-      if (field === 'category' && !item.category) return true;
-      if (recordType === 'projection') {
-          if (field === 'customerName' && (!item.customerName || !item.customerName.trim())) return true;
-          if (field === 'product' && !item.product) return true;
-          if (field === 'channel' && !item.channel) return true;
-          if (field === 'amount' && (!item.amount || item.amount <= 0)) return true;
-          if (field === 'fileStatus' && (!item.fileStatus || !item.fileStatus.trim())) return true;
-      } else {
-          if (field === 'amount' && (item.amount === undefined || item.amount < 0)) return true;
-      }
-      return false;
-  };
+  
+    const isFieldMissing = (item: any, field: string) => {
+        if (!item.isManual) return false;
+        if (field === 'staffName' && !item.staffName) return true;
+        if (field === 'category' && !item.category) return true;
+        if (field === 'product' && !item.product) return true;
+        if (field === 'channel' && !item.channel) return true;
+        if (field === 'customerName' && !item.customerName) return true;
+        if (field === 'amount' && (item.amount === undefined || item.amount === null)) return true;
+        if (field === 'fileStatus' && !item.fileStatus) return true;
+        return false;
+    };
 
   return (
     <div className="min-h-screen p-4 md:p-8 flex flex-col w-full">
@@ -860,28 +780,6 @@ export default function DataEntryTerminal() {
                        style={{ colorScheme: 'dark' }}
                    />
                )}
-           </div>
-
-           <div className="flex-1 min-w-[200px]">
-               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
-                   Record Type
-               </label>
-               <div className="flex bg-slate-900/5 dark:bg-black/40 p-1 rounded-md">
-                   <button 
-                       className={`flex-1 text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'projection' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                       onClick={() => {
-                           if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
-                           setRecordType('projection');
-                       }}
-                   >Projection</button>
-                   <button 
-                       className={`flex-1 text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest transition-colors ${recordType === 'achievement' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                       onClick={() => {
-                           if (isDirty && !window.confirm("You have unsaved rows. Switching type will discard them. Continue?")) return;
-                           setRecordType('achievement');
-                       }}
-                   >Achievement</button>
-               </div>
            </div>
 
            <div className="flex-[2] min-w-[300px] flex items-end gap-2">
@@ -1314,7 +1212,7 @@ export default function DataEntryTerminal() {
                     {success && <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-white dark:bg-slate-900 border border-emerald-500/20 px-4 py-3 rounded-lg shadow-xl shadow-emerald-500/10">{success}</div>}
                 </div>
                 
-                {hasExistingEntry && (recordType === 'achievement' ? isExecutive : (allowDeletion || isExecutive)) && (
+                {hasExistingEntry && ((allowDeletion || isExecutive)) && (
                      <Button 
                         variant="danger" 
                         onClick={() => { 
@@ -1329,7 +1227,7 @@ export default function DataEntryTerminal() {
                      </Button>
                 )}
                 
-                {canModify && (recordType === 'achievement' ? isExecutive : true) && (
+                {canModify && (true) && (
                      <Button variant="secondary" onClick={() => {
                          if (items.length === 0) {
                              setShowContextModal(true);
@@ -1456,19 +1354,19 @@ export default function DataEntryTerminal() {
                             <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
                                 <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Login Date</TableHead>
                                 <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Category *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Product {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Product *</TableHead>
                                 <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Relationship Manager Name</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">File Login</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Channel Partner {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Channel Partner *</TableHead>
                                 <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Branch Location</TableHead>
-                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Customer Name {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Customer Name *</TableHead>
                                 <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">DOB</TableHead>
                                 <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Phone No.</TableHead>
                                 <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Email ID</TableHead>
                                 <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Customer Address</TableHead>
                                 <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Firm Name</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Login Amt *</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">File Status {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">File Status *</TableHead>
                                 <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Sanctioned (₹)</TableHead>
                                 <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Disbursed (₹)</TableHead>
                                 <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Disbursed Dt</TableHead>
@@ -1702,23 +1600,7 @@ export default function DataEntryTerminal() {
                        )}
                    </div>
 
-                   {/* Record Type */}
-                   <div>
-                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                           Record Type
-                       </label>
-                       <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-md">
-                           <button 
-                               className={`flex-1 text-xs font-bold px-3 py-2 rounded-md uppercase tracking-widest transition-colors ${recordType === 'projection' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                               onClick={() => setRecordType('projection')}
-                           >Projection</button>
-                           <button 
-                               className={`flex-1 text-xs font-bold px-3 py-2 rounded-md uppercase tracking-widest transition-colors ${recordType === 'achievement' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                               onClick={() => setRecordType('achievement')}
-                           >Achievement</button>
-                       </div>
                    </div>
-               </div>
                <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                   <Button variant="secondary" onClick={() => setShowContextModal(false)} className="flex-1">Cancel</Button>
                   <Button onClick={() => { setShowContextModal(false); if(items.length===0) handleAddItem(); }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">Start Entry</Button>

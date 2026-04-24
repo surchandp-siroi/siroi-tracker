@@ -20,6 +20,7 @@ const CATEGORY_COLORS: Record<string, { proj: string, ach: string }> = {
     'Insurance': { proj: 'rgba(110, 231, 183, 0.3)', ach: '#6ee7b7' }, // emerald-300
     'Forex': { proj: 'rgba(125, 211, 252, 0.3)', ach: '#7dd3fc' }, // sky-300
     'Consultancy': { proj: 'rgba(196, 181, 253, 0.3)', ach: '#c4b5fd' }, // violet-300
+    'Investments': { proj: 'rgba(253, 224, 71, 0.3)', ach: '#fde047' }, // yellow-300
 };
 
 const CATEGORIES = Object.keys(CATEGORY_COLORS);
