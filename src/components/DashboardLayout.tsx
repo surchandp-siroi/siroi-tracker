@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users } from 'lucide-react';
+import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 
 const navItems = [
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/dashboard/channels', label: 'Channels', icon: Network },
   { to: '/dashboard/branches', label: 'Branches', icon: GitBranch },
   { to: '/dashboard/organigram', label: 'Organigram', icon: Users, adminOnly: true },
+  { to: '/dashboard/audit', label: 'Audit Logs', icon: ShieldAlert, adminOnly: true },
 ];
 
 export default function DashboardLayout() {

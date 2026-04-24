@@ -9,6 +9,7 @@ import ChannelsPage from '@/pages/ChannelsPage';
 import BranchesPage from '@/pages/BranchesPage';
 import OrganigramPage from '@/pages/OrganigramPage';
 import EntryPage from '@/pages/EntryPage';
+import AuditLogsPage from '@/pages/AuditLogsPage';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="channels" element={<ChannelsPage />} />
             <Route path="branches" element={<BranchesPage />} />
             <Route path="organigram" element={<OrganigramPage />} />
+            <Route path="audit" element={<AuditLogsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

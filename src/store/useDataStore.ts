@@ -53,6 +53,7 @@ export interface EntryItem {
     emiDate?: string;
     repaymentBank?: string;
     managerName?: string;
+    relationshipManagerName?: string;
     consultantName?: string;
 }
 

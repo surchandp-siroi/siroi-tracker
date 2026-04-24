@@ -30,6 +30,13 @@ export default function DataEntryTerminal() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [stagedItems, setStagedItems] = useState<EntryItem[]>([]);
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
+  const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
+  const [lodgeName, setLodgeName] = useState('');
+  const [lodgeEmail, setLodgeEmail] = useState('');
   
   const [hasExistingEntry, setHasExistingEntry] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
@@ -214,11 +221,31 @@ export default function DataEntryTerminal() {
       }
       
       setIsParsing(true);
+      setUploadProgress(0);
       setError('');
       
       try {
-          const buffer = await file.arrayBuffer();
+          // Asynchronous reading to unblock UI thread
+          const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onprogress = (e) => {
+                  if (e.lengthComputable) {
+                      const percent = Math.round((e.loaded / e.total) * 30); // Reading is 30%
+                      setUploadProgress(percent);
+                  }
+              };
+              reader.onload = () => resolve(reader.result as ArrayBuffer);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsArrayBuffer(file);
+          });
+          
+          setUploadProgress(40);
+          await new Promise(resolve => setTimeout(resolve, 50)); // Yield thread to allow UI to update
+
           const workbook = XLSX.read(buffer, { type: 'array' });
+          setUploadProgress(50);
+          await new Promise(resolve => setTimeout(resolve, 50)); // Yield thread
+          
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
@@ -229,6 +256,8 @@ export default function DataEntryTerminal() {
               return;
           }
 
+          setUploadProgress(60);
+          
           const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
           const prompt = `
             You are a strict data extraction AI. Extract financial entry data from the following raw JSON representing an uploaded Excel/CSV file.
@@ -263,19 +292,39 @@ export default function DataEntryTerminal() {
             ${JSON.stringify(json).substring(0, 50000)} // Limiting to ~50k chars to avoid token limits
           `;
           
+          setUploadProgress(70);
           const response = await ai.models.generateContent({
              model: 'gemini-2.5-flash',
              contents: prompt,
           });
+          setUploadProgress(90);
           
           const text = response.text || "[]";
-          const _clean = text.replace(new RegExp('\`\`\`json', 'g'), '').replace(new RegExp('\`\`\`', 'g'), '').trim();
+          const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
           let parsed = JSON.parse(_clean);
           
+          setUploadProgress(100);
+
           if (Array.isArray(parsed) && parsed.length > 0) {
-              // Mark them as manual/imported so they can be modified
-              parsed = parsed.map((p: any) => ({ ...p, isManual: true, projectionAmt: p.projectionAmt || 0 }));
-              setItems(prev => [...prev, ...parsed]);
+              // STRICT SEPARATION: Set staged items and open modal
+              parsed = parsed.map((p: any) => {
+                  let prod = p.product || '';
+                  if (prod) {
+                      const plMatch = prod.match(/^PL\s*(.*)$/i);
+                      if (plMatch) {
+                          prod = plMatch[1] ? `Personal Loan (${plMatch[1].trim()})` : "Personal Loan";
+                      } else {
+                          const blMatch = prod.match(/^BL\s*(.*)$/i);
+                          if (blMatch) {
+                              prod = blMatch[1] ? `Business Loan (${blMatch[1].trim()})` : "Business Loan";
+                          }
+                      }
+                  }
+                  return { ...p, product: prod, isManual: true, projectionAmt: p.projectionAmt || 0 };
+              });
+              setStagedItems(parsed);
+              setStagedFile(file);
+              setIsStagingModalOpen(true);
           } else {
               setError("Could not extract valid entries from the file.");
           }
@@ -284,6 +333,8 @@ export default function DataEntryTerminal() {
           setError("Failed to process file. Ensure it's a valid Excel/CSV with readable data.");
       } finally {
           setIsParsing(false);
+          // Wait briefly before resetting progress so user sees 100%
+          setTimeout(() => setUploadProgress(0), 1000);
       }
   };
 
@@ -554,6 +605,127 @@ export default function DataEntryTerminal() {
       }
   };
 
+  const handleBulkSubmit = async () => {
+      if (!stagedFile || stagedItems.length === 0) return;
+      if (!activeBranchId) {
+          setError("You do not have a branch assigned yet. Contact Administrator.");
+          return;
+      }
+      
+      setIsBulkSubmitting(true);
+      setError('');
+      setSuccess('');
+      
+      try {
+          const fileExt = stagedFile.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('bulk_uploads')
+              .upload(fileName, stagedFile);
+              
+          if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
+          
+          const fileUrl = uploadData.path;
+          
+          const { error: auditError } = await supabase
+              .from('upload_audit_logs')
+              .insert({
+                  filename: stagedFile.name,
+                  uploaded_by: lodgeName,
+                  email_id: lodgeEmail,
+                  file_url: fileUrl
+              });
+              
+          if (auditError) throw new Error(`Audit log failed: ${auditError.message}`);
+          
+          const itemsByDate = new Map<string, EntryItem[]>();
+          stagedItems.forEach(item => {
+              const d = item.date || dateStr;
+              if (!itemsByDate.has(d)) itemsByDate.set(d, []);
+              itemsByDate.get(d)!.push(item);
+          });
+          
+          for (const [rowDate, rItems] of itemsByDate.entries()) {
+              const { data: existing } = await supabase
+                .from('entries')
+                .select('id, items')
+                .eq('branchId', activeBranchId)
+                .eq('entryDate', rowDate)
+                .eq('mode', entryMode)
+                .eq('recordType', recordType)
+                .limit(1);
+                
+              let mergedItems = rItems;
+              let existingId = undefined;
+
+              if (existing && existing.length > 0) {
+                  existingId = existing[0].id;
+                  const existingItems = existing[0].items || [];
+                  const existingPhones = new Set(existingItems.map((i: any) => i.phoneNumber).filter(Boolean));
+                  const duplicateFound = rItems.some((i: any) => i.phoneNumber && existingPhones.has(i.phoneNumber));
+                  
+                  if (duplicateFound) {
+                      if (!window.confirm(`Duplicate records found for ${rowDate}. Proceeding will overwrite existing data. Continue?`)) {
+                          continue;
+                      }
+                  }
+                  
+                  mergedItems = [...existingItems];
+                  rItems.forEach((newItem: any) => {
+                      let replaced = false;
+                      for (let i = 0; i < mergedItems.length; i++) {
+                          const existingItem = mergedItems[i];
+                          if (newItem.phoneNumber && existingItem.phoneNumber === newItem.phoneNumber) {
+                              mergedItems[i] = newItem;
+                              replaced = true;
+                              break;
+                          }
+                      }
+                      if (!replaced) {
+                          mergedItems.push(newItem);
+                      }
+                  });
+              }
+              
+              const mergedTotal = mergedItems.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+              const payload = {
+                  branchId: activeBranchId,
+                  entryDate: rowDate,
+                  mode: entryMode,
+                  recordType: recordType,
+                  items: mergedItems,
+                  totalAmount: mergedTotal,
+                  authorId: user?.id,
+                  authorEmail: user?.email,
+                  location: user?.latestLocation || null,
+              };
+
+              if (existingId) {
+                  const { error: upsertError } = await supabase
+                    .from('entries')
+                    .upsert({ ...payload, id: existingId }, { onConflict: 'id' });
+                  if (upsertError) throw new Error(upsertError.message);
+              } else {
+                  const { error: upsertError } = await supabase
+                    .from('entries')
+                    .upsert({ ...payload, createdAt: new Date().toISOString() });
+                  if (upsertError) throw new Error(upsertError.message);
+              }
+          }
+          
+          setSuccess("Bulk upload successfully lodged to respective dates.");
+          setIsStagingModalOpen(false);
+          setStagedItems([]);
+          setStagedFile(null);
+          
+      } catch(e: any) {
+          console.error("Bulk submit error:", e);
+          setError(e.message || "Failed to lodge bulk upload.");
+      } finally {
+          setIsBulkSubmitting(false);
+      }
+  };
+
   if (!isInitialized || !user) {
       return <div className="min-h-screen flex items-center justify-center text-slate-500"><Loader2 className="animate-spin mr-2" /> Initializing Identity...</div>;
   }
@@ -599,6 +771,9 @@ export default function DataEntryTerminal() {
                 </div>
             </div>
             <div className="flex items-center gap-4">
+                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => navigate('/audit-logs')}>
+                    Audit Logs
+                </Button>
                 <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { logout(); navigate('/login'); }}>
                     <LogOut size={14} className="mr-2" /> Log Out
                 </Button>
@@ -722,7 +897,7 @@ export default function DataEntryTerminal() {
                         ${!canModify || isParsing ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400 opacity-50 cursor-not-allowed' : isDragging ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-500 text-indigo-800 dark:text-indigo-200 shadow-sm scale-[1.02]' : 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
                     >
                         {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : <FileSpreadsheet className="w-4 h-4" />}
-                        {isParsing ? 'Processing File...' : isDragging ? 'Drop File Here' : 'Drag & Drop or Select Excel/CSV'}
+                        {isParsing ? `Processing File... ${uploadProgress}%` : isDragging ? 'Drop File Here' : 'Drag & Drop or Select Excel/CSV'}
                        <input 
                            type="file" 
                            accept=".xlsx, .xls, .csv" 
@@ -765,28 +940,29 @@ export default function DataEntryTerminal() {
                     <Table className="min-w-max border-collapse">
                         <TableHeader className="bg-slate-900/5 dark:bg-white/5 sticky top-0 z-10 box-border">
                             <TableRow className="border-b border-slate-900/10 dark:border-white/10 hover:bg-transparent">
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[120px]">1. Login Date</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">2. Category</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">3. Product</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">4. File Login</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">5. Channel Partner</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">6. Branch</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">7. Customer Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">8. DOB</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">9. Phone No.</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">10. Email ID</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[200px]">11. Customer Address</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">12. Firm Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">13. Login Amt (₹)</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">14. File Status</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">15. Sanctioned (₹)</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[140px]">16. Disbursed (₹)</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">17. Disbursed Dt</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[130px]">18. EMI Date</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[160px]">19. Repayment Bank</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[150px]">20. Staff Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[150px]">21. Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 w-[150px]">22. Consultant</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[200px]">1. Login Date</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">2. Category</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">3. Product</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[250px]">4. Relationship Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">5. File Login</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">6. Channel Partner</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">7. Branch</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">8. Customer Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">9. DOB</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">10. Phone No.</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">11. Email ID</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[280px]">12. Customer Address</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">13. Firm Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">14. Login Amt (₹)</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">15. File Status</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">16. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">17. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">18. Disbursed Dt</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">19. EMI Date</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">20. Repayment Bank</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[230px]">21. Staff Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[230px]">22. Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[230px]">23. Consultant</TableHead>
                                 <TableHead className="w-[50px] px-2 sticky right-0 bg-white/5 backdrop-blur z-10"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -836,7 +1012,19 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 4. File Login */}
+                                    
+                                    {/* 4. Relationship Manager Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.relationshipManagerName || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'relationshipManagerName', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 5. File Login */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={(!canModify && !item.isManual) || item.category !== 'Loan'}
@@ -851,7 +1039,7 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 5. Channel Partner */}
+                                    {/* 6. Channel Partner */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
@@ -881,7 +1069,7 @@ export default function DataEntryTerminal() {
                                         </div>
                                     </TableCell>
 
-                                    {/* 7. Customer Name */}
+                                    {/* 8. Customer Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -915,7 +1103,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 10. Email ID */}
+                                    {/* 11. Email ID */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -926,7 +1114,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 11. Customer Address */}
+                                    {/* 12. Customer Address */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -937,7 +1125,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 12. Firm Name */}
+                                    {/* 13. Firm Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -961,7 +1149,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 14. File Status */}
+                                    {/* 15. File Status */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
@@ -1016,7 +1204,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 18. EMI Date */}
+                                    {/* 19. EMI Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1028,7 +1216,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 19. Repayment Bank */}
+                                    {/* 20. Repayment Bank */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1058,7 +1246,7 @@ export default function DataEntryTerminal() {
                                         </datalist>
                                     </TableCell>
 
-                                    {/* 20. Staff Name */}
+                                    {/* 21. Staff Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1069,7 +1257,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 21. Manager Name */}
+                                    {/* 22. Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1242,6 +1430,195 @@ export default function DataEntryTerminal() {
           </div>
           );
         })()}
+
+        
+        {/* Staging Modal */}
+        {isStagingModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 pointer-events-auto bg-black/80 backdrop-blur-sm">
+            <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-[95vw] h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Layers className="text-indigo-500" /> Data Staging & Review
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Review and correct the extracted data. Rows will be saved to their specific Login Date.
+                        </p>
+                    </div>
+                    <button onClick={() => { setIsStagingModalOpen(false); setStagedItems([]); setStagedFile(null); }} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-auto p-0">
+                    <Table>
+                        <TableHeader className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 shadow-sm backdrop-blur-md">
+                            <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Login Date</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Category *</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Product {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Relationship Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">File Login</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Channel Partner {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Branch Location</TableHead>
+                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Customer Name {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">DOB</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Phone No.</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Email ID</TableHead>
+                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Customer Address</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Firm Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Login Amt *</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">File Status {recordType === 'projection' && '*'}</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Sanctioned (₹)</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Disbursed (₹)</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Disbursed Dt</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">EMI Date</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Repayment Bank</TableHead>
+                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Staff Name *</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Consultant</TableHead>
+                                <TableHead className="w-[50px]"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {stagedItems.map((item, index) => {
+                                const handleUpdate = (key: string, val: any) => {
+                                    const arr = [...stagedItems];
+                                    arr[index] = { ...arr[index], [key]: val };
+                                    if (key === 'category') {
+                                        arr[index].product = '';
+                                        if (val !== 'Loan') arr[index].fileLogin = '';
+                                    }
+                                    setStagedItems(arr);
+                                };
+                                const handleRemove = () => setStagedItems(stagedItems.filter((_, i) => i !== index));
+                                
+                                return (
+                                
+                                <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <TableCell className="p-2"><Input type="date" value={item.date || ''} onChange={e => handleUpdate('date', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2">
+                                        <select value={item.category} onChange={e => handleUpdate('category', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                            <option value="" disabled>Select</option>
+                                            <option value="Loan">Loan</option>
+                                            <option value="Insurance">Insurance</option>
+                                            <option value="Forex">Forex</option>
+                                            <option value="Consultancy">Consultancy</option>
+                                        </select>
+                                    </TableCell>
+                                    <TableCell className="p-2">
+                                        <select value={item.product} onChange={e => handleUpdate('product', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                            <option value="" disabled>Select</option>
+                                            {allowedProducts(item.category).map((p: any) => <option key={p.id} value={p.name}>{p.name}</option>)}
+                                        </select>
+                                    </TableCell>
+                                    <TableCell className="p-2"><Input value={item.fileLogin || ''} onChange={e => handleUpdate('fileLogin', e.target.value)} disabled={item.category !== 'Loan'} placeholder="e.g. WBO" className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2">
+                                        <select value={item.channel || ''} onChange={e => handleUpdate('channel', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                            <option value="" disabled>Select</option>
+                                            {item.category === 'Insurance' 
+                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC'].map(c => <option key={c} value={c}>{c}</option>)
+                                                : channels.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)
+                                            }
+                                        </select>
+                                    </TableCell>
+                                    <TableCell className="p-2">
+                                        <select value={item.branchLocation || ''} onChange={e => handleUpdate('branchLocation', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                            <option value="" disabled>Select</option>
+                                            {branches.map((b: any) => <option key={b.id} value={b.name}>{b.name}</option>)}
+                                        </select>
+                                    </TableCell>
+                                    <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input type="date" value={item.customerDOB || ''} onChange={e => handleUpdate('customerDOB', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.phoneNumber || ''} onChange={e => handleUpdate('phoneNumber', e.target.value.replace(/\D/g,''))} placeholder="Phone..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input type="email" value={item.emailId || ''} onChange={e => handleUpdate('emailId', e.target.value)} placeholder="Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.customerAddress || ''} onChange={e => handleUpdate('customerAddress', e.target.value)} placeholder="Address..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.firmName || ''} onChange={e => handleUpdate('firmName', e.target.value)} placeholder="Firm Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2">
+                                        <NumericFormat
+                                            value={item.amount === 0 ? '' : item.amount}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                            onValueChange={(vals) => handleUpdate('amount', vals.floatValue || 0)}
+                                            customInput={Input}
+                                            placeholder="₹"
+                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
+                                        />
+                                    </TableCell>
+                                    <TableCell className="p-2">
+                                        <select value={item.fileStatus || ''} onChange={e => handleUpdate('fileStatus', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                                            <option value="" disabled>Status</option>
+                                            <option value="Login">Login</option>
+                                            <option value="Processing">Processing</option>
+                                            <option value="Sanctioned">Sanctioned</option>
+                                            <option value="Disbursed">Disbursed</option>
+                                            <option value="Rejected">Rejected</option>
+                                        </select>
+                                    </TableCell>
+                                    <TableCell className="p-2">
+                                        <NumericFormat
+                                            value={item.sanctionedAmount === 0 ? '' : item.sanctionedAmount}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                            onValueChange={(vals) => handleUpdate('sanctionedAmount', vals.floatValue || 0)}
+                                            customInput={Input}
+                                            placeholder="₹"
+                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
+                                        />
+                                    </TableCell>
+                                    <TableCell className="p-2">
+                                        <NumericFormat
+                                            value={item.disbursedAmount === 0 ? '' : item.disbursedAmount}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                            onValueChange={(vals) => handleUpdate('disbursedAmount', vals.floatValue || 0)}
+                                            customInput={Input}
+                                            placeholder="₹"
+                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
+                                        />
+                                    </TableCell>
+                                    <TableCell className="p-2"><Input type="date" value={item.disbursedDate || ''} onChange={e => handleUpdate('disbursedDate', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input type="date" value={item.emiDate || ''} onChange={e => handleUpdate('emiDate', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.staffName || ''} onChange={e => handleUpdate('staffName', e.target.value)} placeholder="Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.consultantName || ''} onChange={e => handleUpdate('consultantName', e.target.value)} placeholder="Consultant..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2 text-right">
+                                        <button onClick={handleRemove} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
+                                    </TableCell>
+                                </TableRow>
+
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </div>
+                
+                <div className="p-6 border-t border-slate-200 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Input 
+                            placeholder="Your Name *" 
+                            value={lodgeName} 
+                            onChange={e => setLodgeName(e.target.value)} 
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs w-full md:w-48"
+                        />
+                        <Input 
+                            placeholder="Your @siroiforex.com Email *" 
+                            value={lodgeEmail} 
+                            onChange={e => setLodgeEmail(e.target.value)} 
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs w-full md:w-56"
+                        />
+                    </div>
+                    <div className="flex gap-3 w-full md:w-auto">
+                    <Button variant="secondary" onClick={() => { setIsStagingModalOpen(false); setStagedItems([]); setStagedFile(null); }}>Discard</Button>
+                    <Button onClick={handleBulkSubmit} disabled={isBulkSubmitting || stagedItems.length === 0 || !lodgeName || !lodgeEmail.endsWith('@siroiforex.com')} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[160px]">
+                        {isBulkSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : <><Save className="w-4 h-4 mr-2" /> Approve & Lodge</>}
+                    </Button>
+                </div>
+            </div>
+          </div>
+          </div>
+        )}
 
         {/* Context Modal */}
         {showContextModal && (
