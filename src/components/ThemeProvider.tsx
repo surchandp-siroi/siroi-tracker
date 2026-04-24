@@ -3,14 +3,14 @@ import { createContext, useContext, useEffect, useState } from 'react';
 type Theme = 'light' | 'dark';
 
 const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void }>({
-  theme: 'dark',
+  theme: 'light',
   toggleTheme: () => {},
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme');
-    return (savedTheme as Theme) || 'dark';
+    return (savedTheme as Theme) || 'light';
   });
   const [mounted, setMounted] = useState(false);
 
@@ -34,7 +34,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   }, [theme]);
 
   if (!mounted) {
-      return <div className="min-h-screen bg-[#0f172a]" />; // fallback dark background while loading
+      return <div className="min-h-screen bg-slate-50" />; // fallback light background while loading
   }
 
   return (
