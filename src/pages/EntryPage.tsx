@@ -767,10 +767,10 @@ export default function DataEntryTerminal() {
            </div>
            
            <div className="flex-1 min-w-[150px]">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex justify-between items-center">
-                    <span>Date Context</span>
-                    <span className="text-[9px] font-mono text-slate-400 font-normal normal-case">{currentTime}</span>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                    Date Context
                 </label>
+                <div className="relative">
                {entryMode === 'monthly' ? (
                    <Input 
                        type="month" 
@@ -780,10 +780,10 @@ export default function DataEntryTerminal() {
                            if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
                            setDateStr(e.target.value + '-01');
                        }}
-                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10"
-                       style={{ colorScheme: 'dark' }}
-                   />
-               ) : (
+                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10 w-full pr-28"
+                        style={{ colorScheme: 'dark' }}
+                    />
+                ) : (
                    <Input 
                        type="date" 
                        min="2026-01-01"
@@ -792,11 +792,15 @@ export default function DataEntryTerminal() {
                            if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
                            setDateStr(e.target.value);
                        }}
-                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10"
-                       style={{ colorScheme: 'dark' }}
-                   />
-               )}
-           </div>
+                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10 w-full pr-28"
+                        style={{ colorScheme: 'dark' }}
+                    />
+                )}
+                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500 pointer-events-none">
+                        {currentTime}
+                    </span>
+                </div>
+            </div>
 
            <div className="flex-[2] min-w-[300px] flex items-end gap-2">
                <div className="flex-1">
