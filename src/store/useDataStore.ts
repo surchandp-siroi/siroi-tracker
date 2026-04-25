@@ -223,8 +223,12 @@ export const useDataStore = create<DataState>((set) => ({
           'postgres_changes',
           { event: '*', schema: 'public', table: 'entries' },
           async (payload) => {
-             // Refetch to keep it simple and accurate with RLS
-             const { data: refreshedEntries } = await query;
+             // For simplicity, re-fetch all if there's a change
+             let refreshQuery = supabase.from('entries').select('*');
+             if (role === 'statehead' && branchId) {
+                 refreshQuery = refreshQuery.eq('branchId', branchId);
+             }
+             const { data: refreshedEntries } = await refreshQuery;
              if (refreshedEntries) {
                  computeStats(refreshedEntries as any as BranchEntry[]);
              }

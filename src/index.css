@@ -92,3 +92,4 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
 input[type="date"] { color-scheme: light; } :is(.dark input[type="date"]) { color-scheme: dark; }
+input[type="date"]::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }

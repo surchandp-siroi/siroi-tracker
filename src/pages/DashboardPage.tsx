@@ -103,7 +103,6 @@ export default function DashboardOverview() {
   }, []);
   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
   const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('all');
-  const [showLoanModal, setShowLoanModal] = useState(false);
 
   // Secure routing
   useEffect(() => {
@@ -434,7 +433,7 @@ export default function DashboardOverview() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-7 flex-1 pb-8">
+      <div className="grid gap-6 lg:grid-cols-7 mb-6">
         {/* Branches Performance */}
         <Card className="lg:col-span-4 flex flex-col border-slate-900/10 dark:border-white/10 min-h-[450px]">
           <CardHeader className="flex justify-between items-center py-4 border-slate-900/10 dark:border-white/10 uppercase">
@@ -482,9 +481,6 @@ export default function DashboardOverview() {
               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
                 <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
                 <div className="flex items-center gap-3">
-                    <button onClick={() => setShowLoanModal(true)} className="px-2 py-1 text-[9px] bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 transition-colors rounded uppercase font-bold tracking-widest">
-                      Loan Funnel
-                    </button>
                     <select 
                         value={selectedBusinessBranch}
                         onChange={(e) => setSelectedBusinessBranch(e.target.value)}
@@ -540,67 +536,91 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Loan Deep-Dive Modal */}
-      {showLoanModal && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-slate-50 dark:bg-[#0f172a] rounded-2xl shadow-2xl w-full max-w-3xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
-               {/* Modal Header */}
-               <div className="px-6 py-4 bg-white dark:bg-black/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-                  <div className="flex flex-col">
-                      <h2 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Loan Conversion Pipeline</h2>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Timeframe: {viewMode} • Branch: {selectedBusinessBranch === 'all' ? 'Consolidated' : branches.find(b => b.id === selectedBusinessBranch)?.name}</p>
-                  </div>
-                  <button onClick={() => setShowLoanModal(false)} className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors">
-                      <X className="w-5 h-5" />
-                  </button>
-               </div>
-               {/* Modal Body with Funnel */}
-               <div className="p-8 overflow-y-auto flex-1 flex items-center justify-center">
-                   <div className="flex flex-col items-center w-full max-w-xl mx-auto py-4">
-                       
-                       {/* Stage 1: Logged */}
-                       <div className="w-full relative h-36 bg-gradient-to-b from-indigo-400 to-indigo-600 flex flex-col items-center justify-center text-white shadow-xl transition-all hover:scale-[1.02]" style={{ clipPath: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)' }}>
-                           <span className="text-xs font-bold uppercase tracking-widest opacity-90 mb-1">Logged</span>
-                           <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.logged.value.toLocaleString('en-IN')}</span>
-                           <span className="text-xs font-medium bg-black/20 px-2.5 py-1 rounded-md mt-2 shadow-inner">{loanFunnelData.logged.count} Applications</span>
-                       </div>
+      {/* Loan Conversion Pipeline */}
+      <Card className="mb-8 border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[68%]">
+          <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+             <div className="flex flex-col gap-1.5">
+                 <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Loan Conversion Pipeline</CardTitle>
+                 <div className="flex items-center flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                    <span className="flex items-center gap-1.5">
+                        Timeframe: 
+                        <div className="relative flex items-center ml-1">
+                           <Input 
+                             type="date" 
+                             value={selectedDate}
+                             onChange={(e) => setSelectedDate(e.target.value)}
+                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                           />
+                           <span className="text-slate-700 dark:text-slate-300 pointer-events-none hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+                              {new Date(selectedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\d+)/, (match, p1) => {
+                                 const d = parseInt(p1);
+                                 const suffix = ["th", "st", "nd", "rd"][((d % 100) - 20) % 10] || ["th", "st", "nd", "rd"][d % 100] || "th";
+                                 return p1 + suffix;
+                              })}
+                           </span>
+                        </div>
+                    </span>
+                    <span className="text-slate-300 dark:text-slate-700 mx-1">•</span>
+                    <span className="flex items-center gap-1.5">
+                        Branch:
+                        <select 
+                            value={selectedBusinessBranch}
+                            onChange={(e) => setSelectedBusinessBranch(e.target.value)}
+                            className="bg-transparent border-none text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-none focus:ring-0 p-0 ml-1 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                        >
+                            <option value="all" className="bg-white dark:bg-[#0f172a]">Consolidated</option>
+                            {branches.map(b => (
+                                <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a]">{b.name}</option>
+                            ))}
+                        </select>
+                    </span>
+                 </div>
+             </div>
+          </CardHeader>
+          <CardContent className="p-6 md:p-8 overflow-x-auto flex items-center justify-center">
+             <div className="flex flex-col items-center w-full max-w-3xl mx-auto py-2">
+                 
+                 {/* Stage 1: Logged */}
+                 <div className="w-full relative h-36 bg-amber-100 dark:bg-amber-500/20 flex flex-col items-center justify-center text-orange-700 dark:text-orange-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-amber-200 dark:border-amber-500/30">
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-orange-700/80 dark:text-orange-400/80 mb-1">Logged</span>
+                     <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.logged.value.toLocaleString('en-IN')}</span>
+                     <span className="text-[10px] font-semibold bg-orange-600/10 dark:bg-orange-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-orange-800 dark:text-orange-300">{loanFunnelData.logged.count} Applications</span>
+                 </div>
 
-                       {/* Conversion Arrow 1 */}
-                       <div className="h-16 flex items-center justify-center relative w-full my-1">
-                           <div className="w-0.5 h-full bg-slate-300 dark:bg-slate-700"></div>
-                           <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conversion</span>
-                              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{loanFunnelData.sanctioned.conversion}%</span>
-                           </div>
-                       </div>
+                 {/* Conversion Arrow 1 */}
+                 <div className="h-12 flex items-center justify-center relative w-full my-1">
+                     <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-800"></div>
+                     <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-[#1e293b] px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Conversion</span>
+                        <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{loanFunnelData.sanctioned.conversion}%</span>
+                     </div>
+                 </div>
 
-                       {/* Stage 2: Sanctioned */}
-                       <div className="w-[60%] relative h-36 bg-gradient-to-b from-emerald-400 to-emerald-600 flex flex-col items-center justify-center text-white shadow-xl transition-all hover:scale-[1.02]" style={{ clipPath: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)' }}>
-                           <span className="text-xs font-bold uppercase tracking-widest opacity-90 mb-1">Sanctioned</span>
-                           <span className="text-3xl font-mono font-bold tracking-tight">₹{loanFunnelData.sanctioned.value.toLocaleString('en-IN')}</span>
-                           <span className="text-[10px] font-medium bg-black/20 px-2.5 py-1 rounded-md mt-2 shadow-inner">{loanFunnelData.sanctioned.count} Approvals</span>
-                       </div>
+                 {/* Stage 2: Sanctioned */}
+                 <div className="w-[80%] relative h-36 bg-blue-100 dark:bg-blue-500/20 flex flex-col items-center justify-center text-blue-800 dark:text-blue-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-blue-200 dark:border-blue-500/30">
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-blue-800/80 dark:text-blue-400/80 mb-1">Sanctioned</span>
+                     <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.sanctioned.value.toLocaleString('en-IN')}</span>
+                     <span className="text-[10px] font-semibold bg-blue-600/10 dark:bg-blue-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-blue-900 dark:text-blue-300">{loanFunnelData.sanctioned.count} Approvals</span>
+                 </div>
 
-                       {/* Conversion Arrow 2 */}
-                       <div className="h-16 flex items-center justify-center relative w-full my-1">
-                           <div className="w-0.5 h-full bg-slate-300 dark:bg-slate-700"></div>
-                           <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conversion</span>
-                              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{loanFunnelData.disbursed.conversion}%</span>
-                           </div>
-                       </div>
+                 {/* Conversion Arrow 2 */}
+                 <div className="h-12 flex items-center justify-center relative w-full my-1">
+                     <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-800"></div>
+                     <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-[#1e293b] px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
+                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Conversion</span>
+                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{loanFunnelData.disbursed.conversion}%</span>
+                     </div>
+                 </div>
 
-                       {/* Stage 3: Disbursed */}
-                       <div className="w-[36%] relative h-36 bg-gradient-to-b from-sky-400 to-sky-600 flex flex-col items-center justify-center text-white shadow-xl transition-all hover:scale-[1.02]" style={{ clipPath: 'polygon(0 0, 100% 0, 95% 100%, 5% 100%)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
-                           <span className="text-[10px] font-bold uppercase tracking-widest opacity-90 mb-1">Disbursed</span>
-                           <span className="text-2xl font-mono font-bold tracking-tight">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
-                           <span className="text-[10px] font-medium bg-black/20 px-2 py-0.5 rounded-md mt-2 shadow-inner">{loanFunnelData.disbursed.count} Funded</span>
-                       </div>
-                   </div>
-               </div>
-            </div>
-         </div>
-      )}
+                 {/* Stage 3: Disbursed */}
+                 <div className="w-[60%] relative h-36 bg-emerald-100 dark:bg-emerald-500/20 flex flex-col items-center justify-center text-emerald-800 dark:text-emerald-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-emerald-200 dark:border-emerald-500/30">
+                     <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-800/80 dark:text-emerald-400/80 mb-1">Disbursed</span>
+                     <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
+                     <span className="text-[10px] font-semibold bg-emerald-600/10 dark:bg-emerald-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-emerald-900 dark:text-emerald-300">{loanFunnelData.disbursed.count} Funded</span>
+                 </div>
+             </div>
+          </CardContent>
+        </Card>
     </>
   );
 }
