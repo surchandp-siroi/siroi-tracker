@@ -303,6 +303,7 @@ export default function DataEntryTerminal() {
             - "customerName": string
             - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy", "Investments"].
             - "product": Must be one of: ${products.map((p: any) => p.name).join(', ')}
+            - "rmName": string (Extract Relationship Manager Name)
             - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty if not applicable.
             - "trackingNumber": string or empty if not applicable.
             - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC if Insurance.
@@ -1556,29 +1557,30 @@ export default function DataEntryTerminal() {
                     <Table>
                         <TableHeader className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 shadow-sm backdrop-blur-md">
                             <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Login Date</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Category *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Product *</TableHead>
-                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Relationship Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">File Login</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Channel Partner *</TableHead>
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Branch Location</TableHead>
-                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Customer Name *</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">DOB</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Phone No.</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Email ID</TableHead>
-                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Customer Address</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Firm Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Login Amt *</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">File Status *</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Sanctioned (₹)</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Disbursed (₹)</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Disbursed Dt</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">EMI Date</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Repayment Bank</TableHead>
-                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Staff Name *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">Consultant</TableHead>
+                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">1. Staff Name *</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2. Projection (₹) *</TableHead>
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">3. Login Date</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">4. Category *</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">5. Product *</TableHead>
+                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">6. Relationship Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. File Login</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Tracking Number</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Channel Partner *</TableHead>
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Branch Location</TableHead>
+                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Customer Name *</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. DOB</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Phone No.</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Email ID</TableHead>
+                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Customer Address</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. Firm Name</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. File Status *</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. Sanctioned (₹)</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Disbursed (₹)</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. Disbursed Dt</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. EMI Date</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Repayment Bank</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -1596,8 +1598,19 @@ export default function DataEntryTerminal() {
                                 const handleRemove = () => setStagedItems(stagedItems.filter((_, i) => i !== index));
                                 
                                 return (
-                                
                                 <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <TableCell className="p-2"><Input value={item.staffName || ''} onChange={e => handleUpdate('staffName', e.target.value)} placeholder="Staff Name..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.staffName ? 'border-red-500 border' : ''}`} /></TableCell>
+                                    <TableCell className="p-2">
+                                        <NumericFormat
+                                            value={item.amount === 0 ? '' : item.amount}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                            onValueChange={(vals) => handleUpdate('amount', vals.floatValue || 0)}
+                                            customInput={Input}
+                                            placeholder="₹"
+                                            className={`h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 ${!item.amount ? 'border-red-500 border' : ''}`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="p-2"><Input type="date" value={item.date || ''} onChange={e => handleUpdate('date', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
                                         <AppSelect 
@@ -1605,7 +1618,7 @@ export default function DataEntryTerminal() {
                                             onChange={val => handleUpdate('category', val)} 
                                             options={['Loan', 'Insurance', 'Forex', 'Consultancy'].map(c => ({id: c, name: c}))}
                                             placeholder="Category"
-                                            buttonClassName="w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                            buttonClassName={`w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.category ? 'border border-red-500' : 'border'}`}
                                         />
                                     </TableCell>
                                     <TableCell className="p-2">
@@ -1614,10 +1627,12 @@ export default function DataEntryTerminal() {
                                             onChange={val => handleUpdate('product', val)} 
                                             options={allowedProducts(item.category).map((p: any) => ({id: p.name, name: p.name}))}
                                             placeholder="Product"
-                                            buttonClassName="w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.product ? 'border border-red-500' : 'border'}`}
                                         />
                                     </TableCell>
+                                    <TableCell className="p-2"><Input value={item.rmName || ''} onChange={e => handleUpdate('rmName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.fileLogin || ''} onChange={e => handleUpdate('fileLogin', e.target.value)} disabled={item.category !== 'Loan'} placeholder="e.g. WBO" className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.trackingNumber || ''} onChange={e => handleUpdate('trackingNumber', e.target.value)} placeholder="Track No..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.channel || ''} 
@@ -1627,7 +1642,7 @@ export default function DataEntryTerminal() {
                                                 : channels.map((c: any) => ({id: c.name, name: c.name}))
                                             }
                                             placeholder="Channel"
-                                            buttonClassName="w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.channel ? 'border border-red-500' : 'border'}`}
                                         />
                                     </TableCell>
                                     <TableCell className="p-2">
@@ -1639,30 +1654,19 @@ export default function DataEntryTerminal() {
                                             className="w-[120px]"
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} /></TableCell>
                                     <TableCell className="p-2"><Input type="date" value={item.customerDOB || ''} onChange={e => handleUpdate('customerDOB', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.phoneNumber || ''} onChange={e => handleUpdate('phoneNumber', e.target.value.replace(/\D/g,''))} placeholder="Phone..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input type="email" value={item.emailId || ''} onChange={e => handleUpdate('emailId', e.target.value)} placeholder="Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.customerAddress || ''} onChange={e => handleUpdate('customerAddress', e.target.value)} placeholder="Address..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.firmName || ''} onChange={e => handleUpdate('firmName', e.target.value)} placeholder="Firm Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
-                                        <NumericFormat
-                                            value={item.amount === 0 ? '' : item.amount}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                            onValueChange={(vals) => handleUpdate('amount', vals.floatValue || 0)}
-                                            customInput={Input}
-                                            placeholder="₹"
-                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.fileStatus || ''} 
                                             onChange={val => handleUpdate('fileStatus', val)} 
                                             options={['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Rejected'].map(c => ({id: c, name: c}))}
                                             placeholder="Status"
-                                            buttonClassName="w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                            buttonClassName={`w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.fileStatus ? 'border border-red-500' : 'border'}`}
                                         />
                                     </TableCell>
                                     <TableCell className="p-2">
@@ -1690,7 +1694,6 @@ export default function DataEntryTerminal() {
                                     <TableCell className="p-2"><Input type="date" value={item.disbursedDate || ''} onChange={e => handleUpdate('disbursedDate', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input type="date" value={item.emiDate || ''} onChange={e => handleUpdate('emiDate', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    <TableCell className="p-2"><Input value={item.staffName || ''} onChange={e => handleUpdate('staffName', e.target.value)} placeholder="Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.consultantName || ''} onChange={e => handleUpdate('consultantName', e.target.value)} placeholder="Consultant..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2 text-right">
