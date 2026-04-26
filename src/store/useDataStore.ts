@@ -86,10 +86,10 @@ const staticChannels: Channel[] = [
 ].map((name, i) => ({ id: `ch-${i}`, name, business: 0 }));
 
 const staticBranches: Branch[] = [
-  { id: 'b1', name: 'Guwahati', managerName: 'Aroop Sharma', managerEmail: 'aroop.sharma@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 1500000 },
-  { id: 'b2', name: 'Manipur', managerName: 'Ajay Waikhom', managerEmail: 'ajay.waikhom@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 900000 },
-  { id: 'b3', name: 'Itanagar', managerName: 'Nobin Nani', managerEmail: 'nobin.nani@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 600000 },
-  { id: 'b4', name: 'Nagaland & Mizoram', managerName: 'Ramesh Singh', managerEmail: 'ramesh@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 150000 },
+  { id: 'b1', name: 'Guwahati', managerName: 'Aroop Sharma', managerEmail: 'mis.ghy@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 1500000 },
+  { id: 'b2', name: 'Manipur', managerName: 'Ajay Waikhom', managerEmail: 'mis.manipur@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 900000 },
+  { id: 'b3', name: 'Itanagar', managerName: 'Nobin Nani', managerEmail: 'mis.itanagar@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 600000 },
+  { id: 'b4', name: 'Nagaland & Mizoram', managerName: 'Ramesh Singh', managerEmail: 'mis.mizonaga@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 150000 },
 ];
 
 const staticProducts: Omit<Product, 'business'>[] = [

@@ -17,12 +17,52 @@ export interface UserProfile {
   latestLocation?: string;
 }
 
+export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): Promise<UserProfile> => {
+    const { data: userDoc } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', sbUser.id)
+        .maybeSingle();
+      
+    let profile: UserProfile;
+    
+    if (userDoc) {
+        profile = userDoc as UserProfile;
+        if (location && location !== profile.latestLocation) {
+            await supabase.from('users').update({ latestLocation: location }).eq('id', sbUser.id);
+            profile.latestLocation = location;
+        }
+    } else {
+        const email = sbUser.email!;
+        const isFirstAdmin = email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com';
+        const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
+        
+        profile = {
+            id: sbUser.id,
+            email: email,
+            role: isFirstAdmin ? 'admin' : 'statehead',
+            branchId: branchMatch ? branchMatch.id : null,
+            latestLocation: location || undefined
+        };
+        
+        const { error: insertError } = await supabase.from('users').insert([profile]);
+        
+        if (insertError && !insertError.message.includes("duplicate key value")) {
+            console.error("Failed to insert user profile:", insertError);
+            throw new Error(insertError.message || "Could not initialize user profile");
+        }
+    }
+    return profile;
+};
+
 interface AuthState {
   user: UserProfile | null;
   supabaseUser: SupabaseUser | null;
   isLoading: boolean;
   isInitialized: boolean;
   login: (email: string, password: string, location: string) => Promise<void>;
+  requestOtpLogin: (email: string, location: string) => Promise<void>;
+  verifyOtpLogin: (email: string, otp: string, location: string) => Promise<void>;
   logout: () => Promise<void>;
   initAuth: () => void;
 }
@@ -80,51 +120,65 @@ export const useAuthStore = create<AuthState>((set, get) => ({
          sbUser = authData.user;
       }
       
-      const { data: userDoc, error: userDocErr } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', sbUser.id)
-        .maybeSingle();
-      
-      let profile: UserProfile;
-      
-      if (userDoc) {
-        profile = userDoc as UserProfile;
-        if (location) {
-           await supabase.from('users').update({ latestLocation: location }).eq('id', sbUser.id);
-           profile.latestLocation = location;
-        }
-      } else {
-        // Bootstrapping logic
-        const isFirstAdmin = email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com';
-        
-        const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
-        
-        profile = {
-          id: sbUser.id,
-          email: sbUser.email!,
-          role: isFirstAdmin ? 'admin' : 'statehead',
-          branchId: branchMatch ? branchMatch.id : null,
-          latestLocation: location || undefined
-        };
-        
-        const { error: insertError } = await supabase.from('users').insert([profile]);
-        
-        // If it's a duplicate key, it means a parallel session (or rapid double-click) already inserted the user
-        // We can safely ignore it and proceed, as the user now exists in the database.
-        if (insertError && !insertError.message.includes("duplicate key value")) {
-           console.error("Failed to insert user profile:", insertError);
-           throw new Error(insertError.message || "Could not initialize user profile");
-        }
-      }
+      const profile = await syncUserProfile(sbUser, location);
       
       set({ user: profile, supabaseUser: sbUser, isLoading: false, isInitialized: true });
-      // Keep lock briefly so the async onAuthStateChange callback doesn't overwrite
       setTimeout(() => { isLoginInProgress = false; }, 1500);
     } catch (error: any) {
       isLoginInProgress = false;
       set({ isLoading: false });
       throw new Error(error.message || "Failed to authenticate");
+    }
+  },
+
+  requestOtpLogin: async (rawEmail, location) => {
+    set({ isLoading: true });
+    try {
+      const email = rawEmail.trim().toLowerCase();
+      
+      const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
+      
+      if (!branchMatch || branchMatch.name !== location) {
+         throw new Error("UNAUTHORIZED_LOCATION");
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({ 
+          email,
+          options: { shouldCreateUser: true }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      set({ isLoading: false });
+    } catch (error: any) {
+      set({ isLoading: false });
+      throw new Error(error.message || "Failed to send OTP");
+    }
+  },
+
+  verifyOtpLogin: async (rawEmail, otp, location) => {
+    isLoginInProgress = true;
+    set({ isLoading: true });
+    try {
+      const email = rawEmail.trim().toLowerCase();
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+          email,
+          token: otp,
+          type: 'email'
+      });
+      
+      if (error) throw new Error(error.message);
+      if (!data.user) throw new Error("Authentication failed.");
+      
+      const profile = await syncUserProfile(data.user, location);
+      
+      set({ user: profile, supabaseUser: data.user, isLoading: false, isInitialized: true });
+      setTimeout(() => { isLoginInProgress = false; }, 1500);
+    } catch (error: any) {
+      isLoginInProgress = false;
+      set({ isLoading: false });
+      throw new Error(error.message || "Failed to verify OTP");
     }
   },
 
@@ -142,35 +196,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (isLoginInProgress) return;
 
         if (session?.user) {
-            const { data: userDoc, error: userDocErr } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
-              
-            if (userDoc) {
-                set({ user: userDoc as UserProfile, supabaseUser: session.user, isInitialized: true });
-            } else {
-                // Bootstrapping logic if profile is missing on load
-                const email = session.user.email!;
-                const isFirstAdmin = email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com';
-                const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
-                
-                const profile: UserProfile = {
-                  id: session.user.id,
-                  email: email,
-                  role: isFirstAdmin ? 'admin' : 'statehead',
-                  branchId: branchMatch ? branchMatch.id : null,
-                  latestLocation: undefined
-                };
-                
-                const { error: insertError } = await supabase.from('users').insert([profile]);
-                if (insertError && !insertError.message.includes("duplicate key value")) {
-                   console.warn("Auth sync: Profile not found in 'users' table, and insert failed.", insertError);
-                   set({ supabaseUser: session.user, user: null, isInitialized: true });
-                } else {
-                   set({ user: profile, supabaseUser: session.user, isInitialized: true });
-                }
+            try {
+                const profile = await syncUserProfile(session.user);
+                set({ user: profile, supabaseUser: session.user, isInitialized: true });
+            } catch (err) {
+                console.warn("Auth sync error:", err);
+                set({ supabaseUser: session.user, user: null, isInitialized: true });
             }
         } else {
             set({ user: null, supabaseUser: null, isInitialized: true });
@@ -178,13 +209,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     };
 
     supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip if login() is handling auth — prevents race condition
       if (isLoginInProgress) return;
       initialSessionHandled = true;
       await handleSession(session);
     });
 
-    // Also check initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
        if (!initialSessionHandled) {
           initialSessionHandled = true;

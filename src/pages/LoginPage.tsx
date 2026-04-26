@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
-import { TrendingUp, MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, AlertTriangle } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 
 export default function LoginPage() {
@@ -12,25 +12,46 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [location, setLocation] = useState('HO');
   const [locationStatus, setLocationStatus] = useState<string>('');
-  const { login, isLoading, user } = useAuthStore();
+  
+  const [loginMode, setLoginMode] = useState<'password' | 'otp'>('otp');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  
+  const { login, requestOtpLogin, verifyOtpLogin, isLoading } = useAuthStore();
   const { branches } = useDataStore();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !location) {
-      setError('Please provide email, password, and select location.');
+    if (!email || !location) {
+      setError('Please provide email and select location.');
       return;
     }
     setError('');
-    setLocationStatus('Authenticating...');
 
     try {
       // Force HO location for admin and executive accounts
-      const isSpecialAccount = email.toLowerCase() === 'executive@siroiforex.com' || email.toLowerCase() === 'surchanddsingh@siroiforex.com';
+      const isSpecialAccount = email.toLowerCase() === 'executive@siroiforex.com' || email.toLowerCase() === 'surchanddsingh@siroiforex.com' || email.toLowerCase() === 'tomas@siroiforex.com';
       const loginLocation = isSpecialAccount ? 'HO' : location;
 
-      await login(email, password, loginLocation);
+      if (loginMode === 'password') {
+         if (!password) { setError('Password is required'); return; }
+         setLocationStatus('Authenticating...');
+         await login(email, password, loginLocation);
+      } else {
+         if (!otpSent) {
+            setLocationStatus('Sending OTP...');
+            await requestOtpLogin(email, loginLocation);
+            setOtpSent(true);
+            setLocationStatus('');
+            return; // Wait for user to input OTP
+         } else {
+            if (!otp) { setError('OTP is required'); return; }
+            setLocationStatus('Verifying OTP...');
+            await verifyOtpLogin(email, otp, loginLocation);
+         }
+      }
+
       const updatedUser = useAuthStore.getState().user;
       
       if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com') {
@@ -39,7 +60,9 @@ export default function LoginPage() {
           navigate('/dashboard');
       }
     } catch (err: any) {
-      if (err.message?.includes('Invalid login credentials')) {
+      if (err.message?.includes('UNAUTHORIZED_LOCATION')) {
+        setError('UNAUTHORIZED_LOCATION');
+      } else if (err.message?.includes('Invalid login credentials')) {
         setError('Incorrect email or password. Please try again.');
       } else {
         setError(err.message || 'Authentication failed. Please try again.');
@@ -61,15 +84,42 @@ export default function LoginPage() {
             <p className="text-sm dark:text-slate-400 text-slate-500 uppercase tracking-widest">Internal Portal</p>
         </CardHeader>
         <CardContent className="pt-6 text-center">
-            {error && (
+            {error === 'UNAUTHORIZED_LOCATION' ? (
+                <div className="p-5 bg-red-500/10 border-2 border-red-500 text-red-500 dark:text-red-400 rounded-lg mb-6 flex flex-col items-center justify-center animate-in zoom-in duration-300 shadow-sm">
+                    <div className="bg-red-500 text-white rounded-full p-2.5 mb-3 shadow-md">
+                        <AlertTriangle className="w-8 h-8" />
+                    </div>
+                    <h3 className="font-bold text-lg mb-1 tracking-wide">ACCESS DENIED</h3>
+                    <p className="text-sm font-medium leading-relaxed">
+                        You are either not an authorized user or the selected location does not match your assigned branch.
+                    </p>
+                </div>
+            ) : error ? (
                 <div className="p-3 bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30 text-sm rounded-md mb-6 font-medium animate-in fade-in slide-in-from-top-1">
                    {error}
                 </div>
-            )}
+            ) : null}
             
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
                 Log in and verify your designated branch location to continue.
             </p>
+
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-6">
+                <button
+                    type="button"
+                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${loginMode === 'otp' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                    onClick={() => { setLoginMode('otp'); setOtpSent(false); setError(''); }}
+                >
+                    Branch Login (OTP)
+                </button>
+                <button
+                    type="button"
+                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${loginMode === 'password' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                    onClick={() => { setLoginMode('password'); setError(''); }}
+                >
+                    Admin Login
+                </button>
+            </div>
 
             <form onSubmit={handleLogin} className="space-y-4 text-left mb-6">
                <div>
@@ -80,18 +130,37 @@ export default function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
                       required
+                      disabled={otpSent && loginMode === 'otp'}
                   />
                </div>
-               <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Password</label>
-                  <Input 
-                      type="password" 
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      required
-                  />
-               </div>
+
+               {loginMode === 'password' && (
+                 <div className="animate-in fade-in slide-in-from-bottom-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Password</label>
+                    <Input 
+                        type="password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required={loginMode === 'password'}
+                    />
+                 </div>
+               )}
+
+               {loginMode === 'otp' && otpSent && (
+                 <div className="animate-in fade-in slide-in-from-bottom-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">6-Digit OTP</label>
+                    <Input 
+                        type="text" 
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="Enter the OTP from your email"
+                        maxLength={6}
+                        required={loginMode === 'otp' && otpSent}
+                    />
+                 </div>
+               )}
+
                <div>
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Active Location</label>
                   <select 
@@ -99,6 +168,7 @@ export default function LoginPage() {
                       value={location}
                       onChange={e => setLocation(e.target.value)}
                       required
+                      disabled={otpSent && loginMode === 'otp'}
                   >
                       {branches.map(branch => (
                           <option key={branch.id} value={branch.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
@@ -114,6 +184,8 @@ export default function LoginPage() {
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           {locationStatus || 'Authenticating...'}
                       </>
+                  ) : loginMode === 'otp' ? (
+                      otpSent ? 'Verify OTP & Login' : 'Send OTP'
                   ) : 'Authenticate & Login'}
                 </Button>
             </form>

@@ -8,6 +8,8 @@ import { GoogleGenAI } from '@google/genai';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
+import { BranchSelect } from '@/components/BranchSelect';
+import { AppSelect } from '@/components/AppSelect';
 
 export default function DataEntryTerminal() {
   const { user, isInitialized, logout } = useAuthStore();
@@ -862,19 +864,14 @@ export default function DataEntryTerminal() {
                         <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
                             {isBackdoor ? 'Branch Override (Test)' : 'Admin Branch Override'}
                         </label>
-                        <select 
-                            className="w-full bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-1.5 text-xs rounded text-slate-900 dark:text-white"
+                        <BranchSelect 
                             value={adminSelectedBranch || ''}
-                            onChange={(e) => {
+                            onChange={(val) => {
                                 if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
-                                setAdminSelectedBranch(e.target.value);
+                                setAdminSelectedBranch(val);
                             }}
-                        >
-                            <option value="" disabled>Select branch...</option>
-                            {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
-                                <option key={b.id} value={b.id}>{b.name}</option>
-                            ))}
-                        </select>
+                            branches={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch')}
+                        />
                     </div>
                 )}
 
@@ -1603,35 +1600,44 @@ export default function DataEntryTerminal() {
                                 <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                     <TableCell className="p-2"><Input type="date" value={item.date || ''} onChange={e => handleUpdate('date', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
-                                        <select value={item.category} onChange={e => handleUpdate('category', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                                            <option value="" disabled>Select</option>
-                                            <option value="Loan">Loan</option>
-                                            <option value="Insurance">Insurance</option>
-                                            <option value="Forex">Forex</option>
-                                            <option value="Consultancy">Consultancy</option>
-                                        </select>
+                                        <AppSelect 
+                                            value={item.category || ''} 
+                                            onChange={val => handleUpdate('category', val)} 
+                                            options={['Loan', 'Insurance', 'Forex', 'Consultancy'].map(c => ({id: c, name: c}))}
+                                            placeholder="Category"
+                                            buttonClassName="w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                        />
                                     </TableCell>
                                     <TableCell className="p-2">
-                                        <select value={item.product} onChange={e => handleUpdate('product', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                                            <option value="" disabled>Select</option>
-                                            {allowedProducts(item.category).map((p: any) => <option key={p.id} value={p.name}>{p.name}</option>)}
-                                        </select>
+                                        <AppSelect 
+                                            value={item.product || ''} 
+                                            onChange={val => handleUpdate('product', val)} 
+                                            options={allowedProducts(item.category).map((p: any) => ({id: p.name, name: p.name}))}
+                                            placeholder="Product"
+                                            buttonClassName="w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                        />
                                     </TableCell>
                                     <TableCell className="p-2"><Input value={item.fileLogin || ''} onChange={e => handleUpdate('fileLogin', e.target.value)} disabled={item.category !== 'Loan'} placeholder="e.g. WBO" className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
-                                        <select value={item.channel || ''} onChange={e => handleUpdate('channel', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                                            <option value="" disabled>Select</option>
-                                            {item.category === 'Insurance' 
-                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC'].map(c => <option key={c} value={c}>{c}</option>)
-                                                : channels.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)
+                                        <AppSelect 
+                                            value={item.channel || ''} 
+                                            onChange={val => handleUpdate('channel', val)} 
+                                            options={item.category === 'Insurance' 
+                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC'].map(c => ({id: c, name: c}))
+                                                : channels.map((c: any) => ({id: c.name, name: c.name}))
                                             }
-                                        </select>
+                                            placeholder="Channel"
+                                            buttonClassName="w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                        />
                                     </TableCell>
                                     <TableCell className="p-2">
-                                        <select value={item.branchLocation || ''} onChange={e => handleUpdate('branchLocation', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                                            <option value="" disabled>Select</option>
-                                            {branches.map((b: any) => <option key={b.id} value={b.name}>{b.name}</option>)}
-                                        </select>
+                                        <BranchSelect 
+                                            value={item.branchLocation || ''} 
+                                            onChange={val => handleUpdate('branchLocation', val)} 
+                                            branches={branches}
+                                            valueField="name"
+                                            className="w-[120px]"
+                                        />
                                     </TableCell>
                                     <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input type="date" value={item.customerDOB || ''} onChange={e => handleUpdate('customerDOB', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
@@ -1651,14 +1657,13 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
                                     <TableCell className="p-2">
-                                        <select value={item.fileStatus || ''} onChange={e => handleUpdate('fileStatus', e.target.value)} className="w-full h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                                            <option value="" disabled>Status</option>
-                                            <option value="Login">Login</option>
-                                            <option value="Processing">Processing</option>
-                                            <option value="Sanctioned">Sanctioned</option>
-                                            <option value="Disbursed">Disbursed</option>
-                                            <option value="Rejected">Rejected</option>
-                                        </select>
+                                        <AppSelect 
+                                            value={item.fileStatus || ''} 
+                                            onChange={val => handleUpdate('fileStatus', val)} 
+                                            options={['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Rejected'].map(c => ({id: c, name: c}))}
+                                            placeholder="Status"
+                                            buttonClassName="w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                                        />
                                     </TableCell>
                                     <TableCell className="p-2">
                                         <NumericFormat

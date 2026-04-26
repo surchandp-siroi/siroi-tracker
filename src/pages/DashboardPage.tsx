@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Calendar, X } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
+import { BranchSelect } from '@/components/BranchSelect';
 
 const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
 
@@ -112,6 +113,10 @@ export default function DashboardOverview() {
   const [showTargetLeaders, setShowTargetLeaders] = useState(false);
   const [overrideModal, setOverrideModal] = useState<{ isOpen: boolean, branchId: string, branchName: string, currentTarget: number } | null>(null);
   const [overrideAmount, setOverrideAmount] = useState<string>('');
+
+  // Granular Tracking State
+  const [granularLocation, setGranularLocation] = useState<string>('all');
+  const [granularDate, setGranularDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Secure routing
   useEffect(() => {
@@ -528,16 +533,14 @@ export default function DashboardOverview() {
               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
                 <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
                 <div className="flex items-center gap-3">
-                    <select 
+                    <BranchSelect 
                         value={selectedBusinessBranch}
-                        onChange={(e) => setSelectedBusinessBranch(e.target.value)}
-                        className="text-[10px] bg-transparent dark:bg-[#0f172a] border border-slate-900/10 dark:border-white/10 rounded px-2 py-1 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-bold cursor-pointer"
-                    >
-                        <option value="all" className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">All Branches</option>
-                        {branches.map(b => (
-                            <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-200">{b.name}</option>
-                        ))}
-                    </select>
+                        onChange={setSelectedBusinessBranch}
+                        branches={branches}
+                        includeAllOption={true}
+                        allOptionText="All Branches"
+                        className="w-[140px]"
+                    />
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex justify-center items-center p-4">
@@ -613,16 +616,14 @@ export default function DashboardOverview() {
                     <span className="text-slate-300 dark:text-slate-700 mx-1">•</span>
                     <span className="flex items-center gap-1.5">
                         Branch:
-                        <select 
+                        <BranchSelect 
                             value={selectedBusinessBranch}
-                            onChange={(e) => setSelectedBusinessBranch(e.target.value)}
-                            className="bg-transparent border-none text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-none focus:ring-0 p-0 ml-1 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
-                        >
-                            <option value="all" className="bg-white dark:bg-[#0f172a]">Consolidated</option>
-                            {branches.map(b => (
-                                <option key={b.id} value={b.id} className="bg-white dark:bg-[#0f172a]">{b.name}</option>
-                            ))}
-                        </select>
+                            onChange={setSelectedBusinessBranch}
+                            branches={branches}
+                            includeAllOption={true}
+                            allOptionText="Consolidated"
+                            className="w-[140px] ml-1"
+                        />
                     </span>
                  </div>
              </div>
@@ -801,6 +802,47 @@ export default function DashboardOverview() {
             )}
         </Card>
       </div>
+
+      <hr className="my-10 border-slate-900/10 dark:border-white/10" />
+
+      <div className="flex flex-col gap-6">
+      <Card className="p-6 border-slate-900/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wider">Granular Tracking</h2>
+                  <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Deeper insights</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                  <BranchSelect 
+                      value={granularLocation}
+                      onChange={setGranularLocation}
+                      branches={branches}
+                      includeAllOption={true}
+                      allOptionText="All Locations"
+                      className="w-[160px]"
+                  />
+                  <label 
+                      className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 h-10 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
+                      onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+                  >
+                      <Calendar className="w-4 h-4 text-indigo-500" />
+                      <Input 
+                          type="date" 
+                          value={granularDate}
+                          onChange={(e) => setGranularDate(e.target.value)}
+                          className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
+                      />
+                  </label>
+              </div>
+          </div>
+      </Card>
+      
+      {/* Placeholder for Granular Tracking content */}
+      <Card className="border-slate-900/10 dark:border-white/10 bg-slate-50 dark:bg-white/5 shadow-inner min-h-[300px] flex items-center justify-center">
+          <span className="text-sm text-slate-500 dark:text-slate-400 font-medium tracking-widest uppercase">Select parameters to view granular data</span>
+      </Card>
+      </div>
+
       {overrideModal && overrideModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
               <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-800">
