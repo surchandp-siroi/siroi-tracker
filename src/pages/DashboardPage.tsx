@@ -90,7 +90,7 @@ const renderCustomizedPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, 
 };
 
 export default function DashboardOverview() {
-  const { products, channels, branches, entries } = useDataStore();
+  const { products, channels, branches, entries, branchTargets, setBranchTarget } = useDataStore();
   const { user, isInitialized } = useAuthStore();
   const navigate = useNavigate();
 
@@ -103,6 +103,15 @@ export default function DashboardOverview() {
   }, []);
   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
   const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('all');
+  const [targetInputs, setTargetInputs] = useState<Record<string, string>>({});
+  const [savingTargets, setSavingTargets] = useState(false);
+  const [targetMonthStr, setTargetMonthStr] = useState<string>(() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [showTargetLeaders, setShowTargetLeaders] = useState(false);
+  const [overrideModal, setOverrideModal] = useState<{ isOpen: boolean, branchId: string, branchName: string, currentTarget: number } | null>(null);
+  const [overrideAmount, setOverrideAmount] = useState<string>('');
 
   // Secure routing
   useEffect(() => {
@@ -120,6 +129,44 @@ export default function DashboardOverview() {
   const fyStart = isNewFY ? selectedYear : selectedYear - 1;
   const fyEnd = (fyStart + 1).toString().slice(-2);
   const financialYear = `FY ${fyStart}-${fyEnd}`;
+  
+  const currentMonthStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+  
+  const handleSaveTargets = async () => {
+      setSavingTargets(true);
+      const promises = Object.entries(targetInputs).map(([branchId, amountStr]) => {
+          const amount = Number(amountStr);
+          if (amount >= 0) {
+              return setBranchTarget(branchId, targetMonthStr, amount, user?.id || '');
+          }
+          return Promise.resolve(false);
+      });
+      await Promise.all(promises);
+      setSavingTargets(false);
+      setTargetInputs({});
+      
+      // Let the user know the save was completed.
+      if (promises.length > 0) {
+          alert('Targets successfully lodged!');
+      }
+  };
+
+  const handleOverrideTarget = async () => {
+      if (!overrideModal) return;
+      const amount = Number(overrideAmount.replace(/,/g, ''));
+      if (amount >= 0) {
+          setSavingTargets(true);
+          const success = await setBranchTarget(overrideModal.branchId, targetMonthStr, amount, user?.id || '');
+          setSavingTargets(false);
+          if (success) {
+              setOverrideModal(null);
+              setOverrideAmount('');
+              alert('Target successfully overridden!');
+          } else {
+              alert('Failed to override target. Please try again.');
+          }
+      }
+  };
 
   // Filter entries based on the viewMode
   const filteredEntries = useMemo(() => {
@@ -536,8 +583,11 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Loan Conversion Pipeline */}
-      <Card className="mb-8 border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[68%]">
+      {/* Funnel and Targets Section */}
+      <div className="flex flex-col lg:flex-row gap-6 mb-8 w-full items-stretch">
+        
+        {/* Loan Conversion Pipeline */}
+        <Card className="border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[68%]">
           <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
              <div className="flex flex-col gap-1.5">
                  <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Loan Conversion Pipeline</CardTitle>
@@ -621,6 +671,179 @@ export default function DashboardOverview() {
              </div>
           </CardContent>
         </Card>
+
+        {/* Monthly Targets */}
+        <Card className="border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[32%] bg-slate-50 dark:bg-white/5 shadow-inner">
+            <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 bg-white dark:bg-transparent">
+                <div className="flex flex-col gap-2">
+                   <div className="flex items-center justify-between">
+                       <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Branch Targets</CardTitle>
+                       <button onClick={() => setShowTargetLeaders(!showTargetLeaders)} className={`text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-colors ${showTargetLeaders ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'}`}>
+                           {showTargetLeaders ? 'Show Targets' : 'Show Leaders'}
+                       </button>
+                   </div>
+                   <div className="flex items-center">
+                       <input 
+                           type="month" 
+                           value={targetMonthStr}
+                           onChange={(e) => setTargetMonthStr(e.target.value)}
+                           className="text-[11px] uppercase font-bold text-indigo-600 dark:text-indigo-400 tracking-wider bg-transparent border border-slate-200 dark:border-slate-700 rounded px-2 py-1 outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                       />
+                   </div>
+                </div>
+            </CardHeader>
+            <CardContent className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
+                {(() => {
+                    const [tYearStr, tMonthStr] = targetMonthStr.split('-');
+                    const tYear = parseInt(tYearStr);
+                    const tMonth = parseInt(tMonthStr) - 1;
+
+                    let branchData = branches.filter(b => user?.role === 'admin' || b.id === user?.branchId).map(b => {
+                        const targetAmt = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr)?.targetAmount || 0;
+                        let achSum = 0;
+                        entries.forEach(e => {
+                            if (e.branchId !== b.id) return;
+                            const isAch = !e.recordType || e.recordType === 'achievement';
+                            if (!isAch) return;
+                            const ed = new Date(e.entryDate);
+                            if (ed.getMonth() === tMonth && ed.getFullYear() === tYear) {
+                                e.items.forEach(i => { achSum += (Number(i.disbursedAmount) || 0) });
+                            }
+                        });
+                        const progress = targetAmt > 0 ? (achSum / targetAmt) * 100 : (achSum > 0 ? 100 : 0);
+                        const isAchieved = progress >= 100 && targetAmt > 0;
+                        return { ...b, targetAmt, achSum, progress, isAchieved };
+                    });
+
+                    if (showTargetLeaders) {
+                        branchData = branchData.sort((a, b) => b.achSum - a.achSum);
+                    }
+
+                    return branchData.map((b, index) => {
+                        const branchColors: Record<string, {text: string, bg: string, bar: string}> = {
+                            'Guwahati': { text: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20', bar: 'bg-purple-500' },
+                            'Manipur': { text: 'text-rose-700 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20', bar: 'bg-rose-500' },
+                            'Itanagar': { text: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20', bar: 'bg-amber-500' },
+                            'Nagaland & Mizoram': { text: 'text-cyan-700 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20', bar: 'bg-cyan-500' }
+                        };
+                        const colorObj = branchColors[b.name] || { text: 'text-indigo-700 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20', bar: 'bg-indigo-500' };
+
+                        return (
+                            <div key={b.id} className={`flex flex-col justify-center gap-2 p-5 rounded-xl border shadow-sm relative overflow-hidden min-h-[110px] ${colorObj.bg}`}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        {showTargetLeaders && (
+                                            <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700">
+                                                #{index + 1}
+                                            </div>
+                                        )}
+                                        <span className={`text-[13px] md:text-sm font-bold uppercase tracking-wider ${colorObj.text}`}>{b.name}</span>
+                                    </div>
+                                    {!showTargetLeaders && user?.role === 'admin' ? (
+                                        <div className="flex items-center gap-1.5 z-10">
+                                            <span className="text-xs text-slate-500 font-bold">₹</span>
+                                            <Input 
+                                                type="text" 
+                                                value={targetInputs[b.id] !== undefined ? (targetInputs[b.id] ? Number(targetInputs[b.id]).toLocaleString('en-IN') : '') : (b.targetAmt ? b.targetAmt.toLocaleString('en-IN') : '')}
+                                                readOnly={b.targetAmt > 0}
+                                                onClick={() => {
+                                                    if (b.targetAmt > 0) {
+                                                        setOverrideModal({ isOpen: true, branchId: b.id, branchName: b.name, currentTarget: b.targetAmt });
+                                                        setOverrideAmount(b.targetAmt.toString());
+                                                    }
+                                                }}
+                                                onChange={(e) => {
+                                                    if (b.targetAmt > 0) return;
+                                                    const rawValue = e.target.value.replace(/,/g, '');
+                                                    if (rawValue === '') {
+                                                        setTargetInputs(prev => ({...prev, [b.id]: ''}));
+                                                    } else if (!isNaN(Number(rawValue))) {
+                                                        setTargetInputs(prev => ({...prev, [b.id]: rawValue}));
+                                                    }
+                                                }}
+                                                className={`h-8 w-28 px-2 py-1 text-xs text-right font-mono font-bold border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 ${b.targetAmt > 0 ? 'bg-slate-100 dark:bg-slate-800/50 cursor-pointer text-emerald-600 dark:text-emerald-400' : 'bg-white/50 dark:bg-black/20'}`}
+                                                placeholder="Target"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">₹{b.targetAmt.toLocaleString('en-IN')}</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between text-xs mt-2 relative z-10">
+                                    <span className="text-slate-600 dark:text-slate-400 font-medium">Achieved: <span className="font-mono text-slate-900 dark:text-white font-bold ml-1">₹{b.achSum.toLocaleString('en-IN')}</span></span>
+                                    <div className="flex items-center gap-2">
+                                        {b.targetAmt > 0 && (
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${b.progress >= 100 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'}`}>
+                                                {Math.abs(b.progress - 100) < 0.1 ? 'On Target' : b.progress > 100 ? `+${(b.progress - 100).toFixed(1)}%` : `-${(100 - b.progress).toFixed(1)}%`}
+                                            </span>
+                                        )}
+                                        <span className={`font-bold ${colorObj.text}`}>{b.progress.toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                                <div className="w-full h-2 bg-slate-200/60 dark:bg-slate-800/60 rounded-full overflow-hidden mt-1.5 relative z-10">
+                                    <div className={`h-full rounded-full transition-all duration-500 ${b.isAchieved ? 'bg-emerald-500' : colorObj.bar}`} style={{ width: `${Math.min(100, b.progress)}%` }}></div>
+                                </div>
+                            </div>
+                        );
+                    });
+                })()}
+            </CardContent>
+            {user?.role === 'admin' && (
+                <div className="p-4 border-t border-slate-900/10 dark:border-white/10 bg-white dark:bg-transparent">
+                    <button 
+                        onClick={handleSaveTargets}
+                        disabled={savingTargets}
+                        className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] uppercase tracking-widest font-bold rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        {savingTargets ? 'Saving...' : 'Lodge Targets'}
+                    </button>
+                </div>
+            )}
+        </Card>
+      </div>
+      {overrideModal && overrideModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-800">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Override Target</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                      Targets for <span className="font-bold text-slate-700 dark:text-slate-300">{overrideModal.branchName}</span> are already set for <span className="font-bold text-slate-700 dark:text-slate-300">{new Date(targetMonthStr + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}</span> at <span className="font-mono font-bold">₹{overrideModal.currentTarget.toLocaleString('en-IN')}</span>.
+                  </p>
+                  <div className="mb-4">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 uppercase">New Target Figure</label>
+                      <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
+                          <Input 
+                              type="text"
+                              value={overrideAmount ? Number(overrideAmount.replace(/,/g, '')).toLocaleString('en-IN') : ''}
+                              onChange={(e) => {
+                                  const raw = e.target.value.replace(/,/g, '');
+                                  if (raw === '' || !isNaN(Number(raw))) {
+                                      setOverrideAmount(raw);
+                                  }
+                              }}
+                              className="pl-7 font-mono font-bold h-10 w-full"
+                              placeholder="Enter new target"
+                          />
+                      </div>
+                  </div>
+                  <div className="flex gap-3">
+                      <button 
+                          onClick={() => setOverrideModal(null)}
+                          className="flex-1 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
+                      >
+                          Cancel
+                      </button>
+                      <button 
+                          onClick={handleOverrideTarget}
+                          disabled={savingTargets || !overrideAmount || Number(overrideAmount) <= 0}
+                          className="flex-1 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                      >
+                          {savingTargets ? 'Saving...' : 'Override Target'}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
     </>
   );
 }

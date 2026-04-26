@@ -12,7 +12,7 @@ import { NumericFormat } from 'react-number-format';
 export default function DataEntryTerminal() {
   const { user, isInitialized, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { products, channels, branches } = useDataStore();
+  const { products, channels, branches, branchTargets } = useDataStore();
 
   const [entryMode, setEntryMode] = useState<'daily'|'monthly'>(
       new Date() >= new Date('2026-01-01T00:00:00Z') ? 'daily' : 'monthly'
@@ -39,6 +39,16 @@ export default function DataEntryTerminal() {
   const [lodgeEmail, setLodgeEmail] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   
+  // Projection states
+  const [isProjectionLodged, setIsProjectionLodged] = useState(false);
+  const [lodgedProjectionAmount, setLodgedProjectionAmount] = useState(0);
+  const [isProjectionModalOpen, setIsProjectionModalOpen] = useState(false);
+  const [projectionInputs, setProjectionInputs] = useState<Record<string, number>>({
+      Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0
+  });
+  const [projectionReason, setProjectionReason] = useState<string>('Business as Usual');
+  const [isLodgingProjection, setIsLodgingProjection] = useState(false);
+  
   const [hasExistingEntry, setHasExistingEntry] = useState(false);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   const [entryCreatedAt, setEntryCreatedAt] = useState<string | null>(null);
@@ -64,7 +74,17 @@ export default function DataEntryTerminal() {
   const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
   const isExecutive = user?.email === 'executive@siroiforex.com';
   const isExecutiveOverride = hasExistingEntry && isExecutive;
-  const canModify = !hasExistingEntry || isExecutiveOverride;
+  
+  // Projection logic
+  const currentJsDate = new Date();
+  const isSunday = currentJsDate.getDay() === 0;
+  const isPastMay1 = currentJsDate >= new Date('2026-05-01T00:00:00');
+  const isPast11AM = currentJsDate.getHours() >= 11;
+  const isTimeLocked = isPastMay1 && isPast11AM;
+  const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
+  const isGridBlocked = entryMode === 'daily' && !isSunday && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor;
+
+  const canModify = (!hasExistingEntry || isExecutiveOverride) && !isGridBlocked;
   const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
   // Unsaved Guard
@@ -129,6 +149,26 @@ export default function DataEntryTerminal() {
                       setCurrentEntryId(data.id);
                       setEntryCreatedAt(data.createdAt || null);
                   }
+                  
+                  if (data._proj) {
+                      setIsProjectionLodged(true);
+                      setLodgedProjectionAmount(data._proj.totalAmount || 0);
+                      
+                      const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
+                      if (data._proj.items) {
+                          data._proj.items.forEach((item: any) => {
+                              if (item.category && item.category in fetchedInputs) {
+                                  fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
+                              }
+                          });
+                      }
+                      setProjectionInputs(fetchedInputs);
+                  } else {
+                      setIsProjectionLodged(false);
+                      setLodgedProjectionAmount(0);
+                      setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
+                  }
+                  
                   setIsLoadingExisting(false);
                   return;
               }
@@ -148,19 +188,50 @@ export default function DataEntryTerminal() {
               const { data: snap } = await Promise.race([fetchPromise, timeoutPromise]) as any;
               
               if (snap && snap.length > 0) {
-                  setHasExistingEntry(true);
-                  const data = snap[0];
-                  fetchCache.current[cacheKey] = data;
-                  setItems(data.items || []);
-                  setCurrentEntryId(data.id);
-                  setEntryCreatedAt(data.createdAt || null);
+                  const achievementData = snap.find((e: any) => !e.recordType || e.recordType === 'achievement');
+                  const projectionData = snap.find((e: any) => e.recordType === 'projection');
+                  
+                  if (achievementData) {
+                      setHasExistingEntry(true);
+                      fetchCache.current[cacheKey] = { ...achievementData, _proj: projectionData };
+                      setItems(achievementData.items || []);
+                      setCurrentEntryId(achievementData.id);
+                      setEntryCreatedAt(achievementData.createdAt || null);
+                  } else {
+                      fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionData };
+                      setHasExistingEntry(false);
+                      setItems([]);
+                      setCurrentEntryId(null);
+                      setEntryCreatedAt(null);
+                  }
+                  
+                  if (projectionData) {
+                      setIsProjectionLodged(true);
+                      setLodgedProjectionAmount(projectionData.totalAmount || 0);
+                      
+                      const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
+                      if (projectionData.items) {
+                          projectionData.items.forEach((item: any) => {
+                              if (item.category && item.category in fetchedInputs) {
+                                  fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
+                              }
+                          });
+                      }
+                      setProjectionInputs(fetchedInputs);
+                  } else {
+                      setIsProjectionLodged(false);
+                      setLodgedProjectionAmount(0);
+                      setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
+                  }
               } else {
                   fetchCache.current[cacheKey] = { empty: true, items: [] };
                   setItems([]);
-                  
                   setHasExistingEntry(false);
                   setCurrentEntryId(null);
                   setEntryCreatedAt(null);
+                  setIsProjectionLodged(false);
+                  setLodgedProjectionAmount(0);
+                  setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
               }
           } catch (err: any) {
               console.error("Failed to load context", err);
@@ -231,6 +302,7 @@ export default function DataEntryTerminal() {
             - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy", "Investments"].
             - "product": Must be one of: ${products.map((p: any) => p.name).join(', ')}
             - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty if not applicable.
+            - "trackingNumber": string or empty if not applicable.
             - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC if Insurance.
             - "branchLocation": Map to Branch name exactly as: ${branches.map((b: any) => b.name).join(', ')}. Use the specific branch for the row.
             - "customerDOB": string
@@ -343,6 +415,7 @@ export default function DataEntryTerminal() {
           isManual: true, 
           projectionAmt: 0,
           fileLogin: '',
+          trackingNumber: '',
           branchLocation: branchDetails?.name || '',
           customerDOB: '',
           phoneNumber: '',
@@ -482,6 +555,71 @@ export default function DataEntryTerminal() {
           setError(err.message || "Failed to submit tracking data.");
       } finally {
           setIsSaving(false);
+      }
+  };
+
+  const handleLodgeProjection = async () => {
+      if (!activeBranchId) {
+          setError("You do not have a branch assigned yet. Contact Administrator.");
+          return;
+      }
+      
+      setIsLodgingProjection(true);
+      setError('');
+      setSuccess('');
+      
+      try {
+          const totalProjectionAmtInput = Object.values(projectionInputs).reduce((sum, val) => sum + (val || 0), 0);
+          
+          const payload = {
+              branchId: activeBranchId,
+              entryDate: dateStr,
+              mode: entryMode,
+              recordType: 'projection',
+              items: Object.entries(projectionInputs).map(([cat, amt]) => ({
+                  isManual: true,
+                  category: cat,
+                  product: 'Grouped',
+                  projectionAmt: amt || 0,
+                  amount: amt || 0,
+                  reason: projectionReason
+              })),
+              totalAmount: totalProjectionAmtInput,
+              authorId: user?.id,
+              authorEmail: user?.email,
+              location: user?.latestLocation || null,
+          };
+          
+          const { data: existing } = await supabase
+            .from('entries')
+            .select('id')
+            .eq('branchId', activeBranchId)
+            .eq('entryDate', dateStr)
+            .eq('recordType', 'projection')
+            .limit(1);
+
+          if (existing && existing.length > 0) {
+              const { error: updateError } = await supabase
+                .from('entries')
+                .update({ ...payload })
+                .eq('id', existing[0].id);
+              if (updateError) throw new Error(updateError.message);
+          } else {
+              const { error: insertError } = await supabase
+                .from('entries')
+                .insert([{ ...payload, createdAt: new Date().toISOString() }]);
+              if (insertError) throw new Error(insertError.message);
+          }
+          
+          setSuccess("Daily Projection lodged successfully.");
+          setIsProjectionLodged(true);
+          setLodgedProjectionAmount(totalProjectionAmtInput);
+          setIsProjectionModalOpen(false);
+      } catch (err: any) {
+          console.error("Projection error:", err);
+          setError(err.message || "Failed to lodge projection.");
+      } finally {
+          setIsLodgingProjection(false);
       }
   };
 
@@ -714,121 +852,166 @@ export default function DataEntryTerminal() {
                 </Button>
             </div>
         </header>
-        
-        {/* Sticky Top Control Bar */}
-        <div className="sticky top-0 z-20 glass bg-slate-900/80 dark:bg-black/80 backdrop-blur-md border border-slate-900/10 dark:border-white/10 p-4 mb-6 rounded-xl shadow-lg flex flex-wrap items-end gap-4">
-           {(user.role === 'admin' || isBackdoor) && (
-               <div className="flex-1 min-w-[200px]">
-                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
-                       {isBackdoor ? 'Branch Override (Test)' : 'Admin Branch Override'}
-                   </label>
-                   <select 
-                       className="w-full bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-2 text-xs rounded text-slate-900 dark:text-white"
-                       value={adminSelectedBranch}
-                       onChange={(e) => {
-                           if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
-                           setAdminSelectedBranch(e.target.value);
-                       }}
-                   >
-                       {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
-                           <option key={b.id} value={b.id}>{b.name}</option>
-                       ))}
-                   </select>
-               </div>
-           )}
-
-           <div className="flex-1 min-w-[200px]">
-               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
-                   Tracking Mode
-               </label>
-               <div className="flex bg-slate-900/5 dark:bg-black/40 p-1 rounded-md">
-                   <button 
-                       className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                       onClick={() => {
-                           if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                           setEntryMode('monthly');
-                           setDateStr('2026-04-01');
-                       }}
-                   >
-                       Monthly
-                   </button>
-                   <button 
-                       className={`flex-1 text-[10px] font-bold py-1.5 rounded uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                       onClick={() => {
-                           if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                           setEntryMode('daily');
-                           const today = new Date().toISOString().split('T')[0];
-                           setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
-                       }}
-                   >
-                       Daily
-                   </button>
-               </div>
-           </div>
-           
-           <div className="flex-1 min-w-[150px]">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">
-                    Date Context
-                </label>
-                <div className="relative">
-               {entryMode === 'monthly' ? (
-                   <Input 
-                       type="month" 
-                       max="2026-04"
-                       value={dateStr.substring(0, 7)}
-                       onChange={(e) => {
-                           if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                           setDateStr(e.target.value + '-01');
-                       }}
-                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10 w-full pr-28"
-                    />
-                ) : (
-                   <Input 
-                       type="date" 
-                       min="2026-01-01"
-                       value={dateStr}
-                       onChange={(e) => {
-                           if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                           setDateStr(e.target.value);
-                       }}
-                       className="bg-slate-900/5 dark:bg-black/40 text-xs h-[34px] border-slate-200 dark:border-white/10 w-full pr-28"
-                    />
+             {/* Sticky Top Control Bar */}
+        <div className="sticky top-0 z-20 glass bg-slate-900/80 dark:bg-black/80 backdrop-blur-md border border-slate-900/10 dark:border-white/10 p-4 mb-6 rounded-xl shadow-lg flex flex-col gap-4">
+            
+            {/* Row 1: Context Controls */}
+            <div className="flex flex-wrap items-end gap-4">
+                {(user.role === 'admin' || isBackdoor) && (
+                    <div className="w-[150px] shrink-0">
+                        <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
+                            {isBackdoor ? 'Branch Override (Test)' : 'Admin Branch Override'}
+                        </label>
+                        <select 
+                            className="w-full bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 p-1.5 text-xs rounded text-slate-900 dark:text-white"
+                            value={adminSelectedBranch || ''}
+                            onChange={(e) => {
+                                if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
+                                setAdminSelectedBranch(e.target.value);
+                            }}
+                        >
+                            <option value="" disabled>Select branch...</option>
+                            {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 )}
-                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500 pointer-events-none">
+
+                <div className="w-[140px] shrink-0">
+                    <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
+                        Tracking Mode
+                    </label>
+                    <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-0.5 border border-slate-900/10 dark:border-white/10">
+                        <button 
+                            className={`flex-1 text-[10px] font-bold py-1.5 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                            onClick={() => {
+                                if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                setEntryMode('monthly');
+                                const today = new Date().toISOString().split('T')[0];
+                                setDateStr(today >= '2026-01-01' ? today.substring(0, 7) + '-01' : '2026-01-01');
+                            }}
+                        >
+                            Monthly
+                        </button>
+                        <button 
+                            className={`flex-1 text-[10px] font-bold py-1.5 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                            onClick={() => {
+                                if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                setEntryMode('daily');
+                                const today = new Date().toISOString().split('T')[0];
+                                setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
+                            }}
+                        >
+                            Daily
+                        </button>
+                    </div>
+                </div>
+                
+                <div className="w-[130px] shrink-0">
+                    <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
+                        Date Context
+                    </label>
+                    <div>
+                    {entryMode === 'monthly' ? (
+                        <Input 
+                            type="month" 
+                            max="2026-04"
+                            value={dateStr.substring(0, 7)}
+                            onChange={(e) => {
+                                if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                                setDateStr(e.target.value + '-01');
+                            }}
+                            className="bg-slate-900/5 dark:bg-black/40 text-xs h-[30px] border-slate-200 dark:border-white/10 w-full"
+                        />
+                    ) : (
+                        <Input 
+                            type="date" 
+                            min="2026-01-01"
+                            value={dateStr}
+                            onChange={(e) => {
+                                if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                                setDateStr(e.target.value);
+                            }}
+                            className="bg-slate-900/5 dark:bg-black/40 text-xs h-[30px] border-slate-200 dark:border-white/10 w-full"
+                        />
+                    )}
+                    </div>
+                </div>
+
+                {/* Target */}
+                <div className="flex flex-col justify-end shrink-0 min-w-[150px]">
+                    <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
+                        Target ({dateStr.substring(0, 7)})
+                    </label>
+                    <div className="flex items-center h-[30px] px-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-md text-xs font-extrabold text-emerald-700 dark:text-emerald-400 shadow-sm">
+                        ₹{((branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7))?.targetAmount) || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}
+                    </div>
+                </div>
+
+                {/* Current Time Clock */}
+                <div className="flex flex-col justify-end shrink-0 min-w-[120px]">
+                    <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
+                        Live Time
+                    </label>
+                    <div className="flex items-center h-[30px] px-3 bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-mono text-slate-500">
                         {currentTime}
-                    </span>
+                    </div>
                 </div>
             </div>
 
-           <div className="flex-[2] min-w-[300px] flex items-end gap-2">
-               <div className="flex-1">
-                   <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                       <UploadCloud size={12} /> Bulk Upload (AI Extractor)
-                   </label>
-                   <label 
+            {/* Row 2: Actions & Projection */}
+            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-3">
+                <div className="w-[160px] shrink-0">
+                    <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1 flex items-center gap-1">
+                        <UploadCloud size={12} /> Bulk Upload (AI)
+                    </label>
+                    <label 
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`flex items-center justify-center gap-2 h-[34px] text-xs font-medium rounded-md border border-dashed transition-colors cursor-pointer
+                        className={`flex items-center justify-center gap-2 h-[30px] px-2 text-[10px] font-medium rounded-md border border-dashed transition-colors cursor-pointer truncate
                         ${!canModify || isParsing ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400 opacity-50 cursor-not-allowed' : isDragging ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-500 text-indigo-800 dark:text-indigo-200 shadow-sm scale-[1.02]' : 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
                     >
-                        {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : <FileSpreadsheet className="w-4 h-4" />}
-                        {isParsing ? `Processing File... ${uploadProgress}%` : isDragging ? 'Drop File Here' : 'Drag & Drop or Select Excel/CSV'}
-                       <input 
-                           type="file" 
-                           accept=".xlsx, .xls, .csv" 
-                           className="hidden" 
-                           disabled={!canModify || isParsing}
-                           onChange={handleFileUpload}
-                       />
-                   </label>
-               </div>
-           </div>
+                        {isParsing ? <Loader2 className="animate-spin w-3 h-3 shrink-0" /> : <FileSpreadsheet className="w-3 h-3 shrink-0" />}
+                        <span className="truncate">{isParsing ? `Processing... ${uploadProgress}%` : isDragging ? 'Drop Here' : 'Upload Excel/CSV'}</span>
+                        <input 
+                            type="file" 
+                            accept=".xlsx, .xls, .csv" 
+                            className="hidden" 
+                            disabled={!canModify || isParsing}
+                            onChange={handleFileUpload}
+                        />
+                    </label>
+                </div>
+
+                {/* Projection */}
+                <div className="flex-1 flex justify-end items-center gap-4 min-w-[250px]">
+                    <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest">
+                        <div className="text-slate-500 flex items-center">
+                            <button 
+                                onClick={() => setIsProjectionModalOpen(true)}
+                                className={`px-4 py-1.5 rounded border shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                                    isSunday 
+                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 cursor-not-allowed'
+                                    : isProjectionLodged
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100'
+                                        : isTimeLocked
+                                        ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 cursor-not-allowed'
+                                        : 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-800/40'
+                                }`}
+                            >
+                                Projection: <span className="text-sm font-extrabold">₹{(isProjectionLodged ? lodgedProjectionAmount : (branchDetails?.dailyProjection || 0)).toLocaleString('en-IN')}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {/* Data Grid Section */}
-        <div className="flex-1 flex flex-col min-h-0 bg-white/5 dark:bg-black/20 rounded-xl border border-slate-900/10 dark:border-white/10 overflow-hidden relative">
-            <div className="flex items-center justify-between p-4 border-b border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 shrink-0">
+        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-sm">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 shrink-0">
                <div className="flex items-center gap-3">
                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300">
                        Line Items ({items.length})
@@ -839,14 +1022,6 @@ export default function DataEntryTerminal() {
                        </span>
                    )}
                </div>
-               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
-                   <div className="text-slate-500">
-                       Projection: <span className="text-indigo-600 dark:text-indigo-400 ml-1">₹{(branchDetails?.dailyProjection || 0).toLocaleString('en-IN')}</span>
-                   </div>
-                   <div className="text-slate-500">
-                       Target: <span className="text-indigo-600 dark:text-indigo-400 ml-1">₹{(branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}</span>
-                   </div>
-               </div>
             </div>
 
             <div className="flex-1 overflow-x-auto overflow-y-auto">
@@ -854,38 +1029,39 @@ export default function DataEntryTerminal() {
                     <div className="flex justify-center items-center h-full min-h-[200px]"><Loader2 className="animate-spin text-slate-300" /></div>
                 ) : (
                     <Table className="min-w-max border-collapse">
-                        <TableHeader className="bg-slate-900/5 dark:bg-white/5 sticky top-0 z-10 box-border">
-                            <TableRow className="border-b border-slate-900/10 dark:border-white/10 hover:bg-transparent">
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[200px]">1. Login Date</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">2. Category</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">3. Product</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[250px]">4. Relationship Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">5. File Login</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">6. Channel Partner</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">7. Branch</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">8. Customer Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">9. DOB</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">10. Phone No.</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">11. Email ID</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[280px]">12. Customer Address</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">13. Firm Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">14. Login Amt (₹)</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">15. File Status</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">16. Sanctioned (₹)</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[220px]">17. Disbursed (₹)</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">18. Disbursed Dt</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[210px]">19. EMI Date</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[240px]">20. Repayment Bank</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[230px]">21. Staff Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[230px]">22. Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-semibold py-3 px-3 uppercase tracking-wider text-slate-700 dark:text-slate-300 min-w-[230px]">23. Consultant</TableHead>
-                                <TableHead className="w-[50px] px-2 sticky right-0 bg-white/5 backdrop-blur z-10"></TableHead>
+                        <TableHeader className="bg-indigo-600 dark:bg-indigo-800 sticky top-0 z-10 box-border shadow-sm">
+                            <TableRow>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[200px]">1. Login Date</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">2. Category</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">3. Product</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[250px]">4. Relationship Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">5. File Login</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">6. Tracking Number</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">7. Channel Partner</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">8. Branch</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">9. Customer Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">10. DOB</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">11. Phone No.</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">12. Email ID</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[280px]">13. Customer Address</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">14. Firm Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">15. Login Amt (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">16. File Status</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">17. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">18. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">19. Disbursed Dt</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">20. EMI Date</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">21. Repayment Bank</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">22. Staff Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">23. Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">24. Consultant</TableHead>
+                                <TableHead className="w-[50px] px-2 sticky right-0 bg-indigo-600 dark:bg-indigo-800 z-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {items.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={23} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest border-b-0">
+                                    <TableCell colSpan={24} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest border-b-0">
                                         No items formulated for {dateStr}
                                     </TableCell>
                                 </TableRow>
@@ -954,6 +1130,18 @@ export default function DataEntryTerminal() {
                                             <option value="EXPRESS LINK">EXPRESS LINK</option>
                                             <option value="ILENS">ILENS</option>
                                         </select>
+                                    </TableCell>
+
+                                    {/* 6. Tracking Number */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={(!canModify && !item.isManual) || (item.category !== 'Loan' && item.category !== 'Insurance')}
+                                            type="text"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.trackingNumber || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'trackingNumber', e.target.value)}
+                                            placeholder={item.category !== 'Loan' && item.category !== 'Insurance' ? 'N/A' : 'Tracking #'}
+                                        />
                                     </TableCell>
 
                                     {/* 6. Channel Partner */}
@@ -1225,10 +1413,10 @@ export default function DataEntryTerminal() {
 
         {/* Sticky Bottom Actions */}
         <div className="fixed bottom-0 left-0 right-0 p-4 z-30 pointer-events-none">
-            <div className="max-w-7xl mx-auto flex justify-end gap-3 pointer-events-auto">
+            <div className="max-w-7xl mx-auto flex justify-end items-center gap-4 pointer-events-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-3 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl">
                 <div className="flex-1 max-w-[400px]">
-                    {error && <div className="text-xs text-red-500 font-bold bg-white dark:bg-slate-900 border border-red-500/20 px-4 py-3 rounded-lg shadow-xl shadow-red-500/10">{error}</div>}
-                    {success && <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-white dark:bg-slate-900 border border-emerald-500/20 px-4 py-3 rounded-lg shadow-xl shadow-emerald-500/10">{success}</div>}
+                    {error && <div className="text-xs text-red-500 font-bold bg-white dark:bg-slate-900 border border-red-500/20 px-4 py-2 rounded shadow-sm">{error}</div>}
+                    {success && <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-white dark:bg-slate-900 border border-emerald-500/20 px-4 py-2 rounded shadow-sm">{success}</div>}
                 </div>
                 
                 {hasExistingEntry && ((allowDeletion || isExecutive)) && (
@@ -1239,21 +1427,21 @@ export default function DataEntryTerminal() {
                           setShowDeleteModal(true); 
                         }} 
                         disabled={isDeleting}
-                        className="shadow-xl"
+                        className="shadow-sm h-[38px] px-6 font-bold"
                      >
                          <Trash2 className="w-4 h-4 mr-2" />
                          Delete
                      </Button>
                 )}
                 
-                {canModify && (true) && (
+                {canModify && (
                      <Button variant="secondary" onClick={() => {
                          if (items.length === 0) {
                              setShowContextModal(true);
                          } else {
                              handleAddItem();
                          }
-                     }} className="shadow-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-slate-700">
+                     }} className="h-[38px] px-6 font-bold shadow-sm bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 transition-colors">
                          + Manual Row
                      </Button>
                 )}
@@ -1262,7 +1450,7 @@ export default function DataEntryTerminal() {
                     <Button 
                         disabled={isSaving || items.length === 0} 
                         onClick={handleSubmit} 
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-600/20"
+                        className="h-[38px] px-8 font-bold bg-[#6b21a8] hover:bg-[#581c87] text-white shadow-md transition-all active:scale-95"
                     >
                         {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                         {isExecutiveOverride ? 'Update Record' : 'Permanently Lodge Record'}
@@ -1623,6 +1811,76 @@ export default function DataEntryTerminal() {
                <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                   <Button variant="secondary" onClick={() => setShowContextModal(false)} className="flex-1">Cancel</Button>
                   <Button onClick={() => { setShowContextModal(false); if(items.length===0) handleAddItem(); }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">Start Entry</Button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Projection Modal */}
+        {isProjectionModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsProjectionModalOpen(false)}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+               <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                   <h2 className="text-xl font-bold text-slate-800 dark:text-white">Lodge Daily Projection</h2>
+                   <p className="text-sm text-slate-500 mt-1">Set the expected business projection for {dateStr}. This cannot be modified after 11 AM.</p>
+               </div>
+               <div className="p-6 flex flex-col gap-5 bg-slate-50 dark:bg-slate-900/50">
+                    {isProjectionLodged && (
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 rounded-lg text-emerald-800 dark:text-emerald-300 text-xs font-medium">
+                            <span className="font-bold uppercase tracking-wider block mb-1">Projection Already Set</span>
+                            The target projection for today was previously lodged as ₹{lodgedProjectionAmount.toLocaleString('en-IN')}. You can override this by entering a new amount below.
+                        </div>
+                    )}
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block border-b border-slate-200 dark:border-slate-700 pb-2">
+                            {isProjectionLodged ? 'Override Category Projections (₹)' : 'Category Projections (₹)'}
+                        </label>
+                        <div className="flex flex-col gap-3">
+                            {Object.keys(projectionInputs).map((cat) => (
+                                <div key={cat} className="flex items-center gap-3">
+                                    <span className="w-28 text-sm font-bold text-slate-700 dark:text-slate-300">{cat}</span>
+                                    <NumericFormat
+                                        value={projectionInputs[cat]}
+                                        onValueChange={(values) => setProjectionInputs(prev => ({ ...prev, [cat]: values.floatValue || 0 }))}
+                                        thousandSeparator=","
+                                        thousandsGroupStyle="lakh"
+                                        prefix="₹ "
+                                        className={`flex-1 bg-white dark:bg-slate-900 border ${isProjectionLodged ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 focus:ring-emerald-500' : 'border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-indigo-500'} p-2 text-md font-bold rounded-md focus:ring-2 outline-none transition-colors`}
+                                    />
+                                </div>
+                            ))}
+                            <div className="flex items-center gap-3 pt-3 mt-1 border-t border-slate-200 dark:border-slate-700">
+                                <span className="w-28 text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Total</span>
+                                <div className="flex-1 p-2 text-lg font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-md border border-indigo-100 dark:border-indigo-800/50">
+                                    ₹ {Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0).toLocaleString('en-IN')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                            Reason / Remarks
+                        </label>
+                        <select 
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                            value={projectionReason}
+                            onChange={(e) => setProjectionReason(e.target.value)}
+                        >
+                            <option value="Business as Usual">Business as Usual</option>
+                            <option value="Holiday">Holiday</option>
+                            <option value="Low Walk-ins Expected">Low Walk-ins Expected</option>
+                            <option value="High Walk-ins Expected">High Walk-ins Expected</option>
+                            <option value="Special Drive">Special Drive</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+               </div>
+               <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <Button variant="secondary" onClick={() => setIsProjectionModalOpen(false)} className="flex-1">Cancel</Button>
+                  <Button onClick={handleLodgeProjection} disabled={isLodgingProjection || Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0) < 0} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">
+                      {isLodgingProjection ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : 'Lodge Projection'}
+                  </Button>
                </div>
             </div>
           </div>

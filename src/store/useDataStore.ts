@@ -40,6 +40,7 @@ export interface EntryItem {
     
     // Expanded schema fields
     fileLogin?: 'WBO' | 'EXPRESS LINK' | 'ILENS' | '';
+    trackingNumber?: string;
     branchLocation?: string;
     customerDOB?: string;
     phoneNumber?: string;
@@ -67,6 +68,13 @@ export interface BranchEntry {
     totalAmount: number;
     authorId: string;
     authorEmail: string;
+}
+
+export interface BranchTarget {
+    id?: string;
+    branchId: string;
+    monthYear: string; // e.g. "2026-04"
+    targetAmount: number;
 }
 
 const staticChannels: Channel[] = [
@@ -104,6 +112,7 @@ interface DataState {
   channels: Channel[];
   branches: Branch[];
   entries: BranchEntry[];
+  branchTargets: BranchTarget[];
   isLoading: boolean;
   initSync: (role?: string, branchId?: string | null) => Promise<void>;
   unsubscribeSync: () => void;
@@ -113,6 +122,7 @@ interface DataState {
   deleteProduct: (id: string) => void;
   addBranch: (branch: Omit<Branch, 'id' | 'dailyAchievement'>) => void;
   deleteBranch: (id: string) => void;
+  setBranchTarget: (branchId: string, monthYear: string, targetAmount: number, authorId: string) => Promise<boolean>;
 }
 
 let globalSubscription: any = null;
@@ -122,6 +132,7 @@ export const useDataStore = create<DataState>((set) => ({
   channels: staticChannels,
   branches: staticBranches,
   entries: [],
+  branchTargets: [],
   isLoading: true,
   addChannel: () => {},
   deleteChannel: () => {},
@@ -129,6 +140,35 @@ export const useDataStore = create<DataState>((set) => ({
   deleteProduct: () => {},
   addBranch: () => {},
   deleteBranch: () => {},
+  setBranchTarget: async (branchId, monthYear, targetAmount, authorId) => {
+      try {
+          // Attempt to upsert the target
+          const { error } = await supabase.from('branch_targets').upsert(
+              { branchId, monthYear, targetAmount, authorId },
+              { onConflict: 'branchId,monthYear' }
+          );
+          if (error) {
+              console.error("Error setting branch target:", error);
+              return false;
+          }
+          
+          // Refresh state locally
+          set((state) => {
+             const existingIndex = state.branchTargets.findIndex(t => t.branchId === branchId && t.monthYear === monthYear);
+             if (existingIndex >= 0) {
+                 const newTargets = [...state.branchTargets];
+                 newTargets[existingIndex] = { ...newTargets[existingIndex], targetAmount };
+                 return { branchTargets: newTargets };
+             } else {
+                 return { branchTargets: [...state.branchTargets, { branchId, monthYear, targetAmount }] };
+             }
+          });
+          return true;
+      } catch (e) {
+          console.error("Exception setting branch target:", e);
+          return false;
+      }
+  },
 
   initSync: async (role?: string, branchId?: string | null) => {
     if (globalSubscription) {
@@ -174,7 +214,17 @@ export const useDataStore = create<DataState>((set) => ({
       
       const initialEntries = allEntries;
       
-      const computeStats = (entries: BranchEntry[]) => {
+      let allTargets: BranchTarget[] = [];
+      try {
+          const { data: targetData, error: targetError } = await supabase.from('branch_targets').select('*');
+          if (!targetError && targetData) {
+              allTargets = targetData as BranchTarget[];
+          }
+      } catch (e) {
+          console.warn('Could not fetch branch_targets, table might not exist yet.', e);
+      }
+      
+      const computeStats = (entries: BranchEntry[], targets: BranchTarget[]) => {
         const productBusiness: Record<string, number> = {};
         const branchAchievements: Record<string, number> = {};
         const branchProjections: Record<string, number> = {};
@@ -209,11 +259,12 @@ export const useDataStore = create<DataState>((set) => ({
             })),
             products: state.products.map(p => ({ ...p, business: productBusiness[p.name] || 0 })),
             channels: state.channels.map(c => ({ ...c, business: channelBusiness[c.name] || 0 })),
+            branchTargets: targets,
             isLoading: false
         }));
       };
 
-      computeStats((initialEntries || []) as any as BranchEntry[]);
+      computeStats((initialEntries || []) as any as BranchEntry[], allTargets);
 
       // Subscribe to changes
       const channelName = `entries_changes_${Date.now()}_${Math.random().toString(36).substring(7)}`;
@@ -229,8 +280,15 @@ export const useDataStore = create<DataState>((set) => ({
                  refreshQuery = refreshQuery.eq('branchId', branchId);
              }
              const { data: refreshedEntries } = await refreshQuery;
+             
+             let refreshedTargets: BranchTarget[] = [];
+             try {
+                 const { data: targetData } = await supabase.from('branch_targets').select('*');
+                 if (targetData) refreshedTargets = targetData as BranchTarget[];
+             } catch (e) {}
+
              if (refreshedEntries) {
-                 computeStats(refreshedEntries as any as BranchEntry[]);
+                 computeStats(refreshedEntries as any as BranchEntry[], refreshedTargets);
              }
           }
         )
