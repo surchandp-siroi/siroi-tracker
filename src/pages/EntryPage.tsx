@@ -303,7 +303,7 @@ export default function DataEntryTerminal() {
             - "customerName": string
             - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy", "Investments"].
             - "product": Must be one of: ${products.map((p: any) => p.name).join(', ')}
-            - "rmName": string (Extract Relationship Manager Name)
+            - "relationshipManagerName": string (Extract Relationship Manager Name)
             - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty if not applicable.
             - "trackingNumber": string or empty if not applicable.
             - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC if Insurance.
@@ -1630,7 +1630,7 @@ export default function DataEntryTerminal() {
                                             buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.product ? 'border border-red-500' : 'border'}`}
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2"><Input value={item.rmName || ''} onChange={e => handleUpdate('rmName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input value={item.relationshipManagerName || ''} onChange={e => handleUpdate('relationshipManagerName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.fileLogin || ''} onChange={e => handleUpdate('fileLogin', e.target.value)} disabled={item.category !== 'Loan'} placeholder="e.g. WBO" className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.trackingNumber || ''} onChange={e => handleUpdate('trackingNumber', e.target.value)} placeholder="Track No..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
