@@ -310,7 +310,7 @@ export default function DataEntryTerminal() {
             - "emailId": string
             - "customerAddress": string
             - "firmName": string
-            - "amount": Positive number. Extract directly from the "Login Amount" or "Login Amt" column. This serves as the Projection.
+            - "amount": Positive number. Extract directly from the "Projection" or "Login Amt" column. This serves as the Projection.
             - "fileStatus": string
             - "sanctionedAmount": number
             - "disbursedAmount": Positive number. Extract directly from the "Disbursed Amount" or "Disbursed Amt" column. This serves as the Achievement.
@@ -1031,28 +1031,28 @@ export default function DataEntryTerminal() {
                     <Table className="min-w-max border-collapse">
                         <TableHeader className="bg-indigo-600 dark:bg-indigo-800 sticky top-0 z-10 box-border shadow-sm">
                             <TableRow>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[200px]">1. Login Date</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">2. Category</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">3. Product</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[250px]">4. Relationship Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">5. File Login</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">6. Tracking Number</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">7. Channel Partner</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">8. Branch</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">9. Customer Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">10. DOB</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">11. Phone No.</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">12. Email ID</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[280px]">13. Customer Address</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">14. Firm Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">15. Login Amt (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">16. File Status</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">17. Sanctioned (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">18. Disbursed (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">19. Disbursed Dt</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">20. EMI Date</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">21. Repayment Bank</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">22. Staff Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">1. Staff Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">2. Projection (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[200px]">3. Login Date</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">4. Category</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">5. Product</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[250px]">6. Relationship Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">7. File Login</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">8. Tracking Number</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">9. Channel Partner</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">10. Branch</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">11. Customer Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">12. DOB</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">13. Phone No.</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">14. Email ID</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[280px]">15. Customer Address</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">16. Firm Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">17. File Status</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">18. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">19. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">20. Disbursed Dt</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">21. EMI Date</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">22. Repayment Bank</TableHead>
                                 <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">23. Manager Name</TableHead>
                                 <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">24. Consultant</TableHead>
                                 <TableHead className="w-[50px] px-2 sticky right-0 bg-indigo-600 dark:bg-indigo-800 z-10"></TableHead>
@@ -1067,7 +1067,31 @@ export default function DataEntryTerminal() {
                                 </TableRow>
                             ) : items.map((item, index) => (
                                 <TableRow key={index} className="hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border-b border-slate-900/5 dark:border-white/5">
-                                    {/* 1. Login Date */}
+                                    {/* 1. Staff Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="text"
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
+                                            value={item.staffName || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 2. Projection (₹) */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <NumericFormat 
+                                            customInput={Input}
+                                            disabled={!canModify && !item.isManual}
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
+                                            value={item.amount === 0 ? '' : item.amount}
+                                            onValueChange={(values) => handleUpdateItem(index, 'amount', values.floatValue || 0)}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                        />
+                                    </TableCell>
+
+                                    {/* 3. Login Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center">
                                             {item.date}
@@ -1230,7 +1254,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 13. Firm Name */}
+                                    {/* 16. Firm Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1241,20 +1265,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 13. Login Amount */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <NumericFormat 
-                                            customInput={Input}
-                                            disabled={!canModify && !item.isManual}
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                            value={item.amount === 0 ? '' : item.amount}
-                                            onValueChange={(values) => handleUpdateItem(index, 'amount', values.floatValue || 0)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                        />
-                                    </TableCell>
-
-                                    {/* 15. File Status */}
+                                    {/* 17. File Status */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
@@ -1351,18 +1362,7 @@ export default function DataEntryTerminal() {
                                         </datalist>
                                     </TableCell>
 
-                                    {/* 21. Staff Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={!canModify && !item.isManual}
-                                            type="text"
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                            value={item.staffName || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 22. Manager Name */}
+                                    {/* 23. Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
