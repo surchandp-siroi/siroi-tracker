@@ -11,8 +11,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  const branches = useDataStore.getState().branches;
-  const [location, setLocation] = useState(branches[0]?.name || 'HO');
+  const initialBranches = useDataStore.getState().branches;
+  const [location, setLocation] = useState(initialBranches[0]?.name || 'HO');
   const [locationStatus, setLocationStatus] = useState<string>('');
   
   const [loginMode, setLoginMode] = useState<'password' | 'otp'>('otp');
