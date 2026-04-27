@@ -365,7 +365,7 @@ export default function DataEntryTerminal() {
           }
       } catch (e: any) {
           console.error("AI Parse Error:", e);
-          setError("Failed to process file. Ensure it's a valid Excel/CSV with readable data.");
+          setError(`Failed to process file. Error: ${e.message || "Ensure it's a valid Excel/CSV with readable data."}`);
       } finally {
           setIsParsing(false);
           // Wait briefly before resetting progress so user sees 100%
