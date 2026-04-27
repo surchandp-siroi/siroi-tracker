@@ -10,7 +10,9 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [location, setLocation] = useState('HO');
+  
+  const branches = useDataStore.getState().branches;
+  const [location, setLocation] = useState(branches[0]?.name || 'HO');
   const [locationStatus, setLocationStatus] = useState<string>('');
   
   const [loginMode, setLoginMode] = useState<'password' | 'otp'>('otp');
@@ -54,7 +56,7 @@ export default function LoginPage() {
 
       const updatedUser = useAuthStore.getState().user;
       
-      if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com') {
+      if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
           navigate('/entry');
       } else {
           navigate('/dashboard');

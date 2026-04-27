@@ -75,6 +75,7 @@ export default function DataEntryTerminal() {
   const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
   const isExecutive = user?.email === 'executive@siroiforex.com';
   const isExecutiveOverride = hasExistingEntry && isExecutive;
+  const isMIS = user?.email?.toLowerCase().startsWith('mis.');
   
   // Projection logic
   const currentJsDate = new Date();
@@ -961,6 +962,7 @@ export default function DataEntryTerminal() {
 
             {/* Row 2: Actions & Projection */}
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-3">
+                {!isMIS && (
                 <div className="w-[160px] shrink-0">
                     <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <UploadCloud size={12} /> Bulk Upload (AI)
@@ -983,6 +985,7 @@ export default function DataEntryTerminal() {
                         />
                     </label>
                 </div>
+                )}
 
                 {/* Projection */}
                 <div className="flex-1 flex justify-end items-center gap-4 min-w-[250px]">
