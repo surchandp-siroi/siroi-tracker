@@ -55,13 +55,17 @@ export default function LoginPage() {
       }
 
       const updatedUser = useAuthStore.getState().user;
+      console.log("[LoginPage] verifyOtpLogin finished. updatedUser:", updatedUser?.email, updatedUser?.role);
       
       if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
+          console.log("[LoginPage] Navigating to /entry");
           navigate('/entry');
       } else {
+          console.log("[LoginPage] Navigating to /dashboard");
           navigate('/dashboard');
       }
     } catch (err: any) {
+      console.error("[LoginPage] Caught error in handleLogin:", err);
       if (err.message?.includes('UNAUTHORIZED_LOCATION')) {
         setError('UNAUTHORIZED_LOCATION');
       } else if (err.message?.includes('Invalid login credentials')) {
