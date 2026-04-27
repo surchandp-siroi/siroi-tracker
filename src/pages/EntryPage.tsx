@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
 import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -248,10 +247,6 @@ export default function DataEntryTerminal() {
   }, [activeBranchId, dateStr, entryMode, branches]);
 
   const processFile = async (file: File) => {
-      if (!import.meta.env.VITE_GEMINI_API_KEY) {
-          setError("Smart upload unavailable. Contact admin to set Gemini API key.");
-          return;
-      }
       
       setIsParsing(true);
       setUploadProgress(0);
@@ -291,7 +286,6 @@ export default function DataEntryTerminal() {
 
           setUploadProgress(60);
           
-          const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
           const prompt = `
             You are a strict data extraction AI. Extract financial entry data from the following raw JSON representing an uploaded Excel/CSV file.
             Ignore junk rows like headers, footers, totals, or blank lines.
@@ -328,13 +322,20 @@ export default function DataEntryTerminal() {
           `;
           
           setUploadProgress(70);
-          const response = await ai.models.generateContent({
-             model: 'gemini-2.5-flash',
-             contents: prompt,
+          const { data, error: funcError } = await supabase.functions.invoke('parse-excel', {
+             body: { prompt }
           });
+          
+          if (funcError) {
+             throw new Error(funcError.message || "Failed to invoke Edge Function");
+          }
+          if (data?.error) {
+             throw new Error(data.error);
+          }
+          
           setUploadProgress(90);
           
-          const text = response.text || "[]";
+          const text = data?.text || "[]";
           const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
           let parsed = JSON.parse(_clean);
           
