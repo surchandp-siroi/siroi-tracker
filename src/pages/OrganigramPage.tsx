@@ -162,7 +162,7 @@ function OrganigramChart() {
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    name: '', designation: '', phone: '', email: '', branch: '', dob: '', doj: '', gender: '', box_color: ''
+    name: '', designation: '', phone: '+91 ', email: '', branch: '', dob: '', doj: '', gender: '', box_color: ''
   });
 
   const { user } = useAuthStore();
@@ -248,14 +248,14 @@ function OrganigramChart() {
   const handleAddChild = (parentId: string) => {
     setSelectedParentId(parentId);
     setEditingNodeId(null);
-    setFormData({ name: '', designation: '', phone: '', email: '', branch: '', dob: '', doj: '', gender: '', box_color: '' });
+    setFormData({ name: '', designation: '', phone: '+91 ', email: '', branch: '', dob: '', doj: '', gender: '', box_color: '' });
     setIsFormOpen(true);
   };
 
   const handleAddPeer = (parentId: string | null) => {
     setSelectedParentId(parentId);
     setEditingNodeId(null);
-    setFormData({ name: '', designation: '', phone: '', email: '', branch: '', dob: '', doj: '', gender: '', box_color: '' });
+    setFormData({ name: '', designation: '', phone: '+91 ', email: '', branch: '', dob: '', doj: '', gender: '', box_color: '' });
     setIsFormOpen(true);
   };
 
@@ -265,11 +265,11 @@ function OrganigramChart() {
     setFormData({
       name: nodeData.name || '',
       designation: nodeData.designation || '',
-      phone: nodeData.phone || '',
+      phone: nodeData.phone || '+91 ',
       email: nodeData.email || '',
       branch: nodeData.branch || '',
-      dob: nodeData.dob || '',
-      doj: nodeData.doj || '',
+      dob: nodeData.dob ? nodeData.dob.split('T')[0] : '',
+      doj: nodeData.doj ? nodeData.doj.split('T')[0] : '',
       gender: nodeData.gender || '',
       box_color: nodeData.box_color || ''
     });
@@ -322,22 +322,35 @@ function OrganigramChart() {
     e.preventDefault();
     if (!formData.name || !formData.designation) return;
 
-    if (formData.email && formData.email.trim() !== '' && !formData.email.endsWith('@siroiforex.com')) {
+    if (formData.email && formData.email.trim() !== '' && !formData.email.toLowerCase().endsWith('@siroiforex.com')) {
       alert('Email must belong to @siroiforex.com domain');
       return;
     }
 
+    if (editingNodeId && selectedParentId === editingNodeId) {
+      alert("An employee cannot report to themselves.");
+      return;
+    }
+
+    let finalPhone = formData.phone ? formData.phone.trim() : null;
+    if (finalPhone === '+91' || finalPhone === '+91 ' || finalPhone === '') {
+      finalPhone = null;
+    }
+
+    let finalEmail = formData.email ? formData.email.trim() : null;
+    if (finalEmail === '') finalEmail = null;
+
     const payload = {
-      name: formData.name,
-      designation: formData.designation,
-      phone: formData.phone || null,
-      email: formData.email || null,
+      name: formData.name.trim(),
+      designation: formData.designation.trim(),
+      phone: finalPhone,
+      email: finalEmail,
       branch: formData.branch || null,
       dob: formData.dob || null,
       doj: formData.doj || null,
       gender: formData.gender || null,
       box_color: formData.box_color || null,
-      parent_id: selectedParentId
+      parent_id: selectedParentId || null
     };
 
     if (editingNodeId) {
@@ -454,7 +467,16 @@ function OrganigramChart() {
 
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Phone Number</label>
-                  <input type="tel" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91..." />
+                  <input type="tel" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" value={formData.phone} onChange={e => {
+                    let val = e.target.value;
+                    // Auto-prefix with +91 if user starts typing numbers
+                    if (val.length > 0 && /^[0-9]/.test(val) && !val.startsWith('91')) {
+                      val = '+91 ' + val;
+                    } else if (val.length > 0 && /^[0-9]/.test(val) && val.startsWith('91')) {
+                      val = '+' + val;
+                    }
+                    setFormData({...formData, phone: val});
+                  }} placeholder="+91 99999 99999" />
                 </div>
 
                 <div className="col-span-2 sm:col-span-1">
@@ -529,11 +551,23 @@ function OrganigramChart() {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Email Address</p>
-                  <p className="text-slate-900 dark:text-white font-medium">{viewingNodeData.email || 'N/A'}</p>
+                  {viewingNodeData.email ? (
+                    <a href={`mailto:${viewingNodeData.email}`} className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline inline-flex items-center">
+                      {viewingNodeData.email}
+                    </a>
+                  ) : (
+                    <p className="text-slate-900 dark:text-white font-medium">N/A</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Phone Number</p>
-                  <p className="text-slate-900 dark:text-white font-medium">{viewingNodeData.phone || 'N/A'}</p>
+                  {viewingNodeData.phone ? (
+                    <a href={`tel:${viewingNodeData.phone.replace(/\s+/g, '')}`} className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline inline-flex items-center">
+                      {viewingNodeData.phone}
+                    </a>
+                  ) : (
+                    <p className="text-slate-900 dark:text-white font-medium">N/A</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gender</p>
