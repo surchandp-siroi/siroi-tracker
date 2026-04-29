@@ -450,6 +450,8 @@ function OrganigramChart() {
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Branch Location</label>
                   <select className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" value={formData.branch} onChange={e => setFormData({...formData, branch: e.target.value})}>
                     <option value="">Select Branch</option>
+                    <option value="Overall">Overall</option>
+                    <option value="Guwahati (HO)">Guwahati (HO)</option>
                     {branches.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
                   </select>
                 </div>

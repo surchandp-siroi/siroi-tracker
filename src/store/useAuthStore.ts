@@ -7,12 +7,12 @@ import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 let isLoginInProgress = false;
 
 // Helper to wrap promises with a timeout to prevent infinite loading
-const withTimeout = <T>(promise: Promise<T>, timeoutMs = 15000, errorMessage = "Request timed out. Please refresh or try again."): Promise<T> => {
+const withTimeout = <T>(promise: PromiseLike<T>, timeoutMs = 15000, errorMessage = "Request timed out. Please refresh or try again."): Promise<T> => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
     });
-    return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+    return Promise.race([Promise.resolve(promise), timeoutPromise]).finally(() => clearTimeout(timeoutId));
 };
 
 export type UserRole = 'admin' | 'statehead';
