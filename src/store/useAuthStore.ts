@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { useDataStore } from './useDataStore';
+import { useSessionStore } from './useSessionStore';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 // Login lock: prevents onAuthStateChange from overwriting state mid-login
@@ -145,6 +146,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           "Profile synchronization timed out. Please refresh the page or try again."
       );
       
+      useSessionStore.getState().updateActivity();
       set({ user: profile, supabaseUser: sbUser, isLoading: false, isInitialized: true });
       setTimeout(() => { isLoginInProgress = false; }, 1500);
     } catch (error: any) {
@@ -218,6 +220,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log("[Auth] syncUserProfile completed successfully.");
       
       console.log("[Auth] Setting user profile into Zustand state.");
+      useSessionStore.getState().updateActivity();
       set({ user: profile, supabaseUser: data.user, isLoading: false, isInitialized: true });
       setTimeout(() => { isLoginInProgress = false; }, 1500);
       console.log("[Auth] verifyOtpLogin successfully finished.");
@@ -249,10 +252,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     10000,
                     "Profile sync timeout during init."
                 );
+                useSessionStore.getState().updateActivity();
                 set({ user: profile, supabaseUser: session.user, isInitialized: true });
             } catch (err) {
                 console.warn("Auth sync error:", err);
-                set({ supabaseUser: session.user, user: null, isInitialized: true });
+                set((state) => ({ 
+                    supabaseUser: session.user, 
+                    user: state.user, 
+                    isInitialized: true 
+                }));
             }
         } else {
             set({ user: null, supabaseUser: null, isInitialized: true });

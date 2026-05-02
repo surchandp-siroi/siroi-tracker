@@ -13,50 +13,12 @@ import AuditLogsPage from '@/pages/AuditLogsPage';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuthStore } from '@/store/useAuthStore';
 
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
-
-function SessionTimeoutHandler() {
-  const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!user) return;
-
-    let timeoutId: number;
-
-    const resetTimeout = () => {
-      window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(async () => {
-        await logout();
-        navigate('/login', { replace: true });
-      }, INACTIVITY_TIMEOUT);
-    };
-
-    const events = ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'];
-    
-    events.forEach(event => {
-      window.addEventListener(event, resetTimeout);
-    });
-
-    // Initialize timeout
-    resetTimeout();
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      events.forEach(event => {
-        window.removeEventListener(event, resetTimeout);
-      });
-    };
-  }, [user, logout, navigate]);
-
-  return null;
-}
-
+import { SessionTimer } from '@/components/SessionTimer';
 export default function App() {
   return (
     <ThemeProvider>
       <InitProvider>
-        <SessionTimeoutHandler />
+        <SessionTimer />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/entry" element={<EntryPage />} />
