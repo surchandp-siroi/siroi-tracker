@@ -514,7 +514,7 @@ export default function DataEntryTerminal() {
               branchId: activeBranchId,
               entryDate: dateStr,
               mode: entryMode,
-              
+              recordType: 'achievement',
               items: items,
               totalAmount,
               authorId: user?.id,
@@ -525,23 +525,22 @@ export default function DataEntryTerminal() {
           // Check if an entry already exists for this branch+date+mode+recordType
           const { data: existing } = await supabase
             .from('entries')
-            .select('id')
+            .select('id, recordType')
             .eq('branchId', activeBranchId)
             .eq('entryDate', dateStr)
-            .eq('mode', entryMode)
-            
-            .limit(1);
+            .eq('mode', entryMode);
 
+          const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
           let savedId: string | null = null;
 
-          if (existing && existing.length > 0) {
-              // Update the existing entry
+          if (achievementRow) {
+              // Update the existing achievement entry
               const { error: updateError } = await supabase
                 .from('entries')
-                .update({ items, totalAmount, authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
-                .eq('id', existing[0].id);
+                .update({ items, totalAmount, recordType: 'achievement', authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
+                .eq('id', achievementRow.id);
               if (updateError) throw new Error(updateError.message);
-              savedId = existing[0].id;
+              savedId = achievementRow.id;
           } else {
               // Insert new entry and capture the returned ID
               const { data: insertData, error: insertError } = await supabase
@@ -729,19 +728,18 @@ export default function DataEntryTerminal() {
           for (const [rowDate, rItems] of itemsByDate.entries()) {
               const { data: existing } = await supabase
                 .from('entries')
-                .select('id, items')
+                .select('id, items, recordType')
                 .eq('branchId', activeBranchId)
                 .eq('entryDate', rowDate)
-                .eq('mode', entryMode)
+                .eq('mode', entryMode);
                 
-                .limit(1);
-                
+              const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
               let mergedItems = rItems;
               let existingId = undefined;
 
-              if (existing && existing.length > 0) {
-                  existingId = existing[0].id;
-                  const existingItems = existing[0].items || [];
+              if (achievementRow) {
+                  existingId = achievementRow.id;
+                  const existingItems = achievementRow.items || [];
                   const existingPhones = new Set(existingItems.map((i: any) => i.phoneNumber).filter(Boolean));
                   const duplicateFound = rItems.some((i: any) => i.phoneNumber && existingPhones.has(i.phoneNumber));
                   
@@ -773,7 +771,7 @@ export default function DataEntryTerminal() {
                   branchId: activeBranchId,
                   entryDate: rowDate,
                   mode: entryMode,
-                  
+                  recordType: 'achievement',
                   items: mergedItems,
                   totalAmount: mergedTotal,
                   authorId: user?.id,
