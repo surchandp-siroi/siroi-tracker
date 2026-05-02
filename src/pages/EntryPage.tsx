@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -57,6 +57,7 @@ export default function DataEntryTerminal() {
   const [branchDetails, setBranchDetails] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showContextModal, setShowContextModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedDeleteIndices, setSelectedDeleteIndices] = useState<Set<number>>(new Set());
   
   // Admin Context
@@ -552,7 +553,8 @@ export default function DataEntryTerminal() {
               savedId = insertData?.[0]?.id || null;
           }
           
-          setSuccess("Tracking submitted successfully. Record locked.");
+          setSuccess("Tracking submitted successfully.");
+          setShowSuccessModal(true);
           setHasExistingEntry(true);
           setCurrentEntryId(savedId);
       } catch (err: any) {
@@ -1895,6 +1897,40 @@ export default function DataEntryTerminal() {
                </div>
             </div>
           </div>
+        )}
+        
+        {/* Success Modal */}
+        {showSuccessModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
+                    <div className="p-6 text-center">
+                        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Save className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                            Record Lodged Successfully
+                        </h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                            Your entries have been successfully saved to the database.
+                        </p>
+                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4 mb-6 text-left">
+                            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-1 flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4" />
+                                Important Rule
+                            </h4>
+                            <p className="text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
+                                Please remember that these entries will remain fully <strong>editable for up to 60 days</strong> from their creation date. You can always come back to modify details, add missing manual rows, or update the file status.
+                            </p>
+                        </div>
+                        <Button 
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold py-3"
+                        >
+                            Acknowledge
+                        </Button>
+                    </div>
+                </div>
+            </div>
         )}
     </div>
   );
