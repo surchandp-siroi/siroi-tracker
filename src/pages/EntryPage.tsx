@@ -86,7 +86,8 @@ export default function DataEntryTerminal() {
   const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
   const isGridBlocked = entryMode === 'daily' && !isSunday && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor;
 
-  const canModify = (!hasExistingEntry || isExecutiveOverride) && !isGridBlocked;
+  const allowEdit = !hasExistingEntry || daysSinceCreation <= 60;
+  const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
   const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
   // Unsaved Guard
@@ -1453,7 +1454,7 @@ export default function DataEntryTerminal() {
                         className="h-[38px] px-8 font-bold bg-[#6b21a8] hover:bg-[#581c87] text-white shadow-md transition-all active:scale-95"
                     >
                         {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                        {isExecutiveOverride ? 'Update Record' : 'Permanently Lodge Record'}
+                        {hasExistingEntry ? 'Update Record' : 'Permanently Lodge Record'}
                     </Button>
                 )}
             </div>
