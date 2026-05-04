@@ -65,6 +65,8 @@ export default function DataEntryTerminal() {
   
   const fetchCache = useRef<Record<string, any>>({});
   const [fetchError, setFetchError] = useState(false);
+  
+  const [metricCategory, setMetricCategory] = useState<string>('Loan');
 
   // 60-day deletion window from entry creation date
   const daysSinceCreation = entryCreatedAt
@@ -311,7 +313,7 @@ export default function DataEntryTerminal() {
             - "customerAddress": string
             - "firmName": string
             - "amount": Positive number. Extract directly from the "Projection" or "Login Amt" column. This serves as the Projection.
-            - "fileStatus": string
+            - "fileStatus": string (If category is Insurance, must be "Issued" or "Not Issued". If category is Loan, must be one of "Login", "Underwriting", "Sanctioned", "Disbursed", "Rejected". Otherwise, one of "Login", "Processing", "Sanctioned", "Disbursed", "Rejected")
             - "sanctionedAmount": number
             - "disbursedAmount": Positive number. Extract directly from the "Disbursed Amount" or "Disbursed Amt" column. This serves as the Achievement.
             - "disbursedDate": string
@@ -449,6 +451,27 @@ export default function DataEntryTerminal() {
           arr[index].product = ''; // reset
           if (val !== 'Loan') {
               arr[index].fileLogin = ''; // reset if not Loan
+          }
+          if (val === 'Insurance') {
+              arr[index].fileStatus = '';
+          } else {
+              if (['Issued', 'Not Issued'].includes(arr[index].fileStatus || '')) {
+                  arr[index].fileStatus = '';
+              }
+          }
+      }
+      
+      // Automatically update achievement for Insurance
+      if (arr[index].category === 'Insurance') {
+          if (key === 'fileStatus') {
+              if (val === 'Issued') {
+                  arr[index].disbursedAmount = arr[index].amount;
+              } else if (val === 'Not Issued') {
+                  arr[index].disbursedAmount = 0;
+              }
+          }
+          if (key === 'amount' && arr[index].fileStatus === 'Issued') {
+              arr[index].disbursedAmount = Number(val) || 0;
           }
       }
       
@@ -816,12 +839,15 @@ export default function DataEntryTerminal() {
   
   const getFileStatusColor = (status: string) => {
       switch (status) {
-          case 'Login': return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-          case 'Processing': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-          case 'Sanctioned': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-          case 'Disbursed': return 'bg-green-500/20 text-green-400 border-green-500/30';
-          case 'Rejected': return 'bg-red-500/20 text-red-400 border-red-500/30';
-          default: return 'bg-slate-900/50 text-slate-300 border-slate-700';
+          case 'Login': return 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/30';
+          case 'Processing': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+          case 'Underwriting': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+          case 'Sanctioned': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
+          case 'Disbursed': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30';
+          case 'Rejected': return 'bg-rose-100 dark:bg-red-500/20 text-rose-700 dark:text-red-400 border-rose-200 dark:border-red-500/30';
+          case 'Issued': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30';
+          case 'Not Issued': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
+          default: return 'bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700';
       }
   };
 
@@ -837,6 +863,24 @@ export default function DataEntryTerminal() {
         if (field === 'fileStatus' && !item.fileStatus) return true;
         return false;
     };
+
+  // Calculate dynamic metrics based on the current items and selected metricCategory
+  let metricLogin = 0;
+  let metricDisbursed = 0;
+  let insuranceIssued = 0;
+  let insuranceNotIssued = 0;
+
+  items.forEach((item: any) => {
+      if (metricCategory === 'All' || item.category === metricCategory) {
+          metricLogin += (Number(item.amount) || 0);
+          metricDisbursed += (Number(item.disbursedAmount) || 0);
+          
+          if (item.category === 'Insurance') {
+              if (item.fileStatus === 'Issued') insuranceIssued += (Number(item.amount) || 0);
+              if (item.fileStatus === 'Not Issued') insuranceNotIssued += (Number(item.amount) || 0);
+          }
+      }
+  });
 
   return (
     <div className="min-h-screen p-4 md:p-8 flex flex-col w-full">
@@ -947,6 +991,48 @@ export default function DataEntryTerminal() {
                     </label>
                     <div className="flex items-center h-[30px] px-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-md text-xs font-extrabold text-emerald-700 dark:text-emerald-400 shadow-sm">
                         ₹{((branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7))?.targetAmount) || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}
+                    </div>
+                </div>
+
+                {/* Dynamic Totals */}
+                <div className="flex flex-col justify-end shrink-0 min-w-[280px]">
+                    <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                            Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
+                        </label>
+                        <select 
+                            value={metricCategory}
+                            onChange={(e) => setMetricCategory(e.target.value)}
+                            className="bg-transparent text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase outline-none border-none cursor-pointer p-0 m-0"
+                        >
+                            <option value="Loan">Loan</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Forex">Forex</option>
+                            <option value="Consultancy">Consultancy</option>
+                            <option value="Investments">Investments</option>
+                            <option value="All">All</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center h-[30px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-md overflow-hidden text-xs font-semibold shadow-sm">
+                        {metricCategory === 'Insurance' ? (
+                            <>
+                                <div className="flex-1 px-2 border-r border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Issued</span>₹{insuranceIssued.toLocaleString('en-IN')}
+                                </div>
+                                <div className="flex-1 px-2 text-indigo-700 dark:text-indigo-300">
+                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Not Issued</span>₹{insuranceNotIssued.toLocaleString('en-IN')}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex-1 px-2 border-r border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
+                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Log</span>₹{metricLogin.toLocaleString('en-IN')}
+                                </div>
+                                <div className="flex-1 px-2 text-indigo-700 dark:text-indigo-300">
+                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Disb</span>₹{metricDisbursed.toLocaleString('en-IN')}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -1277,11 +1363,28 @@ export default function DataEntryTerminal() {
                                             onChange={(e) => handleUpdateItem(index, 'fileStatus', e.target.value)}
                                         >
                                             <option value="" className="bg-slate-800 text-white">Select...</option>
-                                            <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
-                                            <option value="Processing" className="bg-slate-800 text-blue-400">Processing</option>
-                                            <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
-                                            <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
-                                            <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                            {item.category === 'Insurance' ? (
+                                                <>
+                                                    <option value="Issued" className="bg-slate-800 text-green-400">Issued</option>
+                                                    <option value="Not Issued" className="bg-slate-800 text-yellow-400">Not Issued</option>
+                                                </>
+                                            ) : item.category === 'Loan' ? (
+                                                <>
+                                                    <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
+                                                    <option value="Underwriting" className="bg-slate-800 text-blue-400">Underwriting</option>
+                                                    <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
+                                                    <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
+                                                    <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
+                                                    <option value="Processing" className="bg-slate-800 text-blue-400">Processing</option>
+                                                    <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
+                                                    <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
+                                                    <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                                </>
+                                            )}
                                         </select>
                                     </TableCell>
 
@@ -1597,7 +1700,28 @@ export default function DataEntryTerminal() {
                                     if (key === 'category') {
                                         arr[index].product = '';
                                         if (val !== 'Loan') arr[index].fileLogin = '';
+                                        if (val === 'Insurance') {
+                                            arr[index].fileStatus = '';
+                                        } else {
+                                            if (['Issued', 'Not Issued'].includes(arr[index].fileStatus || '')) {
+                                                arr[index].fileStatus = '';
+                                            }
+                                        }
                                     }
+                                    
+                                    if (arr[index].category === 'Insurance') {
+                                        if (key === 'fileStatus') {
+                                            if (val === 'Issued') {
+                                                arr[index].disbursedAmount = arr[index].amount;
+                                            } else if (val === 'Not Issued') {
+                                                arr[index].disbursedAmount = 0;
+                                            }
+                                        }
+                                        if (key === 'amount' && arr[index].fileStatus === 'Issued') {
+                                            arr[index].disbursedAmount = Number(val) || 0;
+                                        }
+                                    }
+                                    
                                     setStagedItems(arr);
                                 };
                                 const handleRemove = () => setStagedItems(stagedItems.filter((_, i) => i !== index));
@@ -1669,7 +1793,12 @@ export default function DataEntryTerminal() {
                                         <AppSelect 
                                             value={item.fileStatus || ''} 
                                             onChange={val => handleUpdate('fileStatus', val)} 
-                                            options={['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Rejected'].map(c => ({id: c, name: c}))}
+                                            options={item.category === 'Insurance' 
+                                                ? ['Issued', 'Not Issued'].map(c => ({id: c, name: c}))
+                                                : item.category === 'Loan'
+                                                ? ['Login', 'Underwriting', 'Sanctioned', 'Disbursed', 'Rejected'].map(c => ({id: c, name: c}))
+                                                : ['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Rejected'].map(c => ({id: c, name: c}))
+                                            }
                                             placeholder="Status"
                                             buttonClassName={`w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.fileStatus ? 'border border-red-500' : 'border'}`}
                                         />
