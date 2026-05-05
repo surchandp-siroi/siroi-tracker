@@ -10,6 +10,53 @@ import { NumericFormat } from 'react-number-format';
 import { BranchSelect } from '@/components/BranchSelect';
 import { AppSelect } from '@/components/AppSelect';
 
+const generateDailyOptions = () => {
+    const options = [];
+    const start = new Date(2026, 0, 1);
+    const end = new Date();
+    let current = new Date(start);
+    while (current <= end) {
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, '0');
+        const day = String(current.getDate()).padStart(2, '0');
+        const dStr = `${year}-${month}-${day}`;
+        const display = current.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        options.push({ id: dStr, name: display });
+        current.setDate(current.getDate() + 1);
+    }
+    const tYear = end.getFullYear();
+    const tMonth = String(end.getMonth() + 1).padStart(2, '0');
+    const tDay = String(end.getDate()).padStart(2, '0');
+    const todayStr = `${tYear}-${tMonth}-${tDay}`;
+    if (!options.find(o => o.id === todayStr)) {
+        options.push({ id: todayStr, name: end.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) });
+    }
+    return options.reverse();
+};
+
+const generateMonthlyOptions = () => {
+    const options = [];
+    const start = new Date(2026, 0, 1);
+    const end = new Date();
+    let current = new Date(start);
+    current.setDate(1);
+    
+    const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+    while (current <= endMonth) {
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, '0');
+        const dStr = `${year}-${month}-01`;
+        const display = current.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        options.push({ id: dStr, name: display });
+        current.setMonth(current.getMonth() + 1);
+    }
+    return options.reverse();
+};
+
+const DAILY_OPTIONS = generateDailyOptions();
+const MONTHLY_OPTIONS = generateMonthlyOptions();
+
 export default function DataEntryTerminal() {
   const { user, isInitialized, logout } = useAuthStore();
   const navigate = useNavigate();
@@ -953,35 +1000,20 @@ export default function DataEntryTerminal() {
                     </div>
                 </div>
                 
-                <div className="w-[130px] shrink-0">
+                <div className="w-[140px] shrink-0">
                     <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
                         Date Context
                     </label>
-                    <div>
-                    {entryMode === 'monthly' ? (
-                        <Input 
-                            type="month" 
-                            max="2026-04"
-                            value={dateStr.substring(0, 7)}
-                            onChange={(e) => {
-                                if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                setDateStr(e.target.value + '-01');
-                            }}
-                            className="bg-slate-900/5 dark:bg-black/40 text-xs h-[30px] border-slate-200 dark:border-white/10 w-full"
-                        />
-                    ) : (
-                        <Input 
-                            type="date" 
-                            min="2026-01-01"
-                            value={dateStr}
-                            onChange={(e) => {
-                                if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                setDateStr(e.target.value);
-                            }}
-                            className="bg-slate-900/5 dark:bg-black/40 text-xs h-[30px] border-slate-200 dark:border-white/10 w-full"
-                        />
-                    )}
-                    </div>
+                    <AppSelect
+                        options={entryMode === 'monthly' ? MONTHLY_OPTIONS : DAILY_OPTIONS}
+                        value={entryMode === 'monthly' ? dateStr.substring(0, 7) + '-01' : dateStr}
+                        onChange={(newVal) => {
+                            if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                            setDateStr(newVal);
+                        }}
+                        className="w-full"
+                        buttonClassName="w-full flex items-center justify-between bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 h-[30px] px-3 text-xs rounded-md text-slate-900 dark:text-white hover:bg-slate-900/10 dark:hover:bg-black/60 transition-colors font-medium"
+                    />
                 </div>
 
                 {/* Target */}
