@@ -10,6 +10,7 @@ import { NumericFormat } from 'react-number-format';
 import { BranchSelect } from '@/components/BranchSelect';
 import { AppSelect } from '@/components/AppSelect';
 import { ExecutivePerformanceWidget } from '@/components/ExecutivePerformanceWidget';
+import { StaffNameResolutionDialog } from '@/components/StaffNameResolutionDialog';
 
 const generateDailyOptions = () => {
     const options = [];
@@ -61,7 +62,7 @@ const MONTHLY_OPTIONS = generateMonthlyOptions();
 export default function DataEntryTerminal() {
   const { user, isInitialized, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { products, channels, branches, branchTargets } = useDataStore();
+  const { products, channels, branches, branchTargets, orgMembers } = useDataStore();
 
   const [entryMode, setEntryMode] = useState<'daily'|'monthly'>(
       new Date() >= new Date('2026-01-01T00:00:00Z') ? 'daily' : 'monthly'
@@ -87,6 +88,9 @@ export default function DataEntryTerminal() {
   const [lodgeName, setLodgeName] = useState('');
   const [lodgeEmail, setLodgeEmail] = useState('');
   const [currentTime, setCurrentTime] = useState('');
+  // Staff name resolution dialog (bulk upload)
+  const [pendingParsed, setPendingParsed] = useState<any[]>([]);
+  const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
   
   // Projection states
   const [isProjectionLodged, setIsProjectionLodged] = useState(false);
@@ -140,6 +144,15 @@ export default function DataEntryTerminal() {
   const allowEdit = !hasExistingEntry || daysSinceCreation <= 60;
   const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
   const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
+
+  // Derive active branch name and scoped staff list for the Staff Name dropdown
+  const activeBranchName = branches.find(b => b.id === activeBranchId)?.name ?? '';
+  const branchStaff = orgMembers.filter(m => {
+      if (!m.branch) return false;
+      const mBranch = m.branch.toLowerCase();
+      const aBranch = activeBranchName.toLowerCase();
+      return mBranch.includes(aBranch) || aBranch.includes(mBranch);
+  });
 
   // Unsaved Guard
   const isDirty = !hasExistingEntry && items.length > 0;
@@ -411,9 +424,10 @@ export default function DataEntryTerminal() {
                   }
                   return { ...p, product: prod, isManual: true, projectionAmt: Number(p.amount) || 0, amount: Number(p.disbursedAmount) || 0 };
               });
-              setStagedItems(parsed);
+              // Show name resolution dialog before staging modal
+              setPendingParsed(parsed);
               setStagedFile(file);
-              setIsStagingModalOpen(true);
+              setIsResolutionDialogOpen(true);
           } else {
               setError("Could not extract valid entries from the file.");
           }
@@ -1195,13 +1209,33 @@ export default function DataEntryTerminal() {
                                 <TableRow key={index} className="hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border-b border-slate-900/5 dark:border-white/5">
                                     {/* 1. Staff Name */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={!canModify && !item.isManual}
-                                            type="text"
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                            value={item.staffName || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
-                                        />
+                                        {branchStaff.length > 0 ? (
+                                            <select
+                                                disabled={!canModify && !item.isManual}
+                                                value={item.staffName || ''}
+                                                onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
+                                                className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                    isFieldMissing(item, 'staffName')
+                                                        ? 'border-red-500/50'
+                                                        : 'border-slate-200 dark:border-white/10'
+                                                }`}
+                                            >
+                                                <option value="">— Select Staff —</option>
+                                                {branchStaff.map(m => (
+                                                    <option key={m.id} value={m.name}>{m.name}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <Input
+                                                disabled={!canModify && !item.isManual}
+                                                type="text"
+                                                className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${
+                                                    isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'
+                                                }`}
+                                                value={item.staffName || ''}
+                                                onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
+                                            />
+                                        )}
                                     </TableCell>
 
                                     {/* 2. Projection (₹) */}
@@ -1680,6 +1714,26 @@ export default function DataEntryTerminal() {
         })()}
 
         
+        {/* Staff Name Resolution Dialog (Bulk Upload) */}
+        {isResolutionDialogOpen && (
+            <StaffNameResolutionDialog
+                rawItems={pendingParsed}
+                orgMembers={orgMembers}
+                branches={branches}
+                activeBranchName={activeBranchName}
+                onConfirm={(_mappings, resolvedItems) => {
+                    setIsResolutionDialogOpen(false);
+                    setStagedItems(resolvedItems);
+                    setIsStagingModalOpen(true);
+                }}
+                onCancel={() => {
+                    setIsResolutionDialogOpen(false);
+                    setPendingParsed([]);
+                    setStagedFile(null);
+                }}
+            />
+        )}
+
         {/* Staging Modal */}
         {isStagingModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 pointer-events-auto bg-black/80 backdrop-blur-sm">
@@ -1765,7 +1819,38 @@ export default function DataEntryTerminal() {
                                 
                                 return (
                                 <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                    <TableCell className="p-2"><Input value={item.staffName || ''} onChange={e => handleUpdate('staffName', e.target.value)} placeholder="Staff Name..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.staffName ? 'border-red-500 border' : ''}`} /></TableCell>
+                                    <TableCell className="p-2">
+                                        {(() => {
+                                            const rowBranchName = item.branchLocation || activeBranchName;
+                                            const rowStaff = orgMembers.filter(m => {
+                                                if (!m.branch) return false;
+                                                const mB = m.branch.toLowerCase();
+                                                const rB = rowBranchName.toLowerCase();
+                                                return mB.includes(rB) || rB.includes(mB);
+                                            });
+                                            return rowStaff.length > 0 ? (
+                                                <select
+                                                    value={item.staffName || ''}
+                                                    onChange={e => handleUpdate('staffName', e.target.value)}
+                                                    className={`w-full h-8 text-xs rounded-md px-2 bg-transparent border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                        !item.staffName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
+                                                    } dark:text-white text-slate-900`}
+                                                >
+                                                    <option value="">— Select Staff —</option>
+                                                    {rowStaff.map(m => (
+                                                        <option key={m.id} value={m.name}>{m.name}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <Input
+                                                    value={item.staffName || ''}
+                                                    onChange={e => handleUpdate('staffName', e.target.value)}
+                                                    placeholder="Staff Name..."
+                                                    className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.staffName ? 'border-red-500 border' : ''}`}
+                                                />
+                                            );
+                                        })()}
+                                    </TableCell>
                                     <TableCell className="p-2">
                                         <NumericFormat
                                             value={item.amount === 0 ? '' : item.amount}

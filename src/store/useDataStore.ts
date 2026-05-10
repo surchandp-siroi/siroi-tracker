@@ -77,6 +77,12 @@ export interface BranchTarget {
     targetAmount: number;
 }
 
+export interface OrgMember {
+    id: string;
+    name: string;
+    branch: string | null;
+}
+
 const staticChannels: Channel[] = [
   'Aditya Birla', 'Axis Bank', 'Axis Finance', 'Bajaj Finserv', 'Bajaj Market',
   'Bandhan Bank', 'Cholamandalam', 'Finnable', 'SMFG India', 'HDFC BANK',
@@ -113,6 +119,7 @@ interface DataState {
   branches: Branch[];
   entries: BranchEntry[];
   branchTargets: BranchTarget[];
+  orgMembers: OrgMember[];
   isLoading: boolean;
   initSync: (role?: string, branchId?: string | null) => Promise<void>;
   unsubscribeSync: () => void;
@@ -133,6 +140,7 @@ export const useDataStore = create<DataState>((set) => ({
   branches: staticBranches,
   entries: [],
   branchTargets: [],
+  orgMembers: [],
   isLoading: true,
   addChannel: () => {},
   deleteChannel: () => {},
@@ -222,6 +230,22 @@ export const useDataStore = create<DataState>((set) => ({
           }
       } catch (e) {
           console.warn('Could not fetch branch_targets, table might not exist yet.', e);
+      }
+      
+      // Fetch org members (staff list per branch)
+      let allOrgMembers: OrgMember[] = [];
+      try {
+          const { data: orgData } = await supabase.from('org_nodes').select('id, name, branch');
+          if (orgData) {
+              allOrgMembers = orgData.filter((m: any) => m.name).map((m: any) => ({
+                  id: m.id,
+                  name: m.name,
+                  branch: m.branch || null,
+              }));
+              set({ orgMembers: allOrgMembers });
+          }
+      } catch (e) {
+          console.warn('Could not fetch org_nodes.', e);
       }
       
       const computeStats = (entries: BranchEntry[], targets: BranchTarget[]) => {
