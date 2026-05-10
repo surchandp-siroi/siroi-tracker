@@ -1214,7 +1214,7 @@ export default function DataEntryTerminal() {
                                                 disabled={!canModify && !item.isManual}
                                                 value={item.staffName || ''}
                                                 onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
-                                                className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
                                                     isFieldMissing(item, 'staffName')
                                                         ? 'border-red-500/50'
                                                         : 'border-slate-200 dark:border-white/10'
@@ -1832,9 +1832,9 @@ export default function DataEntryTerminal() {
                                                 <select
                                                     value={item.staffName || ''}
                                                     onChange={e => handleUpdate('staffName', e.target.value)}
-                                                    className={`w-full h-8 text-xs rounded-md px-2 bg-transparent border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                    className={`w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 ${
                                                         !item.staffName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
-                                                    } dark:text-white text-slate-900`}
+                                                    }`}
                                                 >
                                                     <option value="">— Select Staff —</option>
                                                     {rowStaff.map(m => (
