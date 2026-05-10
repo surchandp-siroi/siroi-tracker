@@ -951,7 +951,7 @@ export default function DataEntryTerminal() {
             </div>
         </header>
 
-        {isExecutive && (
+        {(isExecutive || isMIS) && (
             <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} />
         )}
              {/* Sticky Top Control Bar */}
