@@ -9,6 +9,7 @@ import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
 import { BranchSelect } from '@/components/BranchSelect';
 import { AppSelect } from '@/components/AppSelect';
+import { ExecutivePerformanceWidget } from '@/components/ExecutivePerformanceWidget';
 
 const generateDailyOptions = () => {
     const options = [];
@@ -949,6 +950,10 @@ export default function DataEntryTerminal() {
                 </Button>
             </div>
         </header>
+
+        {isExecutive && (
+            <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} />
+        )}
              {/* Sticky Top Control Bar */}
         <div className="sticky top-0 z-20 glass bg-slate-900/80 dark:bg-black/80 backdrop-blur-md border border-slate-900/10 dark:border-white/10 p-4 mb-6 rounded-xl shadow-lg flex flex-col gap-4">
             
