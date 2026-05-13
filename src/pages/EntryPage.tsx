@@ -342,10 +342,19 @@ export default function DataEntryTerminal() {
           
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+          const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+          
+          // Filter out rows that are completely empty or contain only empty strings/whitespace
+          const json = rawJson.filter((row: any) => {
+              return Object.values(row).some(val => {
+                  if (val === undefined || val === null) return false;
+                  const str = String(val).trim();
+                  return str !== "" && str !== "-";
+              });
+          });
           
           if (json.length === 0) {
-              setError("The uploaded file appears to be empty.");
+              setError("The uploaded file appears to be empty or contains no valid data rows.");
               setIsParsing(false);
               return;
           }
