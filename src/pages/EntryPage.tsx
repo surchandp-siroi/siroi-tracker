@@ -396,23 +396,56 @@ export default function DataEntryTerminal() {
             ${JSON.stringify(json).substring(0, 50000)} // Limiting to ~50k chars to avoid token limits
           `;
           
-          setUploadProgress(70);
-          const { data, error: funcError } = await supabase.functions.invoke('parse-excel', {
-             body: { prompt }
-          });
-          
-          if (funcError) {
-             throw new Error(funcError.message || "Failed to invoke Edge Function");
+          let parsed: any[] = [];
+          try {
+              setUploadProgress(70);
+              const { data, error: funcError } = await supabase.functions.invoke('parse-excel', {
+                 body: { prompt }
+              });
+              
+              if (funcError) {
+                 throw new Error(funcError.message || "Failed to invoke Edge Function");
+              }
+              if (data?.error) {
+                 throw new Error(data.error);
+              }
+              
+              setUploadProgress(90);
+              
+              const text = data?.text || "[]";
+              const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
+              parsed = JSON.parse(_clean);
+          } catch (aiErr) {
+              console.warn("AI parsing failed/timed out, falling back to robust local parsing:", aiErr);
+              // Deterministic local parsing fallback mapping common column headers
+              parsed = json.map((row: any) => {
+                  const getVal = (possibleKeys: string[]) => {
+                      for (const k of Object.keys(row)) {
+                          if (possibleKeys.some(pk => k.toLowerCase().includes(pk.toLowerCase()))) {
+                              return row[k] !== undefined ? String(row[k]).trim() : "";
+                          }
+                      }
+                      return "";
+                  };
+                  
+                  return {
+                      date: getVal(["date", "login date"]),
+                      staffName: getVal(["staff", "employee", "name"]),
+                      customerName: getVal(["customer", "client", "borrower"]),
+                      category: getVal(["category", "type"]) || "Loan",
+                      product: getVal(["product", "scheme"]),
+                      relationshipManagerName: getVal(["rm", "relationship manager"]),
+                      fileLogin: getVal(["file login", "login portal", "portal"]),
+                      trackingNumber: getVal(["tracking", "file no", "app no"]),
+                      channel: getVal(["channel", "source", "partner"]),
+                      branchLocation: getVal(["branch", "location"]),
+                      amount: Number(getVal(["projection", "login amt", "amount"])) || 0,
+                      fileStatus: getVal(["status", "file status"]) || "Login",
+                      disbursedAmount: Number(getVal(["disbursed", "achievement", "disbursed amt"])) || 0,
+                      sanctionedAmount: Number(getVal(["sanctioned"])) || 0,
+                  };
+              });
           }
-          if (data?.error) {
-             throw new Error(data.error);
-          }
-          
-          setUploadProgress(90);
-          
-          const text = data?.text || "[]";
-          const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
-          let parsed = JSON.parse(_clean);
           
           setUploadProgress(100);
 
