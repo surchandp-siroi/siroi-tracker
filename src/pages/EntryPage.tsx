@@ -386,11 +386,24 @@ export default function DataEntryTerminal() {
               for (const [sysKey, excelHeader] of Object.entries(mapping)) {
                   if (excelHeader && row[excelHeader] !== undefined) {
                       let val = row[excelHeader];
+                      
                       // Handle Excel serial dates natively
-                      if ((sysKey === 'date' || sysKey === 'customerDOB' || sysKey === 'disbursedDate' || sysKey === 'emiDate') && typeof val === 'number') {
-                          const utc_days = Math.floor(val - 25569);
-                          const date_info = new Date(utc_days * 86400 * 1000);
-                          val = date_info.toISOString().split('T')[0];
+                      if ((sysKey === 'date' || sysKey === 'customerDOB' || sysKey === 'disbursedDate' || sysKey === 'emiDate')) {
+                          if (typeof val === 'number') {
+                              const utc_days = Math.floor(val - 25569);
+                              const date_info = new Date(utc_days * 86400 * 1000);
+                              val = date_info.toISOString().split('T')[0];
+                          } else if (typeof val === 'string') {
+                              const str = val.trim();
+                              // Check for DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+                              const match = str.match(/^(\d{1,2})[-\/.\s](\d{1,2})[-\/.\s](\d{4})$/);
+                              if (match) {
+                                  const d = match[1].padStart(2, '0');
+                                  const m = match[2].padStart(2, '0');
+                                  const y = match[3];
+                                  val = `${y}-${m}-${d}`; // YYYY-MM-DD
+                              }
+                          }
                       }
                       mappedRow[sysKey] = val;
                   }
@@ -1821,7 +1834,8 @@ export default function DataEntryTerminal() {
                         <TableHeader className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 shadow-sm backdrop-blur-md">
                             <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
                                 <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">1. Staff Name *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2. Projection (₹) *</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2. Projection (₹)</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2b. Login Amount (₹) *</TableHead>
                                 <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">3. Login Date</TableHead>
                                 <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">4. Category *</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">5. Product *</TableHead>
@@ -1914,6 +1928,17 @@ export default function DataEntryTerminal() {
                                                 />
                                             );
                                         })()}
+                                    </TableCell>
+                                    <TableCell className="p-2">
+                                        <NumericFormat
+                                            value={item.projectionAmt === 0 ? '' : item.projectionAmt}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                            onValueChange={(vals) => handleUpdate('projectionAmt', vals.floatValue || 0)}
+                                            customInput={Input}
+                                            placeholder="₹"
+                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
+                                        />
                                     </TableCell>
                                     <TableCell className="p-2">
                                         <NumericFormat
