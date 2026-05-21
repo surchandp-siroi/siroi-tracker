@@ -343,7 +343,7 @@ export default function DataEntryTerminal() {
           
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+          const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false });
           
           // Filter out rows that are completely empty or contain only empty strings/whitespace
           const json = rawJson.filter((row: any) => {
@@ -368,7 +368,7 @@ export default function DataEntryTerminal() {
             
             Return ONLY a valid JSON array of objects without markdown formatting.
             Each object MUST represent a valid row and have these EXACT keys:
-            - "date": Map to Login Date (format YYYY-MM-DD). Use the specific date for the row. Do NOT assume a global date.
+            - "date": Map to Login Date. You MUST output this STRICTLY in YYYY-MM-DD format (e.g. 2026-01-06). The input might be DD-MM-YY, DD-MM-YYYY, DD/MM/YYYY, etc. Convert it correctly. Do NOT output anything else. Use the specific date for the row. Do NOT assume a global date.
             - "staffName": string
             - "customerName": string
             - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy", "Investments"].
@@ -380,11 +380,11 @@ export default function DataEntryTerminal() {
             - "branchLocation": Map to Branch name exactly as: ${branches.map((b: any) => b.name).join(', ')}. Use the specific branch for the row.
             - "customerDOB": string
             - "phoneNumber": string
-            - "emailId": string
+            - "emailId": string. Extract strictly from the "Email ID", "Email", or similar column. Return empty string if missing.
             - "customerAddress": string
             - "firmName": string
-            - "amount": Positive number. Extract directly from the "Projection" or "Login Amt" column. This serves as the Projection.
-            - "fileStatus": string (If category is Insurance, must be "Issued" or "Not Issued". If category is Loan, must be one of "Login", "Underwriting", "Sanctioned", "Disbursed", "Rejected". Otherwise, one of "Login", "Processing", "Sanctioned", "Disbursed", "Rejected")
+            - "amount": number. Extract strictly from the "PROJECTION" or "PROJECTION (₹)" column. If it is empty, blank, or missing, return 0. Do NOT hallucinate or extract from other columns. This serves as the Projection.
+            - "fileStatus": string. Extract from the "File Status", "Status", or "Current Status" column and map it strictly to the closest allowed Enum value. If Insurance: "Issued" or "Not Issued". If Loan/Other: "Login", "Underwriting", "Processing", "Sanctioned", "Disbursed", or "Rejected". If empty or no match, return empty string.
             - "sanctionedAmount": number
             - "disbursedAmount": Positive number. Extract directly from the "Disbursed Amount" or "Disbursed Amt" column. This serves as the Achievement.
             - "disbursedDate": string
