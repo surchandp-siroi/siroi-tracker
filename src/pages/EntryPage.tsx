@@ -11,6 +11,7 @@ import { BranchSelect } from '@/components/BranchSelect';
 import { AppSelect } from '@/components/AppSelect';
 import { ExecutivePerformanceWidget } from '@/components/ExecutivePerformanceWidget';
 import { StaffNameResolutionDialog } from '@/components/StaffNameResolutionDialog';
+import { ColumnMappingDialog, ColumnMapping } from '@/components/ColumnMappingDialog';
 
 const generateDailyOptions = () => {
     const options = [];
@@ -91,6 +92,9 @@ export default function DataEntryTerminal() {
   const [currentTime, setCurrentTime] = useState('');
   // Staff name resolution dialog (bulk upload)
   const [pendingParsed, setPendingParsed] = useState<any[]>([]);
+  const [rawHeaders, setRawHeaders] = useState<string[]>([]);
+  const [rawJsonData, setRawJsonData] = useState<any[]>([]);
+  const [isMappingDialogOpen, setIsMappingDialogOpen] = useState(false);
   const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
   
   // Projection states
@@ -314,19 +318,16 @@ export default function DataEntryTerminal() {
   }, [activeBranchId, dateStr, entryMode, branches, refreshTrigger]);
 
   const processFile = async (file: File) => {
-      
       setIsParsing(true);
       setUploadProgress(0);
       setError('');
       
       try {
-          // Asynchronous reading to unblock UI thread
           const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
               const reader = new FileReader();
               reader.onprogress = (e) => {
                   if (e.lengthComputable) {
-                      const percent = Math.round((e.loaded / e.total) * 30); // Reading is 30%
-                      setUploadProgress(percent);
+                      setUploadProgress(Math.round((e.loaded / e.total) * 30));
                   }
               };
               reader.onload = () => resolve(reader.result as ArrayBuffer);
@@ -335,17 +336,16 @@ export default function DataEntryTerminal() {
           });
           
           setUploadProgress(40);
-          await new Promise(resolve => setTimeout(resolve, 50)); // Yield thread to allow UI to update
+          await new Promise(resolve => setTimeout(resolve, 50));
 
           const workbook = XLSX.read(buffer, { type: 'array' });
           setUploadProgress(50);
-          await new Promise(resolve => setTimeout(resolve, 50)); // Yield thread
+          await new Promise(resolve => setTimeout(resolve, 50));
           
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false });
           
-          // Filter out rows that are completely empty or contain only empty strings/whitespace
           const json = rawJson.filter((row: any) => {
               return Object.values(row).some(val => {
                   if (val === undefined || val === null) return false;
@@ -360,41 +360,72 @@ export default function DataEntryTerminal() {
               return;
           }
 
-          setUploadProgress(60);
-          
+          // Extract headers
+          const headers = Array.from(new Set(json.flatMap((row: any) => Object.keys(row || {}))));
+          setRawHeaders(headers);
+          setRawJsonData(json);
+          setStagedFile(file);
+          setIsMappingDialogOpen(true);
+          setIsParsing(false);
+      } catch (e: any) {
+          console.error("AI Parse Error:", e);
+          setError(`Failed to read file. Error: ${e.message}`);
+          setIsParsing(false);
+      }
+  };
+
+  const handleMappingConfirm = async (mapping: ColumnMapping) => {
+      setIsMappingDialogOpen(false);
+      setIsParsing(true);
+      setUploadProgress(60);
+
+      try {
+          // Transform raw data using mapping
+          const mappedJson = rawJsonData.map((row: any) => {
+              const mappedRow: any = {};
+              for (const [sysKey, excelHeader] of Object.entries(mapping)) {
+                  if (excelHeader && row[excelHeader] !== undefined) {
+                      mappedRow[sysKey] = row[excelHeader];
+                  }
+              }
+              return mappedRow;
+          });
+
           const prompt = `
-            You are a strict data extraction AI. Extract financial entry data from the following raw JSON representing an uploaded Excel/CSV file.
+            You are a strict data extraction AI. Extract financial entry data from the following JSON representing an uploaded Excel sheet.
+            The user has ALREADY mapped the columns perfectly to your expected keys. Just clean the data, format the dates to YYYY-MM-DD, and map the enums correctly.
             Ignore junk rows like headers, footers, totals, or blank lines.
             
             Return ONLY a valid JSON array of objects without markdown formatting.
             Each object MUST represent a valid row and have these EXACT keys:
-            - "date": Map to Login Date. You MUST output this STRICTLY in YYYY-MM-DD format (e.g. 2026-01-06). The input might be DD-MM-YY, DD-MM-YYYY, DD/MM/YYYY, etc. Convert it correctly. Do NOT output anything else. Use the specific date for the row. Do NOT assume a global date.
+            - "date": string (Format YYYY-MM-DD)
             - "staffName": string
             - "customerName": string
             - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy", "Investments"].
             - "product": Must be one of: ${products.map((p: any) => p.name).join(', ')}
-            - "relationshipManagerName": string (Extract Relationship Manager Name)
-            - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty if not applicable.
-            - "trackingNumber": string or empty if not applicable.
+            - "relationshipManagerName": string
+            - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty
+            - "trackingNumber": string or empty
             - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC if Insurance.
             - "branchLocation": Map to Branch name exactly as: ${branches.map((b: any) => b.name).join(', ')}. Use the specific branch for the row.
             - "customerDOB": string
             - "phoneNumber": string
-            - "emailId": string. Extract strictly from the "Email ID", "Email", or similar column. Return empty string if missing.
+            - "emailId": string
             - "customerAddress": string
             - "firmName": string
-            - "amount": number. Extract strictly from the "PROJECTION" or "PROJECTION (₹)" column. If it is empty, blank, or missing, return 0. Do NOT hallucinate or extract from other columns. This serves as the Projection.
-            - "fileStatus": string. Extract from the "File Status", "Status", or "Current Status" column and map it strictly to the closest allowed Enum value. If Insurance: "Issued" or "Not Issued". If Loan/Other: "Login", "Underwriting", "Processing", "Sanctioned", "Disbursed", or "Rejected". If empty or no match, return empty string.
+            - "amount": number. (This is Login Amount) If missing, return 0.
+            - "projectionAmt": number. If missing, return 0.
+            - "fileStatus": string. If Insurance: "Issued" or "Not Issued". If Loan/Other: "Login", "Underwriting", "Processing", "Sanctioned", "Disbursed", or "Rejected".
             - "sanctionedAmount": number
-            - "disbursedAmount": Positive number. Extract directly from the "Disbursed Amount" or "Disbursed Amt" column. This serves as the Achievement.
+            - "disbursedAmount": number.
             - "disbursedDate": string
             - "emiDate": string
             - "repaymentBank": string
             - "managerName": string
             - "consultantName": string
             
-            Raw Spreadsheet JSON:
-            ${JSON.stringify(json).substring(0, 50000)} // Limiting to ~50k chars to avoid token limits
+            Mapped Spreadsheet JSON:
+            ${JSON.stringify(mappedJson).substring(0, 50000)} // Limiting to ~50k chars
           `;
           
           let parsed: any[] = [];
@@ -417,41 +448,13 @@ export default function DataEntryTerminal() {
               const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
               parsed = JSON.parse(_clean);
           } catch (aiErr) {
-              console.warn("AI parsing failed/timed out, falling back to robust local parsing:", aiErr);
-              // Deterministic local parsing fallback mapping common column headers
-              parsed = json.map((row: any) => {
-                  const getVal = (possibleKeys: string[]) => {
-                      for (const k of Object.keys(row)) {
-                          if (possibleKeys.some(pk => k.toLowerCase().includes(pk.toLowerCase()))) {
-                              return row[k] !== undefined ? String(row[k]).trim() : "";
-                          }
-                      }
-                      return "";
-                  };
-                  
-                  return {
-                      date: getVal(["date", "login date"]),
-                      staffName: getVal(["staff", "employee", "name"]),
-                      customerName: getVal(["customer", "client", "borrower"]),
-                      category: getVal(["category", "type"]) || "Loan",
-                      product: getVal(["product", "scheme"]),
-                      relationshipManagerName: getVal(["rm", "relationship manager"]),
-                      fileLogin: getVal(["file login", "login portal", "portal"]),
-                      trackingNumber: getVal(["tracking", "file no", "app no"]),
-                      channel: getVal(["channel", "source", "partner"]),
-                      branchLocation: getVal(["branch", "location"]),
-                      amount: Number(getVal(["projection", "login amt", "amount"])) || 0,
-                      fileStatus: getVal(["status", "file status"]) || "Login",
-                      disbursedAmount: Number(getVal(["disbursed", "achievement", "disbursed amt"])) || 0,
-                      sanctionedAmount: Number(getVal(["sanctioned"])) || 0,
-                  };
-              });
+              console.warn("AI parsing failed/timed out, falling back to local mapped parsing:", aiErr);
+              parsed = mappedJson;
           }
           
           setUploadProgress(100);
 
           if (Array.isArray(parsed) && parsed.length > 0) {
-              // STRICT SEPARATION: Set staged items and open modal
               parsed = parsed.map((p: any) => {
                   let prod = p.product || '';
                   if (prod) {
@@ -465,21 +468,18 @@ export default function DataEntryTerminal() {
                           }
                       }
                   }
-                  return { ...p, product: prod, isManual: true, projectionAmt: Number(p.amount) || 0, amount: Number(p.disbursedAmount) || 0 };
+                  return { ...p, product: prod, isManual: true, projectionAmt: Number(p.projectionAmt) || 0, amount: Number(p.amount) || 0, disbursedAmount: Number(p.disbursedAmount) || 0 };
               });
-              // Show name resolution dialog before staging modal
               setPendingParsed(parsed);
-              setStagedFile(file);
               setIsResolutionDialogOpen(true);
           } else {
               setError("Could not extract valid entries from the file.");
           }
       } catch (e: any) {
-          console.error("AI Parse Error:", e);
-          setError(`Failed to process file. Error: ${e.message || "Ensure it's a valid Excel/CSV with readable data."}`);
+          console.error("Parse Error:", e);
+          setError(`Failed to process file. Error: ${e.message}`);
       } finally {
           setIsParsing(false);
-          // Wait briefly before resetting progress so user sees 100%
           setTimeout(() => setUploadProgress(0), 1000);
       }
   };
@@ -1758,6 +1758,15 @@ export default function DataEntryTerminal() {
         })()}
 
         
+        {/* Staff Name Resolution Dialog (Bulk Upload) */}
+        
+        <ColumnMappingDialog
+            open={isMappingDialogOpen}
+            headers={rawHeaders}
+            onConfirm={handleMappingConfirm}
+            onCancel={() => { setIsMappingDialogOpen(false); setIsParsing(false); setUploadProgress(0); }}
+        />
+
         {/* Staff Name Resolution Dialog (Bulk Upload) */}
         {isResolutionDialogOpen && (
             <StaffNameResolutionDialog
