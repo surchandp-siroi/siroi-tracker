@@ -385,8 +385,19 @@ export default function DataEntryTerminal() {
               const mappedRow: any = {};
               for (const [sysKey, excelHeader] of Object.entries(mapping)) {
                   if (excelHeader && row[excelHeader] !== undefined) {
-                      mappedRow[sysKey] = row[excelHeader];
+                      let val = row[excelHeader];
+                      // Handle Excel serial dates natively
+                      if ((sysKey === 'date' || sysKey === 'customerDOB' || sysKey === 'disbursedDate' || sysKey === 'emiDate') && typeof val === 'number') {
+                          const utc_days = Math.floor(val - 25569);
+                          const date_info = new Date(utc_days * 86400 * 1000);
+                          val = date_info.toISOString().split('T')[0];
+                      }
+                      mappedRow[sysKey] = val;
                   }
+              }
+              // Force projectionAmt to 0 if missing to prevent AI hallucination
+              if (mappedRow['projectionAmt'] === undefined || mappedRow['projectionAmt'] === null || mappedRow['projectionAmt'] === '') {
+                  mappedRow['projectionAmt'] = 0;
               }
               return mappedRow;
           });
@@ -398,7 +409,7 @@ export default function DataEntryTerminal() {
             
             Return ONLY a valid JSON array of objects without markdown formatting.
             Each object MUST represent a valid row and have these EXACT keys:
-            - "date": string (Format YYYY-MM-DD)
+            - "date": string (Format strictly YYYY-MM-DD). Convert string dates (like dd-mm-yyyy) into valid YYYY-MM-DD format.
             - "staffName": string
             - "customerName": string
             - "category": Must be one of ["Loan", "Insurance", "Forex", "Consultancy", "Investments"].
@@ -414,7 +425,7 @@ export default function DataEntryTerminal() {
             - "customerAddress": string
             - "firmName": string
             - "amount": number. (This is Login Amount) If missing, return 0.
-            - "projectionAmt": number. If missing, return 0.
+            - "projectionAmt": number. If missing, return 0. Do NOT duplicate 'amount'.
             - "fileStatus": string. If Insurance: "Issued" or "Not Issued". If Loan/Other: "Login", "Underwriting", "Processing", "Sanctioned", "Disbursed", or "Rejected".
             - "sanctionedAmount": number
             - "disbursedAmount": number.
