@@ -85,6 +85,7 @@ export default function DataEntryTerminal() {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
   const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lodgeName, setLodgeName] = useState('');
   const [lodgeEmail, setLodgeEmail] = useState('');
   const [currentTime, setCurrentTime] = useState('');
@@ -310,7 +311,7 @@ export default function DataEntryTerminal() {
           }
       };
       fetchContext();
-  }, [activeBranchId, dateStr, entryMode, branches]);
+  }, [activeBranchId, dateStr, entryMode, branches, refreshTrigger]);
 
   const processFile = async (file: File) => {
       
@@ -922,6 +923,7 @@ export default function DataEntryTerminal() {
               }
           }
           
+          fetchCache.current = {}; setRefreshTrigger(prev => prev + 1);
           setSuccess("Bulk upload successfully lodged to respective dates.");
           setIsStagingModalOpen(false);
           setStagedItems([]);
@@ -998,7 +1000,7 @@ export default function DataEntryTerminal() {
                 </div>
             </div>
             <div className="flex items-center gap-4">
-                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => navigate('/audit-logs')}>
+                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => navigate('/dashboard/audit')}>
                     Audit Logs
                 </Button>
                 <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { logout(); navigate('/login'); }}>
@@ -2021,6 +2023,7 @@ export default function DataEntryTerminal() {
                         />
                     </div>
                     <div className="flex gap-3 w-full md:w-auto">
+                    {error && <div className="text-xs text-red-500 font-bold bg-white dark:bg-slate-900 border border-red-500/20 px-4 py-2 rounded shadow-sm w-full mb-3">{error}</div>}
                     <Button variant="secondary" onClick={() => { setIsStagingModalOpen(false); setStagedItems([]); setStagedFile(null); }}>Discard</Button>
                     <Button onClick={handleBulkSubmit} disabled={isBulkSubmitting || stagedItems.length === 0 || !lodgeName || !lodgeEmail.endsWith('@siroiforex.com')} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[160px]">
                         {isBulkSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : <><Save className="w-4 h-4 mr-2" /> Approve & Lodge</>}
