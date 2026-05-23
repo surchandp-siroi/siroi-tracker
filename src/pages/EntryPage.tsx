@@ -1116,7 +1116,7 @@ export default function DataEntryTerminal() {
                             Date Context
                         </label>
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center h-[30px] px-2 bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-md hover:bg-slate-900/10 dark:hover:bg-black/60 transition-colors cursor-pointer group">
+                            <div className="flex items-center h-[30px] px-2 bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-md hover:bg-slate-900/10 dark:hover:bg-black/60 transition-colors cursor-pointer group" onClick={(e) => { try { e.currentTarget.querySelector('input')?.showPicker(); } catch(err) {} }}>
                                 <Calendar className="w-3.5 h-3.5 text-indigo-500 mr-2 group-hover:text-indigo-400 transition-colors" />
                                 {entryMode === 'monthly' ? (
                                     <input 
