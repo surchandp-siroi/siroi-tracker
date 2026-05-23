@@ -75,10 +75,10 @@ export default function AuditLogsPage() {
                             <TableHeader>
                                 <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
                                     <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[220px] pl-4">Upload Date & Time</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[180px]">Uploaded By</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[250px]">Email ID</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[180px] text-center">Uploaded By</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[250px] text-center">Email ID</TableHead>
                                     <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center">Original Filename</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right w-[150px] pr-4">Action</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center w-[150px]">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -100,16 +100,16 @@ export default function AuditLogsPage() {
                                             <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap">
                                                 {format(new Date(log.uploaded_at), 'dd MMM yyyy, hh:mm a')}
                                             </TableCell>
-                                            <TableCell className="p-4 text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                                            <TableCell className="p-4 text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap text-center">
                                                 {log.uploaded_by}
                                             </TableCell>
-                                            <TableCell className="p-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                            <TableCell className="p-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap text-center">
                                                 {log.email_id}
                                             </TableCell>
                                             <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap text-center">
                                                 {log.filename}
                                             </TableCell>
-                                            <TableCell className="p-4 text-right whitespace-nowrap">
+                                            <TableCell className="p-4 text-center whitespace-nowrap">
                                                 <Button 
                                                     variant="secondary" 
                                                     size="sm" 
@@ -131,5 +131,6 @@ export default function AuditLogsPage() {
         </div>
     );
 }
+
 
 
