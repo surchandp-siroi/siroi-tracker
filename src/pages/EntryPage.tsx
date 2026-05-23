@@ -361,14 +361,36 @@ export default function DataEntryTerminal() {
           setUploadProgress(40);
           await new Promise(resolve => setTimeout(resolve, 50));
 
-          const workbook = XLSX.read(buffer, { type: 'array' });
+          const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
           setUploadProgress(50);
           await new Promise(resolve => setTimeout(resolve, 50));
           
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
-          const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false });
+          const _rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: true });
           
+          // Pre-process all dates and strings before filtering
+          const rawJson = _rawJson.map((row: any) => {
+             const newRow: any = {};
+             for (const key in row) {
+                 let val = row[key];
+                 if (val instanceof Date) {
+                     val.setHours(val.getHours() + 12); 
+                     val = val.toISOString().split('T')[0];
+                 } else if (typeof val === 'string') {
+                     const match = val.trim().match(/^(\d{1,2})[-\/.\s](\d{1,2})[-\/.\s](\d{4})$/);
+                     if (match) {
+                          const d = match[1].padStart(2, '0');
+                          const m = match[2].padStart(2, '0');
+                          const y = match[3];
+                          val = y + '-' + m + '-' + d;
+                     }
+                 }
+                 newRow[key] = val;
+             }
+             return newRow;
+          });
+
           const json = rawJson.filter((row: any) => {
               return Object.values(row).some(val => {
                   if (val === undefined || val === null) return false;
