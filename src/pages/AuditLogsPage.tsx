@@ -10,7 +10,7 @@ interface AuditLog {
     uploaded_by: string;
     email_id: string;
     file_url: string;
-    created_at: string;
+    uploaded_at: string;
 }
 
 export default function AuditLogsPage() {
@@ -27,7 +27,7 @@ export default function AuditLogsPage() {
             const { data, error } = await supabase
                 .from('upload_audit_logs')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('uploaded_at', { ascending: false });
 
             if (error) throw error;
             setLogs(data || []);
@@ -74,11 +74,11 @@ export default function AuditLogsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500">Upload Date & Time</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500">Uploaded By</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500">Email ID</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[220px]">Upload Date & Time</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[180px]">Uploaded By</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[250px]">Email ID</TableHead>
                                     <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500">Original Filename</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right">Action</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right w-[150px]">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -98,7 +98,7 @@ export default function AuditLogsPage() {
                                     logs.map((log) => (
                                         <TableRow key={log.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                             <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                                                {format(new Date(log.created_at), 'dd MMM yyyy, hh:mm a')}
+                                                {format(new Date(log.uploaded_at), 'dd MMM yyyy, hh:mm a')}
                                             </TableCell>
                                             <TableCell className="p-4 text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
                                                 {log.uploaded_by}
@@ -131,3 +131,4 @@ export default function AuditLogsPage() {
         </div>
     );
 }
+

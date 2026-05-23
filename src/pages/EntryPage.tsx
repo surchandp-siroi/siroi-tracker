@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { format } from 'date-fns';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -113,6 +114,28 @@ export default function DataEntryTerminal() {
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
   const [branchDetails, setBranchDetails] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [executiveAuditLogs, setExecutiveAuditLogs] = useState<any[]>([]);
+  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
+
+  const fetchExecutiveAuditLogs = async () => {
+      try {
+          setLoadingAuditLogs(true);
+          const { data, error } = await supabase
+              .from('upload_audit_logs')
+              .select('*')
+              .eq('uploaded_by', user?.name || '')
+              .order('uploaded_at', { ascending: false });
+
+          if (error) throw error;
+          setExecutiveAuditLogs(data || []);
+      } catch (err) {
+          console.error('Error fetching audit logs:', err);
+      } finally {
+          setLoadingAuditLogs(false);
+      }
+  };
+
   const [showContextModal, setShowContextModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedDeleteIndices, setSelectedDeleteIndices] = useState<Set<number>>(new Set());
@@ -1024,7 +1047,7 @@ export default function DataEntryTerminal() {
                 </div>
             </div>
             <div className="flex items-center gap-4">
-                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => navigate('/dashboard/audit')}>
+                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
                     Audit Logs
                 </Button>
                 <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { logout(); navigate('/login'); }}>
@@ -2273,6 +2296,100 @@ export default function DataEntryTerminal() {
                 </div>
             </div>
         )}
+        {isAuditModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsAuditModalOpen(false)}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div 
+              className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                  <div>
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          Upload Audit Logs
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">Your recent bulk upload history and source files.</p>
+                  </div>
+                  <button onClick={() => setIsAuditModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                      <X size={20} />
+                  </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-0">
+                  <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[220px]">Upload Date & Time</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[180px]">Uploaded By</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[250px]">Email ID</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500">Original Filename</TableHead>
+                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-right w-[150px]">Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loadingAuditLogs ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                                            Loading logs...
+                                        </TableCell>
+                                    </TableRow>
+                                ) : executiveAuditLogs.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                                            No audit logs found.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    executiveAuditLogs.map((log) => (
+                                        <TableRow key={log.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                                                {format(new Date(log.uploaded_at), "dd MMM yyyy, hh:mm a")}
+                                            </TableCell>
+                                            <TableCell className="p-4 text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                                                {log.uploaded_by}
+                                            </TableCell>
+                                            <TableCell className="p-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                                {log.email_id}
+                                            </TableCell>
+                                            <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                                                {log.filename}
+                                            </TableCell>
+                                            <TableCell className="p-4 text-right whitespace-nowrap">
+                                                <Button 
+                                                    variant="secondary" 
+                                                    size="sm" 
+                                                    onClick={async () => {
+                                                        try {
+                                                            const { data, error } = await supabase.storage.from("bulk_uploads").download(log.file_url);
+                                                            if (error) throw error;
+                                                            const url = URL.createObjectURL(data);
+                                                            const a = document.createElement("a");
+                                                            a.href = url;
+                                                            a.download = log.filename;
+                                                            a.click();
+                                                            URL.revokeObjectURL(url);
+                                                        } catch (err) {
+                                                            alert("Failed to download file.");
+                                                        }
+                                                    }}
+                                                    className="gap-2 text-xs h-8 border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                >
+                                                    <Download size={14} />
+                                                    Download File
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                  </div>
+              </div>
+            </div>
+          </div>
+        )}
+
     </div>
   );
 }
