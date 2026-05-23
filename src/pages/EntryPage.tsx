@@ -124,7 +124,7 @@ export default function DataEntryTerminal() {
           const { data, error } = await supabase
               .from('upload_audit_logs')
               .select('*')
-              .eq('uploaded_by', user?.name || '')
+              .eq('email_id', user?.email || '')
               .order('uploaded_at', { ascending: false });
 
           if (error) throw error;
