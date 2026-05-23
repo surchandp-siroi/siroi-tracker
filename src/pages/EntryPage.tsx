@@ -2396,3 +2396,4 @@ export default function DataEntryTerminal() {
 
 
 
+
