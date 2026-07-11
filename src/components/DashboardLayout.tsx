@@ -69,7 +69,7 @@ export default function DashboardLayout() {
           </p>
           <div className="space-y-0.5">
             {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
-              const isSuperAdmin = user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com';
+              const isSuperAdmin = user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com' || user?.email?.toLowerCase() === 'sharjuthoudam@siroiforex.com';
               if (adminOnly && user?.role !== 'admin' && !isSuperAdmin) return null;
               
               return (
@@ -98,6 +98,7 @@ export default function DashboardLayout() {
         </nav>
 
         {/* Finances section */}
+        {user?.email?.toLowerCase() === 'sharjuthoudam@siroiforex.com' && (
         <nav className="px-3 mt-4">
           <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600 font-bold px-3 mb-2">
             Finances
@@ -122,6 +123,7 @@ export default function DashboardLayout() {
               </NavLink>
             </div>
           </nav>
+        )}
         </div>
 
         {/* Bottom section */}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,6 @@ export default function LoginPage() {
   const initialBranches = useDataStore.getState().branches;
   const [location, setLocation] = useState(initialBranches[0]?.name || 'HO');
   const [locationStatus, setLocationStatus] = useState<string>('');
-  
   const [loginMode, setLoginMode] = useState<'password' | 'otp'>('otp');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
@@ -22,6 +21,8 @@ export default function LoginPage() {
   const { login, requestOtpLogin, verifyOtpLogin, isLoading } = useAuthStore();
   const { branches } = useDataStore();
   const navigate = useNavigate();
+
+  const effectiveLoginMode = (loginMode === 'password' && email.toLowerCase() === 'sharjuthoudam@siroiforex.com') ? 'otp' : loginMode;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,10 +34,10 @@ export default function LoginPage() {
 
     try {
       // Force HO location for admin and executive accounts
-      const isSpecialAccount = email.toLowerCase() === 'executive@siroiforex.com' || email.toLowerCase() === 'surchanddsingh@siroiforex.com' || email.toLowerCase() === 'tomas@siroiforex.com';
+      const isSpecialAccount = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(email.toLowerCase());
       const loginLocation = isSpecialAccount ? 'HO' : location;
 
-      if (loginMode === 'password') {
+      if (effectiveLoginMode === 'password') {
          if (!password) { setError('Password is required'); return; }
          setLocationStatus('Authenticating...');
          await login(email, password, loginLocation);
@@ -136,11 +137,11 @@ export default function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
                       required
-                      disabled={otpSent && loginMode === 'otp'}
+                      disabled={otpSent && effectiveLoginMode === 'otp'}
                   />
                </div>
 
-               {loginMode === 'password' && (
+               {effectiveLoginMode === 'password' && (
                  <div className="animate-in fade-in slide-in-from-bottom-2">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Password</label>
                     <Input 
@@ -148,12 +149,12 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
-                        required={loginMode === 'password'}
+                        required={effectiveLoginMode === 'password'}
                     />
                  </div>
                )}
 
-               {loginMode === 'otp' && otpSent && (
+               {effectiveLoginMode === 'otp' && otpSent && (
                  <div className="animate-in fade-in slide-in-from-bottom-2">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">6-Digit OTP</label>
                     <Input 
@@ -162,7 +163,7 @@ export default function LoginPage() {
                         onChange={(e) => setOtp(e.target.value)}
                         placeholder="Enter the OTP from your email"
                         maxLength={6}
-                        required={loginMode === 'otp' && otpSent}
+                        required={effectiveLoginMode === 'otp' && otpSent}
                     />
                  </div>
                )}
@@ -174,7 +175,7 @@ export default function LoginPage() {
                       value={location}
                       onChange={e => setLocation(e.target.value)}
                       required
-                      disabled={otpSent && loginMode === 'otp'}
+                      disabled={otpSent && effectiveLoginMode === 'otp'}
                   >
                       {branches.map(branch => (
                           <option key={branch.id} value={branch.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
@@ -190,7 +191,7 @@ export default function LoginPage() {
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           {locationStatus || 'Authenticating...'}
                       </>
-                  ) : loginMode === 'otp' ? (
+                  ) : effectiveLoginMode === 'otp' ? (
                       otpSent ? 'Verify OTP & Login' : 'Send OTP'
                   ) : 'Authenticate & Login'}
                 </Button>

@@ -57,6 +57,7 @@ export interface EntryItem {
     relationshipManagerName?: string;
     consultantName?: string;
     consultantEmail?: string;
+    commissionPercentage?: number;
 }
 
 export interface BranchEntry {
@@ -133,6 +134,7 @@ interface DataState {
   addBranch: (branch: Omit<Branch, 'id' | 'dailyAchievement'>) => void;
   deleteBranch: (id: string) => void;
   setBranchTarget: (branchId: string, monthYear: string, targetAmount: number, authorId: string, productTargets?: Record<string, number>) => Promise<boolean>;
+  updateCommission: (entryId: string, itemIdx: number, commission: number) => Promise<boolean>;
 }
 
 let globalSubscription: any = null;
@@ -177,6 +179,29 @@ export const useDataStore = create<DataState>((set) => ({
           return true;
       } catch (e) {
           console.error("Exception setting branch target:", e);
+          return false;
+      }
+  },
+  updateCommission: async (entryId, itemIdx, commission) => {
+      try {
+          const { data, error } = await supabase.from('entries').select('*').eq('id', entryId).single();
+          if (error || !data) throw error;
+          
+          const items = [...data.items];
+          if (items[itemIdx]) {
+              items[itemIdx] = { ...items[itemIdx], commissionPercentage: commission };
+              
+              const { error: updateError } = await supabase.from('entries').update({ items }).eq('id', entryId);
+              if (updateError) throw updateError;
+              
+              set((state) => ({
+                  entries: state.entries.map(e => e.id === entryId ? { ...e, items } : e)
+              }));
+              return true;
+          }
+          return false;
+      } catch (e) {
+          console.error("Error updating commission:", e);
           return false;
       }
   },

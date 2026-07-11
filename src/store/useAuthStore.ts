@@ -180,10 +180,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const email = rawEmail.trim().toLowerCase();
       
-      const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
+      const isSuperAdmin = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(email);
       
-      if (!branchMatch || branchMatch.name !== location) {
-         throw new Error("UNAUTHORIZED_LOCATION");
+      if (!isSuperAdmin) {
+          const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
+          
+          if (!branchMatch || branchMatch.name !== location) {
+             throw new Error("UNAUTHORIZED_LOCATION");
+          }
       }
 
       const { error } = await withTimeout(

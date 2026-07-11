@@ -76,7 +76,7 @@ export function TableBody({ className, children }: { className?: string, childre
   return <tbody className={cn("divide-y divide-black/5 dark:divide-white/5", className)}>{children}</tbody>
 }
 export function TableRow({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <tr className={cn("text-slate-700 dark:text-slate-300 transition-colors hover:bg-black/5 dark:hover:dark:bg-white/5 bg-slate-900/5 cursor-default", className)}>{children}</tr>
+  return <tr className={cn("text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-default group", className)}>{children}</tr>
 }
 export function TableHead({ className, children, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return <th className={cn("pb-2 font-medium", className)} {...props}>{children}</th>
