@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
+import { Input } from '@/components/ui';
 
 const navItems = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -16,6 +18,12 @@ export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [profileModal, setProfileModal] = useState<{
+      isOpen: boolean;
+      displayName: string;
+      avatarSeed: string;
+  } | null>(null);
+  const [updatingProfile, setUpdatingProfile] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -112,6 +120,22 @@ export default function DashboardLayout() {
                 {user?.role === 'admin' ? 'Administrator' : 'State Head'}
               </p>
             </div>
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileModal({
+                    isOpen: true,
+                    displayName: user.displayName || user.email.split('@')[0],
+                    avatarSeed: user.avatarSeed || user.email.split('@')[0]
+                  });
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                title="Edit Profile Settings"
+              >
+                <Settings size={14} />
+              </button>
+            )}
             <button
               type="button"
               onClick={handleLogout}
@@ -130,6 +154,101 @@ export default function DashboardLayout() {
           <Outlet />
         </div>
       </main>
+
+      {profileModal && profileModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full text-slate-900 dark:text-white animate-in zoom-in-95 duration-200">
+                  <div className="flex justify-between items-center mb-6">
+                      <div>
+                          <h3 className="text-base font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                              Edit Admin Profile
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              Update your display name and custom avatar.
+                          </p>
+                      </div>
+                      <button 
+                          onClick={() => setProfileModal(null)}
+                          className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      >
+                          <X className="w-5 h-5" />
+                      </button>
+                  </div>
+
+                  {/* Avatar Preview */}
+                  <div className="flex flex-col items-center justify-center gap-2 mb-6">
+                      <div className="bg-indigo-500/10 dark:bg-indigo-500/20 p-2.5 rounded-full border border-indigo-500/20 shadow-inner">
+                          <img 
+                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileModal.avatarSeed || 'admin'}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`}
+                              alt="Avatar Preview"
+                              className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 object-cover border border-slate-200 dark:border-white/10"
+                          />
+                      </div>
+                      <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Avatar Preview</span>
+                  </div>
+
+                  <div className="space-y-4">
+                      <div>
+                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Display Name</label>
+                          <Input 
+                              type="text"
+                              value={profileModal.displayName}
+                              onChange={(e) => setProfileModal(prev => prev ? { ...prev, displayName: e.target.value } : null)}
+                              className="h-9 w-full px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                              placeholder="Enter display name"
+                          />
+                      </div>
+
+                      <div>
+                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Avatar Seed (Text/Name)</label>
+                          <Input 
+                              type="text"
+                              value={profileModal.avatarSeed}
+                              onChange={(e) => setProfileModal(prev => prev ? { ...prev, avatarSeed: e.target.value } : null)}
+                              className="h-9 w-full px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                              placeholder="Type anything to change avatar"
+                          />
+                          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1">
+                              Changing the seed text generates a unique, beautiful custom avatar instantly.
+                          </p>
+                      </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                      <button 
+                          onClick={() => setProfileModal(null)}
+                          className="flex-1 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      >
+                          Cancel
+                      </button>
+                      <button 
+                          onClick={async () => {
+                              if (!profileModal.displayName.trim()) {
+                                  alert('Display name cannot be empty');
+                                  return;
+                              }
+                              setUpdatingProfile(true);
+                              const success = await useAuthStore.getState().updateProfile(
+                                  profileModal.displayName.trim(),
+                                  profileModal.avatarSeed.trim()
+                              );
+                              setUpdatingProfile(false);
+                              if (success) {
+                                  setProfileModal(null);
+                                  alert('Profile updated successfully!');
+                              } else {
+                                  alert('Failed to update profile. Please try again.');
+                              }
+                          }}
+                          disabled={updatingProfile}
+                          className="flex-1 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50 transition-colors"
+                      >
+                          {updatingProfile ? 'Saving...' : 'Save Changes'}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 }
