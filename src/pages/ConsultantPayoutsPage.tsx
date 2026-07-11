@@ -131,20 +131,20 @@ export default function ConsultantPayoutsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-2 animate-in fade-in duration-300">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
             Consultant Payouts
           </h1>
-          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">
             Financial Management
           </p>
         </div>
       </div>
       
       {/* Blank page as requested */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-8 min-h-[400px] flex items-center justify-center shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 min-h-[400px] flex items-center justify-center shadow-sm">
         <p className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           No data to display
         </p>
