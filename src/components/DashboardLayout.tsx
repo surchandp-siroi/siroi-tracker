@@ -113,12 +113,14 @@ export default function DashboardLayout() {
               className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0 object-cover border border-slate-200 dark:border-white/10" 
             />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                {displayName}
+              <p className="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2 leading-tight break-words" title={displayName}>
+                {displayName.length > 30 ? displayName.slice(0, 30) + '...' : displayName}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
-                {user?.role === 'admin' ? 'Administrator' : 'State Head'}
-              </p>
+              {user?.role !== 'admin' && (
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                  State Head
+                </p>
+              )}
             </div>
             {user?.role === 'admin' && (
               <button
