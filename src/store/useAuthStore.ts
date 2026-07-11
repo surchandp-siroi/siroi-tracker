@@ -25,6 +25,8 @@ export interface UserProfile {
   branchId: string | null;
   createdAt?: string;
   latestLocation?: string;
+  displayName?: string | null;
+  avatarSeed?: string | null;
 }
 
 export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): Promise<UserProfile> => {
@@ -75,6 +77,7 @@ interface AuthState {
   verifyOtpLogin: (email: string, otp: string, location: string) => Promise<void>;
   logout: () => Promise<void>;
   initAuth: () => void;
+  updateProfile: (displayName: string, avatarSeed: string) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -229,6 +232,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isLoginInProgress = false;
       set({ isLoading: false });
       throw new Error(error.message || "Failed to verify OTP");
+    }
+  },
+
+  updateProfile: async (displayName, avatarSeed) => {
+    const { user } = get();
+    if (!user) return false;
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ displayName, avatarSeed })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      set({
+        user: {
+          ...user,
+          displayName,
+          avatarSeed
+        }
+      });
+      return true;
+    } catch (err) {
+      console.error("Failed to update user profile:", err);
+      return false;
     }
   },
 

@@ -28,7 +28,8 @@ export default function DashboardLayout() {
   };
 
   // Extract display name from email (before @)
-  const displayName = user?.email?.split('@')[0] || 'User';
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const avatarSeed = user?.avatarSeed || user?.email?.split('@')[0] || displayName;
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
@@ -99,7 +100,7 @@ export default function DashboardLayout() {
           {/* User Profile */}
           <div className="flex items-center gap-3 px-2 py-2">
             <img 
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || displayName}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`} 
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`} 
               alt="Avatar" 
               className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0 object-cover border border-slate-200 dark:border-white/10" 
             />
