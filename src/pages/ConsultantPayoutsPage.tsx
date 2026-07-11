@@ -6,14 +6,14 @@ import { Input } from '@/components/ui';
 
 export default function ConsultantPayoutsPage() {
   const { user } = useAuthStore();
-  const [isVerified, setIsVerified] = useState(false);
+  const targetEmail = 'sharjuthoudam@siroiforex.com';
+  const [isVerified, setIsVerified] = useState(user?.email === targetEmail);
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const targetEmail = 'sharjuthoudam@siroiforex.com';
 
   const sendOtp = async () => {
     setIsSending(true);
@@ -32,8 +32,12 @@ export default function ConsultantPayoutsPage() {
   };
 
   useEffect(() => {
-    // Send OTP on first mount to the target email
-    sendOtp().finally(() => setIsLoading(false));
+    // Send OTP on first mount to the target email only if not already verified
+    if (!isVerified) {
+      sendOtp().finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   const handleVerify = async (e: React.FormEvent) => {
