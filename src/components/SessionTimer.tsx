@@ -4,13 +4,16 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useSessionStore } from '@/store/useSessionStore';
 import { Clock } from 'lucide-react';
 
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const DEFAULT_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const RESTRICTED_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
 export function SessionTimer() {
   const { user, logout } = useAuthStore();
   const { lastActivity, updateActivity } = useSessionStore();
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState<number>(INACTIVITY_TIMEOUT);
+  
+  const timeoutMs = user?.email === 'sharjuthoudam@siroiforex.com' ? RESTRICTED_TIMEOUT : DEFAULT_TIMEOUT;
+  const [timeLeft, setTimeLeft] = useState<number>(timeoutMs);
 
   // Handle user activity events with throttling (max once per second)
   useEffect(() => {
@@ -47,7 +50,7 @@ export function SessionTimer() {
     const intervalId = window.setInterval(async () => {
       const now = Date.now();
       const elapsed = now - lastActivity;
-      const remaining = Math.max(0, INACTIVITY_TIMEOUT - elapsed);
+      const remaining = Math.max(0, timeoutMs - elapsed);
 
       setTimeLeft(remaining);
 
@@ -59,7 +62,7 @@ export function SessionTimer() {
     }, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [user, lastActivity, logout, navigate]);
+  }, [user, lastActivity, logout, navigate, timeoutMs]);
 
   if (!user) return null;
 
