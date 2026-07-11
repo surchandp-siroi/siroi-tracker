@@ -10,6 +10,7 @@ import BranchesPage from '@/pages/BranchesPage';
 import OrganigramPage from '@/pages/OrganigramPage';
 import EntryPage from '@/pages/EntryPage';
 import AuditLogsPage from '@/pages/AuditLogsPage';
+import ConsultantPayoutsPage from '@/pages/ConsultantPayoutsPage';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="branches" element={<BranchesPage />} />
             <Route path="organigram" element={<OrganigramPage />} />
             <Route path="audit" element={<AuditLogsPage />} />
+            <Route path="consultant-payouts" element={<ConsultantPayoutsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
