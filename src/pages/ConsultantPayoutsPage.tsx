@@ -7,7 +7,8 @@ import { Input } from '@/components/ui';
 export default function ConsultantPayoutsPage() {
   const { user } = useAuthStore();
   const targetEmail = 'sharjuthoudam@siroiforex.com';
-  const [isVerified, setIsVerified] = useState(user?.email === targetEmail);
+  const isAlreadyAdmin = user?.email?.toLowerCase() === targetEmail.toLowerCase();
+  const [isVerified, setIsVerified] = useState(isAlreadyAdmin);
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -33,7 +34,7 @@ export default function ConsultantPayoutsPage() {
 
   useEffect(() => {
     // Send OTP on first mount to the target email only if not already verified
-    if (!isVerified) {
+    if (!isVerified && !isAlreadyAdmin) {
       sendOtp().finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
@@ -78,7 +79,7 @@ export default function ConsultantPayoutsPage() {
 
 
 
-  if (!isVerified) {
+  if (!isVerified && !isAlreadyAdmin) {
     return (
       <div className="flex flex-col h-[80vh] items-center justify-center">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl shadow-sm max-w-md w-full animate-in zoom-in-95 duration-300">
