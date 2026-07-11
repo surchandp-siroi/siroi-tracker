@@ -90,6 +90,17 @@ const renderCustomizedPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, 
   );
 };
 
+export const TARGET_PRODUCTS = [
+  { name: 'Personal Loan', category: 'Loan' },
+  { name: 'Business Loan', category: 'Loan' },
+  { name: 'Housing Loan/ML', category: 'Loan' },
+  { name: 'Life Insurance', category: 'Insurance' },
+  { name: 'General Insurance', category: 'Insurance' },
+  { name: 'Livlong Loan Protector', category: 'Insurance' },
+  { name: 'Mutual Fund / SIP', category: 'Investments' },
+  { name: 'Forex / Retail', category: 'Forex' }
+];
+
 export default function DashboardOverview() {
   const { products, channels, branches, entries, branchTargets, setBranchTarget } = useDataStore();
   const { user, isInitialized } = useAuthStore();
@@ -104,15 +115,19 @@ export default function DashboardOverview() {
   }, []);
   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
   const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('all');
-  const [targetInputs, setTargetInputs] = useState<Record<string, string>>({});
   const [savingTargets, setSavingTargets] = useState(false);
   const [targetMonthStr, setTargetMonthStr] = useState<string>(() => {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
   const [showTargetLeaders, setShowTargetLeaders] = useState(false);
-  const [overrideModal, setOverrideModal] = useState<{ isOpen: boolean, branchId: string, branchName: string, currentTarget: number } | null>(null);
-  const [overrideAmount, setOverrideAmount] = useState<string>('');
+  const [productTargetModal, setProductTargetModal] = useState<{
+      isOpen: boolean;
+      branchId: string;
+      branchName: string;
+      isEdit: boolean;
+  } | null>(null);
+  const [modalTargetInputs, setModalTargetInputs] = useState<Record<string, string>>({});
 
   // Granular Tracking State
   const [granularLocation, setGranularLocation] = useState<string>('all');
@@ -137,41 +152,7 @@ export default function DashboardOverview() {
   
   const currentMonthStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
   
-  const handleSaveTargets = async () => {
-      setSavingTargets(true);
-      const promises = Object.entries(targetInputs).map(([branchId, amountStr]) => {
-          const amount = Number(amountStr);
-          if (amount >= 0) {
-              return setBranchTarget(branchId, targetMonthStr, amount, user?.id || '');
-          }
-          return Promise.resolve(false);
-      });
-      await Promise.all(promises);
-      setSavingTargets(false);
-      setTargetInputs({});
-      
-      // Let the user know the save was completed.
-      if (promises.length > 0) {
-          alert('Targets successfully lodged!');
-      }
-  };
-
-  const handleOverrideTarget = async () => {
-      if (!overrideModal) return;
-      const amount = Number(overrideAmount.replace(/,/g, ''));
-      if (amount >= 0) {
-          setSavingTargets(true);
-          const success = await setBranchTarget(overrideModal.branchId, targetMonthStr, amount, user?.id || '');
-          setSavingTargets(false);
-          if (success) {
-              setOverrideModal(null);
-              setOverrideAmount('');
-              alert('Target successfully overridden!');
-          } else {
-              alert('Failed to override target. Please try again.');
-          }
-      }
-  };
+  
 
   // Filter entries based on the viewMode
   const filteredEntries = useMemo(() => {
@@ -740,35 +721,32 @@ export default function DashboardOverview() {
                                         )}
                                         <span className={`text-[13px] md:text-sm font-bold uppercase tracking-wider ${colorObj.text}`}>{b.name}</span>
                                     </div>
-                                    {!showTargetLeaders && user?.role === 'admin' ? (
-                                        <div className="flex items-center gap-1.5 z-10">
-                                            <span className="text-xs text-slate-500 font-bold">₹</span>
-                                            <Input 
-                                                type="text" 
-                                                value={targetInputs[b.id] !== undefined ? (targetInputs[b.id] ? Number(targetInputs[b.id]).toLocaleString('en-IN') : '') : (b.targetAmt ? b.targetAmt.toLocaleString('en-IN') : '')}
-                                                readOnly={b.targetAmt > 0}
-                                                onClick={() => {
-                                                    if (b.targetAmt > 0) {
-                                                        setOverrideModal({ isOpen: true, branchId: b.id, branchName: b.name, currentTarget: b.targetAmt });
-                                                        setOverrideAmount(b.targetAmt.toString());
-                                                    }
-                                                }}
-                                                onChange={(e) => {
-                                                    if (b.targetAmt > 0) return;
-                                                    const rawValue = e.target.value.replace(/,/g, '');
-                                                    if (rawValue === '') {
-                                                        setTargetInputs(prev => ({...prev, [b.id]: ''}));
-                                                    } else if (!isNaN(Number(rawValue))) {
-                                                        setTargetInputs(prev => ({...prev, [b.id]: rawValue}));
-                                                    }
-                                                }}
-                                                className={`h-8 w-28 px-2 py-1 text-xs text-right font-mono font-bold border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 ${b.targetAmt > 0 ? 'bg-slate-100 dark:bg-slate-800/50 cursor-pointer text-emerald-600 dark:text-emerald-400' : 'bg-white/50 dark:bg-black/20'}`}
-                                                placeholder="Target"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">₹{b.targetAmt.toLocaleString('en-IN')}</span>
-                                    )}
+                                    <div className="z-10">
+                                        <button 
+                                            onClick={() => {
+                                                setProductTargetModal({
+                                                    isOpen: true,
+                                                    branchId: b.id,
+                                                    branchName: b.name,
+                                                    isEdit: b.targetAmt === 0 && user?.role === 'admin'
+                                                });
+                                                const currentTargetRecord = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr);
+                                                const pt = (currentTargetRecord?.productTargets || {}) as Record<string, any>;
+                                                const initialInputs: Record<string, string> = {};
+                                                TARGET_PRODUCTS.forEach(p => {
+                                                    initialInputs[p.name] = pt[p.name] !== undefined ? pt[p.name].toString() : '';
+                                                });
+                                                setModalTargetInputs(initialInputs);
+                                            }}
+                                            className={`text-xs font-mono font-bold px-2 py-1 rounded transition-colors ${
+                                                b.targetAmt > 0 
+                                                ? 'text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800' 
+                                                : 'text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700'
+                                            }`}
+                                        >
+                                            {b.targetAmt > 0 ? `₹${b.targetAmt.toLocaleString('en-IN')}` : (user?.role === 'admin' ? 'Set Targets' : 'No Target Set')}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="flex items-center justify-between text-xs mt-2 relative z-10">
                                     <span className="text-slate-600 dark:text-slate-400 font-medium">Achieved: <span className="font-mono text-slate-900 dark:text-white font-bold ml-1">₹{b.achSum.toLocaleString('en-IN')}</span></span>
@@ -789,17 +767,6 @@ export default function DashboardOverview() {
                     });
                 })()}
             </CardContent>
-            {user?.role === 'admin' && (
-                <div className="p-4 border-t border-slate-900/10 dark:border-white/10 bg-white dark:bg-transparent">
-                    <button 
-                        onClick={handleSaveTargets}
-                        disabled={savingTargets}
-                        className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] uppercase tracking-widest font-bold rounded-lg transition-colors shadow-sm disabled:opacity-50"
-                    >
-                        {savingTargets ? 'Saving...' : 'Lodge Targets'}
-                    </button>
-                </div>
-            )}
         </Card>
       </div>
 
@@ -843,45 +810,196 @@ export default function DashboardOverview() {
       </Card>
       </div>
 
-      {overrideModal && overrideModal.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6 max-w-sm w-full border border-slate-200 dark:border-slate-800">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Override Target</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                      Targets for <span className="font-bold text-slate-700 dark:text-slate-300">{overrideModal.branchName}</span> are already set for <span className="font-bold text-slate-700 dark:text-slate-300">{new Date(targetMonthStr + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}</span> at <span className="font-mono font-bold">₹{overrideModal.currentTarget.toLocaleString('en-IN')}</span>.
-                  </p>
-                  <div className="mb-4">
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 uppercase">New Target Figure</label>
-                      <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
-                          <Input 
-                              type="text"
-                              value={overrideAmount ? Number(overrideAmount.replace(/,/g, '')).toLocaleString('en-IN') : ''}
-                              onChange={(e) => {
-                                  const raw = e.target.value.replace(/,/g, '');
-                                  if (raw === '' || !isNaN(Number(raw))) {
-                                      setOverrideAmount(raw);
+      {productTargetModal && productTargetModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-xl w-full text-slate-900 dark:text-white">
+                  <div className="flex justify-between items-center mb-6">
+                      <div>
+                          <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                              {productTargetModal.isEdit ? 'Lodge Product Targets' : 'Product Targets Breakdown'}
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">
+                              {productTargetModal.branchName} • {new Date(targetMonthStr + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}
+                          </p>
+                      </div>
+                      <button 
+                          onClick={() => setProductTargetModal(null)}
+                          className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                      >
+                          <X className="w-5 h-5" />
+                      </button>
+                  </div>
+
+                  <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                      {TARGET_PRODUCTS.map(p => {
+                          // Calculate MTD achievement for this specific product
+                          const [tYearStr, tMonthStr] = targetMonthStr.split('-');
+                          const tYear = parseInt(tYearStr);
+                          const tMonth = parseInt(tMonthStr) - 1;
+                          
+                          let ach = 0;
+                          entries.forEach(e => {
+                              if (e.branchId !== productTargetModal.branchId) return;
+                              const isAch = !e.recordType || e.recordType === 'achievement';
+                              if (!isAch) return;
+                              const ed = new Date(e.entryDate);
+                              if (ed.getMonth() === tMonth && ed.getFullYear() === tYear) {
+                                  e.items.forEach(item => {
+                                      const isLoan = item.category === 'Loan';
+                                      const isInsurance = item.category === 'Insurance';
+                                      const isInvestments = item.category === 'Investments';
+                                      const isForex = item.category === 'Forex';
+                                      const pName = (item.product || '').trim();
+                                      const amount = Number(item.disbursedAmount) || 0;
+
+                                      if (p.name === 'Personal Loan') {
+                                          if (isLoan && (pName === 'Personal Loan' || pName.toLowerCase().startsWith('personal loan'))) {
+                                              ach += amount;
+                                          }
+                                      } else if (p.name === 'Business Loan') {
+                                          if (isLoan && (pName === 'Business Loan' || pName.toLowerCase().startsWith('business loan'))) {
+                                              ach += amount;
+                                          }
+                                      } else if (p.name === 'Housing Loan/ML') {
+                                          if (isLoan && !(pName === 'Personal Loan' || pName.toLowerCase().startsWith('personal loan')) && !(pName === 'Business Loan' || pName.toLowerCase().startsWith('business loan'))) {
+                                              ach += amount;
+                                          }
+                                      } else if (p.name === 'Life Insurance') {
+                                          if (isInsurance && pName === 'Life Insurance') {
+                                              ach += amount;
+                                          }
+                                      } else if (p.name === 'General Insurance') {
+                                          if (isInsurance && pName === 'General Insurance') {
+                                              ach += amount;
+                                          }
+                                      } else if (p.name === 'Livlong Loan Protector') {
+                                          if (isInsurance && (pName === 'Livlong Loan Protector' || pName.toLowerCase() === 'liv long loan protector' || pName.toLowerCase() === 'livlong loan protector')) {
+                                              ach += amount;
+                                          }
+                                      } else if (p.name === 'Mutual Fund / SIP') {
+                                          if (isInvestments) {
+                                              ach += amount;
+                                          }
+                                      } else if (p.name === 'Forex / Retail') {
+                                          if (isForex) {
+                                              ach += amount;
+                                          }
+                                      }
+                                  });
+                              }
+                          });
+
+                          const targetVal = Number(modalTargetInputs[p.name] || 0);
+                          const progress = targetVal > 0 ? (ach / targetVal) * 100 : (ach > 0 ? 100 : 0);
+
+                          return (
+                              <div key={p.name} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-2">
+                                  <div className="flex justify-between items-center">
+                                      <div className="flex flex-col">
+                                          <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{p.name}</span>
+                                          <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{p.category}</span>
+                                      </div>
+                                      
+                                      {productTargetModal.isEdit ? (
+                                          <div className="flex items-center gap-1.5">
+                                              <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">₹</span>
+                                              <Input
+                                                  type="text"
+                                                  value={modalTargetInputs[p.name] ? Number(modalTargetInputs[p.name]).toLocaleString('en-IN') : ''}
+                                                  onChange={(e) => {
+                                                      const raw = e.target.value.replace(/,/g, '');
+                                                      if (raw === '' || !isNaN(Number(raw))) {
+                                                          setModalTargetInputs(prev => ({ ...prev, [p.name]: raw }));
+                                                      }
+                                                  }}
+                                                  className="h-8 w-32 px-2 py-1 text-xs text-right font-mono font-bold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                                  placeholder="Target"
+                                              />
+                                          </div>
+                                      ) : (
+                                          <div className="flex flex-col items-end">
+                                              <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                                                  ₹{targetVal.toLocaleString('en-IN')}
+                                              </span>
+                                              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Target</span>
+                                          </div>
+                                      )}
+                                  </div>
+
+                                  <div className="flex justify-between items-center text-xs mt-1 text-slate-500 dark:text-slate-400">
+                                      <span>Achieved: <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">₹{ach.toLocaleString('en-IN')}</span></span>
+                                      {targetVal > 0 && (
+                                          <span className="font-bold text-indigo-600 dark:text-indigo-400">{progress.toFixed(1)}%</span>
+                                      )}
+                                  </div>
+                                  
+                                  {targetVal > 0 && (
+                                      <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
+                                          <div className="h-full bg-indigo-500 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, progress)}%` }}></div>
+                                      </div>
+                                  )}
+                              </div>
+                          );
+                      })}
+                  </div>
+
+                  {/* Summary Total */}
+                  <div className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 flex justify-between items-center">
+                      <span className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Target:</span>
+                      <span className="text-xl font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
+                          ₹{TARGET_PRODUCTS.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0).toLocaleString('en-IN')}
+                      </span>
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                      <button 
+                          onClick={() => setProductTargetModal(null)}
+                          className="flex-1 py-2.5 text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      >
+                          {productTargetModal.isEdit ? 'Cancel' : 'Close'}
+                      </button>
+                      
+                      {productTargetModal.isEdit ? (
+                          <button 
+                              onClick={async () => {
+                                  setSavingTargets(true);
+                                  const totalAmt = TARGET_PRODUCTS.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0);
+                                  const productTargetsObj: Record<string, number> = {};
+                                  TARGET_PRODUCTS.forEach(p => {
+                                      productTargetsObj[p.name] = Number(modalTargetInputs[p.name] || 0);
+                                  });
+                                  const success = await setBranchTarget(
+                                      productTargetModal.branchId,
+                                      targetMonthStr,
+                                      totalAmt,
+                                      user?.id || '',
+                                      productTargetsObj
+                                  );
+                                  setSavingTargets(false);
+                                  if (success) {
+                                      setProductTargetModal(null);
+                                      alert('Product targets successfully lodged!');
+                                  } else {
+                                      alert('Failed to save targets. Please try again.');
                                   }
                               }}
-                              className="pl-7 font-mono font-bold h-10 w-full"
-                              placeholder="Enter new target"
-                          />
-                      </div>
-                  </div>
-                  <div className="flex gap-3">
-                      <button 
-                          onClick={() => setOverrideModal(null)}
-                          className="flex-1 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors"
-                      >
-                          Cancel
-                      </button>
-                      <button 
-                          onClick={handleOverrideTarget}
-                          disabled={savingTargets || !overrideAmount || Number(overrideAmount) <= 0}
-                          className="flex-1 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                      >
-                          {savingTargets ? 'Saving...' : 'Override Target'}
-                      </button>
+                              disabled={savingTargets}
+                              className="flex-1 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                          >
+                              {savingTargets ? 'Saving...' : 'Save Targets'}
+                          </button>
+                      ) : (
+                          user?.role === 'admin' && (
+                              <button 
+                                  onClick={() => {
+                                      setProductTargetModal(prev => prev ? { ...prev, isEdit: true } : null);
+                                  }}
+                                  className="flex-1 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                              >
+                                  Edit Targets
+                              </button>
+                          )
+                      )}
                   </div>
               </div>
           </div>

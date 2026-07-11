@@ -492,6 +492,7 @@ export default function DataEntryTerminal() {
             - "repaymentBank": string
             - "managerName": string
             - "consultantName": string
+            - "consultantEmail": string
             
             Mapped Spreadsheet JSON:
             ${JSON.stringify(mappedJson).substring(0, 50000)} // Limiting to ~50k chars
@@ -618,7 +619,8 @@ export default function DataEntryTerminal() {
           emiDate: '',
           repaymentBank: '',
           managerName: '',
-          consultantName: ''
+          consultantName: '',
+          consultantEmail: ''
       }]);
   };
   
@@ -1338,13 +1340,14 @@ export default function DataEntryTerminal() {
                                 <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">22. Repayment Bank</TableHead>
                                 <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">23. Manager Name</TableHead>
                                 <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">24. Consultant</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">25. Consultant Email ID</TableHead>
                                 <TableHead className="w-[50px] px-2 sticky right-0 bg-indigo-600 dark:bg-indigo-800 z-10"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {items.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={24} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest border-b-0">
+                                    <TableCell colSpan={25} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest border-b-0">
                                         No items formulated for {dateStr}
                                     </TableCell>
                                 </TableRow>
@@ -1704,6 +1707,17 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
+                                    {/* 25. Consultant Email ID */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={!canModify && !item.isManual}
+                                            type="email"
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.consultantEmail || ''}
+                                            onChange={(e) => handleUpdateItem(index, 'consultantEmail', e.target.value)}
+                                        />
+                                    </TableCell>
+
                                     {/* Remove Button */}
                                     <TableCell className="py-2 px-2 align-top text-right sticky right-0 bg-white dark:bg-slate-900/90 backdrop-blur z-10 border-l border-slate-900/10 dark:border-white/10">
                                         {canModify && (
@@ -1933,6 +1947,7 @@ export default function DataEntryTerminal() {
                                 <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Repayment Bank</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Manager Name</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Consultant Email ID</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -2116,6 +2131,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.consultantName || ''} onChange={e => handleUpdate('consultantName', e.target.value)} placeholder="Consultant..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input type="email" value={item.consultantEmail || ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder="Consultant Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2 text-right">
                                         <button onClick={handleRemove} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
                                     </TableCell>

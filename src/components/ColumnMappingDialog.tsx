@@ -36,7 +36,10 @@ const SYSTEM_FIELDS: SystemField[] = [
     { key: 'disbursedAmount', label: 'Disbursed Amount', required: false, aliases: ['disbursed amount', 'disbursed', 'disbursed amt', 'achievement'] },
     { key: 'disbursedDate', label: 'Disbursed Date', required: false, aliases: ['disbursed date', 'disbursement date'] },
     { key: 'emiDate', label: 'EMI Date', required: false, aliases: ['emi date', 'emi'] },
-    { key: 'repaymentBank', label: 'Repayment Bank', required: false, aliases: ['repayment bank', 'bank'] }
+    { key: 'repaymentBank', label: 'Repayment Bank', required: false, aliases: ['repayment bank', 'bank'] },
+    { key: 'managerName', label: 'Manager Name', required: false, aliases: ['manager name', 'manager'] },
+    { key: 'consultantName', label: 'Consultant', required: false, aliases: ['consultant', 'consultant name'] },
+    { key: 'consultantEmail', label: 'Consultant Email ID', required: false, aliases: ['consultant email', 'consultant email id', 'consultant e-mail'] }
 ];
 
 function similarity(a: string, b: string): number {

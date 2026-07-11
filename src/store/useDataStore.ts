@@ -56,6 +56,7 @@ export interface EntryItem {
     managerName?: string;
     relationshipManagerName?: string;
     consultantName?: string;
+    consultantEmail?: string;
 }
 
 export interface BranchEntry {
@@ -75,6 +76,7 @@ export interface BranchTarget {
     branchId: string;
     monthYear: string; // e.g. "2026-04"
     targetAmount: number;
+    productTargets?: Record<string, number>;
 }
 
 export interface OrgMember {
@@ -105,6 +107,7 @@ const staticProducts: Omit<Product, 'business'>[] = [
   { id: 'p4', name: 'Home Loan', category: 'Loan' },
   { id: 'p5', name: 'General Insurance', category: 'Insurance' },
   { id: 'p6', name: 'Life Insurance', category: 'Insurance' },
+  { id: 'p13', name: 'Livlong Loan Protector', category: 'Insurance' },
   { id: 'p7', name: 'Currency Exchange', category: 'Forex' },
   { id: 'p8', name: 'Forex card', category: 'Forex' },
   { id: 'p9', name: 'Outward Remittance', category: 'Forex' },
@@ -129,7 +132,7 @@ interface DataState {
   deleteProduct: (id: string) => void;
   addBranch: (branch: Omit<Branch, 'id' | 'dailyAchievement'>) => void;
   deleteBranch: (id: string) => void;
-  setBranchTarget: (branchId: string, monthYear: string, targetAmount: number, authorId: string) => Promise<boolean>;
+  setBranchTarget: (branchId: string, monthYear: string, targetAmount: number, authorId: string, productTargets?: Record<string, number>) => Promise<boolean>;
 }
 
 let globalSubscription: any = null;
@@ -148,11 +151,11 @@ export const useDataStore = create<DataState>((set) => ({
   deleteProduct: () => {},
   addBranch: () => {},
   deleteBranch: () => {},
-  setBranchTarget: async (branchId, monthYear, targetAmount, authorId) => {
+  setBranchTarget: async (branchId, monthYear, targetAmount, authorId, productTargets) => {
       try {
           // Attempt to upsert the target
           const { error } = await supabase.from('branch_targets').upsert(
-              { branchId, monthYear, targetAmount, authorId },
+              { branchId, monthYear, targetAmount, authorId, productTargets },
               { onConflict: 'branchId,monthYear' }
           );
           if (error) {
@@ -165,10 +168,10 @@ export const useDataStore = create<DataState>((set) => ({
              const existingIndex = state.branchTargets.findIndex(t => t.branchId === branchId && t.monthYear === monthYear);
              if (existingIndex >= 0) {
                  const newTargets = [...state.branchTargets];
-                 newTargets[existingIndex] = { ...newTargets[existingIndex], targetAmount };
+                 newTargets[existingIndex] = { ...newTargets[existingIndex], targetAmount, productTargets };
                  return { branchTargets: newTargets };
              } else {
-                 return { branchTargets: [...state.branchTargets, { branchId, monthYear, targetAmount }] };
+                 return { branchTargets: [...state.branchTargets, { branchId, monthYear, targetAmount, productTargets }] };
              }
           });
           return true;
