@@ -5,6 +5,12 @@ import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users,
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 
+const AVATAR_OPTIONS = [
+  'Aneka', 'Surchand', 'Tomas', 'Elena', 'Raj', 
+  'Sarah', 'David', 'Maya', 'Leo', 'Zoe',
+  'Kofi', 'Chloe', 'Amir', 'Nina', 'Marcus', 'Priya'
+];
+
 const navItems = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/dashboard/products', label: 'Products', icon: Package },
@@ -202,17 +208,30 @@ export default function DashboardLayout() {
                       </div>
 
                       <div>
-                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Avatar Seed (Text/Name)</label>
-                          <Input 
-                              type="text"
-                              value={profileModal.avatarSeed}
-                              onChange={(e) => setProfileModal(prev => prev ? { ...prev, avatarSeed: e.target.value } : null)}
-                              className="h-9 w-full px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                              placeholder="Type anything to change avatar"
-                          />
-                          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1">
-                              Changing the seed text generates a unique, beautiful custom avatar instantly.
-                          </p>
+                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Select Avatar</label>
+                          <div className="grid grid-cols-4 gap-2 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 rounded-xl max-h-[160px] overflow-y-auto">
+                              {AVATAR_OPTIONS.map((seed) => {
+                                  const isSelected = profileModal.avatarSeed === seed;
+                                  return (
+                                      <button
+                                          key={seed}
+                                          type="button"
+                                          onClick={() => setProfileModal(prev => prev ? { ...prev, avatarSeed: seed } : null)}
+                                          className={`p-1 rounded-lg border-2 transition-all flex items-center justify-center bg-white dark:bg-slate-900 ${
+                                              isSelected 
+                                              ? 'border-indigo-600 dark:border-indigo-500 scale-105 shadow-md' 
+                                              : 'border-transparent hover:border-slate-300 dark:hover:border-slate-700'
+                                          }`}
+                                      >
+                                          <img 
+                                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`}
+                                              alt={seed}
+                                              className="w-10 h-10 rounded-full"
+                                          />
+                                      </button>
+                                  );
+                              })}
+                          </div>
                       </div>
                   </div>
 
