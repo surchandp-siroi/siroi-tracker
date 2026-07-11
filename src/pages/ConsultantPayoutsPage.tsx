@@ -1,20 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui';
-
-// Create a separate supabase client that does not persist the session
-// This prevents the OTP verification from logging out the current admin user
-const tempSupabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  {
-    auth: {
-      persistSession: false,
-    }
-  }
-);
 
 export default function ConsultantPayoutsPage() {
   const { user } = useAuthStore();
@@ -31,7 +19,7 @@ export default function ConsultantPayoutsPage() {
     setIsSending(true);
     setError(null);
     try {
-      const { error } = await tempSupabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email: targetEmail,
       });
       if (error) throw error;
@@ -58,7 +46,7 @@ export default function ConsultantPayoutsPage() {
     setIsVerifying(true);
     setError(null);
     try {
-      const { error } = await tempSupabase.auth.verifyOtp({
+      const { error } = await supabase.auth.verifyOtp({
         email: targetEmail,
         token: otp,
         type: 'email'

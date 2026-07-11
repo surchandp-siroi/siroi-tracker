@@ -40,13 +40,29 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): 
     
     if (userDoc) {
         profile = userDoc as UserProfile;
+        
+        let needsUpdate = false;
+        const updates: any = {};
+        
         if (location && location !== profile.latestLocation) {
-            await supabase.from('users').update({ latestLocation: location }).eq('id', sbUser.id);
+            updates.latestLocation = location;
             profile.latestLocation = location;
+            needsUpdate = true;
+        }
+        
+        const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(sbUser.email || '');
+        if (isSuperAdminEmail && profile.role !== 'admin') {
+            updates.role = 'admin';
+            profile.role = 'admin';
+            needsUpdate = true;
+        }
+
+        if (needsUpdate) {
+            await supabase.from('users').update(updates).eq('id', sbUser.id);
         }
     } else {
         const email = sbUser.email!;
-        const isFirstAdmin = email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com';
+        const isFirstAdmin = email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com' || email === 'sharjuthoudam@siroiforex.com';
         const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
         
         profile = {
