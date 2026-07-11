@@ -60,8 +60,10 @@ export default function DashboardLayout() {
           </p>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 mt-2">
+        {/* Scrollable Navigation Area */}
+        <div className="flex-1 overflow-y-auto mt-2 pb-4">
+          {/* Navigation */}
+          <nav className="px-3">
           <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600 font-bold px-3 mb-2">
             Management
           </p>
@@ -120,6 +122,7 @@ export default function DashboardLayout() {
               </NavLink>
             </div>
           </nav>
+        </div>
 
         {/* Bottom section */}
         <div className="mt-auto px-3 pb-4 space-y-3">
