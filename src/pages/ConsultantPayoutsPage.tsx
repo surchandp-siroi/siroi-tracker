@@ -32,13 +32,9 @@ export default function ConsultantPayoutsPage() {
   };
 
   useEffect(() => {
-    // Only send OTP on first mount if they are the target user
-    if (user?.email === targetEmail) {
-      sendOtp().finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
-  }, [user]);
+    // Send OTP on first mount to the target email
+    sendOtp().finally(() => setIsLoading(false));
+  }, []);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,16 +72,7 @@ export default function ConsultantPayoutsPage() {
     );
   }
 
-  // Strict check
-  if (user?.email !== targetEmail) {
-    return (
-      <div className="flex flex-col h-[80vh] items-center justify-center text-center">
-        <Lock className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" />
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Restricted Access</h2>
-        <p className="text-slate-500 mt-2">You do not have permission to view this page.</p>
-      </div>
-    );
-  }
+
 
   if (!isVerified) {
     return (

@@ -95,12 +95,11 @@ export default function DashboardLayout() {
           </div>
         </nav>
 
-        {/* Finances section (Restricted) */}
-        {user?.email === 'sharjuthoudam@siroiforex.com' && (
-          <nav className="px-3 mt-4">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600 font-bold px-3 mb-2">
-              Finances
-            </p>
+        {/* Finances section */}
+        <nav className="px-3 mt-4">
+          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600 font-bold px-3 mb-2">
+            Finances
+          </p>
             <div className="space-y-0.5">
               <NavLink
                 to="/dashboard/consultant-payouts"
@@ -121,7 +120,6 @@ export default function DashboardLayout() {
               </NavLink>
             </div>
           </nav>
-        )}
 
         {/* Bottom section */}
         <div className="mt-auto px-3 pb-4 space-y-3">
