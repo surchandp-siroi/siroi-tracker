@@ -625,39 +625,41 @@ export default function DataEntryTerminal() {
   };
   
   const handleUpdateItem = (index: number, key: string, val: string | number) => {
-      const arr = [...items];
-      arr[index] = { ...arr[index], [key]: val };
-      
-      // Auto-update product if category changes
-      if (key === 'category') {
-          arr[index].product = ''; // reset
-          if (val !== 'Loan') {
-              arr[index].fileLogin = ''; // reset if not Loan
-          }
-          if (val === 'Insurance') {
-              arr[index].fileStatus = '';
-          } else {
-              if (['Issued', 'Not Issued'].includes(arr[index].fileStatus || '')) {
+      setItems(prevItems => {
+          const arr = [...prevItems];
+          arr[index] = { ...arr[index], [key]: val };
+          
+          // Auto-update product if category changes
+          if (key === 'category') {
+              arr[index].product = ''; // reset
+              if (val !== 'Loan') {
+                  arr[index].fileLogin = ''; // reset if not Loan
+              }
+              if (val === 'Insurance') {
                   arr[index].fileStatus = '';
+              } else {
+                  if (['Issued', 'Not Issued'].includes(arr[index].fileStatus || '')) {
+                      arr[index].fileStatus = '';
+                  }
               }
           }
-      }
-      
-      // Automatically update achievement for Insurance
-      if (arr[index].category === 'Insurance') {
-          if (key === 'fileStatus') {
-              if (val === 'Issued') {
-                  arr[index].disbursedAmount = arr[index].amount;
-              } else if (val === 'Not Issued') {
-                  arr[index].disbursedAmount = 0;
+          
+          // Automatically update achievement for Insurance
+          if (arr[index].category === 'Insurance') {
+              if (key === 'fileStatus') {
+                  if (val === 'Issued') {
+                      arr[index].disbursedAmount = arr[index].amount;
+                  } else if (val === 'Not Issued') {
+                      arr[index].disbursedAmount = 0;
+                  }
+              }
+              if (key === 'amount' && arr[index].fileStatus === 'Issued') {
+                  arr[index].disbursedAmount = Number(val) || 0;
               }
           }
-          if (key === 'amount' && arr[index].fileStatus === 'Issued') {
-              arr[index].disbursedAmount = Number(val) || 0;
-          }
-      }
-      
-      setItems(arr);
+          
+          return arr;
+      });
   };
   
   const handleRemoveItem = (index: number) => {
