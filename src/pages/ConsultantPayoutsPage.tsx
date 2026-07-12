@@ -179,16 +179,16 @@ export default function ConsultantPayoutsPage() {
           <Table>
             <TableHeader className="bg-indigo-50/80 dark:bg-indigo-500/10 border-b border-indigo-100 dark:border-indigo-500/20">
               <TableRow>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest">Entry Date</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest">Disbursed Date</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest">Consultant Name</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest">Consultant Email</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Disbursed Amount</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Commission (%)</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Settlement (₹)</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Status</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Date of Settlement</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right"></TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Entry Date</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Disbursed Date</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Consultant Name</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Consultant Email</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Disbursed Amount</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Commission (%)</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Settlement (₹)</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Status</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Date of Settlement</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -228,12 +228,12 @@ export default function ConsultantPayoutsPage() {
                       <TableCell className="px-5 py-4 text-slate-500 text-sm whitespace-nowrap">
                         {item.consultantEmail || '-'}
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-right">
+                      <TableCell className="px-5 py-4 text-center">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                           {item.disbursedAmount ? `₹${item.disbursedAmount.toLocaleString('en-IN')}` : '-'}
                         </span>
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-right">
+                      <TableCell className="px-5 py-4 text-center">
                         {(() => {
                           const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
                           const draftValue = commissions[item._uniqueId] !== undefined ? commissions[item._uniqueId] : (item.commissionPercentage?.toString() || '');
@@ -246,7 +246,7 @@ export default function ConsultantPayoutsPage() {
                                   step="0.1"
                                   value={draftValue}
                                   onChange={(e) => handleCommissionChange(item._uniqueId, e.target.value)}
-                                  className="w-16 text-right font-medium h-8 bg-slate-50 dark:bg-slate-800/50 px-2 ml-auto"
+                                  className="w-16 text-center font-medium h-8 bg-slate-50 dark:bg-slate-800/50 px-2 mx-auto"
                                   placeholder="0.0"
                                 />
                             );
@@ -255,7 +255,7 @@ export default function ConsultantPayoutsPage() {
                           }
                         })()}
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-right">
+                      <TableCell className="px-5 py-4 text-center">
                         <span className="font-bold text-slate-900 dark:text-white whitespace-nowrap text-sm bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg inline-block min-w-[80px]">
                           {(() => {
                             const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
@@ -271,7 +271,7 @@ export default function ConsultantPayoutsPage() {
                           })()}
                         </span>
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-right">
+                      <TableCell className="px-5 py-4 text-center">
                         {(() => {
                           const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
                           const draftStatus = draftStatuses[item._uniqueId] ?? (item.settlementStatus || 'Not Settled');
@@ -280,22 +280,22 @@ export default function ConsultantPayoutsPage() {
                                 <select
                                   value={draftStatus}
                                   onChange={(e) => handleStatusChange(item._uniqueId, e.target.value as 'Not Settled' | 'Settled')}
-                                  className="h-8 rounded bg-slate-50 dark:bg-slate-800/50 px-2 text-sm font-medium border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                                  className={`h-8 rounded px-2 text-sm font-bold border outline-none focus:ring-2 focus:ring-indigo-500 mx-auto ${draftStatus === 'Settled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}
                                 >
-                                  <option value="Not Settled">Not Settled</option>
-                                  <option value="Settled">Settled</option>
+                                  <option value="Not Settled" className="text-rose-700 bg-white font-bold">Not Settled</option>
+                                  <option value="Settled" className="text-emerald-700 bg-white font-bold">Settled</option>
                                 </select>
                             );
                           } else {
                             return (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${item.settlementStatus === 'Settled' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}>
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap ${item.settlementStatus === 'Settled' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400'}`}>
                                   {item.settlementStatus || 'Not Settled'}
                                 </span>
                             );
                           }
                         })()}
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-right">
+                      <TableCell className="px-5 py-4 text-center">
                         {(() => {
                           const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
                           const draftStatus = draftStatuses[item._uniqueId] ?? (item.settlementStatus || 'Not Settled');
@@ -307,7 +307,7 @@ export default function ConsultantPayoutsPage() {
                                 type="date"
                                 value={draftDate}
                                 onChange={(e) => handleDateChange(item._uniqueId, e.target.value)}
-                                className="w-32 h-8 text-sm font-medium bg-slate-50 dark:bg-slate-800/50 px-2 ml-auto"
+                                className="w-32 h-8 text-sm font-medium bg-slate-50 dark:bg-slate-800/50 px-2 mx-auto"
                               />
                             );
                           } else {
@@ -319,7 +319,7 @@ export default function ConsultantPayoutsPage() {
                           }
                         })()}
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-right">
+                      <TableCell className="px-5 py-4 text-center">
                         {(() => {
                           const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
                           const draftValue = commissions[item._uniqueId] !== undefined ? commissions[item._uniqueId] : (item.commissionPercentage?.toString() || '');
