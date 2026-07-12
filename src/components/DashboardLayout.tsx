@@ -206,7 +206,7 @@ export default function DashboardLayout() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-[1400px] mx-auto space-y-5">
+        <div className="w-full space-y-5">
           <Outlet />
         </div>
       </main>
