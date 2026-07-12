@@ -18,7 +18,9 @@ export default function OnboardingPage() {
 
   // Form Data
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     phone: '',
     email: '',
     panNumber: '',
@@ -66,8 +68,8 @@ export default function OnboardingPage() {
 
   const handleNextFormStep = () => {
       if (formStep === 1) {
-          if (!formData.name || !formData.phone || !formData.email) {
-              setError("Please fill out all personal details.");
+          if (!formData.firstName || !formData.lastName || !formData.phone || !formData.email) {
+              setError("Please fill out all mandatory personal details.");
               return;
           }
       } else if (formStep === 2) {
@@ -147,7 +149,7 @@ export default function OnboardingPage() {
       }
 
       const { error: dbError } = await supabase.from('consultants').insert([{
-        name: formData.name,
+        name: [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(' '),
         phone: formData.phone,
         email: formData.email,
         pan_number: formData.panNumber,
@@ -318,17 +320,26 @@ export default function OnboardingPage() {
                                       {formStep === 1 && (
                                           <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                                               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                                  <div>
-                                                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Full Name</label>
-                                                      <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="John Doe" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
-                                                  </div>
-                                                  <div>
-                                                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Phone Number</label>
-                                                      <Input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
+                                                  <div className="sm:col-span-2">
+                                                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Name (As per Legal ID)</label>
+                                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                          <Input required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} placeholder="First Name" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
+                                                          <Input value={formData.middleName} onChange={e => setFormData({...formData, middleName: e.target.value})} placeholder="Middle Name" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
+                                                          <Input required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} placeholder="Surname" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
+                                                      </div>
                                                   </div>
                                                   <div className="sm:col-span-2">
-                                                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Email Address</label>
-                                                      <Input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="john@example.com" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
+                                                      <p className="text-xs text-slate-500 mb-4">* The phone number and email ID below will be the medium of communication from Siroi's team in the future.</p>
+                                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                          <div>
+                                                              <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Phone Number</label>
+                                                              <Input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
+                                                          </div>
+                                                          <div>
+                                                              <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Email Address</label>
+                                                              <Input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="john@example.com" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
+                                                          </div>
+                                                      </div>
                                                   </div>
                                               </div>
                                           </div>
