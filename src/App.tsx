@@ -11,6 +11,8 @@ import OrganigramPage from '@/pages/OrganigramPage';
 import EntryPage from '@/pages/EntryPage';
 import AuditLogsPage from '@/pages/AuditLogsPage';
 import ConsultantPayoutsPage from '@/pages/ConsultantPayoutsPage';
+import ConsultantApprovalPage from '@/pages/ConsultantApprovalPage';
+import OnboardingPage from '@/pages/OnboardingPage';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -22,6 +24,7 @@ export default function App() {
         <SessionTimer />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/entry" element={<EntryPage />} />
           {/* Dashboard routes wrapped in sidebar layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>
@@ -31,6 +34,7 @@ export default function App() {
             <Route path="branches" element={<BranchesPage />} />
             <Route path="organigram" element={<OrganigramPage />} />
             <Route path="audit" element={<AuditLogsPage />} />
+            <Route path="consultant-approval" element={<ConsultantApprovalPage />} />
             <Route path="consultant-payouts" element={<ConsultantPayoutsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />

@@ -86,6 +86,26 @@ export interface OrgMember {
     branch: string | null;
 }
 
+export interface Consultant {
+    id: string;
+    name: string;
+    phone: string;
+    email: string;
+    pan_number: string;
+    pan_file_url: string;
+    aadhar_number: string;
+    aadhar_file_url: string;
+    bank_name: string;
+    account_number: string;
+    account_type: string;
+    ifsc_code: string;
+    address: string;
+    pincode: string;
+    state: string;
+    status: string;
+    created_at: string;
+}
+
 const staticChannels: Channel[] = [
   'Aditya Birla', 'Axis Bank', 'Axis Finance', 'Bajaj Finserv', 'Bajaj Market',
   'Bandhan Bank', 'Cholamandalam', 'Finnable', 'SMFG India', 'HDFC BANK',
@@ -124,6 +144,7 @@ interface DataState {
   entries: BranchEntry[];
   branchTargets: BranchTarget[];
   orgMembers: OrgMember[];
+  consultants: Consultant[];
   isLoading: boolean;
   initSync: (role?: string, branchId?: string | null) => Promise<void>;
   unsubscribeSync: () => void;
@@ -146,6 +167,7 @@ export const useDataStore = create<DataState>((set) => ({
   entries: [],
   branchTargets: [],
   orgMembers: [],
+  consultants: [],
   isLoading: true,
   addChannel: () => {},
   deleteChannel: () => {},
@@ -274,6 +296,16 @@ export const useDataStore = create<DataState>((set) => ({
           }
       } catch (e) {
           console.warn('Could not fetch org_nodes.', e);
+      }
+
+      // Fetch approved consultants
+      try {
+          const { data: consultantData } = await supabase.from('consultants').select('*').eq('status', 'approved');
+          if (consultantData) {
+              set({ consultants: consultantData as Consultant[] });
+          }
+      } catch (e) {
+          console.warn('Could not fetch consultants.', e);
       }
       
       const computeStats = (entries: BranchEntry[], targets: BranchTarget[]) => {

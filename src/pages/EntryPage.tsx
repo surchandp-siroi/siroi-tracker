@@ -64,7 +64,7 @@ const MONTHLY_OPTIONS = generateMonthlyOptions();
 export default function DataEntryTerminal() {
   const { user, isInitialized, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { products, channels, branches, branchTargets, orgMembers } = useDataStore();
+  const { products, channels, branches, branchTargets, orgMembers, consultants } = useDataStore();
 
   const [entryMode, setEntryMode] = useState<'daily'|'monthly'>(
       new Date() >= new Date('2026-01-01T00:00:00Z') ? 'daily' : 'monthly'
@@ -1698,13 +1698,25 @@ export default function DataEntryTerminal() {
 
                                     {/* 22. Consultant Name */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <Input 
+                                        <select 
                                             disabled={!canModify && !item.isManual}
-                                            type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            className="w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200"
                                             value={item.consultantName || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'consultantName', e.target.value)}
-                                        />
+                                            onChange={(e) => {
+                                                handleUpdateItem(index, 'consultantName', e.target.value);
+                                                const consultant = consultants.find(c => c.name === e.target.value);
+                                                if (consultant) {
+                                                    handleUpdateItem(index, 'consultantEmail', consultant.email);
+                                                } else {
+                                                    handleUpdateItem(index, 'consultantEmail', '');
+                                                }
+                                            }}
+                                        >
+                                            <option value="" className="bg-slate-800 text-slate-400">Select...</option>
+                                            {consultants.map(c => (
+                                                <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
+                                            ))}
+                                        </select>
                                     </TableCell>
 
                                     {/* 25. Consultant Email ID */}
@@ -2130,7 +2142,26 @@ export default function DataEntryTerminal() {
                                     <TableCell className="p-2"><Input type="date" value={item.emiDate || ''} onChange={e => handleUpdate('emiDate', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    <TableCell className="p-2"><Input value={item.consultantName || ''} onChange={e => handleUpdate('consultantName', e.target.value)} placeholder="Consultant..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2">
+                                        <select
+                                            value={item.consultantName || ''}
+                                            onChange={e => {
+                                                handleUpdate('consultantName', e.target.value);
+                                                const consultant = consultants.find(c => c.name === e.target.value);
+                                                if (consultant) {
+                                                    handleUpdate('consultantEmail', consultant.email);
+                                                } else {
+                                                    handleUpdate('consultantEmail', '');
+                                                }
+                                            }}
+                                            className="w-full h-8 text-xs rounded-md px-2 bg-transparent text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700"
+                                        >
+                                            <option value="">— Select —</option>
+                                            {consultants.map(c => (
+                                                <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </TableCell>
                                     <TableCell className="p-2"><Input type="email" value={item.consultantEmail || ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder="Consultant Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2 text-right">
                                         <button onClick={handleRemove} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
