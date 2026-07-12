@@ -112,6 +112,7 @@ export default function ConsultantApprovalPage() {
                                                 <div className="text-xs text-slate-500">{consultant.phone}</div>
                                             </td>
                                             <td className="px-4 py-3">
+                                                <div className="font-semibold text-indigo-600 dark:text-indigo-400 mb-0.5">{consultant.associated_branch} Branch</div>
                                                 <div className="text-slate-900 dark:text-white">{consultant.state}</div>
                                                 <div className="text-xs text-slate-500">{consultant.address}</div>
                                                 <div className="text-xs text-slate-500">{consultant.pincode}</div>
