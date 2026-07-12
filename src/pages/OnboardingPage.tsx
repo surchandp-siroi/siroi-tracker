@@ -107,7 +107,13 @@ export default function OnboardingPage() {
     try {
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: formData.email,
-        options: { shouldCreateUser: true }
+        options: { 
+          shouldCreateUser: true,
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName
+          }
+        }
       });
 
       if (otpError) throw otpError;
