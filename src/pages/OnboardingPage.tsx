@@ -329,7 +329,6 @@ export default function OnboardingPage() {
                                                       </div>
                                                   </div>
                                                   <div className="sm:col-span-2">
-                                                      <p className="text-xs text-slate-500 mb-4">* The phone number and email ID below will be the medium of communication from Siroi's team in the future.</p>
                                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                                           <div>
                                                               <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Phone Number</label>
@@ -340,6 +339,7 @@ export default function OnboardingPage() {
                                                               <Input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="john@example.com" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />
                                                           </div>
                                                       </div>
+                                                      <p className="text-xs text-slate-500 mt-4">* The phone number and email ID above will be the medium of communication from Siroi's team in the future.</p>
                                                   </div>
                                               </div>
                                           </div>
