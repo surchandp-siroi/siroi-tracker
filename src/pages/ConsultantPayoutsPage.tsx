@@ -22,12 +22,20 @@ export default function ConsultantPayoutsPage() {
   const [filterMonth, setFilterMonth] = useState(currentMonthStr);
   const [filterLocation, setFilterLocation] = useState('all');
   const [commissions, setCommissions] = useState<Record<string, string>>({});
+  const [draftStatuses, setDraftStatuses] = useState<Record<string, 'Not Settled' | 'Settled'>>({});
+  const [draftDates, setDraftDates] = useState<Record<string, string>>({});
   const [editingIds, setEditingIds] = useState<Record<string, boolean>>({});
   const [isSavingAll, setIsSavingAll] = useState(false);
 
   const handleCommissionChange = (itemId: string, value: string) => {
     setCommissions(prev => ({ ...prev, [itemId]: value }));
   };
+  const handleStatusChange = (itemId: string, val: 'Not Settled' | 'Settled') => {
+      setDraftStatuses(prev => ({ ...prev, [itemId]: val }));
+  }
+  const handleDateChange = (itemId: string, val: string) => {
+      setDraftDates(prev => ({ ...prev, [itemId]: val }));
+  }
 
   const filteredItems = useMemo(() => {
     let items = entries.flatMap(entry => 
@@ -69,17 +77,30 @@ export default function ConsultantPayoutsPage() {
   const pendingSaves = useMemo(() => {
     return filteredItems.filter(item => {
       const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
-      return isEditing && commissions[item._uniqueId] !== undefined && commissions[item._uniqueId] !== '';
+      return isEditing && (
+        (commissions[item._uniqueId] !== undefined && commissions[item._uniqueId] !== '') ||
+        draftStatuses[item._uniqueId] !== undefined ||
+        draftDates[item._uniqueId] !== undefined
+      );
     });
-  }, [filteredItems, editingIds, commissions]);
+  }, [filteredItems, editingIds, commissions, draftStatuses, draftDates]);
 
   const handleSaveAll = async () => {
     setIsSavingAll(true);
     
     for (const item of pendingSaves) {
-      const val = parseFloat(commissions[item._uniqueId]);
-      if (!isNaN(val)) {
-        const success = await updateCommission(item._entryId, item._itemIdx, val);
+      const valStr = commissions[item._uniqueId];
+      const val = valStr !== undefined ? parseFloat(valStr) : item.commissionPercentage;
+      
+      const newStatus = draftStatuses[item._uniqueId] ?? item.settlementStatus;
+      const newDate = draftDates[item._uniqueId] ?? item.settlementDate;
+
+      if (val !== undefined && !isNaN(val)) {
+        const success = await updateCommission(item._entryId, item._itemIdx, { 
+            commissionPercentage: val,
+            settlementStatus: newStatus,
+            settlementDate: newDate
+        });
         if (success) {
           setEditingIds(prev => ({ ...prev, [item._uniqueId]: false }));
         }
@@ -164,13 +185,16 @@ export default function ConsultantPayoutsPage() {
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest">Consultant Email</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Disbursed Amount</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Commission (%)</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Settlement</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Settlement (₹)</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Status</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right">Date of Settlement</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
+                  <TableCell colSpan={10} className="text-center py-12 text-slate-500 dark:text-slate-400 text-sm">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                         <span className="text-slate-400">!</span>
@@ -210,55 +234,26 @@ export default function ConsultantPayoutsPage() {
                         </span>
                       </TableCell>
                       <TableCell className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {(() => {
-                            const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
-                            const draftValue = commissions[item._uniqueId] !== undefined ? commissions[item._uniqueId] : (item.commissionPercentage?.toString() || '');
-                            
-                            if (isEditing) {
-                              return (
-                                <>
-                                  <Input
-                                    type="number"
-                                    min="0.1"
-                                    max="5"
-                                    step="0.1"
-                                    value={draftValue}
-                                    onChange={(e) => handleCommissionChange(item._uniqueId, e.target.value)}
-                                    className="w-16 text-right font-medium h-8 bg-slate-50 dark:bg-slate-800/50 px-2"
-                                    placeholder="0.0"
-                                  />
-                                  <button 
-                                    onClick={async () => {
-                                      const val = parseFloat(draftValue);
-                                      if (!isNaN(val)) {
-                                        const success = await updateCommission(item._entryId, item._itemIdx, val);
-                                        if (success) {
-                                          setEditingIds(prev => ({ ...prev, [item._uniqueId]: false }));
-                                        }
-                                      }
-                                    }}
-                                    className="h-8 px-3 text-xs font-semibold rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm transition-colors"
-                                  >
-                                    Save
-                                  </button>
-                                </>
-                              );
-                            } else {
-                              return (
-                                <>
-                                  <span className="font-semibold text-slate-900 dark:text-white mr-1">{item.commissionPercentage}%</span>
-                                  <button 
-                                    onClick={() => setEditingIds(prev => ({ ...prev, [item._uniqueId]: true }))}
-                                    className="h-8 px-3 text-xs font-medium rounded text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10 transition-colors"
-                                  >
-                                    Edit
-                                  </button>
-                                </>
-                              );
-                            }
-                          })()}
-                        </div>
+                        {(() => {
+                          const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
+                          const draftValue = commissions[item._uniqueId] !== undefined ? commissions[item._uniqueId] : (item.commissionPercentage?.toString() || '');
+                          if (isEditing) {
+                            return (
+                                <Input
+                                  type="number"
+                                  min="0.1"
+                                  max="5"
+                                  step="0.1"
+                                  value={draftValue}
+                                  onChange={(e) => handleCommissionChange(item._uniqueId, e.target.value)}
+                                  className="w-16 text-right font-medium h-8 bg-slate-50 dark:bg-slate-800/50 px-2 ml-auto"
+                                  placeholder="0.0"
+                                />
+                            );
+                          } else {
+                            return <span className="font-semibold text-slate-900 dark:text-white">{item.commissionPercentage}%</span>;
+                          }
+                        })()}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-right">
                         <span className="font-bold text-slate-900 dark:text-white whitespace-nowrap text-sm bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg inline-block min-w-[80px]">
@@ -275,6 +270,94 @@ export default function ConsultantPayoutsPage() {
                             return '-';
                           })()}
                         </span>
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-right">
+                        {(() => {
+                          const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
+                          const draftStatus = draftStatuses[item._uniqueId] ?? (item.settlementStatus || 'Not Settled');
+                          if (isEditing) {
+                            return (
+                                <select
+                                  value={draftStatus}
+                                  onChange={(e) => handleStatusChange(item._uniqueId, e.target.value as 'Not Settled' | 'Settled')}
+                                  className="h-8 rounded bg-slate-50 dark:bg-slate-800/50 px-2 text-sm font-medium border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                  <option value="Not Settled">Not Settled</option>
+                                  <option value="Settled">Settled</option>
+                                </select>
+                            );
+                          } else {
+                            return (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${item.settlementStatus === 'Settled' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}>
+                                  {item.settlementStatus || 'Not Settled'}
+                                </span>
+                            );
+                          }
+                        })()}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-right">
+                        {(() => {
+                          const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
+                          const draftStatus = draftStatuses[item._uniqueId] ?? (item.settlementStatus || 'Not Settled');
+                          const draftDate = draftDates[item._uniqueId] ?? (item.settlementDate || '');
+                          
+                          if (isEditing && draftStatus === 'Settled') {
+                            return (
+                              <Input
+                                type="date"
+                                value={draftDate}
+                                onChange={(e) => handleDateChange(item._uniqueId, e.target.value)}
+                                className="w-32 h-8 text-sm font-medium bg-slate-50 dark:bg-slate-800/50 px-2 ml-auto"
+                              />
+                            );
+                          } else {
+                            return (
+                              <span className="text-slate-500 text-sm whitespace-nowrap">
+                                {item.settlementStatus === 'Settled' ? formatDate(item.settlementDate) : '-'}
+                              </span>
+                            );
+                          }
+                        })()}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-right">
+                        {(() => {
+                          const isEditing = editingIds[item._uniqueId] || item.commissionPercentage === undefined;
+                          const draftValue = commissions[item._uniqueId] !== undefined ? commissions[item._uniqueId] : (item.commissionPercentage?.toString() || '');
+                          const draftStatus = draftStatuses[item._uniqueId] ?? (item.settlementStatus || 'Not Settled');
+                          const draftDate = draftDates[item._uniqueId] ?? (item.settlementDate || '');
+                          
+                          if (isEditing) {
+                            return (
+                                <button 
+                                  onClick={async () => {
+                                    const val = parseFloat(draftValue);
+                                    if (!isNaN(val)) {
+                                      const success = await updateCommission(item._entryId, item._itemIdx, {
+                                        commissionPercentage: val,
+                                        settlementStatus: draftStatus,
+                                        settlementDate: draftDate
+                                      });
+                                      if (success) {
+                                        setEditingIds(prev => ({ ...prev, [item._uniqueId]: false }));
+                                      }
+                                    }
+                                  }}
+                                  className="h-8 px-3 text-xs font-semibold rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm transition-colors whitespace-nowrap"
+                                >
+                                  Save
+                                </button>
+                            );
+                          } else {
+                            return (
+                                <button 
+                                  onClick={() => setEditingIds(prev => ({ ...prev, [item._uniqueId]: true }))}
+                                  className="h-8 px-3 text-xs font-medium rounded text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10 transition-colors whitespace-nowrap"
+                                >
+                                  Edit
+                                </button>
+                            );
+                          }
+                        })()}
                       </TableCell>
                     </TableRow>
                   );

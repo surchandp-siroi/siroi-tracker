@@ -58,6 +58,8 @@ export interface EntryItem {
     consultantName?: string;
     consultantEmail?: string;
     commissionPercentage?: number;
+    settlementStatus?: 'Not Settled' | 'Settled';
+    settlementDate?: string;
 }
 
 export interface BranchEntry {
@@ -158,7 +160,7 @@ interface DataState {
   addBranch: (branch: Omit<Branch, 'id' | 'dailyAchievement'>) => void;
   deleteBranch: (id: string) => void;
   setBranchTarget: (branchId: string, monthYear: string, targetAmount: number, authorId: string, productTargets?: Record<string, number>) => Promise<boolean>;
-  updateCommission: (entryId: string, itemIdx: number, commission: number) => Promise<boolean>;
+  updateCommission: (entryId: string, itemIdx: number, updates: { commissionPercentage?: number, settlementStatus?: 'Not Settled' | 'Settled', settlementDate?: string }) => Promise<boolean>;
 }
 
 let globalSubscription: any = null;
@@ -207,14 +209,14 @@ export const useDataStore = create<DataState>((set) => ({
           return false;
       }
   },
-  updateCommission: async (entryId, itemIdx, commission) => {
+  updateCommission: async (entryId, itemIdx, updates) => {
       try {
           const { data, error } = await supabase.from('entries').select('*').eq('id', entryId).single();
           if (error || !data) throw error;
           
           const items = [...data.items];
           if (items[itemIdx]) {
-              items[itemIdx] = { ...items[itemIdx], commissionPercentage: commission };
+              items[itemIdx] = { ...items[itemIdx], ...updates };
               
               const { error: updateError } = await supabase.from('entries').update({ items }).eq('id', entryId);
               if (updateError) throw updateError;
@@ -226,7 +228,7 @@ export const useDataStore = create<DataState>((set) => ({
           }
           return false;
       } catch (e) {
-          console.error("Error updating commission:", e);
+          console.error("Error updating commission/settlement:", e);
           return false;
       }
   },
