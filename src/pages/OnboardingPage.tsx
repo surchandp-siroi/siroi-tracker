@@ -140,6 +140,10 @@ export default function OnboardingPage() {
       if (verifyError) throw verifyError;
       if (!authData.user) throw new Error("Verification failed.");
 
+      // Add a short delay to allow Supabase client to finish writing the session
+      // to local storage and release the auth token lock.
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       let panUrl = '';
       let aadharUrl = '';
       try {
