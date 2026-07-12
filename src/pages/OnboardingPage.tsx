@@ -111,7 +111,8 @@ export default function OnboardingPage() {
           shouldCreateUser: true,
           data: {
             first_name: formData.firstName,
-            last_name: formData.lastName
+            last_name: formData.lastName,
+            user_type: 'consultant'
           }
         }
       });
