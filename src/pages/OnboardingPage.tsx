@@ -33,7 +33,8 @@ export default function OnboardingPage() {
     pincode: '',
     state: defaultState,
     city: stateCityMap[defaultState][0] || '',
-    currentWorkspace: ''
+    currentWorkspace: '',
+    associatedBranch: ''
   });
 
   const [panFile, setPanFile] = useState<File | null>(null);
@@ -165,6 +166,7 @@ export default function OnboardingPage() {
         state: formData.state,
         city: formData.city,
         current_workspace: formData.currentWorkspace,
+        associated_branch: formData.associatedBranch,
         status: 'pending'
       }]);
 
@@ -405,6 +407,21 @@ export default function OnboardingPage() {
                                       {formStep === 4 && (
                                           <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                                               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                                  <div className="sm:col-span-2">
+                                                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Associated Branch</label>
+                                                      <select 
+                                                          required
+                                                          className="flex h-12 text-lg w-full rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 px-3 py-2 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                          value={formData.associatedBranch}
+                                                          onChange={e => setFormData({...formData, associatedBranch: e.target.value})}
+                                                      >
+                                                          <option value="" disabled>Select Associated Branch...</option>
+                                                          <option value="Guwahati">Guwahati</option>
+                                                          <option value="Manipur">Manipur</option>
+                                                          <option value="Itanagar">Itanagar</option>
+                                                          <option value="Nagaland & Mizoram">Nagaland & Mizoram</option>
+                                                      </select>
+                                                  </div>
                                                   <div className="sm:col-span-2">
                                                       <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2 block">Current Place of Work</label>
                                                       <Input required value={formData.currentWorkspace} onChange={e => setFormData({...formData, currentWorkspace: e.target.value})} placeholder="Company Name / Office Location" className="h-12 text-lg bg-slate-50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800" />

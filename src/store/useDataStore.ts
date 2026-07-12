@@ -102,6 +102,9 @@ export interface Consultant {
     address: string;
     pincode: string;
     state: string;
+    city: string;
+    current_workspace: string;
+    associated_branch: string;
     status: string;
     created_at: string;
 }

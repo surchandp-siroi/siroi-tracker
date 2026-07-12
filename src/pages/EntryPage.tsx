@@ -1713,7 +1713,9 @@ export default function DataEntryTerminal() {
                                             }}
                                         >
                                             <option value="" className="bg-slate-800 text-slate-400">Select...</option>
-                                            {consultants.map(c => (
+                                            {consultants
+                                                .filter(c => !c.associated_branch || c.associated_branch === activeBranchName)
+                                                .map(c => (
                                                 <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
                                             ))}
                                         </select>
