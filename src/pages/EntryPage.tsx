@@ -14,6 +14,59 @@ import { ExecutivePerformanceWidget } from '@/components/ExecutivePerformanceWid
 import { StaffNameResolutionDialog } from '@/components/StaffNameResolutionDialog';
 import { ColumnMappingDialog, ColumnMapping } from '@/components/ColumnMappingDialog';
 
+function CustomDatePicker({ value, onChange, disabled, className, min }: any) {
+    const [displayVal, setDisplayVal] = useState('');
+    
+    useEffect(() => {
+        if (!value) {
+            setDisplayVal('');
+            return;
+        }
+        const parts = value.split('-');
+        if (parts.length === 3) {
+            setDisplayVal(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        } else {
+            setDisplayVal(value);
+        }
+    }, [value]);
+
+    const handleTextChange = (e: any) => {
+        const newVal = e.target.value;
+        setDisplayVal(newVal);
+        const match = newVal.trim().match(/^(\d{1,2})[-\/.\s](\d{1,2})[-\/.\s](\d{4})$/);
+        if (match) {
+            const d = match[1].padStart(2, '0');
+            const m = match[2].padStart(2, '0');
+            const y = match[3];
+            onChange(`${y}-${m}-${d}`);
+        } else if (newVal === '') {
+            onChange('');
+        }
+    };
+
+    return (
+        <div className="relative flex items-center w-full h-full">
+            <Input 
+                disabled={disabled}
+                value={displayVal}
+                onChange={handleTextChange}
+                placeholder="DD-MM-YYYY"
+                className={`pr-8 ${className || ''}`}
+            />
+            <input 
+                type="date"
+                min={min}
+                disabled={disabled}
+                value={value || ''}
+                onChange={(e) => onChange(e.target.value)}
+                className="absolute right-0 top-0 bottom-0 opacity-0 cursor-pointer w-8 z-10"
+                style={{ colorScheme: 'dark' }}
+            />
+            <Calendar className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 pointer-events-none" />
+        </div>
+    );
+}
+
 const generateDailyOptions = () => {
     const options = [];
     const start = new Date(2026, 0, 1);
@@ -1157,7 +1210,7 @@ export default function DataEntryTerminal() {
                             Date Context
                         </label>
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center h-[30px] px-2 bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-md hover:bg-slate-900/10 dark:hover:bg-black/60 transition-colors cursor-pointer group" onClick={(e) => { try { e.currentTarget.querySelector('input')?.showPicker(); } catch(err) {} }}>
+                            <div className="flex items-center h-[30px] px-2 bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-md hover:bg-slate-900/10 dark:hover:bg-black/60 transition-colors cursor-pointer group">
                                 <Calendar className="w-3.5 h-3.5 text-indigo-500 mr-2 group-hover:text-indigo-400 transition-colors" />
                                 {entryMode === 'monthly' ? (
                                     <input 
@@ -1171,14 +1224,12 @@ export default function DataEntryTerminal() {
                                         }}
                                     />
                                 ) : (
-                                    <input 
-                                        type="date" 
+                                    <CustomDatePicker 
                                         className="bg-transparent text-xs text-slate-900 dark:text-white font-medium outline-none cursor-pointer w-[110px]"
-                                        style={{ colorScheme: 'dark' }}
                                         value={dateStr}
-                                        onChange={(e) => {
+                                        onChange={(val: string) => {
                                             if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                            setDateStr(e.target.value);
+                                            setDateStr(val);
                                         }}
                                     />
                                 )}
@@ -1528,13 +1579,11 @@ export default function DataEntryTerminal() {
 
                                     {/* 8. Customer DOB */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <Input 
+                                        <CustomDatePicker 
                                             disabled={!canModify && !item.isManual}
-                                            type="date"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            style={{ colorScheme: 'dark' }}
                                             value={item.customerDOB || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'customerDOB', e.target.value)}
+                                            onChange={(val: string) => handleUpdateItem(index, 'customerDOB', val)}
                                         />
                                     </TableCell>
 
@@ -1644,25 +1693,21 @@ export default function DataEntryTerminal() {
 
                                     {/* 17. Disbursed Date */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <Input 
+                                        <CustomDatePicker 
                                             disabled={!canModify && !item.isManual}
-                                            type="date"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            style={{ colorScheme: 'dark' }}
                                             value={item.disbursedDate || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'disbursedDate', e.target.value)}
+                                            onChange={(val: string) => handleUpdateItem(index, 'disbursedDate', val)}
                                         />
                                     </TableCell>
 
                                     {/* 19. EMI Date */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <Input 
+                                        <CustomDatePicker 
                                             disabled={!canModify && !item.isManual}
-                                            type="date"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            style={{ colorScheme: 'dark' }}
                                             value={item.emiDate || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'emiDate', e.target.value)}
+                                            onChange={(val: string) => handleUpdateItem(index, 'emiDate', val)}
                                         />
                                     </TableCell>
 
@@ -2066,7 +2111,7 @@ export default function DataEntryTerminal() {
                                             className={`h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 ${!item.amount ? 'border-red-500 border' : ''}`}
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2"><Input type="date" value={item.date || ''} onChange={e => handleUpdate('date', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><CustomDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.category || ''} 
@@ -2110,7 +2155,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
                                     <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} /></TableCell>
-                                    <TableCell className="p-2"><Input type="date" value={item.customerDOB || ''} onChange={e => handleUpdate('customerDOB', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><CustomDatePicker value={item.customerDOB || ''} onChange={(val: string) => handleUpdate('customerDOB', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.phoneNumber || ''} onChange={e => handleUpdate('phoneNumber', e.target.value.replace(/\D/g,''))} placeholder="Phone..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input type="email" value={item.emailId || ''} onChange={e => handleUpdate('emailId', e.target.value)} placeholder="Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.customerAddress || ''} onChange={e => handleUpdate('customerAddress', e.target.value)} placeholder="Address..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
@@ -2151,8 +2196,8 @@ export default function DataEntryTerminal() {
                                             className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2"><Input type="date" value={item.disbursedDate || ''} onChange={e => handleUpdate('disbursedDate', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    <TableCell className="p-2"><Input type="date" value={item.emiDate || ''} onChange={e => handleUpdate('emiDate', e.target.value)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><CustomDatePicker value={item.disbursedDate || ''} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><CustomDatePicker value={item.emiDate || ''} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
@@ -2276,24 +2321,22 @@ export default function DataEntryTerminal() {
                            Date
                        </label>
                        {entryMode === 'monthly' ? (
-                           <Input 
-                               type="month" 
-                               max="2026-04"
-                               value={dateStr.substring(0, 7)}
-                               onChange={(e) => setDateStr(e.target.value + '-01')}
-                               className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 w-full"
-                               style={{ colorScheme: 'dark' }}
-                           />
-                       ) : (
-                           <Input 
-                               type="date" 
-                               min="2026-01-01"
-                               value={dateStr}
-                               onChange={(e) => setDateStr(e.target.value)}
-                               className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 w-full"
-                               style={{ colorScheme: 'dark' }}
-                           />
-                       )}
+                            <Input 
+                                type="month" 
+                                max="2026-04"
+                                value={dateStr.substring(0, 7)}
+                                onChange={(e) => setDateStr(e.target.value + '-01')}
+                                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 w-full"
+                                style={{ colorScheme: 'dark' }}
+                            />
+                        ) : (
+                            <CustomDatePicker 
+                                min="2026-01-01"
+                                value={dateStr}
+                                onChange={setDateStr}
+                                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 w-full"
+                            />
+                        )}
                    </div>
 
                    </div>
