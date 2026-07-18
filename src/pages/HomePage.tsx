@@ -51,7 +51,7 @@ export default function HomePage() {
       setActiveSlide((prev) => (prev + 1) % contentSlides.length);
     }, 2500); // Set to 2.5s to give users enough time to read the text
     return () => clearInterval(interval);
-  }, []);
+  }, [activeSlide]);
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,24 +240,43 @@ export default function HomePage() {
         </div>
 
         {/* Bottom Text & Pagination aligned to the left */}
-        <div className="p-12 z-10 flex flex-col items-start pb-16 pl-16">
-            <h2 className="text-3xl font-bold text-white mb-3 tracking-tight whitespace-pre-line min-h-[72px]">
-                {contentSlides[activeSlide].title}
-            </h2>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-md mb-8 min-h-[60px]">
-                {contentSlides[activeSlide].description}
-            </p>
+        <div className="p-12 z-10 flex flex-col items-start pb-16 pl-16 w-full">
+            <style>{`
+              @keyframes slideProgress {
+                0% { width: 0%; }
+                100% { width: 100%; }
+              }
+            `}</style>
+            
+            {/* Fixed height container to prevent layout shifts */}
+            <div className="h-[160px] relative w-full max-w-md">
+                <div key={activeSlide} className="absolute inset-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <h2 className="text-3xl font-bold text-white mb-3 tracking-tight whitespace-pre-line">
+                        {contentSlides[activeSlide].title}
+                    </h2>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                        {contentSlides[activeSlide].description}
+                    </p>
+                </div>
+            </div>
             
             {/* Pagination Dots (Interactive) */}
-            <div className="flex items-center justify-start gap-2">
+            <div className="flex items-center justify-start gap-2 mt-4">
                 {contentSlides.map((_, index) => (
                     <div 
                         key={index}
                         onClick={() => setActiveSlide(index)}
-                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                            activeSlide === index ? 'w-10 bg-white' : 'w-6 bg-white/20 hover:bg-white/40'
+                        className={`h-1.5 rounded-full transition-all cursor-pointer relative overflow-hidden ${
+                            activeSlide === index ? 'w-12 bg-white/20' : 'w-6 bg-white/20 hover:bg-white/40'
                         }`}
-                    ></div>
+                    >
+                        {activeSlide === index && (
+                            <div 
+                                className="absolute top-0 left-0 h-full bg-white"
+                                style={{ animation: 'slideProgress 2.5s linear forwards' }}
+                            ></div>
+                        )}
+                    </div>
                 ))}
             </div>
         </div>
