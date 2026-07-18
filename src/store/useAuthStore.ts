@@ -183,6 +183,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const isSuperAdmin = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(email);
       
       if (!isSuperAdmin) {
+          if (new Date().getDay() === 0) {
+              throw new Error("Sunday is a holiday. Branch login is disabled.");
+          }
           const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
           
           if (!branchMatch || branchMatch.name !== location) {

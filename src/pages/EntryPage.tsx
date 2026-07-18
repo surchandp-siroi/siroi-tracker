@@ -167,7 +167,7 @@ export default function DataEntryTerminal() {
   const isPast11AM = currentJsDate.getHours() >= 11;
   const isTimeLocked = isPastMay1 && isPast11AM;
   const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
-  const isGridBlocked = entryMode === 'daily' && !isSunday && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor;
+  const isGridBlocked = (entryMode === 'daily' && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor) || (isSunday && !isBackdoor);
 
   const allowEdit = !hasExistingEntry || daysSinceCreation <= 60;
   const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
@@ -667,6 +667,10 @@ export default function DataEntryTerminal() {
   };
 
   const handleSubmit = async () => {
+      if (isSunday && !isBackdoor) {
+          setError("Tracking submission is restricted on Sundays. Enjoy your holiday!");
+          return;
+      }
       if (!activeBranchId) {
           setError("You do not have a branch assigned yet. Contact Administrator.");
           return;
@@ -896,7 +900,12 @@ export default function DataEntryTerminal() {
   };
 
   const handleBulkSubmit = async () => {
-      if (!stagedFile || stagedItems.length === 0) return;
+        if (isSunday && !isBackdoor) {
+            setError("Bulk upload is restricted on Sundays. Enjoy your holiday!");
+            return;
+        }
+        
+        if (!stagedFile || stagedItems.length === 0) return;
       if (!activeBranchId) {
           setError("You do not have a branch assigned yet. Contact Administrator.");
           return;
