@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
 import { MapPin, Loader2, AlertTriangle } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 
 export default function LoginPage() {
+  const routerLocation = useLocation();
   const [error, setError] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(routerLocation.state?.email || '');
   const [password, setPassword] = useState('');
   
   const initialBranches = useDataStore.getState().branches;
@@ -21,6 +22,12 @@ export default function LoginPage() {
   const { login, requestOtpLogin, verifyOtpLogin, isLoading } = useAuthStore();
   const { branches } = useDataStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!email) {
+      navigate('/');
+    }
+  }, [email, navigate]);
 
   const effectiveLoginMode = (loginMode === 'password' && email.toLowerCase() === 'sharjuthoudam@siroiforex.com') ? 'otp' : loginMode;
 

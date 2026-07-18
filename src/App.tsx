@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { InitProvider } from '@/components/InitProvider';
+import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ProductsPage from '@/pages/ProductsPage';
@@ -23,6 +24,7 @@ export default function App() {
       <InitProvider>
         <SessionTimer />
         <Routes>
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/entry" element={<EntryPage />} />
@@ -37,7 +39,7 @@ export default function App() {
             <Route path="consultant-approval" element={<ConsultantApprovalPage />} />
             <Route path="consultant-payouts" element={<ConsultantPayoutsPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </InitProvider>
     </ThemeProvider>
