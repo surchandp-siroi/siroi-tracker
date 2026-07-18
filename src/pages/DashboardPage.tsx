@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Calendar, X } from 'lucide-react';
+import { Calendar, X, Info } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { BranchSelect } from '@/components/BranchSelect';
 
@@ -16,15 +16,22 @@ const BRANCH_COLORS: Record<string, string> = {
   'Nagaland & Mizoram': '#fbbf24'
 };
 
-const CATEGORY_COLORS: Record<string, { proj: string, ach: string, textDark: string }> = {
-    'Loan': { proj: 'rgba(252, 165, 165, 0.3)', ach: '#fca5a5', textDark: '#991b1b' }, // red-300 / red-800
-    'Insurance': { proj: 'rgba(110, 231, 183, 0.3)', ach: '#6ee7b7', textDark: '#065f46' }, // emerald-300 / emerald-800
-    'Forex': { proj: 'rgba(125, 211, 252, 0.3)', ach: '#7dd3fc', textDark: '#075985' }, // sky-300 / sky-800
-    'Consultancy': { proj: 'rgba(196, 181, 253, 0.3)', ach: '#c4b5fd', textDark: '#5b21b6' }, // violet-300 / violet-800
-    'Investments': { proj: 'rgba(253, 224, 71, 0.3)', ach: '#fde047', textDark: '#854d0e' }, // yellow-300 / yellow-800
+const getPatternId = (name: string) => `pattern_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: string }> = {
+    'Personal Loan': { proj: `url(#${getPatternId('Personal Loan')})`, ach: '#2563eb', textDark: '#1e3a8a' }, // Blue
+    'Business Loan': { proj: `url(#${getPatternId('Business Loan')})`, ach: '#ea580c', textDark: '#7c2d12' }, // Orange
+    'Housing Loan/LAP': { proj: `url(#${getPatternId('Housing Loan/LAP')})`, ach: '#16a34a', textDark: '#14532d' }, // Green
+    'Life Insurance': { proj: `url(#${getPatternId('Life Insurance')})`, ach: '#dc2626', textDark: '#7f1d1d' }, // Red
+    'General Insurance': { proj: `url(#${getPatternId('General Insurance')})`, ach: '#9333ea', textDark: '#581c87' }, // Purple
+    'Livlong Loan Protector': { proj: `url(#${getPatternId('Livlong Loan Protector')})`, ach: '#0891b2', textDark: '#164e63' }, // Cyan
+    'Mutual Fund/SIP': { proj: `url(#${getPatternId('Mutual Fund/SIP')})`, ach: '#ca8a04', textDark: '#713f12' }, // Yellow
+    'Retail Forex': { proj: `url(#${getPatternId('Retail Forex')})`, ach: '#db2777', textDark: '#831843' }, // Pink
+    'GST filing': { proj: `url(#${getPatternId('GST filing')})`, ach: '#0d9488', textDark: '#134e4a' }, // Teal
+    'ITR filing': { proj: `url(#${getPatternId('ITR filing')})`, ach: '#65a30d', textDark: '#3f6212' } // Lime
 };
 
-const CATEGORIES = Object.keys(CATEGORY_COLORS);
+const PRODUCTS_LIST = Object.keys(PRODUCT_COLORS);
 
 const CustomizedAxisTick = (props: any) => {
   const { x, y, payload } = props;
@@ -81,25 +88,14 @@ const renderCustomizedPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, 
   
   if (percent * 100 < 3) return null;
   
-  const fontColor = CATEGORY_COLORS[name]?.textDark || '#0f172a';
-  
   return (
-    <text x={x} y={y} fill={fontColor} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight="900">
+    <text x={x} y={y} fill="#ffffff" textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight="900">
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
 };
 
-export const TARGET_PRODUCTS = [
-  { name: 'Personal Loan', category: 'Loan' },
-  { name: 'Business Loan', category: 'Loan' },
-  { name: 'Housing Loan/ML', category: 'Loan' },
-  { name: 'Life Insurance', category: 'Insurance' },
-  { name: 'General Insurance', category: 'Insurance' },
-  { name: 'Livlong Loan Protector', category: 'Insurance' },
-  { name: 'Mutual Fund / SIP', category: 'Investments' },
-  { name: 'Forex / Retail', category: 'Forex' }
-];
+
 
 export default function DashboardOverview() {
   const { products, channels, branches, entries, branchTargets, setBranchTarget } = useDataStore();
@@ -132,7 +128,14 @@ export default function DashboardOverview() {
 
   // Granular Tracking State
   const [granularLocation, setGranularLocation] = useState<string>('all');
-  const [granularDate, setGranularDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [granularTimeframe, setGranularTimeframe] = useState<'MTD' | 'YTD'>('MTD');
+
+  // Data Quality State
+  const [dqLocation, setDqLocation] = useState<string>('all');
+  const [dqMonthStr, setDqMonthStr] = useState<string>(() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   // Secure routing
   useEffect(() => {
@@ -155,9 +158,29 @@ export default function DashboardOverview() {
   
   
 
-  // Filter entries based on the viewMode
+  // Deduplicate entries to prevent double counting:
+  // For each branch and month, if there is at least one 'monthly' entry, ignore all 'daily' entries for that branch/month.
+  const validEntries = useMemo(() => {
+     const monthlyPresence = new Set<string>();
+     entries.forEach(e => {
+         if (e.mode === 'monthly') {
+             const d = new Date(e.entryDate);
+             monthlyPresence.add(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`);
+         }
+     });
+     return entries.filter(e => {
+         if (e.mode === 'daily') {
+             const d = new Date(e.entryDate);
+             if (monthlyPresence.has(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`)) {
+                 return false; // Ignore daily if monthly exists for this branch/month
+             }
+         }
+         return true;
+     });
+  }, [entries]);
+
   const filteredEntries = useMemo(() => {
-     return entries.filter(entry => {
+     return validEntries.filter(entry => {
          const entryDateStr = entry.entryDate;
          if (viewMode === 'daily') {
              return entryDateStr === selectedDate;
@@ -177,8 +200,14 @@ export default function DashboardOverview() {
      });
   }, [entries, selectedDate, viewMode, selectedMonth, selectedYear, fyStart]);
 
-  const { ftdBusiness, mtdBusiness, ytdBusiness, projectedTotalBusinessToday } = useMemo(() => {
-     let ftd = 0, mtd = 0, ytd = 0, projToday = 0;
+  const [kpiCategory, setKpiCategory] = useState<string>('All Products');
+
+  const { kpiMetrics, projectedTotalBusinessToday } = useMemo(() => {
+     const metrics: Record<string, { ftd: number, mtd: number, ytd: number, ftdCount: number, mtdCount: number, ytdCount: number }> = {};
+     metrics['All Products'] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 };
+     PRODUCTS_LIST.forEach(c => metrics[c] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 });
+     let projToday = 0;
+
      const sd = new Date(selectedDate);
      const sdYear = sd.getFullYear();
      const sdMonth = sd.getMonth();
@@ -186,12 +215,11 @@ export default function DashboardOverview() {
      const sdIsNewFY = sdMonth >= 3;
      const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
      
-     entries.forEach(entry => {
+     validEntries.forEach(entry => {
          const isProj = entry.recordType === 'projection';
          const isAch = !entry.recordType || entry.recordType === 'achievement';
          
          const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
-         const entryAch = isAch ? entry.items.reduce((sum, i) => sum + (Number(i.disbursedAmount) || 0), 0) : 0;
 
          if (isProj && entry.entryDate === selectedDate) {
              projToday += entryProj;
@@ -203,23 +231,57 @@ export default function DashboardOverview() {
          const edIsNewFY = edMonth >= 3;
          const edFyStart = edIsNewFY ? edYear : edYear - 1;
 
-         if (edFyStart === sdFyStart && ed <= sd) {
-             ytd += entryAch;
-             if (edMonth === sdMonth && edYear === sdYear) {
-                 mtd += entryAch;
-                 if (entry.entryDate === selectedDate) {
-                     ftd += entryAch;
+         if (isAch && edFyStart === sdFyStart && ed <= sd) {
+             entry.items.forEach(item => {
+                 const cat = item.category || 'Loan';
+                 const prod = item.product || 'Personal Loan';
+                 let achAmt = 0;
+                 if (cat === 'Loan') {
+                     achAmt = Number(item.disbursedAmount) || 0;
+                 } else if (cat === 'Insurance') {
+                     achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+                 } else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') {
+                     achAmt = Number(item.amount) || 0;
+                 } else {
+                     achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
                  }
-             }
+
+                 if (!metrics[prod]) metrics[prod] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 };
+                 
+                 metrics[prod].ytd += achAmt;
+                 metrics['All Products'].ytd += achAmt;
+                 if (achAmt > 0) {
+                     metrics[prod].ytdCount++;
+                     metrics['All Products'].ytdCount++;
+                 }
+
+                 if (edMonth === sdMonth && edYear === sdYear) {
+                     metrics[prod].mtd += achAmt;
+                     metrics['All Products'].mtd += achAmt;
+                     if (achAmt > 0) {
+                         metrics[prod].mtdCount++;
+                         metrics['All Products'].mtdCount++;
+                     }
+
+                     if (entry.entryDate === selectedDate) {
+                         metrics[prod].ftd += achAmt;
+                         metrics['All Products'].ftd += achAmt;
+                         if (achAmt > 0) {
+                             metrics[prod].ftdCount++;
+                             metrics['All Products'].ftdCount++;
+                         }
+                     }
+                 }
+             });
          }
      });
-     return { ftdBusiness: ftd, mtdBusiness: mtd, ytdBusiness: ytd, projectedTotalBusinessToday: projToday };
-  }, [entries, selectedDate]);
+     return { kpiMetrics: metrics, projectedTotalBusinessToday: projToday };
+  }, [validEntries, selectedDate]);
 
   const { filteredBranches, totalBusiness, businessByCategory } = useMemo(() => {
      const branchMap = new Map();
      branches.forEach(b => {
-         const initialCategories = CATEGORIES.reduce((acc, c) => {
+         const initialCategories = PRODUCTS_LIST.reduce((acc, c) => {
              acc[`proj_${c}`] = 0;
              acc[`ach_${c}`] = 0;
              return acc;
@@ -243,24 +305,61 @@ export default function DashboardOverview() {
           const isProj = entry.recordType === 'projection';
           const isAch = !entry.recordType || entry.recordType === 'achievement';
 
-          const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
-          const entryAch = isAch ? entry.items.reduce((sum, i) => sum + (Number(i.disbursedAmount) || 0), 0) : 0;
-
-          b.dailyAchievement += entryAch;
-          b.dailyProjection += entryProj;
-          total += entryAch;
+          let entryAch = 0;
+          let entryProj = 0;
           
           if (selectedBusinessBranch === 'all' || selectedBusinessBranch === b.id) {
               entry.items.forEach(item => {
+                  let prod = (item.product || 'Personal Loan').trim();
+                  
+                  // Standardize product names to match PRODUCTS_LIST exactly so they show up on the charts
+                  const pLower = prod.toLowerCase();
+                  if (pLower === 'mortgage' || pLower === 'home loan' || pLower.includes('housing')) prod = 'Housing Loan/LAP';
+                  else if (pLower.includes('mutual') || pLower.includes('sip')) prod = 'Mutual Fund/SIP';
+                  else if (pLower.startsWith('personal loan') || pLower.startsWith('pl')) prod = 'Personal Loan';
+                  else if (pLower.startsWith('business loan') || pLower.startsWith('bl')) prod = 'Business Loan';
+                  else if (pLower.includes('life insurance')) prod = 'Life Insurance';
+                  else if (pLower.includes('general insurance')) prod = 'General Insurance';
+                  else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
+                  else if (pLower.includes('forex')) prod = 'Retail Forex';
+                  else if (pLower.includes('gst')) prod = 'GST filing';
+                  else if (pLower.includes('itr')) prod = 'ITR filing';
+
+                  let achAmt = 0;
+                  let projAmt = 0;
+                  
+                  if (item.category === 'Loan') {
+                      achAmt = Number(item.disbursedAmount) || 0;
+                      projAmt = Number(item.amount) || 0;
+                  } else if (item.category === 'Insurance') {
+                      achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+                      projAmt = Number(item.amount) || 0;
+                  } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
+                      achAmt = Number(item.amount) || 0;
+                      projAmt = Number(item.amount) || 0;
+                  } else {
+                      achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
+                      projAmt = Number(item.amount) || 0;
+                  }
+
                   if (isAch) {
-                      catMap.set(item.category, (catMap.get(item.category) || 0) + (Number(item.disbursedAmount) || 0));
-                      b[`ach_${item.category}`] = (b[`ach_${item.category}`] || 0) + (Number(item.disbursedAmount) || 0);
+                      catMap.set(prod, (catMap.get(prod) || 0) + achAmt);
+                      b[`ach_${prod}`] = (b[`ach_${prod}`] || 0) + achAmt;
+                      b[`proj_${prod}`] = (b[`proj_${prod}`] || 0) + projAmt; // Line item login amounts act as projections
+                      entryAch += achAmt;
+                      entryProj += projAmt;
                   }
                   if (isProj) {
-                      b[`proj_${item.category}`] = (b[`proj_${item.category}`] || 0) + (Number(item.amount) || 0);
+                      // Modal daily projections (often just category-level)
+                      b[`proj_${prod}`] = (b[`proj_${prod}`] || 0) + (Number(item.amount) || 0);
+                      entryProj += (Number(item.amount) || 0);
                   }
               });
           }
+          
+          b.dailyAchievement += entryAch;
+          b.dailyProjection += entryProj;
+          total += entryAch;
      });
 
      const fb = Array.from(branchMap.values());
@@ -314,17 +413,114 @@ export default function DashboardOverview() {
   }, [filteredEntries, selectedBusinessBranch]);
 
   const activeCategories = useMemo(() => {
-     return CATEGORIES.filter(c => 
+     return PRODUCTS_LIST.filter(c => 
          filteredBranches.some((b: any) => (b[`proj_${c}`] || 0) > 0 || (b[`ach_${c}`] || 0) > 0)
      );
   }, [filteredBranches]);
+
+  const granularData = useMemo(() => {
+     const data: Record<string, { amount: number, count: number, target: number }> = {};
+     
+     products.forEach(p => {
+         data[p.name] = { amount: 0, count: 0, target: 0 };
+     });
+     
+     // 1. Calculate Targets
+     branchTargets.forEach(bt => {
+         if (granularLocation !== 'all' && bt.branchId !== granularLocation) return;
+         
+         const btYear = parseInt(bt.monthYear.split('-')[0]);
+         const btMonth = parseInt(bt.monthYear.split('-')[1]) - 1;
+         const btIsNewFY = btMonth >= 3;
+         const btFyStart = btIsNewFY ? btYear : btYear - 1;
+
+         let includeTarget = false;
+         if (granularTimeframe === 'MTD') {
+             includeTarget = (bt.monthYear === currentMonthStr);
+         } else if (granularTimeframe === 'YTD') {
+             const btDate = new Date(btYear, btMonth, 1);
+             const sd = new Date(selectedYear, selectedMonth, 1);
+             includeTarget = (btFyStart === fyStart && btDate <= sd);
+         }
+
+         if (includeTarget && bt.productTargets) {
+             Object.entries(bt.productTargets).forEach(([pName, tAmt]) => {
+                 // Try strict match first, fallback to standard mapping
+                 let mappedProduct = pName.trim();
+                 if (mappedProduct === 'Mortgage' || mappedProduct === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
+                 else if (mappedProduct === 'SIP & Mutual Fund' || mappedProduct === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
+                 
+                 if (data[mappedProduct]) {
+                     data[mappedProduct].target += Number(tAmt) || 0;
+                 }
+             });
+         }
+     });
+
+     // 2. Calculate Achievements
+     validEntries.forEach(entry => {
+         if (granularLocation !== 'all' && entry.branchId !== granularLocation) return;
+         
+         const isAch = !entry.recordType || entry.recordType === 'achievement';
+         if (!isAch) return;
+
+         const ed = new Date(entry.entryDate);
+         const edYear = ed.getFullYear();
+         const edMonth = ed.getMonth();
+         const edIsNewFY = edMonth >= 3;
+         const edFyStart = edIsNewFY ? edYear : edYear - 1;
+
+         let includeAch = false;
+         if (granularTimeframe === 'MTD') {
+             includeAch = (edMonth === selectedMonth && edYear === selectedYear);
+         } else if (granularTimeframe === 'YTD') {
+             const sd = new Date(selectedDate);
+             includeAch = (edFyStart === fyStart && ed <= sd);
+         }
+         if (!includeAch) return;
+
+         entry.items.forEach(item => {
+             const pName = (item.product || '').trim();
+             
+             let amt = 0;
+             if (item.category === 'Loan') {
+                 amt = Number(item.disbursedAmount) || 0;
+             } else if (item.category === 'Insurance') {
+                 amt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+             } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
+                 amt = Number(item.amount) || 0;
+             } else {
+                 amt = Number(item.disbursedAmount) || Number(item.amount) || 0;
+             }
+             
+             if (amt <= 0) return;
+             
+             let mappedProduct = pName;
+             const exactProduct = products.find(p => p.name === pName);
+             if (exactProduct) {
+                 mappedProduct = exactProduct.name;
+             } else {
+                 if (pName === 'Mortgage' || pName === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
+                 else if (pName === 'SIP & Mutual Fund' || pName === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
+                 else if (item.category === 'Forex') mappedProduct = 'Retail Forex';
+             }
+
+             if (data[mappedProduct]) {
+                 data[mappedProduct].amount += amt;
+                 data[mappedProduct].count++;
+             }
+         });
+     });
+     
+     return data;
+  }, [validEntries, granularLocation, granularTimeframe, products, branchTargets, currentMonthStr, fyStart, selectedMonth, selectedYear, selectedDate]);
 
   const maxYValue = useMemo(() => {
      let max = 0;
      filteredBranches.forEach((b: any) => {
          let projSum = 0;
          let achSum = 0;
-         CATEGORIES.forEach(c => {
+         PRODUCTS_LIST.forEach(c => {
              projSum += (b[`proj_${c}`] || 0);
              achSum += (b[`ach_${c}`] || 0);
          });
@@ -333,24 +529,64 @@ export default function DashboardOverview() {
      return max > 0 ? max : 1000;
   }, [filteredBranches]);
 
+  const dataQuality = useMemo(() => {
+     let totalItems = 0;
+     let completeItems = 0;
+     let missingFields = { dob: 0, email: 0, phone: 0, address: 0 };
+     
+     const filteredEntries = validEntries.filter(entry => {
+         if (dqLocation !== 'all' && entry.branchId !== dqLocation) return false;
+         
+         const entryDate = new Date(entry.entryDate);
+         const entryMonthStr = `${entryDate.getFullYear()}-${String(entryDate.getMonth() + 1).padStart(2, '0')}`;
+         if (entryMonthStr !== dqMonthStr) return false;
+         
+         return true;
+     });
+
+     filteredEntries.forEach(entry => {
+         entry.items.forEach(item => {
+             totalItems++;
+             let isComplete = true;
+             
+             if (!item.customerDOB) { isComplete = false; missingFields.dob++; }
+             if (!item.emailId) { isComplete = false; missingFields.email++; }
+             if (!item.phoneNumber) { isComplete = false; missingFields.phone++; }
+             if (!item.customerAddress) { isComplete = false; missingFields.address++; }
+             
+             if (isComplete) completeItems++;
+         });
+     });
+     
+     const score = totalItems > 0 ? Math.round((completeItems / totalItems) * 100) : 0;
+     return { score, totalItems, completeItems, missingFields };
+  }, [validEntries, dqLocation, dqMonthStr]);
+
   const renderCustomLegend = (props: any) => {
     return (
       <div className="flex flex-col gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
         <div className="flex items-center gap-6 justify-center border-b border-slate-800/50 pb-2">
            <div className="flex items-center gap-2">
-              <div className="w-3.5 h-3.5 bg-slate-700/50 border border-slate-500 border-dashed rounded-[2px]"></div>
+              <svg width="14" height="14" className="rounded-[2px] border border-slate-400">
+                  <defs>
+                      <pattern id="legend-stripe" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
+                          <line x1="0" y="0" x2="0" y2="4" stroke="#94a3b8" strokeWidth="2" />
+                      </pattern>
+                  </defs>
+                  <rect width="14" height="14" fill="url(#legend-stripe)" />
+              </svg>
               <span>Projection</span>
            </div>
            <div className="flex items-center gap-2">
-              <div className="w-3.5 h-3.5 bg-slate-500 rounded-[2px]"></div>
+              <div className="w-[14px] h-[14px] bg-slate-500 rounded-[2px]"></div>
               <span>Achievement</span>
            </div>
         </div>
-        {activeCategories.length > 0 && (
+         {activeCategories.length > 0 && (
           <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center px-2">
              {activeCategories.map(c => (
                  <div key={c} className="flex items-center gap-1.5">
-                     <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: CATEGORY_COLORS[c].ach }}></div>
+                     <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[c].ach }}></div>
                      <span className="text-[9px]">{c}</span>
                  </div>
              ))}
@@ -420,39 +656,56 @@ export default function DashboardOverview() {
             </div>
             <div className="flex flex-col items-end">
                 <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
-                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{ftdBusiness.toLocaleString('en-IN')}</span>
+                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{Object.values(kpiMetrics).reduce((sum, m) => sum + m.ftd, 0).toLocaleString('en-IN')}</span>
                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
             </div>
         </div>
       </header>
 
+      {/* KPI Category Selector */}
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 hide-scrollbar">
+         {['All Products', ...PRODUCTS_LIST].map(cat => (
+            <button
+               key={cat}
+               onClick={() => setKpiCategory(cat)}
+               className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+                  kpiCategory === cat 
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+                  : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
+               }`}
+            >
+               {cat}
+            </button>
+         ))}
+      </div>
+
       {/* KPI Timeline Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD Business</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {kpiCategory}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ftdBusiness.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">For the day</p>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD Business</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD {kpiCategory}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{mtdBusiness.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Month to date</p>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-indigo-500/10 inline-block px-2 py-0.5 rounded text-indigo-700 dark:text-indigo-300">{kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD Business</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD {kpiCategory}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{ytdBusiness.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Year to date</p>
+            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
+            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-emerald-500/10 inline-block px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300">{kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
@@ -477,6 +730,13 @@ export default function DashboardOverview() {
           <CardContent className="flex-1 p-4 pb-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filteredBranches} margin={{ top: 20, right: 10, left: 0, bottom: 0 }} barGap={4} barCategoryGap="25%">
+                <defs>
+                   {PRODUCTS_LIST.map(p => (
+                       <pattern key={`pattern_${p}`} id={getPatternId(p)} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+                           <line x1="0" y="0" x2="0" y2="6" stroke={PRODUCT_COLORS[p].ach} strokeWidth="3" />
+                       </pattern>
+                   ))}
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
                 <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
                 <YAxis 
@@ -497,12 +757,12 @@ export default function DashboardOverview() {
 
                 {/* Projection Stacks */}
                 {activeCategories.map(c => (
-                   <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={CATEGORY_COLORS[c].proj} stroke={CATEGORY_COLORS[c].ach} strokeWidth={1} strokeDasharray="2 2" maxBarSize={50} />
+                   <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={PRODUCT_COLORS[c].proj} stroke={PRODUCT_COLORS[c].ach} strokeWidth={1} maxBarSize={50} />
                 ))}
 
                 {/* Achievement Stacks */}
                 {activeCategories.map(c => (
-                   <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={CATEGORY_COLORS[c].ach} maxBarSize={50} />
+                   <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={PRODUCT_COLORS[c].ach} maxBarSize={50} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -543,7 +803,7 @@ export default function DashboardOverview() {
                       label={renderCustomizedPieLabel}
                     >
                       {businessByCategory.map((entry, index) => {
-                        const color = CATEGORY_COLORS[entry.name]?.ach || '#94a3b8';
+                        const color = PRODUCT_COLORS[entry.name]?.ach || '#94a3b8';
                         return <Cell key={`cell-${index}`} fill={color} />
                       })}
                     </Pie>
@@ -556,7 +816,7 @@ export default function DashboardOverview() {
               </CardContent>
               <div className="px-6 pb-6 flex flex-wrap gap-4 justify-center mt-auto shrink-0 pt-4">
                   {businessByCategory.map((entry) => {
-                      const color = CATEGORY_COLORS[entry.name]?.ach || '#94a3b8';
+                      const color = PRODUCT_COLORS[entry.name]?.ach || '#94a3b8';
                       return (
                           <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
                               <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: color }}></span>
@@ -685,7 +945,7 @@ export default function DashboardOverview() {
                     let branchData = branches.filter(b => user?.role === 'admin' || b.id === user?.branchId).map(b => {
                         const targetAmt = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr)?.targetAmount || 0;
                         let achSum = 0;
-                        entries.forEach(e => {
+                        validEntries.forEach(e => {
                             if (e.branchId !== b.id) return;
                             const isAch = !e.recordType || e.recordType === 'achievement';
                             if (!isAch) return;
@@ -735,7 +995,7 @@ export default function DashboardOverview() {
                                                 const currentTargetRecord = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr);
                                                 const pt = (currentTargetRecord?.productTargets || {}) as Record<string, any>;
                                                 const initialInputs: Record<string, string> = {};
-                                                TARGET_PRODUCTS.forEach(p => {
+                                                products.forEach(p => {
                                                     initialInputs[p.name] = pt[p.name] !== undefined ? pt[p.name].toString() : '';
                                                 });
                                                 setModalTargetInputs(initialInputs);
@@ -774,44 +1034,230 @@ export default function DashboardOverview() {
 
       <hr className="my-10 border-slate-900/10 dark:border-white/10" />
 
-      <div className="flex flex-col gap-6">
-      <Card className="p-6 border-slate-900/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm mb-6">
+      <div className="flex flex-col gap-4">
+      <Card className="p-6 border-slate-900/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wider">Granular Tracking</h2>
                   <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Deeper insights</p>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                  <BranchSelect 
-                      value={granularLocation}
-                      onChange={setGranularLocation}
-                      branches={branches}
-                      includeAllOption={true}
-                      allOptionText="All Locations"
-                      className="w-[160px]"
-                  />
-                  <label 
-                      className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 h-10 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
-                      onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
-                  >
-                      <Calendar className="w-4 h-4 text-indigo-500" />
-                      <Input 
-                          type="date" 
-                          value={granularDate}
-                          onChange={(e) => setGranularDate(e.target.value)}
-                          className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
-                      />
-                  </label>
+              <div className="flex flex-wrap items-center gap-4">
+                  {/* Location Filter */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold shrink-0">Filter By:</span>
+                      <button
+                          onClick={() => setGranularLocation('all')}
+                          className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+                              granularLocation === 'all'
+                                  ? 'bg-indigo-500 text-white shadow-sm'
+                                  : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                          }`}
+                      >
+                          Consolidated
+                      </button>
+                      {branches.map(b => (
+                          <button
+                              key={b.id}
+                              onClick={() => setGranularLocation(b.id)}
+                              className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+                                  granularLocation === b.id
+                                      ? 'bg-indigo-500 text-white shadow-sm'
+                                      : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                              }`}
+                          >
+                              {b.name}
+                          </button>
+                      ))}
+                  </div>
+
+                  {/* Timeframe Toggle */}
+                  <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+                      <button 
+                          onClick={() => setGranularTimeframe('MTD')}
+                          className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'MTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                      >MTD</button>
+                      <button 
+                          onClick={() => setGranularTimeframe('YTD')}
+                          className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'YTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                      >YTD</button>
+                  </div>
               </div>
           </div>
       </Card>
       
-      {/* Placeholder for Granular Tracking content */}
-      <Card className="border-slate-900/10 dark:border-white/10 bg-slate-50 dark:bg-white/5 shadow-inner min-h-[300px] flex items-center justify-center">
-          <span className="text-sm text-slate-500 dark:text-slate-400 font-medium tracking-widest uppercase">Select parameters to view granular data</span>
-      </Card>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {[
+              { cat: 'Loan', title: 'Loan Portfolio', colorClass: 'text-indigo-600 dark:text-indigo-400' },
+              { cat: 'Insurance', title: 'Insurance Plans', colorClass: 'text-amber-600 dark:text-amber-400' },
+              { cat: 'Forex', title: 'Forex Services', colorClass: 'text-emerald-600 dark:text-emerald-400' },
+              { cat: 'Consultancy', title: 'Consulting', colorClass: 'text-sky-600 dark:text-sky-400' },
+              { cat: 'Investments', title: 'Investments', colorClass: 'text-purple-600 dark:text-purple-400' }
+          ].map(categoryInfo => {
+              const catProducts = products.filter(p => p.category === categoryInfo.cat);
+              if (catProducts.length === 0) return null;
 
+              return (
+                  <Card key={categoryInfo.cat} className="border-slate-900/10 dark:border-white/10 flex flex-col">
+                      <CardHeader className="flex flex-row items-center justify-between py-3 border-b border-slate-900/10 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${categoryInfo.colorClass}`}>{categoryInfo.title}</span>
+                      </CardHeader>
+                      <CardContent className="p-0 flex-1">
+                          {catProducts.map(p => {
+                              const stats = granularData[p.name] || { amount: 0, count: 0, target: 0 };
+                              const progress = stats.target > 0 ? (stats.amount / stats.target) * 100 : (stats.amount > 0 ? 100 : 0);
+
+                              return (
+                                  <div key={p.id} className="flex flex-col px-3 py-3 border-b border-slate-900/5 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                      <div className="flex items-center justify-between mb-1.5">
+                                          <span className="text-[10px] uppercase font-bold text-slate-800 dark:text-slate-300 pr-2 leading-tight">{p.name}</span>
+                                          <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stats.count} {stats.count === 1 ? 'Entry' : 'Entries'}</span>
+                                      </div>
+                                      
+                                      <div className="flex items-end justify-between mt-1">
+                                          <div className="flex flex-col">
+                                              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Achieved</span>
+                                              <span className="text-sm font-mono font-bold text-emerald-500 dark:text-emerald-400 leading-none">₹{stats.amount.toLocaleString('en-IN')}</span>
+                                          </div>
+                                          
+                                          <div className="flex flex-col items-end">
+                                              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Target</span>
+                                              <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-400 leading-none">₹{stats.target.toLocaleString('en-IN')}</span>
+                                          </div>
+                                      </div>
+
+                                      {stats.target > 0 && (
+                                          <div className="w-full h-1.5 bg-slate-200/60 dark:bg-slate-800/60 rounded-full overflow-hidden mt-2 relative">
+                                              <div className={`h-full rounded-full transition-all duration-500 ${stats.amount >= stats.target ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${Math.min(100, progress)}%` }}></div>
+                                          </div>
+                                      )}
+                                  </div>
+                              );
+                          })}
+                      </CardContent>
+                  </Card>
+              );
+          })}
+      </div>
+      </div>
+      
+      <hr className="my-10 border-slate-900/10 dark:border-white/10" />
+
+      {/* Data Quality Dashboard */}
+      <Card className="p-6 md:p-8 border-slate-900/10 dark:border-white/10 bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20 shadow-lg relative overflow-hidden group mb-8 rounded-2xl">
+        <div className="absolute -top-12 -right-12 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-700">
+           <Info className="w-64 h-64 text-indigo-500" />
+        </div>
+        
+        {/* Filters */}
+        <div className="relative z-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl text-indigo-600 dark:text-indigo-400">
+                    <Info className="w-6 h-6" />
+                </div>
+                <div>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-wider">Data Quality Index</h2>
+                        <div className="group/tooltip relative flex items-center justify-center">
+                            <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-xs cursor-help hover:bg-indigo-500 hover:text-white transition-colors">?</div>
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-72 p-3 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl leading-relaxed">
+                                Measures the completeness of customer records. A high score means entries have Customer DOB, Email, Phone, and Address fully populated. This is critical for future CRM deployments, targeted marketing, and accurate MIS reporting.
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Ensure complete KYC profiles for better relationship management.</p>
+                </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <input 
+                    type="month"
+                    value={dqMonthStr}
+                    onChange={(e) => setDqMonthStr(e.target.value)}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all"
+                />
+                <select 
+                    value={dqLocation}
+                    onChange={(e) => setDqLocation(e.target.value)}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all cursor-pointer appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
+                >
+                    <option value="all">All Locations</option>
+                    {branches.map(b => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                </select>
+            </div>
+        </div>
+
+        {dataQuality.totalItems === 0 ? (
+            <div className="relative z-10 flex flex-col items-center justify-center p-12 bg-white/50 dark:bg-slate-950/20 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <Info className="w-8 h-8 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No Entries Found</h3>
+                <p className="text-sm text-slate-500 text-center max-w-sm mt-2">There is no customer data recorded for this specific location and month. Change the filters above to see data quality metrics.</p>
+            </div>
+        ) : (
+            <div className="relative z-10 flex flex-col md:flex-row gap-8 lg:gap-16 items-center">
+                {/* Score Display */}
+                <div className="flex flex-col items-center justify-center min-w-[240px] p-6 bg-white dark:bg-slate-950/50 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div className="relative w-40 h-40 flex items-center justify-center">
+                        <svg className="w-full h-full -rotate-90 transform drop-shadow-md" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-slate-100 dark:text-slate-800" />
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray={`${dataQuality.score * 2.827} 282.7`} strokeLinecap="round" className={`${dataQuality.score >= 90 ? 'text-emerald-500' : dataQuality.score >= 70 ? 'text-amber-500' : 'text-rose-500'} transition-all duration-1500 ease-out`} />
+                        </svg>
+                        <div className="absolute flex flex-col items-center justify-center">
+                            <span className="text-4xl font-mono font-black text-slate-900 dark:text-white drop-shadow-sm">{dataQuality.score}%</span>
+                            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mt-1">Health Score</span>
+                        </div>
+                    </div>
+                    <div className="mt-5 text-center">
+                        <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] uppercase font-bold text-slate-600 dark:text-slate-300 tracking-wider">
+                            {dataQuality.completeItems} / {dataQuality.totalItems} Complete Entries
+                        </span>
+                    </div>
+                </div>
+
+                {/* Metrics Breakdown */}
+                <div className="flex-1 w-full">
+                    <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Missing Fields Breakdown</h3>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white dark:bg-slate-950/50 border-b-2 border-rose-200 dark:border-rose-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 mb-2 text-rose-500 dark:text-rose-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest">Date of Birth</span>
+                            </div>
+                            <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.dob}</span>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-slate-950/50 border-b-2 border-amber-200 dark:border-amber-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 mb-2 text-amber-500 dark:text-amber-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest">Email ID</span>
+                            </div>
+                            <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.email}</span>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-slate-950/50 border-b-2 border-sky-200 dark:border-sky-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 mb-2 text-sky-500 dark:text-sky-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest">Phone Number</span>
+                            </div>
+                            <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.phone}</span>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-slate-950/50 border-b-2 border-purple-200 dark:border-purple-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 mb-2 text-purple-500 dark:text-purple-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                <span className="text-[10px] uppercase font-bold tracking-widest">Customer Address</span>
+                            </div>
+                            <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.address}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+      </Card>
       {productTargetModal && productTargetModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-xl w-full text-slate-900 dark:text-white">
@@ -833,7 +1279,7 @@ export default function DashboardOverview() {
                   </div>
 
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                      {TARGET_PRODUCTS.map(p => {
+                      {products.map(p => {
                           // Calculate MTD achievement for this specific product
                           const [tYearStr, tMonthStr] = targetMonthStr.split('-');
                           const tYear = parseInt(tYearStr);
@@ -847,43 +1293,11 @@ export default function DashboardOverview() {
                               const ed = new Date(e.entryDate);
                               if (ed.getMonth() === tMonth && ed.getFullYear() === tYear) {
                                   e.items.forEach(item => {
-                                      const isLoan = item.category === 'Loan';
-                                      const isInsurance = item.category === 'Insurance';
-                                      const isInvestments = item.category === 'Investments';
-                                      const isForex = item.category === 'Forex';
                                       const pName = (item.product || '').trim();
                                       const amount = Number(item.disbursedAmount) || 0;
 
-                                      if (p.name === 'Personal Loan') {
-                                          if (isLoan && (pName === 'Personal Loan' || pName.toLowerCase().startsWith('personal loan'))) {
-                                              ach += amount;
-                                          }
-                                      } else if (p.name === 'Business Loan') {
-                                          if (isLoan && (pName === 'Business Loan' || pName.toLowerCase().startsWith('business loan'))) {
-                                              ach += amount;
-                                          }
-                                      } else if (p.name === 'Housing Loan/ML') {
-                                          if (isLoan && !(pName === 'Personal Loan' || pName.toLowerCase().startsWith('personal loan')) && !(pName === 'Business Loan' || pName.toLowerCase().startsWith('business loan'))) {
-                                              ach += amount;
-                                          }
-                                      } else if (p.name === 'Life Insurance') {
-                                          if (isInsurance && pName === 'Life Insurance') {
-                                              ach += amount;
-                                          }
-                                      } else if (p.name === 'General Insurance') {
-                                          if (isInsurance && pName === 'General Insurance') {
-                                              ach += amount;
-                                          }
-                                      } else if (p.name === 'Livlong Loan Protector') {
-                                          if (isInsurance && (pName === 'Livlong Loan Protector' || pName.toLowerCase() === 'liv long loan protector' || pName.toLowerCase() === 'livlong loan protector')) {
-                                              ach += amount;
-                                          }
-                                      } else if (p.name === 'Mutual Fund / SIP') {
-                                          if (isInvestments) {
-                                              ach += amount;
-                                          }
-                                      } else if (p.name === 'Forex / Retail') {
-                                          if (isForex) {
+                                      if (item.category === p.category) {
+                                          if (pName === p.name || pName.toLowerCase().startsWith(p.name.toLowerCase())) {
                                               ach += amount;
                                           }
                                       }
@@ -949,7 +1363,7 @@ export default function DashboardOverview() {
                   <div className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 flex justify-between items-center">
                       <span className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Target:</span>
                       <span className="text-xl font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
-                          ₹{TARGET_PRODUCTS.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0).toLocaleString('en-IN')}
+                          ₹{products.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0).toLocaleString('en-IN')}
                       </span>
                   </div>
 
@@ -965,9 +1379,9 @@ export default function DashboardOverview() {
                           <button 
                               onClick={async () => {
                                   setSavingTargets(true);
-                                  const totalAmt = TARGET_PRODUCTS.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0);
+                                  const totalAmt = products.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0);
                                   const productTargetsObj: Record<string, number> = {};
-                                  TARGET_PRODUCTS.forEach(p => {
+                                  products.forEach(p => {
                                       productTargetsObj[p.name] = Number(modalTargetInputs[p.name] || 0);
                                   });
                                   const success = await setBranchTarget(

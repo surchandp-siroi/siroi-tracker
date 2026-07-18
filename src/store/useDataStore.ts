@@ -129,17 +129,14 @@ const staticBranches: Branch[] = [
 const staticProducts: Omit<Product, 'business'>[] = [
   { id: 'p1', name: 'Personal Loan', category: 'Loan' },
   { id: 'p2', name: 'Business Loan', category: 'Loan' },
-  { id: 'p3', name: 'Mortgage', category: 'Loan' },
-  { id: 'p4', name: 'Home Loan', category: 'Loan' },
+  { id: 'p3', name: 'Housing Loan/LAP', category: 'Loan' },
+  { id: 'p4', name: 'Life Insurance', category: 'Insurance' },
   { id: 'p5', name: 'General Insurance', category: 'Insurance' },
-  { id: 'p6', name: 'Life Insurance', category: 'Insurance' },
-  { id: 'p13', name: 'Livlong Loan Protector', category: 'Insurance' },
-  { id: 'p7', name: 'Currency Exchange', category: 'Forex' },
-  { id: 'p8', name: 'Forex card', category: 'Forex' },
-  { id: 'p9', name: 'Outward Remittance', category: 'Forex' },
-  { id: 'p10', name: 'GST filing', category: 'Consultancy' },
-  { id: 'p11', name: 'ITR filing', category: 'Consultancy' },
-  { id: 'p12', name: 'SIP & Mutual Fund', category: 'Investments' },
+  { id: 'p6', name: 'Livlong Loan Protector', category: 'Insurance' },
+  { id: 'p7', name: 'Mutual Fund/SIP', category: 'Investments' },
+  { id: 'p8', name: 'Retail Forex', category: 'Forex' },
+  { id: 'p9', name: 'GST filing', category: 'Consultancy' },
+  { id: 'p10', name: 'ITR filing', category: 'Consultancy' }
 ];
 
 interface DataState {
@@ -275,7 +272,18 @@ export const useDataStore = create<DataState>((set) => ({
           }
       }
       
-      const initialEntries = allEntries;
+      // Deduplicate entries to prevent double counting if accidental duplicates exist
+      const uniqueEntries = new Map<string, BranchEntry>();
+      allEntries.forEach(e => {
+          const recType = !e.recordType || e.recordType === 'achievement' ? 'achievement' : 'projection';
+          const key = `${e.branchId}_${e.entryDate}_${e.mode}_${recType}`;
+          const existing = uniqueEntries.get(key);
+          // If duplicate exists, prefer the one with more items (likely the one actively updated)
+          if (!existing || (e.items && existing.items && e.items.length > existing.items.length)) {
+              uniqueEntries.set(key, e);
+          }
+      });
+      const initialEntries = Array.from(uniqueEntries.values());
       
       let allTargets: BranchTarget[] = [];
       try {
@@ -314,6 +322,18 @@ export const useDataStore = create<DataState>((set) => ({
       }
       
       const computeStats = (entries: BranchEntry[], targets: BranchTarget[]) => {
+        // Deduplicate entries safely inside computeStats to catch any realtime insertion overlaps
+        const uniqueEntriesMap = new Map<string, BranchEntry>();
+        entries.forEach(e => {
+            const recType = !e.recordType || e.recordType === 'achievement' ? 'achievement' : 'projection';
+            const key = `${e.branchId}_${e.entryDate}_${e.mode}_${recType}`;
+            const existing = uniqueEntriesMap.get(key);
+            if (!existing || (e.items && existing.items && e.items.length > existing.items.length)) {
+                uniqueEntriesMap.set(key, e);
+            }
+        });
+        const validEntries = Array.from(uniqueEntriesMap.values());
+
         const productBusiness: Record<string, number> = {};
         const branchAchievements: Record<string, number> = {};
         const branchProjections: Record<string, number> = {};
@@ -322,7 +342,7 @@ export const useDataStore = create<DataState>((set) => ({
         // Use today's date for daily projections check
         const todayStr = new Date().toISOString().split('T')[0];
         
-        entries.forEach(entry => {
+        validEntries.forEach(entry => {
             const isAchievement = !entry.recordType || entry.recordType === 'achievement';
             const isProjection = entry.recordType === 'projection';
             
@@ -340,7 +360,7 @@ export const useDataStore = create<DataState>((set) => ({
         });
 
         set((state) => ({
-            entries,
+            entries: validEntries,
             branches: state.branches.map(b => ({ 
                 ...b, 
                 dailyAchievement: branchAchievements[b.id] || 0,

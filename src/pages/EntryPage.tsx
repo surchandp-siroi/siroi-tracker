@@ -1089,7 +1089,7 @@ export default function DataEntryTerminal() {
         </header>
 
         {(isExecutive || isMIS) && (
-            <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} />
+            <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
         )}
              {/* Sticky Top Control Bar */}
         <div className="sticky top-0 z-20 glass bg-slate-900/80 dark:bg-black/80 backdrop-blur-md border border-slate-900/10 dark:border-white/10 p-4 mb-6 rounded-xl shadow-lg flex flex-col gap-4">
@@ -1206,7 +1206,7 @@ export default function DataEntryTerminal() {
                             <option value="Loan">Loan</option>
                             <option value="Insurance">Insurance</option>
                             <option value="Forex">Forex</option>
-                            <option value="Consultancy">Consultancy</option>
+                            <option value="Consultancy">Consulting</option>
                             <option value="Investments">Investments</option>
                             <option value="All">All</option>
                         </select>
@@ -1417,7 +1417,7 @@ export default function DataEntryTerminal() {
                                             <option value="Loan">Loan</option>
                                             <option value="Insurance">Insurance</option>
                                             <option value="Forex">Forex</option>
-                                            <option value="Consultancy">Consultancy</option>
+                                            <option value="Consultancy">Consulting</option>
                                             <option value="Investments">Investments</option>
                                         </select>
                                     </TableCell>
@@ -2062,7 +2062,7 @@ export default function DataEntryTerminal() {
                                         <AppSelect 
                                             value={item.category || ''} 
                                             onChange={val => handleUpdate('category', val)} 
-                                            options={['Loan', 'Insurance', 'Forex', 'Consultancy'].map(c => ({id: c, name: c}))}
+                                            options={['Loan', 'Insurance', 'Forex', 'Consultancy', 'Investments'].map(c => ({id: c, name: c === 'Consultancy' ? 'Consulting' : c}))}
                                             placeholder="Category"
                                             buttonClassName={`w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.category ? 'border border-red-500' : 'border'}`}
                                         />

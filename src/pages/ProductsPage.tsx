@@ -78,13 +78,18 @@ export default function ProductsPage() {
                   const achAmt = Number(item.disbursedAmount) || 0;
 
                   if (item.product && item.product !== 'Grouped') {
+                      let mappedProduct = item.product.trim();
+                      if (mappedProduct === 'Mortgage' || mappedProduct === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
+                      else if (mappedProduct === 'SIP & Mutual Fund' || mappedProduct === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
+                      else if (item.category === 'Forex') mappedProduct = 'Retail Forex';
+
                       if (isAch) {
-                          mapA[item.product] = (mapA[item.product] || 0) + achAmt;
-                          mapACount[item.product] = (mapACount[item.product] || 0) + 1;
+                          mapA[mappedProduct] = (mapA[mappedProduct] || 0) + achAmt;
+                          mapACount[mappedProduct] = (mapACount[mappedProduct] || 0) + 1;
                       }
                       if (isProj) {
-                          mapP[item.product] = (mapP[item.product] || 0) + projAmt;
-                          mapPCount[item.product] = (mapPCount[item.product] || 0) + 1;
+                          mapP[mappedProduct] = (mapP[mappedProduct] || 0) + projAmt;
+                          mapPCount[mappedProduct] = (mapPCount[mappedProduct] || 0) + 1;
                       }
                   }
                   if (item.category) {
@@ -175,7 +180,7 @@ export default function ProductsPage() {
     },
     {
       id: 'Consultancy',
-      title: 'Consultancy Services',
+      title: 'Consulting',
       colorClass: 'text-sky-600 dark:text-sky-400',
       total: getCategoryTotal('Consultancy'),
       products: consultancyProducts,

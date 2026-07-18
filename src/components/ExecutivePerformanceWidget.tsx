@@ -5,9 +5,10 @@ import { TrendingUp, Target, Award, Calendar } from 'lucide-react';
 interface ExecutivePerformanceWidgetProps {
     dateStr?: string;
     branchId?: string | null;
+    mode?: 'daily' | 'monthly';
 }
 
-export function ExecutivePerformanceWidget({ dateStr, branchId }: ExecutivePerformanceWidgetProps) {
+export function ExecutivePerformanceWidget({ dateStr, branchId, mode }: ExecutivePerformanceWidgetProps) {
     const { entries, branchTargets, branches } = useDataStore();
     const [timeContext, setTimeContext] = useState<'MTD' | 'YTD'>('MTD');
 
@@ -47,6 +48,9 @@ export function ExecutivePerformanceWidget({ dateStr, branchId }: ExecutivePerfo
             const isAch = !entry.recordType || entry.recordType === 'achievement';
             if (!isAch) return;
 
+            // Filter by mode if provided
+            if (mode && entry.mode !== mode) return;
+
             let includeEntry = false;
             if (timeContext === 'MTD') {
                 includeEntry = entry.entryDate.startsWith(selectedMonth);
@@ -65,10 +69,13 @@ export function ExecutivePerformanceWidget({ dateStr, branchId }: ExecutivePerfo
                         achievedAmt += disb;
                     } else if (item.category === 'Insurance') {
                         if (item.fileStatus === 'Issued') {
-                            achievedAmt += amt; // Assuming insurance achievement is the amount when issued
+                            achievedAmt += amt;
                         } else {
-                            loggedAmt += amt; // Insurance not issued
+                            loggedAmt += amt;
                         }
+                    } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
+                        loggedAmt += amt;
+                        achievedAmt += amt; // For these, login amount is taken as achievement
                     } else {
                         loggedAmt += amt;
                         achievedAmt += disb > 0 ? disb : amt;
@@ -96,7 +103,7 @@ export function ExecutivePerformanceWidget({ dateStr, branchId }: ExecutivePerfo
             displayMonth: monthName,
             branchLabel
         };
-    }, [entries, branchTargets, branches, dateStr, timeContext, branchId]);
+    }, [entries, branchTargets, branches, dateStr, timeContext, branchId, mode]);
 
     const formatCurrency = (val: number) => {
         if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;

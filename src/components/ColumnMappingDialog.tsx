@@ -20,7 +20,7 @@ const SYSTEM_FIELDS: SystemField[] = [
     { key: 'amount', label: 'Login Amount', required: true, aliases: ['login amount', 'login amt', 'amount', 'login_amount', 'login'] },
     { key: 'category', label: 'Category', required: true, aliases: ['category', 'cat'] },
     { key: 'product', label: 'Product', required: true, aliases: ['product', 'prod'] },
-    { key: 'relationshipManagerName', label: 'Relationship Manager', required: false, aliases: ['relationship manager', 'relationship manager name', 'rm', 'relationship', 'manager name'] },
+    { key: 'relationshipManagerName', label: 'Relationship Manager', required: false, aliases: ['relationship manager', 'relationship manager name', 'rm', 'relationship'] },
     { key: 'fileLogin', label: 'File Login (WBO/ILENS)', required: false, aliases: ['file login', 'file_login'] },
     { key: 'trackingNumber', label: 'Tracking Number', required: false, aliases: ['tracking number', 'tracking', 'track'] },
     { key: 'channel', label: 'Channel Partner', required: false, aliases: ['channel partner', 'channel', 'partner'] },
