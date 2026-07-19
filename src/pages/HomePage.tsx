@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { 
   ArrowRight, ShieldCheck, AlertTriangle, Wallet, Plus, 
-  TrendingUp, Activity, Users, BarChart3, PieChart, ArrowUpRight
+  TrendingUp, Activity, Users, BarChart3, PieChart, ArrowUpRight,
+  Clock, CheckCircle2, Building2, Star
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 
@@ -97,142 +98,234 @@ export default function HomePage() {
         <div className="flex-1 relative flex items-center justify-center p-10 z-10 w-full h-full mt-20">
             
             {/* Mockup Composition Wrapper */}
-            <div className="relative w-full max-w-2xl h-[550px]">
+            <div className="relative w-full max-w-4xl flex justify-center items-center gap-2 py-4">
                 
-                {/* 1. Main Dashboard Card */}
-                <div className="absolute top-0 left-0 bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 w-72 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000 transform transition-all hover:-translate-y-4 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group z-20">
-                    <div className="flex justify-between items-start mb-4">
+                {/* Column 1 (Left) */}
+                <div className="flex flex-col items-end gap-4 translate-y-2">
+                    {/* 1. Main Dashboard Card */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-56 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
+                        <div className="flex justify-between items-start mb-3">
+                            <div>
+                                <p className="text-[10px] font-semibold text-slate-400 mb-1">Financial Plan</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded-full border-[3px] border-indigo-500 border-r-slate-700 flex-shrink-0"></div>
+                                    <div>
+                                        <p className="text-lg font-bold text-white">₹8.7Cr</p>
+                                        <p className="text-[8px] text-indigo-400 font-medium">Total Disbursed</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-white/10 px-1 py-0.5 rounded text-[8px] text-white">This Month ⌄</div>
+                        </div>
+                        <div className="space-y-2.5 mt-3">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 rounded-full bg-indigo-500"></div>
+                                <p className="text-[10px] text-slate-300 flex-1">Personal</p>
+                                <p className="text-[10px] text-white font-medium">₹5.2Cr</p>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                                <p className="text-[10px] text-slate-300 flex-1">Business</p>
+                                <p className="text-[10px] text-white font-medium">₹3.5Cr</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. Revenue Analytics Bar Chart */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-3.5 rounded-3xl border border-white/10 w-64 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-300 delay-300 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="flex items-center gap-1.5">
+                                <div className="p-1 bg-indigo-500/20 rounded-lg">
+                                    <BarChart3 className="w-3 h-3 text-indigo-400" />
+                                </div>
+                                <p className="text-[10px] font-semibold text-white">Revenue Growth</p>
+                            </div>
+                            <span className="text-[9px] text-green-400 font-medium">+24.5%</span>
+                        </div>
+                        
+                        <div className="flex items-end justify-between gap-1 h-16 mt-2">
+                            {[40, 65, 45, 80, 55, 95, 75].map((height, i) => (
+                                <div key={i} className="w-full bg-slate-800 rounded-t-sm relative group-hover:bg-slate-700 transition-colors h-full flex items-end">
+                                    <div 
+                                        className={`w-full rounded-t-sm transition-all duration-300 ${i === 5 ? 'bg-indigo-500' : 'bg-blue-500/50 group-hover:bg-blue-500/70'}`}
+                                        style={{ height: `${height}%` }}
+                                    ></div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex justify-between mt-1.5 text-[7px] text-slate-500">
+                            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                        </div>
+                    </div>
+
+                    {/* 6. Quick Action Button */}
+                    <div className="bg-indigo-600/90 backdrop-blur-md p-2.5 rounded-2xl border border-white/10 w-64 flex items-center gap-2.5 shadow-2xl shadow-indigo-600/20 animate-in fade-in slide-in-from-bottom-16 duration-300 delay-1000 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-indigo-500 cursor-pointer group">
+                        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                            <Plus className="w-3 h-3" />
+                        </div>
                         <div>
-                            <p className="text-xs font-semibold text-slate-400 mb-1">Financial Plan</p>
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full border-4 border-indigo-500 border-r-slate-700 flex-shrink-0"></div>
+                            <p className="text-[11px] font-bold text-white mb-0.5">Quick Action</p>
+                            <p className="text-[8px] text-indigo-200">Record a new application</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Column 2 (Center) */}
+                <div className="flex flex-col items-center gap-4 -translate-y-4">
+                    {/* 8. Approval Rate */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-top-8 duration-300 delay-200 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group self-start flex flex-col justify-center">
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <CheckCircle2 className="w-3 h-3 text-green-400" />
+                            <p className="text-[9px] font-semibold text-slate-300">Approval Rate</p>
+                        </div>
+                        <p className="text-xl font-bold text-white">92.8%</p>
+                    </div>
+
+                    {/* 10. Daily Volume */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-[180px] shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col">
+                        <p className="text-[10px] font-semibold text-slate-400 mb-1">Daily Volume</p>
+                        <p className="text-2xl font-bold text-white mb-3">₹1.2Cr</p>
+                        
+                        <div className="flex items-end gap-1 flex-1 mt-2">
+                            {[30, 45, 25, 60, 40, 75, 55, 85, 65, 95].map((h, i) => (
+                                <div key={i} className="flex-1 bg-slate-800 rounded-t group-hover:bg-slate-700 transition-colors h-full flex items-end">
+                                    <div className="w-full rounded-t bg-cyan-400/80 transition-all duration-300" style={{ height: `${h}%` }}></div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 9. Support Satisfaction */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-32 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-400 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex items-center justify-between">
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-1.5">
+                                <div className="p-1.5 bg-orange-500/20 rounded-lg">
+                                    <Star className="w-4 h-4 text-orange-400" />
+                                </div>
+                                <p className="text-[11px] font-semibold text-white">Satisfaction</p>
+                            </div>
+                            <span className="text-[9px] text-slate-400">Based on 1.2k reviews</span>
+                        </div>
+                        <div className="relative w-14 h-14 flex items-center justify-center">
+                            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                <path className="text-slate-800" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path className="text-orange-400" strokeDasharray="85, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <span className="absolute text-sm font-bold text-white">4.8</span>
+                        </div>
+                    </div>
+
+                    {/* Row for Active Users & System Health */}
+                    <div className="flex items-center gap-4 self-center">
+                        {/* 7. Active Users */}
+                        <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
+                            <div className="flex items-center gap-1.5">
+                                <div className="p-1 bg-purple-500/20 rounded-md">
+                                    <Users className="w-3 h-3 text-purple-400" />
+                                </div>
+                                <p className="text-[9px] font-semibold text-slate-300">Active Users</p>
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <p className="text-2xl font-bold text-white">8.4k</p>
+                                <span className="text-[8px] text-green-400 font-medium flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> +124 today</span>
+                            </div>
+                        </div>
+
+                        {/* 11. System Health */}
+                        <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
+                            <div className="flex items-center gap-1.5">
+                                <div className="p-1 bg-teal-500/20 rounded-md">
+                                    <ShieldCheck className="w-3 h-3 text-teal-400" />
+                                </div>
+                                <p className="text-[9px] font-semibold text-slate-300">System Health</p>
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                                <p className="text-2xl font-bold text-white">99.9%</p>
+                                <span className="text-[8px] text-teal-400 font-medium flex items-center">Optimal state</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Column 3 (Right) */}
+                <div className="flex flex-col items-start gap-4 translate-y-4">
+                    {/* 2. Capital Allocations */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-3.5 rounded-3xl border border-white/10 w-52 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-150 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
+                        <div className="flex justify-between items-center mb-2">
+                            <p className="text-[10px] font-semibold text-slate-400">Capital Allocations</p>
+                            <span className="text-[7px] text-slate-500 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div> Live</span>
+                        </div>
+                        <p className="text-base font-bold text-white mb-1">94%</p>
+                        <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-2.5">
+                            <div className="w-[94%] h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between items-center bg-white/5 rounded-lg p-1.5">
+                                 <div className="flex items-center gap-1.5">
+                                    <Wallet className="w-2.5 h-2.5 text-slate-400" />
+                                    <span className="text-[8px] text-slate-300">Target Achieved</span>
+                                 </div>
+                                 <span className="text-[8px] text-green-400 flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> 12%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 4. Activity Stream */}
+                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-56 h-[220px] shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-500 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Activity className="w-3.5 h-3.5 text-slate-400" />
+                            <p className="text-[11px] font-semibold text-white">Recent Activity</p>
+                        </div>
+                        <div className="space-y-3 flex-1 overflow-hidden">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                    <Users className="w-3 h-3 text-blue-400" />
+                                </div>
                                 <div>
-                                    <p className="text-2xl font-bold text-white">₹8.7Cr</p>
-                                    <p className="text-[10px] text-indigo-400 font-medium">Total Disbursed</p>
+                                    <p className="text-[10px] font-medium text-white">New Client Lead</p>
+                                    <p className="text-[8px] text-slate-400">2 mins ago</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <TrendingUp className="w-3 h-3 text-green-400" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-medium text-white">Target Exceeded</p>
+                                    <p className="text-[8px] text-slate-400">1 hour ago</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                                    <PieChart className="w-3 h-3 text-indigo-400" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-medium text-white">Monthly Report</p>
+                                    <p className="text-[8px] text-slate-400">Generated</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2.5 opacity-50 group-hover:opacity-100 transition-opacity">
+                                <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center">
+                                    <Star className="w-3 h-3 text-orange-400" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-medium text-white">5-Star Review</p>
+                                    <p className="text-[8px] text-slate-400">3 hours ago</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white/10 px-2 py-1 rounded text-[10px] text-white">This Month ⌄</div>
                     </div>
-                    <div className="space-y-3 mt-6">
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                            <p className="text-xs text-slate-300 flex-1">Personal Loans</p>
-                            <p className="text-xs text-white font-medium">₹5.2Cr</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                            <p className="text-xs text-slate-300 flex-1">Business Loans</p>
-                            <p className="text-xs text-white font-medium">₹3.5Cr</p>
-                        </div>
-                    </div>
-                </div>
 
-                {/* 2. Capital Allocations */}
-                <div className="absolute top-8 right-12 bg-slate-900/60 backdrop-blur-xl p-5 rounded-3xl border border-white/10 w-64 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-150 transform transition-all hover:-translate-y-3 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group z-10">
-                    <div className="flex justify-between items-center mb-4">
-                        <p className="text-xs font-semibold text-slate-400">Capital Allocations</p>
-                        <span className="text-[9px] text-slate-500 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div> Live</span>
-                    </div>
-                    <p className="text-xl font-bold text-white mb-1">94%</p>
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mb-4">
-                        <div className="w-[94%] h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center bg-white/5 rounded-lg p-2">
-                             <div className="flex items-center gap-2">
-                                <Wallet className="w-3 h-3 text-slate-400" />
-                                <span className="text-[10px] text-slate-300">Target Achieved</span>
-                             </div>
-                             <span className="text-[10px] text-green-400 flex items-center"><ArrowUpRight className="w-3 h-3 mr-0.5" /> 12%</span>
+                    {/* 5. Mini Stat / Conversion Rate */}
+                    <div className="bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl border border-white/10 w-44 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-300 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-800/80 cursor-pointer group">
+                        <p className="text-[8px] text-slate-400 mb-1">Conversion Rate</p>
+                        <div className="flex items-end gap-1.5">
+                            <p className="text-lg font-bold text-white">68.4%</p>
+                            <span className="text-[9px] text-green-400 flex items-center mb-0.5"><ArrowUpRight className="w-2 h-2" /> 4.2%</span>
                         </div>
-                    </div>
-                </div>
-
-                {/* 3. Revenue Analytics Bar Chart */}
-                <div className="absolute top-48 left-16 bg-slate-900/60 backdrop-blur-xl p-5 rounded-3xl border border-white/10 w-80 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300 transform transition-all hover:-translate-y-3 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group z-30">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-indigo-500/20 rounded-lg">
-                                <BarChart3 className="w-4 h-4 text-indigo-400" />
-                            </div>
-                            <p className="text-xs font-semibold text-white">Revenue Growth</p>
+                        <div className="mt-2 w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                            <div className="bg-green-400 h-full w-[68%]"></div>
                         </div>
-                        <span className="text-xs text-green-400 font-medium">+24.5%</span>
-                    </div>
-                    
-                    <div className="flex items-end justify-between gap-2 h-24 mt-4">
-                        {[40, 65, 45, 80, 55, 95, 75].map((height, i) => (
-                            <div key={i} className="w-full bg-slate-800 rounded-t-sm relative group-hover:bg-slate-700 transition-colors h-full flex items-end">
-                                <div 
-                                    className={`w-full rounded-t-sm transition-all duration-1000 ${i === 5 ? 'bg-indigo-500' : 'bg-blue-500/50 group-hover:bg-blue-500/70'}`}
-                                    style={{ height: `${height}%` }}
-                                ></div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="flex justify-between mt-2 text-[9px] text-slate-500">
-                        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                    </div>
-                </div>
-
-                {/* 4. Activity Stream */}
-                <div className="absolute top-44 right-0 bg-slate-900/60 backdrop-blur-xl p-5 rounded-3xl border border-white/10 w-60 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500 transform transition-all hover:-translate-y-3 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group z-20">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Activity className="w-4 h-4 text-slate-400" />
-                        <p className="text-xs font-semibold text-white">Recent Activity</p>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                <Users className="w-4 h-4 text-blue-400" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-white">New Client Lead</p>
-                                <p className="text-[10px] text-slate-400">2 mins ago</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                                <TrendingUp className="w-4 h-4 text-green-400" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-white">Target Exceeded</p>
-                                <p className="text-[10px] text-slate-400">1 hour ago</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                                <PieChart className="w-4 h-4 text-indigo-400" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-white">Monthly Report</p>
-                                <p className="text-[10px] text-slate-400">Generated</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 5. Mini Stat / Conversion Rate */}
-                <div className="absolute bottom-6 right-32 bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 w-48 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-800/80 cursor-pointer group z-30">
-                    <p className="text-[10px] text-slate-400 mb-1">Conversion Rate</p>
-                    <div className="flex items-end gap-2">
-                        <p className="text-2xl font-bold text-white">68.4%</p>
-                        <span className="text-xs text-green-400 flex items-center mb-1"><ArrowUpRight className="w-3 h-3" /> 4.2%</span>
-                    </div>
-                    <div className="mt-3 w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                        <div className="bg-green-400 h-full w-[68%]"></div>
-                    </div>
-                </div>
-
-                {/* 6. Quick Action Button */}
-                <div className="absolute bottom-16 left-4 bg-indigo-600/90 backdrop-blur-md p-4 rounded-2xl border border-white/10 w-56 flex items-center gap-4 shadow-2xl shadow-indigo-600/20 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-1000 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-indigo-500 cursor-pointer group z-40">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                        <Plus className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-bold text-white mb-0.5">Quick Action</p>
-                        <p className="text-[10px] text-indigo-200">Record a new application</p>
                     </div>
                 </div>
 
@@ -279,6 +372,11 @@ export default function HomePage() {
                     </div>
                 ))}
             </div>
+        </div>
+
+        {/* Disclaimer */}
+        <div className="absolute bottom-6 right-8 z-10 text-[9px] text-white/70 text-right pointer-events-none">
+            Figures and data shown are for illustrative design purposes only.
         </div>
       </div>
 

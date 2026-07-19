@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSessionStore } from '@/store/useSessionStore';
 import { Clock } from 'lucide-react';
@@ -11,6 +11,7 @@ export function SessionTimer() {
   const { user, logout } = useAuthStore();
   const { lastActivity, updateActivity } = useSessionStore();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const timeoutMs = user?.email === 'sharjuthoudam@siroiforex.com' ? RESTRICTED_TIMEOUT : DEFAULT_TIMEOUT;
   const [timeLeft, setTimeLeft] = useState<number>(timeoutMs);
@@ -64,7 +65,8 @@ export function SessionTimer() {
     return () => window.clearInterval(intervalId);
   }, [user, lastActivity, logout, navigate, timeoutMs]);
 
-  if (!user) return null;
+  const isAuthPage = ['/', '/login', '/onboarding'].includes(location.pathname);
+  if (!user || isAuthPage) return null;
 
   // Formatting time (MM:SS)
   const minutes = Math.floor(timeLeft / 60000);
