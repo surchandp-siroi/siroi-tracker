@@ -2,15 +2,19 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui';
 import { Consultant } from '@/store/useDataStore';
-import { Loader2, Check, X, FileText, Download } from 'lucide-react';
+import { Loader2, Check, X, FileText, Download, Trash2 } from 'lucide-react';
+import { triggerNotification } from '@/lib/notifications';
 
 export default function ConsultantApprovalPage() {
     const [pendingConsultants, setPendingConsultants] = useState<Consultant[]>([]);
+    const [approvedConsultants, setApprovedConsultants] = useState<Consultant[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isApprovedLoading, setIsApprovedLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     useEffect(() => {
         fetchPending();
+        fetchApproved();
     }, []);
 
     const fetchPending = async () => {
@@ -31,6 +35,24 @@ export default function ConsultantApprovalPage() {
         }
     };
 
+    const fetchApproved = async () => {
+        setIsApprovedLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('consultants')
+                .select('*')
+                .eq('status', 'approved')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            setApprovedConsultants(data as Consultant[]);
+        } catch (error) {
+            console.error('Error fetching approved consultants:', error);
+        } finally {
+            setIsApprovedLoading(false);
+        }
+    };
+
     const handleAction = async (id: string, newStatus: 'approved' | 'rejected') => {
         setActionLoading(id);
         try {
@@ -43,9 +65,43 @@ export default function ConsultantApprovalPage() {
             
             // Remove from list
             setPendingConsultants(prev => prev.filter(c => c.id !== id));
+            
+            if (newStatus === 'approved') {
+                const approvedConsultant = pendingConsultants.find(c => c.id === id);
+                if (approvedConsultant) {
+                    setApprovedConsultants(prev => [{ ...approvedConsultant, status: 'approved' }, ...prev]);
+                    
+                    // Trigger email notification
+                    triggerNotification('onboarding_approved', {
+                        email: approvedConsultant.email,
+                        name: approvedConsultant.name
+                    });
+                }
+            }
         } catch (error) {
             console.error(`Error ${newStatus} consultant:`, error);
             alert(`Failed to ${newStatus} consultant. Please try again.`);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this consultant? This action cannot be undone.')) return;
+        
+        setActionLoading(id);
+        try {
+            const { error } = await supabase
+                .from('consultants')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
+            
+            setApprovedConsultants(prev => prev.filter(c => c.id !== id));
+        } catch (error) {
+            console.error('Error deleting consultant:', error);
+            alert('Failed to delete consultant. Please try again.');
         } finally {
             setActionLoading(null);
         }
@@ -150,6 +206,71 @@ export default function ConsultantApprovalPage() {
                                                     onClick={() => handleAction(consultant.id, 'rejected')}
                                                 >
                                                     {actionLoading === consultant.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Approved Consultants */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Approved Consultants ({approvedConsultants.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {isApprovedLoading ? (
+                        <div className="flex justify-center p-8">
+                            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                        </div>
+                    ) : approvedConsultants.length === 0 ? (
+                        <div className="text-center p-8 text-slate-500">
+                            No approved consultants.
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50">
+                                    <tr>
+                                        <th className="px-4 py-3">Name & Contact</th>
+                                        <th className="px-4 py-3">Location</th>
+                                        <th className="px-4 py-3">Bank Details</th>
+                                        <th className="px-4 py-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {approvedConsultants.map((consultant) => (
+                                        <tr key={consultant.id} className="border-b dark:border-slate-800">
+                                            <td className="px-4 py-3">
+                                                <div className="font-semibold text-slate-900 dark:text-white">{consultant.name}</div>
+                                                <div className="text-xs text-slate-500">{consultant.email}</div>
+                                                <div className="text-xs text-slate-500">{consultant.phone}</div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="font-semibold text-indigo-600 dark:text-indigo-400 mb-0.5">{consultant.associated_branch} Branch</div>
+                                                <div className="text-slate-900 dark:text-white">{consultant.state}</div>
+                                                <div className="text-xs text-slate-500">{consultant.address}</div>
+                                                <div className="text-xs text-slate-500">{consultant.pincode}</div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="text-slate-900 dark:text-white">{consultant.bank_name}</div>
+                                                <div className="text-xs text-slate-500">A/c: {consultant.account_number}</div>
+                                                <div className="text-xs text-slate-500">IFSC: {consultant.ifsc_code}</div>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="secondary"
+                                                    className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700 dark:bg-red-900/20 dark:border-red-900/50 dark:hover:bg-red-900/40"
+                                                    disabled={actionLoading === consultant.id}
+                                                    onClick={() => handleDelete(consultant.id)}
+                                                    title="Delete Consultant"
+                                                >
+                                                    {actionLoading === consultant.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                                 </Button>
                                             </td>
                                         </tr>

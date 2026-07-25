@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Input } from '@/components/ui';
 import { BranchSelect } from '@/components/BranchSelect';
+import { triggerNotification } from '@/lib/notifications';
 
 const formatDate = (dateStr: string | undefined | null) => {
   if (!dateStr || dateStr === '-') return '-';
@@ -103,6 +104,15 @@ export default function ConsultantPayoutsPage() {
         });
         if (success) {
           setEditingIds(prev => ({ ...prev, [item._uniqueId]: false }));
+
+          if (newStatus === 'Settled' && item.settlementStatus !== 'Settled') {
+            const settlementAmount = Math.round(Number(item.disbursedAmount) * (val / 100));
+            triggerNotification('payout_settled', {
+                email: item.consultantEmail,
+                name: item.consultantName,
+                amount: settlementAmount
+            });
+          }
         }
       }
     }
