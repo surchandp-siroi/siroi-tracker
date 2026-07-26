@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck, ArrowDown } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { BranchSelect } from '@/components/BranchSelect';
-
+import { CustomDatePicker } from '@/components/CustomDatePicker';
 const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
 
 const BRANCH_COLORS: Record<string, string> = {
@@ -32,6 +32,20 @@ const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: stri
 };
 
 const PRODUCTS_LIST = Object.keys(PRODUCT_COLORS);
+
+const PRODUCT_ICONS: Record<string, any> = {
+  'All Products': LayoutGrid,
+  'Personal Loan': User,
+  'Business Loan': Briefcase,
+  'Housing Loan/LAP': Home,
+  'Life Insurance': HeartPulse,
+  'General Insurance': Shield,
+  'Livlong Loan Protector': ShieldCheck,
+  'Mutual Fund/SIP': TrendingUp,
+  'Retail Forex': DollarSign,
+  'GST filing': FileText,
+  'ITR filing': FileCheck
+};
 
 const CustomizedAxisTick = (props: any) => {
   const { x, y, payload } = props;
@@ -103,6 +117,7 @@ export default function DashboardOverview() {
   const navigate = useNavigate();
 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -124,7 +139,9 @@ export default function DashboardOverview() {
       isEdit: boolean;
   } | null>(null);
   const [modalTargetInputs, setModalTargetInputs] = useState<Record<string, string>>({});
-
+  
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const [activeCategoryPage, setActiveCategoryPage] = useState(0);
 
   // Granular Tracking State
   const [granularLocation, setGranularLocation] = useState<string>('all');
@@ -592,6 +609,13 @@ export default function DashboardOverview() {
              ))}
           </div>
         )}
+        {showDatePicker && (
+          <CustomDatePicker 
+            selectedDate={selectedDate}
+            onChange={(date) => setSelectedDate(date)}
+            onClose={() => setShowDatePicker(false)}
+          />
+        )}
       </div>
     );
   };
@@ -628,18 +652,12 @@ export default function DashboardOverview() {
                 </button>
               </div>
 
-              <label 
+              <button 
                 className="relative flex-shrink-0 flex items-center justify-center w-11 h-11 bg-indigo-600 text-white rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
-                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+                onClick={() => setShowDatePicker(true)}
               >
                 <Calendar className="h-5 w-5" />
-                <Input 
-                  type="date" 
-                  value={selectedDate}
-                  onChange={(e: any) => setSelectedDate(e.target.value)}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full p-0 m-0"
-                />
-              </label>
+              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
@@ -687,17 +705,14 @@ export default function DashboardOverview() {
             </div>
             
             <div className="flex items-center gap-3">
-              <label 
+              <button 
                 className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
-                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+                onClick={() => setShowDatePicker(true)}
               >
                 <Calendar className="w-5 h-5 text-indigo-400" />
-                <Input 
-                  type="date" 
-                  value={selectedDate}
-                  onChange={(e: any) => setSelectedDate(e.target.value)}
-                  className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
-                />
+                <span className="text-sm font-bold text-slate-900 dark:text-white px-1">
+                   {selectedDate}
+                </span>
                 <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
@@ -706,7 +721,7 @@ export default function DashboardOverview() {
                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                   </span>
                 </div>
-              </label>
+              </button>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden lg:inline-block shrink-0">Select Date Tracker</span>
             </div>
           </div>
@@ -725,8 +740,8 @@ export default function DashboardOverview() {
         </div>
       </header>
 
-      {/* KPI Category Selector */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 hide-scrollbar">
+      {/* KPI Category Selector (Desktop) */}
+      <div className="hidden md:flex gap-2 mb-4 overflow-x-auto pb-1 hide-scrollbar">
          {['All Products', ...PRODUCTS_LIST].map(cat => (
             <button
                key={cat}
@@ -742,41 +757,109 @@ export default function DashboardOverview() {
          ))}
       </div>
 
+      {/* KPI Category Selector (Mobile - Swipeable Icons) */}
+      <div className="md:hidden mb-6">
+        <div 
+          ref={categoryScrollRef}
+          onScroll={(e) => {
+            const container = e.currentTarget;
+            const scrollLeft = container.scrollLeft;
+            const clientWidth = container.clientWidth;
+            // Avoid division by zero
+            if (clientWidth > 0) {
+                const activePage = Math.round(scrollLeft / clientWidth);
+                setActiveCategoryPage(activePage);
+            }
+          }}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-2 px-1"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+           {['All Products', ...PRODUCTS_LIST].map((cat) => {
+              const Icon = PRODUCT_ICONS[cat] || LayoutGrid;
+              const isActive = kpiCategory === cat;
+              return (
+                <button
+                   key={cat}
+                   onClick={() => setKpiCategory(cat)}
+                   className={`snap-center shrink-0 w-[clamp(72px,22vw,88px)] aspect-square rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm ${
+                      isActive 
+                      ? 'bg-indigo-600 text-white scale-100 shadow-md shadow-indigo-600/30 border border-indigo-600' 
+                      : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 scale-[0.96] hover:scale-[0.98] border border-slate-100 dark:border-white/5'
+                   }`}
+                >
+                   <Icon className={`w-[clamp(20px,6vw,28px)] h-[clamp(20px,6vw,28px)] mb-1.5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'}`} strokeWidth={2} />
+                   <div className="h-[2.4em] flex items-center justify-center w-full px-0.5">
+                     <span className={`text-[clamp(8px,2.2vw,10px)] font-bold uppercase tracking-wider text-center leading-[1.2em] line-clamp-2 w-full break-words ${isActive ? 'text-indigo-50' : 'text-slate-600 dark:text-slate-300'}`}>
+                       {cat}
+                     </span>
+                   </div>
+                </button>
+              );
+           })}
+        </div>
+        
+        {/* Pagination Dots */}
+        <div className="flex justify-center items-center gap-1.5 mt-2">
+           {Array.from({ length: Math.ceil((PRODUCTS_LIST.length + 1) / 3) }).map((_, index) => (
+             <div 
+                key={index} 
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  activeCategoryPage === index 
+                  ? 'w-4 bg-indigo-600 dark:bg-indigo-400' 
+                  : 'w-1.5 bg-slate-200 dark:bg-slate-700'
+                }`}
+             />
+           ))}
+        </div>
+      </div>
+
       {/* KPI Timeline Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {kpiCategory}</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
+              <span>FTD</span>
+              <span className="truncate">{kpiCategory}</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
+            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD {kpiCategory}</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
+              <span>MTD</span>
+              <span className="truncate">{kpiCategory}</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
+            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-indigo-500/10 inline-block px-2 py-0.5 rounded text-indigo-700 dark:text-indigo-300">{kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD {kpiCategory}</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
+              <span>YTD</span>
+              <span className="truncate">{kpiCategory}</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
+            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-emerald-500/10 inline-block px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300">{kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Daily Proj.</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
+              <span>Daily</span>
+              <span>Proj.</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
+            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter">
                 ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
             </div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">All branches</p>

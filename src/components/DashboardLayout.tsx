@@ -50,7 +50,10 @@ export default function DashboardLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-[#0b1120]">
       {/* Mobile Top Bar */}
-      <div className="md:hidden fixed top-3 left-3 right-3 h-14 bg-gradient-to-br from-[#111145] to-[#0f112e] rounded-2xl border border-white/10 flex items-center px-4 z-40 shadow-xl justify-center">
+      <div 
+        className="md:hidden fixed top-3 left-3 right-3 h-14 rounded-2xl border border-white/10 flex items-center px-4 z-40 shadow-xl justify-center"
+        style={{ backgroundImage: 'radial-gradient(circle at center, #4f46e5 0%, #4338ca 35%, #3730a3 70%, #1e1b4b 100%)' }}
+      >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center w-8 h-8">
             <img src="/logo-transparent.svg" alt="Siroi Forex Logo" className="w-full h-full object-contain brightness-0 invert" />
@@ -253,27 +256,27 @@ export default function DashboardLayout() {
               end={to === '/dashboard'}
               onClick={() => setIsMobileSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                `flex flex-col items-center justify-center p-1 sm:p-2 min-w-[50px] flex-1 rounded-xl transition-all ${
                   isActive
                     ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                 }`
               }
             >
-              <Icon size={20} strokeWidth={2.5} />
-              <span className="text-[9px] font-bold uppercase tracking-wider mt-1">{label}</span>
+              <Icon className="w-[clamp(16px,4.5vw,20px)] h-[clamp(16px,4.5vw,20px)]" strokeWidth={2.5} />
+              <span className="text-[clamp(8px,2vw,9px)] font-bold uppercase tracking-wider mt-1 line-clamp-1 text-center">{label}</span>
             </NavLink>
           ))}
           <button
             onClick={() => setIsMobileSidebarOpen(true)}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center p-1 sm:p-2 min-w-[50px] flex-1 rounded-xl transition-all ${
               isMobileSidebarOpen
                 ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
                 : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             }`}
           >
-            <Menu size={20} strokeWidth={2.5} />
-            <span className="text-[9px] font-bold uppercase tracking-wider mt-1">Menu</span>
+            <Menu className="w-[clamp(16px,4.5vw,20px)] h-[clamp(16px,4.5vw,20px)]" strokeWidth={2.5} />
+            <span className="text-[clamp(8px,2vw,9px)] font-bold uppercase tracking-wider mt-1 line-clamp-1 text-center">Menu</span>
           </button>
         </div>
       </div>
