@@ -1,0 +1,48 @@
+Created At: 2026-07-26T08:43:45Z
+Completed At: 2026-07-26T08:43:45Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1504
+Total Bytes: 95737
+Showing lines 1 to 40
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: import { useDataStore } from '@/store/useDataStore';
+2: import { useAuthStore } from '@/store/useAuthStore';
+3: import { useNavigate } from 'react-router-dom';
+4: import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
+5: import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+6: import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck } from 'lucide-react';
+7: import { useMemo, useState, useEffect } from 'react';
+8: import { BranchSelect } from '@/components/BranchSelect';
+9: 
+10: const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
+11: 
+12: const BRANCH_COLORS: Record<string, string> = {
+13:   'Guwahati': '#818cf8',
+14:   'Manipur': '#34d399',
+15:   'Itanagar': '#38bdf8',
+16:   'Nagaland & Mizoram': '#fbbf24'
+17: };
+18: 
+19: const getPatternId = (name: string) => `pattern_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+20: 
+21: const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: string }> = {
+22:     'Personal Loan': { proj: `url(#${getPatternId('Personal Loan')})`, ach: '#2563eb', textDark: '#1e3a8a' }, // Blue
+23:     'Business Loan': { proj: `url(#${getPatternId('Business Loan')})`, ach: '#ea580c', textDark: '#7c2d12' }, // Orange
+24:     'Housing Loan/LAP': { proj: `url(#${getPatternId('Housing Loan/LAP')})`, ach: '#16a34a', textDark: '#14532d' }, // Green
+25:     'Life Insurance': { proj: `url(#${getPatternId('Life Insurance')})`, ach: '#dc2626', textDark: '#7f1d1d' }, // Red
+26:     'General Insurance': { proj: `url(#${getPatternId('General Insurance')})`, ach: '#9333ea', textDark: '#581c87' }, // Purple
+27:     'Livlong Loan Protector': { proj: `url(#${getPatternId('Livlong Loan Protector')})`, ach: '#0891b2', textDark: '#164e63' }, // Cyan
+28:     'Mutual Fund/SIP': { proj: `url(#${getPatternId('Mutual Fund/SIP')})`, ach: '#ca8a04', textDark: '#713f12' }, // Yellow
+29:     'Retail Forex': { proj: `url(#${getPatternId('Retail Forex')})`, ach: '#db2777', textDark: '#831843' }, // Pink
+30:     'GST filing': { proj: `url(#${getPatternId('GST filing')})`, ach: '#0d9488', textDark: '#134e4a' }, // Teal
+31:     'ITR filing': { proj: `url(#${getPatternId('ITR filing')})`, ach: '#65a30d', textDark: '#3f6212' } // Lime
+32: };
+33: 
+34: const PRODUCTS_LIST = Object.keys(PRODUCT_COLORS);
+35: 
+36: const CustomizedAxisTick = (props: any) => {
+37:   const { x, y, payload } = props;
+38:   const branchName = payload.value;
+39:   const color = BRANCH_COLORS[branchName] || '#94a3b8';
+40:   return (
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

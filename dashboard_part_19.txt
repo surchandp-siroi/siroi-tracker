@@ -1,0 +1,59 @@
+Created At: 2026-07-26T09:47:05Z
+Completed At: 2026-07-26T09:47:05Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1521
+Total Bytes: 96696
+Showing lines 210 to 260
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+210:          const entryDateStr = entry.entryDate;
+211:          if (viewMode === 'daily') {
+212:              return entryDateStr === selectedDate;
+213:          } else {
+214:              const entryDate = new Date(entryDateStr);
+215:              if (viewMode === 'month') {
+216:                  return entryDate.getMonth() === selectedMonth && entryDate.getFullYear() === selectedYear;
+217:              } else {
+218:                  // FY logic
+219:                  const em = entryDate.getMonth();
+220:                  const ey = entryDate.getFullYear();
+221:                  const eIsNewFY = em >= 3;
+222:                  const eFyStart = eIsNewFY ? ey : ey - 1;
+223:                  return eFyStart === fyStart;
+224:              }
+225:          }
+226:      });
+227:   }, [entries, selectedDate, viewMode, selectedMonth, selectedYear, fyStart]);
+228: 
+229:   const [kpiCategory, setKpiCategory] = useState<string>('All Products');
+230: 
+231:   const { kpiMetrics, projectedTotalBusinessToday } = useMemo(() => {
+232:      const metrics: Record<string, { ftd: number, mtd: number, ytd: number, ftdCount: number, mtdCount: number, ytdCount: number }> = {};
+233:      metrics['All Products'] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 };
+234:      PRODUCTS_LIST.forEach(c => metrics[c] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 });
+235:      let projToday = 0;
+236: 
+237:      const sd = new Date(selectedDate);
+238:      const sdYear = sd.getFullYear();
+239:      const sdMonth = sd.getMonth();
+240:      
+241:      const sdIsNewFY = sdMonth >= 3;
+242:      const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
+243:      
+244:      validEntries.forEach(entry => {
+245:          const isProj = entry.recordType === 'projection';
+246:          const isAch = !entry.recordType || entry.recordType === 'achievement';
+247:          
+248:          const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+249: 
+250:          if (isProj && entry.entryDate === selectedDate) {
+251:              projToday += entryProj;
+252:          }
+253: 
+254:          const ed = new Date(entry.entryDate);
+255:          const edYear = ed.getFullYear();
+256:          const edMonth = ed.getMonth();
+257:          const edIsNewFY = edMonth >= 3;
+258:          const edFyStart = edIsNewFY ? edYear : edYear - 1;
+259: 
+260:          if (isAch && edFyStart === sdFyStart && ed <= sd) {
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

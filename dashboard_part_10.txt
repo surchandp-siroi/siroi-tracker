@@ -1,0 +1,78 @@
+Created At: 2026-07-26T08:41:49Z
+Completed At: 2026-07-26T08:41:49Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1492
+Total Bytes: 95215
+Showing lines 721 to 790
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+721:                     : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
+722:                  }`}
+723:               >
+724:                  {cat}
+725:               </button>
+726:            ))}
+727:         </div>
+728:       </div>
+729: 
+730:       {/* KPI Timeline Metrics */}
+731:       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+732:         <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
+733:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+734:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {kpiCategory}</CardTitle>
+735:           </CardHeader>
+736:           <CardContent>
+737:             <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
+738:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+739:           </CardContent>
+740:         </Card>
+741:         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
+742:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+743:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD {kpiCategory}</CardTitle>
+744:           </CardHeader>
+745:           <CardContent>
+746:             <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
+747:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-indigo-500/10 inline-block px-2 py-0.5 rounded text-indigo-700 dark:text-indigo-300">{kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+748:           </CardContent>
+749:         </Card>
+750:         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
+751:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+752:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD {kpiCategory}</CardTitle>
+753:           </CardHeader>
+754:           <CardContent>
+755:             <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
+756:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-emerald-500/10 inline-block px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300">{kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+757:           </CardContent>
+758:         </Card>
+759:         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
+760:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+761:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Daily Proj.</CardTitle>
+762:           </CardHeader>
+763:           <CardContent>
+764:             <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}`}>
+765:                 ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
+766:             </div>
+767:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">All branches</p>
+768:           </CardContent>
+769:         </Card>
+770:       </div>
+771: 
+772:       <div className="grid gap-6 lg:grid-cols-7 mb-6">
+773:         {/* Branches Performance */}
+774:         <Card className="lg:col-span-4 flex flex-col border-slate-900/10 dark:border-white/10 min-h-[450px]">
+775:           <CardHeader className="flex justify-between items-center py-4 border-slate-900/10 dark:border-white/10 uppercase">
+776:             <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300">Branch Performance ({viewMode === 'daily' ? 'Daily' : viewMode === 'month' ? 'Monthly' : 'Yearly'})</span>
+777:           </CardHeader>
+778:           <CardContent className="flex-1 p-4 pb-0">
+779:             <ResponsiveContainer width="100%" height="100%">
+780:               <BarChart data={filteredBranches} margin={{ top: 20, right: 10, left: 0, bottom: 0 }} barGap={4} barCategoryGap="25%">
+781:                 <defs>
+782:                    {PRODUCTS_LIST.map(p => (
+783:                        <pattern key={`pattern_${p}`} id={getPatternId(p)} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+784:                            <line x1="0" y="0" x2="0" y2="6" stroke={PRODUCT_COLORS[p].ach} strokeWidth="3" />
+785:                        </pattern>
+786:                    ))}
+787:                 </defs>
+788:                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
+789:                 <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
+790:                 <YAxis 
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

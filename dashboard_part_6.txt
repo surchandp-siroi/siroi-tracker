@@ -1,0 +1,89 @@
+Created At: 2026-07-26T07:14:00Z
+Completed At: 2026-07-26T07:14:00Z
+File Path: `file:///c:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1417
+Total Bytes: 89717
+Showing lines 1020 to 1100
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1020:                 })()}
+1021:             </CardContent>
+1022:         </Card>
+1023:       </div>
+1024: 
+1025:       <hr className="my-10 border-slate-900/10 dark:border-white/10" />
+1026: 
+1027:       <div className="flex flex-col gap-4">
+1028:       <Card className="p-6 border-slate-900/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm">
+1029:           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+1030:               <div>
+1031:                   <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wider">Granular Tracking</h2>
+1032:                   <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Deeper insights</p>
+1033:               </div>
+1034:               <div className="flex flex-wrap items-center gap-4">
+1035:                   {/* Location Filter */}
+1036:                   <div className="flex items-center gap-2 flex-wrap">
+1037:                       <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold shrink-0">Filter By:</span>
+1038:                       <button
+1039:                           onClick={() => setGranularLocation('all')}
+1040:                           className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+1041:                               granularLocation === 'all'
+1042:                                   ? 'bg-indigo-500 text-white shadow-sm'
+1043:                                   : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+1044:                           }`}
+1045:                       >
+1046:                           Consolidated
+1047:                       </button>
+1048:                       {branches.map(b => (
+1049:                           <button
+1050:                               key={b.id}
+1051:                               onClick={() => setGranularLocation(b.id)}
+1052:                               className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+1053:                                   granularLocation === b.id
+1054:                                       ? 'bg-indigo-500 text-white shadow-sm'
+1055:                                       : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+1056:                               }`}
+1057:                           >
+1058:                               {b.name}
+1059:                           </button>
+1060:                       ))}
+1061:                   </div>
+1062: 
+1063:                   {/* Timeframe Toggle */}
+1064:                   <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+1065:                       <button 
+1066:                           onClick={() => setGranularTimeframe('MTD')}
+1067:                           className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'MTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+1068:                       >MTD</button>
+1069:                       <button 
+1070:                           onClick={() => setGranularTimeframe('YTD')}
+1071:                           className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'YTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+1072:                       >YTD</button>
+1073:                   </div>
+1074:               </div>
+1075:           </div>
+1076:       </Card>
+1077:       
+1078:       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+1079:           {[
+1080:               { cat: 'Loan', title: 'Loan Portfolio', colorClass: 'text-indigo-600 dark:text-indigo-400' },
+1081:               { cat: 'Insurance', title: 'Insurance Plans', colorClass: 'text-amber-600 dark:text-amber-400' },
+1082:               { cat: 'Forex', title: 'Forex Services', colorClass: 'text-emerald-600 dark:text-emerald-400' },
+1083:               { cat: 'Consultancy', title: 'Consulting', colorClass: 'text-sky-600 dark:text-sky-400' },
+1084:               { cat: 'Investments', title: 'Investments', colorClass: 'text-purple-600 dark:text-purple-400' }
+1085:           ].map(categoryInfo => {
+1086:               const catProducts = products.filter(p => p.category === categoryInfo.cat);
+1087:               if (catProducts.length === 0) return null;
+1088: 
+1089:               return (
+1090:                   <Card key={categoryInfo.cat} className="border-slate-900/10 dark:border-white/10 flex flex-col">
+1091:                       <CardHeader className="flex flex-row items-center justify-between py-3 border-b border-slate-900/10 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+1092:                           <span className={`text-[10px] font-bold uppercase tracking-widest ${categoryInfo.colorClass}`}>{categoryInfo.title}</span>
+1093:                       </CardHeader>
+1094:                       <CardContent className="p-0 flex-1">
+1095:                           {catProducts.map(p => {
+1096:                               const stats = granularData[p.name] || { amount: 0, count: 0, target: 0 };
+1097:                               const progress = stats.target > 0 ? (stats.amount / stats.target) * 100 : (stats.amount > 0 ? 100 : 0);
+1098: 
+1099:                               return (
+1100:                                   <div key={p.id} className="flex flex-col px-3 py-3 border-b border-slate-900/5 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

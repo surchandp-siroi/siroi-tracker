@@ -1,0 +1,49 @@
+Created At: 2026-07-26T10:47:46Z
+Completed At: 2026-07-26T10:47:46Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1694
+Total Bytes: 107973
+Showing lines 650 to 690
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+650:               <svg width="14" height="14" className="rounded-[2px] border border-slate-400">
+651:                   <defs>
+652:                       <pattern id="legend-stripe" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
+653:                           <line x1="0" y="0" x2="0" y2="4" stroke="#94a3b8" strokeWidth="2" />
+654:                       </pattern>
+655:                   </defs>
+656:                   <rect width="14" height="14" fill="url(#legend-stripe)" />
+657:               </svg>
+658:               <span>Projection</span>
+659:            </div>
+660:            <div className="flex items-center gap-2">
+661:               <div className="w-[14px] h-[14px] bg-slate-500 rounded-[2px]"></div>
+662:               <span>Achievement</span>
+663:            </div>
+664:         </div>
+665:          {activeCategories.length > 0 && (
+666:           <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center px-2">
+667:              {activeCategories.map(c => (
+668:                  <div key={c} className="flex items-center gap-1.5">
+669:                      <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[c].ach }}></div>
+670:                      <span className="text-[9px]">{c}</span>
+671:                  </div>
+672:              ))}
+673:           </div>
+674:         )}
+675:       </div>
+676:     );
+677:   };
+678: 
+679:   return (
+680:     <>
+681:       <header className="glass p-4 md:px-6 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 rounded-xl shadow-sm mb-6 border border-white/20 dark:border-white/5">
+682:         <div className="flex flex-col gap-3">
+683:           <div className="flex flex-wrap items-center gap-3">
+684:             <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Financial Portal</h1>
+685: 
+686:             <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 font-bold uppercase tracking-wider border border-indigo-500/30">
+687:               {financialYear}
+688:             </span>
+689:           </div>
+690:           <div className="flex items-center gap-2 flex-wrap mt-2 md:mt-0 w-full md:w-auto">
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

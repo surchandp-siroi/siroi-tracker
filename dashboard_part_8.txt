@@ -1,0 +1,69 @@
+Created At: 2026-07-26T08:27:29Z
+Completed At: 2026-07-26T08:27:29Z
+File Path: `file:///c:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1464
+Total Bytes: 93336
+Showing lines 640 to 700
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+640:                   value={selectedDate}
+641:                   onChange={(e) => setSelectedDate(e.target.value)}
+642:                   className="hidden md:block w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
+643:                 />
+644:                 <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+645:                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+646:                     {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+647:                   </span>
+648:                   <span className="text-[10px] text-slate-500 font-medium">
+649:                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+650:                   </span>
+651:                 </div>
+652:               </label>
+653:               <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden lg:inline-block shrink-0">Select Date Tracker</span>
+654:             </div>
+655:           </div>
+656:         </div>
+657:         <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 border-t border-slate-200 dark:border-white/10 pt-4 md:pt-0 md:border-0">
+658:             <div className="flex flex-col items-start md:items-end">
+659:                 <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Total Business Today</span>
+660:                 <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString('en-IN')}</span>
+661:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+662:             </div>
+663:             <div className="flex flex-col items-start md:items-end">
+664:                 <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
+665:                 <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{Object.values(kpiMetrics).reduce((sum, m) => sum + m.ftd, 0).toLocaleString('en-IN')}</span>
+666:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+667:             </div>
+668:         </div>
+669:       </header>
+670: 
+671:       {/* KPI Category Selector */}
+672:       <div className="mb-4 relative">
+673:         <div className="md:hidden">
+674:           <select
+675:             value={kpiCategory}
+676:             onChange={(e) => setKpiCategory(e.target.value)}
+677:             className="w-full px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-white dark:bg-[#0b1120] border-2 border-indigo-100 dark:border-indigo-900 text-indigo-700 dark:text-indigo-400 focus:ring-2 focus:ring-indigo-500 appearance-none shadow-sm cursor-pointer hover:border-indigo-300 transition-colors"
+678:             style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em' }}
+679:           >
+680:             {['All Products', ...PRODUCTS_LIST].map(cat => (
+681:                <option key={cat} value={cat}>{cat}</option>
+682:             ))}
+683:           </select>
+684:         </div>
+685:         <div className="hidden md:flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+686:            {['All Products', ...PRODUCTS_LIST].map(cat => (
+687:               <button
+688:                  key={cat}
+689:                  onClick={() => setKpiCategory(cat)}
+690:                  className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+691:                     kpiCategory === cat 
+692:                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+693:                     : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
+694:                  }`}
+695:               >
+696:                  {cat}
+697:               </button>
+698:            ))}
+699:         </div>
+700:       </div>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

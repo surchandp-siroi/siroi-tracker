@@ -1,0 +1,109 @@
+Created At: 2026-07-26T10:39:49Z
+Completed At: 2026-07-26T10:39:49Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1694
+Total Bytes: 107973
+Showing lines 150 to 250
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+150:       isEdit: boolean;
+151:   } | null>(null);
+152:   const [modalTargetInputs, setModalTargetInputs] = useState<Record<string, string>>({});
+153: 
+154: 
+155:   // Granular Tracking State
+156:   const [granularLocation, setGranularLocation] = useState<string>('all');
+157:   const [granularTimeframe, setGranularTimeframe] = useState<'MTD' | 'YTD'>('MTD');
+158: 
+159:   // Data Quality State
+160:   const [dqLocation, setDqLocation] = useState<string>('all');
+161:   const [dqMonthStr, setDqMonthStr] = useState<string>(() => {
+162:       const d = new Date();
+163:       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+164:   });
+165: 
+166:   // Secure routing
+167:   useEffect(() => {
+168:      if (isInitialized) {
+169:          if (!user) navigate('/login');
+170:          else if (user.role !== 'admin') navigate('/entry');
+171:      }
+172:   }, [user, isInitialized, navigate]);
+173: 
+174:   // Financial Year Logic
+175:   const dateObj = new Date(selectedDate);
+176:   const selectedMonth = dateObj.getMonth();
+177:   const selectedYear = dateObj.getFullYear();
+178:   const isNewFY = selectedMonth >= 3;
+179:   const fyStart = isNewFY ? selectedYear : selectedYear - 1;
+180:   const fyEnd = (fyStart + 1).toString().slice(-2);
+181:   const financialYear = `FY ${fyStart}-${fyEnd}`;
+182:   
+183:   const currentMonthStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+184:   
+185:   
+186: 
+187:   // Deduplicate entries to prevent double counting:
+188:   // For each branch and month, if there is at least one 'monthly' entry, ignore all 'daily' entries for that branch/month.
+189:   const validEntries = useMemo(() => {
+190:      const monthlyPresence = new Set<string>();
+191:      entries.forEach(e => {
+192:          if (e.mode === 'monthly') {
+193:              const d = new Date(e.entryDate);
+194:              monthlyPresence.add(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`);
+195:          }
+196:      });
+197:      return entries.filter(e => {
+198:          if (e.mode === 'daily') {
+199:              const d = new Date(e.entryDate);
+200:              if (monthlyPresence.has(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`)) {
+201:                  return false; // Ignore daily if monthly exists for this branch/month
+202:              }
+203:          }
+204:          return true;
+205:      });
+206:   }, [entries]);
+207: 
+208:   const filteredEntries = useMemo(() => {
+209:      return validEntries.filter(entry => {
+210:          const entryDateStr = entry.entryDate;
+211:          if (viewMode === 'daily') {
+212:              return entryDateStr === selectedDate;
+213:          } else {
+214:              const entryDate = new Date(entryDateStr);
+215:              if (viewMode === 'month') {
+216:                  return entryDate.getMonth() === selectedMonth && entryDate.getFullYear() === selectedYear;
+217:              } else {
+218:                  // FY logic
+219:                  const em = entryDate.getMonth();
+220:                  const ey = entryDate.getFullYear();
+221:                  const eIsNewFY = em >= 3;
+222:                  const eFyStart = eIsNewFY ? ey : ey - 1;
+223:                  return eFyStart === fyStart;
+224:              }
+225:          }
+226:      });
+227:   }, [entries, selectedDate, viewMode, selectedMonth, selectedYear, fyStart]);
+228: 
+229:   const [kpiCategory, setKpiCategory] = useState<string>('All Products');
+230: 
+231:   const { kpiMetrics, projectedTotalBusinessToday } = useMemo(() => {
+232:      const metrics: Record<string, { ftd: number, mtd: number, ytd: number, ftdCount: number, mtdCount: number, ytdCount: number }> = {};
+233:      metrics['All Products'] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 };
+234:      PRODUCTS_LIST.forEach(c => metrics[c] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 });
+235:      let projToday = 0;
+236: 
+237:      const sd = new Date(selectedDate);
+238:      const sdYear = sd.getFullYear();
+239:      const sdMonth = sd.getMonth();
+240:      
+241:      const sdIsNewFY = sdMonth >= 3;
+242:      const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
+243:      
+244:      validEntries.forEach(entry => {
+245:          const isProj = entry.recordType === 'projection';
+246:          const isAch = !entry.recordType || entry.recordType === 'achievement';
+247:          
+248:          const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+249: 
+250:          if (isProj && entry.entryDate === selectedDate) {
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

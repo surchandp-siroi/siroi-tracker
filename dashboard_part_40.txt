@@ -1,0 +1,303 @@
+Created At: 2026-07-26T10:40:16Z
+Completed At: 2026-07-26T10:40:16Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1694
+Total Bytes: 107973
+Showing lines 1400 to 1694
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1400:                                   </div>
+1401:                               );
+1402:                           })}
+1403:                       </CardContent>
+1404:                   </Card>
+1405:               );
+1406:           })}
+1407:       </div>
+1408:       </div>
+1409:       
+1410:       <hr className="my-10 border-slate-900/10 dark:border-white/10" />
+1411: 
+1412:       {/* Data Quality Dashboard */}
+1413:       <Card className="p-6 md:p-8 border-slate-900/10 dark:border-white/10 bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20 shadow-lg relative overflow-hidden group mb-8 rounded-2xl">
+1414:         <div className="absolute -top-12 -right-12 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-700">
+1415:            <Info className="w-64 h-64 text-indigo-500" />
+1416:         </div>
+1417:         
+1418:         {/* Filters */}
+1419:         <div className="relative z-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+1420:             <div className="flex items-center gap-3">
+1421:                 <div className="p-2.5 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl text-indigo-600 dark:text-indigo-400">
+1422:                     <Info className="w-6 h-6" />
+1423:                 </div>
+1424:                 <div>
+1425:                     <div className="flex items-center gap-2">
+1426:                         <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-wider">Data Quality Index</h2>
+1427:                         <div className="group/tooltip relative flex items-center justify-center">
+1428:                             <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-xs cursor-help hover:bg-indigo-500 hover:text-white transition-colors">?</div>
+1429:                             <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-72 p-3 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl leading-relaxed">
+1430:                                 Measures the completeness of customer records. A high score means entries have Customer DOB, Email, Phone, and Address fully populated. This is critical for future CRM deployments, targeted marketing, and accurate MIS reporting.
+1431:                             </div>
+1432:                         </div>
+1433:                     </div>
+1434:                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Ensure complete KYC profiles for better relationship management.</p>
+1435:                 </div>
+1436:             </div>
+1437:             
+1438:             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+1439:                 <input 
+1440:                     type="month"
+1441:                     value={dqMonthStr}
+1442:                     onChange={(e) => setDqMonthStr(e.target.value)}
+1443:                     className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all"
+1444:                 />
+1445:                 <select 
+1446:                     value={dqLocation}
+1447:                     onChange={(e) => setDqLocation(e.target.value)}
+1448:                     className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all cursor-pointer appearance-none"
+1449:                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
+1450:                 >
+1451:                     <option value="all">All Locations</option>
+1452:                     {branches.map(b => (
+1453:                         <option key={b.id} value={b.id}>{b.name}</option>
+1454:                     ))}
+1455:                 </select>
+1456:             </div>
+1457:         </div>
+1458: 
+1459:         {dataQuality.totalItems === 0 ? (
+1460:             <div className="relative z-10 flex flex-col items-center justify-center p-12 bg-white/50 dark:bg-slate-950/20 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
+1461:                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+1462:                     <Info className="w-8 h-8 text-slate-400" />
+1463:                 </div>
+1464:                 <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No Entries Found</h3>
+1465:                 <p className="text-sm text-slate-500 text-center max-w-sm mt-2">There is no customer data recorded for this specific location and month. Change the filters above to see data quality metrics.</p>
+1466:             </div>
+1467:         ) : (
+1468:             <div className="relative z-10 flex flex-col md:flex-row gap-8 lg:gap-16 items-center">
+1469:                 {/* Score Display */}
+1470:                 <div className="flex flex-col items-center justify-center min-w-[240px] p-6 bg-white dark:bg-slate-950/50 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+1471:                     <div className="relative w-40 h-40 flex items-center justify-center">
+1472:                         <svg className="w-full h-full -rotate-90 transform drop-shadow-md" viewBox="0 0 100 100">
+1473:                             <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-slate-100 dark:text-slate-800" />
+1474:                             <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray={`${dataQuality.score * 2.827} 282.7`} strokeLinecap="round" className={`${dataQuality.score >= 90 ? 'text-emerald-500' : dataQuality.score >= 70 ? 'text-amber-500' : 'text-rose-500'} transition-all duration-1500 ease-out`} />
+1475:                         </svg>
+1476:                         <div className="absolute flex flex-col items-center justify-center">
+1477:                             <span className="text-4xl font-mono font-black text-slate-900 dark:text-white drop-shadow-sm">{dataQuality.score}%</span>
+1478:                             <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mt-1">Health Score</span>
+1479:                         </div>
+1480:                     </div>
+1481:                     <div className="mt-5 text-center">
+1482:                         <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] uppercase font-bold text-slate-600 dark:text-slate-300 tracking-wider">
+1483:                             {dataQuality.completeItems} / {dataQuality.totalItems} Complete Entries
+1484:                         </span>
+1485:                     </div>
+1486:                 </div>
+1487: 
+1488:                 {/* Metrics Breakdown */}
+1489:                 <div className="flex-1 w-full">
+1490:                     <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Missing Fields Breakdown</h3>
+1491:                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+1492:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-rose-200 dark:border-rose-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1493:                             <div className="flex items-center gap-2 mb-2 text-rose-500 dark:text-rose-400">
+1494:                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+1495:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Date of Birth</span>
+1496:                             </div>
+1497:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.dob}</span>
+1498:                         </div>
+1499:                         
+1500:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-amber-200 dark:border-amber-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1501:                             <div className="flex items-center gap-2 mb-2 text-amber-500 dark:text-amber-400">
+1502:                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+1503:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Email ID</span>
+1504:                             </div>
+1505:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.email}</span>
+1506:                         </div>
+1507:                         
+1508:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-sky-200 dark:border-sky-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1509:                             <div className="flex items-center gap-2 mb-2 text-sky-500 dark:text-sky-400">
+1510:                                 <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+1511:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Phone Number</span>
+1512:                             </div>
+1513:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.phone}</span>
+1514:                         </div>
+1515:                         
+1516:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-purple-200 dark:border-purple-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1517:                             <div className="flex items-center gap-2 mb-2 text-purple-500 dark:text-purple-400">
+1518:                                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+1519:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Customer Address</span>
+1520:                             </div>
+1521:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.address}</span>
+1522:                         </div>
+1523:                     </div>
+1524:                 </div>
+1525:             </div>
+1526:         )}
+1527:       </Card>
+1528:       {productTargetModal && productTargetModal.isOpen && (
+1529:           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+1530:               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-xl w-full text-slate-900 dark:text-white">
+1531:                   <div className="flex justify-between items-center mb-6">
+1532:                       <div>
+1533:                           <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+1534:                               {productTargetModal.isEdit ? 'Lodge Product Targets' : 'Product Targets Breakdown'}
+1535:                           </h3>
+1536:                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">
+1537:                               {productTargetModal.branchName} • {new Date(targetMonthStr + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}
+1538:                           </p>
+1539:                       </div>
+1540:                       <button 
+1541:                           onClick={() => setProductTargetModal(null)}
+1542:                           className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+1543:                       >
+1544:                           <X className="w-5 h-5" />
+1545:                       </button>
+1546:                   </div>
+1547: 
+1548:                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+1549:                       {products.map(p => {
+1550:                           // Calculate MTD achievement for this specific product
+1551:                           const [tYearStr, tMonthStr] = targetMonthStr.split('-');
+1552:                           const tYear = parseInt(tYearStr);
+1553:                           const tMonth = parseInt(tMonthStr) - 1;
+1554:                           
+1555:                           let ach = 0;
+1556:                           entries.forEach(e => {
+1557:                               if (e.branchId !== productTargetModal.branchId) return;
+1558:                               const isAch = !e.recordType || e.recordType === 'achievement';
+1559:                               if (!isAch) return;
+1560:                               const ed = new Date(e.entryDate);
+1561:                               if (ed.getMonth() === tMonth && ed.getFullYear() === tYear) {
+1562:                                   e.items.forEach(item => {
+1563:                                       const pName = (item.product || '').trim();
+1564:                                       const amount = Number(item.disbursedAmount) || 0;
+1565: 
+1566:                                       if (item.category === p.category) {
+1567:                                           if (pName === p.name || pName.toLowerCase().startsWith(p.name.toLowerCase())) {
+1568:                                               ach += amount;
+1569:                                           }
+1570:                                       }
+1571:                                   });
+1572:                               }
+1573:                           });
+1574: 
+1575:                           const targetVal = Number(modalTargetInputs[p.name] || 0);
+1576:                           const progress = targetVal > 0 ? (ach / targetVal) * 100 : (ach > 0 ? 100 : 0);
+1577: 
+1578:                           return (
+1579:                               <div key={p.name} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-2">
+1580:                                   <div className="flex justify-between items-center">
+1581:                                       <div className="flex flex-col">
+1582:                                           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{p.name}</span>
+1583:                                           <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{p.category}</span>
+1584:                                       </div>
+1585:                                       
+1586:                                       {productTargetModal.isEdit ? (
+1587:                                           <div className="flex items-center gap-1.5">
+1588:                                               <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">₹</span>
+1589:                                               <Input
+1590:                                                   type="text"
+1591:                                                   value={modalTargetInputs[p.name] ? Number(modalTargetInputs[p.name]).toLocaleString('en-IN') : ''}
+1592:                                                   onChange={(e: any) => {
+1593:                                                       const raw = e.target.value.replace(/,/g, '');
+1594:                                                       if (raw === '' || !isNaN(Number(raw))) {
+1595:                                                           setModalTargetInputs(prev => ({ ...prev, [p.name]: raw }));
+1596:                                                       }
+1597:                                                   }}
+1598:                                                   className="h-8 w-32 px-2 py-1 text-xs text-right font-mono font-bold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+1599:                                                   placeholder="Target"
+1600:                                               />
+1601:                                           </div>
+1602:                                       ) : (
+1603:                                           <div className="flex flex-col items-end">
+1604:                                               <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+1605:                                                   ₹{targetVal.toLocaleString('en-IN')}
+1606:                                               </span>
+1607:                                               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Target</span>
+1608:                                           </div>
+1609:                                       )}
+1610:                                   </div>
+1611: 
+1612:                                   <div className="flex justify-between items-center text-xs mt-1 text-slate-500 dark:text-slate-400">
+1613:                                       <span>Achieved: <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">₹{ach.toLocaleString('en-IN')}</span></span>
+1614:                                       {targetVal > 0 && (
+1615:                                           <span className="font-bold text-indigo-600 dark:text-indigo-400">{progress.toFixed(1)}%</span>
+1616:                                       )}
+1617:                                   </div>
+1618:                                   
+1619:                                   {targetVal > 0 && (
+1620:                                       <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
+1621:                                           <div className="h-full bg-indigo-500 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, progress)}%` }}></div>
+1622:                                       </div>
+1623:                                   )}
+1624:                               </div>
+1625:                           );
+1626:                       })}
+1627:                   </div>
+1628: 
+1629:                   {/* Summary Total */}
+1630:                   <div className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 flex justify-between items-center">
+1631:                       <span className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Target:</span>
+1632:                       <span className="text-xl font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
+1633:                           ₹{products.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0).toLocaleString('en-IN')}
+1634:                       </span>
+1635:                   </div>
+1636: 
+1637:                   <div className="flex gap-3 mt-6">
+1638:                       <button 
+1639:                           onClick={() => setProductTargetModal(null)}
+1640:                           className="flex-1 py-2.5 text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+1641:                       >
+1642:                           {productTargetModal.isEdit ? 'Cancel' : 'Close'}
+1643:                       </button>
+1644:                       
+1645:                       {productTargetModal.isEdit ? (
+1646:                           <button 
+1647:                               onClick={async () => {
+1648:                                   setSavingTargets(true);
+1649:                                   const totalAmt = products.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0);
+1650:                                   const productTargetsObj: Record<string, number> = {};
+1651:                                   products.forEach(p => {
+1652:                                       productTargetsObj[p.name] = Number(modalTargetInputs[p.name] || 0);
+1653:                                   });
+1654:                                   const success = await setBranchTarget(
+1655:                                       productTargetModal.branchId,
+1656:                                       targetMonthStr,
+1657:                                       totalAmt,
+1658:                                       user?.id || '',
+1659:                                       productTargetsObj
+1660:                                   );
+1661:                                   setSavingTargets(false);
+1662:                                   if (success) {
+1663:                                       setProductTargetModal(null);
+1664:                                       alert('Product targets successfully lodged!');
+1665:                                   } else {
+1666:                                       alert('Failed to save targets. Please try again.');
+1667:                                   }
+1668:                               }}
+1669:                               disabled={savingTargets}
+1670:                               className="flex-1 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+1671:                           >
+1672:                               {savingTargets ? 'Saving...' : 'Save Targets'}
+1673:                           </button>
+1674:                       ) : (
+1675:                           user?.role === 'admin' && (
+1676:                               <button 
+1677:                                   onClick={() => {
+1678:                                       setProductTargetModal(prev => prev ? { ...prev, isEdit: true } : null);
+1679:                                   }}
+1680:                                   className="flex-1 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+1681:                               >
+1682:                                   Edit Targets
+1683:                               </button>
+1684:                           )
+1685:                       )}
+1686:                   </div>
+1687:               </div>
+1688:           </div>
+1689:       )}
+1690: 
+1691:     </>
+1692:   );
+1693: }
+1694: 
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

@@ -1,0 +1,26 @@
+Created At: 2026-07-26T11:41:09Z
+Completed At: 2026-07-26T11:41:10Z
+
+				The command completed successfully.
+				Output:
+				Created At: 2026-07-26T06:20:16Z
+Completed At: 2026-07-26T06:20:17Z
+File Path: `file:///c:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1427
+Total Bytes: 89299
+Showing lines 1 to 800
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: import { useDataStore } from '@/store/useDataStore';
+2: import { useAuthStore } from '@/store/useAuthStore';
+3: import { useNavigate } from 'react-router-dom';
+4: import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
+5: import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+6: import { Calendar, X, Info } from 'lucide-react';
+7: import { useMemo, useState, useEffect } from 'react';
+8: import { BranchSelect } from '@/components/BranchSelect';
+9: 
+10: const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
+11: 
+12: const BRANCH_COLORS: Record<string, string> = {
+13:   'Guwahati': '#818cf8',
+

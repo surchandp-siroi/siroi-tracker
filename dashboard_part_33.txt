@@ -1,0 +1,29 @@
+Created At: 2026-07-26T10:32:57Z
+Completed At: 2026-07-26T10:32:57Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1692
+Total Bytes: 107644
+Showing lines 1020 to 1040
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1020:                  <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Loan Conversion Pipeline</CardTitle>
+1021:                  <div className="flex items-center flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+1022:                     <span className="flex items-center gap-1.5">
+1023:                         Timeframe: 
+1024:                         <div className="relative flex items-center ml-1">
+1025:                            <Input 
+1026:                              type="date" 
+1027:                              value={selectedDate}
+1028:                              onChange={(e) => setSelectedDate(e.target.value)}
+1029:                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+1030:                            />
+1031:                            <span className="text-slate-700 dark:text-slate-300 pointer-events-none hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+1032:                               {new Date(selectedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\d+)/, (match, p1) => {
+1033:                                  const d = parseInt(p1);
+1034:                                  const suffix = ["th", "st", "nd", "rd"][((d % 100) - 20) % 10] || ["th", "st", "nd", "rd"][d % 100] || "th";
+1035:                                  return p1 + suffix;
+1036:                               })}
+1037:                            </span>
+1038:                         </div>
+1039:                     </span>
+1040:                     <span className="text-slate-300 dark:text-slate-700 mx-1">•</span>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

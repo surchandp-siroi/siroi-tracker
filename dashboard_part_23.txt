@@ -1,0 +1,49 @@
+Created At: 2026-07-26T09:58:34Z
+Completed At: 2026-07-26T09:58:34Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1521
+Total Bytes: 96660
+Showing lines 700 to 740
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+700:            <div className="flex gap-3 overflow-x-auto pb-3 hide-scrollbar w-full snap-x snap-mandatory">
+701:               {['All Products', ...PRODUCTS_LIST].map(cat => (
+702:                  <button
+703:                     key={cat}
+704:                     onClick={() => setKpiCategory(cat)}
+705:                     className={`flex flex-col items-center justify-center w-[90px] h-[90px] shrink-0 p-2 rounded-2xl transition-all border snap-start ${
+706:                        kpiCategory === cat 
+707:                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/30' 
+708:                        : 'bg-white dark:bg-[#0b1120] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50 shadow-sm'
+709:                     }`}
+710:                  >
+711:                     <div className={`w-10 h-10 flex items-center justify-center rounded-xl mb-2 transition-all ${
+712:                        kpiCategory === cat 
+713:                        ? 'bg-white text-indigo-600 shadow-sm' 
+714:                        : 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+715:                     }`}>
+716:                        {getCategoryIcon(cat)}
+717:                     </div>
+718:                     <span className="text-[9px] font-bold uppercase tracking-tighter text-center leading-tight w-full flex flex-col items-center justify-center">{splitCategoryName(cat)}</span>
+719:                  </button>
+720:               ))}
+721:            </div>
+722:            {/* Pagination Dots Indicator */}
+723:            <div className="flex justify-center gap-1.5 mt-1">
+724:               <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+725:               <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+726:               <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+727:               <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+728:            </div>
+729:         </div>
+730:         <div className="hidden md:flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+731:            {['All Products', ...PRODUCTS_LIST].map(cat => (
+732:               <button
+733:                  key={cat}
+734:                  onClick={() => setKpiCategory(cat)}
+735:                  className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+736:                     kpiCategory === cat 
+737:                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+738:                     : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
+739:                  }`}
+740:               >
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

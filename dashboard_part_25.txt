@@ -1,0 +1,209 @@
+Created At: 2026-07-26T10:13:43Z
+Completed At: 2026-07-26T10:13:43Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1521
+Total Bytes: 96762
+Showing lines 900 to 1100
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+900:                               {entry.name}
+901:                           </div>
+902:                       )
+903:                   })}
+904:               </div>
+905:             </Card>
+906:         </div>
+907:       </div>
+908: 
+909:       {/* Funnel and Targets Section */}
+910:       <div className="flex flex-col lg:flex-row gap-6 mb-8 w-full items-stretch">
+911:         
+912:         {/* Loan Conversion Pipeline */}
+913:         <Card className="border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[68%]">
+914:           <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+915:              <div className="flex flex-col gap-1.5">
+916:                  <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Loan Conversion Pipeline</CardTitle>
+917:                  <div className="flex items-center flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+918:                     <span className="flex items-center gap-1.5">
+919:                         Timeframe: 
+920:                         <div className="relative flex items-center ml-1">
+921:                            <Input 
+922:                              type="date" 
+923:                              value={selectedDate}
+924:                              onChange={(e) => setSelectedDate(e.target.value)}
+925:                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+926:                            />
+927:                            <span className="text-slate-700 dark:text-slate-300 pointer-events-none hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+928:                               {new Date(selectedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\d+)/, (match, p1) => {
+929:                                  const d = parseInt(p1);
+930:                                  const suffix = ["th", "st", "nd", "rd"][((d % 100) - 20) % 10] || ["th", "st", "nd", "rd"][d % 100] || "th";
+931:                                  return p1 + suffix;
+932:                               })}
+933:                            </span>
+934:                         </div>
+935:                     </span>
+936:                     <span className="text-slate-300 dark:text-slate-700 mx-1">•</span>
+937:                     <span className="flex items-center gap-1.5">
+938:                         Branch:
+939:                         <BranchSelect 
+940:                             value={selectedBusinessBranch}
+941:                             onChange={setSelectedBusinessBranch}
+942:                             branches={branches}
+943:                             includeAllOption={true}
+944:                             allOptionText="Consolidated"
+945:                             className="w-[140px] ml-1"
+946:                         />
+947:                     </span>
+948:                  </div>
+949:              </div>
+950:           </CardHeader>
+951:           <CardContent className="p-6 md:p-8 overflow-x-auto flex items-center justify-center">
+952:              <div className="flex flex-col items-center w-full max-w-3xl mx-auto py-2">
+953:                  
+954:                  {/* Stage 1: Logged */}
+955:                  <div className="w-full relative h-36 bg-amber-100 dark:bg-amber-500/20 flex flex-col items-center justify-center text-orange-700 dark:text-orange-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-amber-200 dark:border-amber-500/30">
+956:                      <span className="text-[11px] font-bold uppercase tracking-widest text-orange-700/80 dark:text-orange-400/80 mb-1">Logged</span>
+957:                      <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.logged.value.toLocaleString('en-IN')}</span>
+958:                      <span className="text-[10px] font-semibold bg-orange-600/10 dark:bg-orange-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-orange-800 dark:text-orange-300">{loanFunnelData.logged.count} Applications</span>
+959:                  </div>
+960: 
+961:                  {/* Conversion Arrow 1 */}
+962:                  <div className="h-12 flex items-center justify-center relative w-full my-1">
+963:                      <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-800"></div>
+964:                      <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-[#1e293b] px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
+965:                         <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Conversion</span>
+966:                         <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{loanFunnelData.sanctioned.conversion}%</span>
+967:                      </div>
+968:                  </div>
+969: 
+970:                  {/* Stage 2: Sanctioned */}
+971:                  <div className="w-[80%] relative h-36 bg-blue-100 dark:bg-blue-500/20 flex flex-col items-center justify-center text-blue-800 dark:text-blue-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-blue-200 dark:border-blue-500/30">
+972:                      <span className="text-[11px] font-bold uppercase tracking-widest text-blue-800/80 dark:text-blue-400/80 mb-1">Sanctioned</span>
+973:                      <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.sanctioned.value.toLocaleString('en-IN')}</span>
+974:                      <span className="text-[10px] font-semibold bg-blue-600/10 dark:bg-blue-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-blue-900 dark:text-blue-300">{loanFunnelData.sanctioned.count} Approvals</span>
+975:                  </div>
+976: 
+977:                  {/* Conversion Arrow 2 */}
+978:                  <div className="h-12 flex items-center justify-center relative w-full my-1">
+979:                      <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-800"></div>
+980:                      <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-[#1e293b] px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
+981:                         <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Conversion</span>
+982:                         <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{loanFunnelData.disbursed.conversion}%</span>
+983:                      </div>
+984:                  </div>
+985: 
+986:                  {/* Stage 3: Disbursed */}
+987:                  <div className="w-[60%] relative h-36 bg-emerald-100 dark:bg-emerald-500/20 flex flex-col items-center justify-center text-emerald-800 dark:text-emerald-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-emerald-200 dark:border-emerald-500/30">
+988:                      <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-800/80 dark:text-emerald-400/80 mb-1">Disbursed</span>
+989:                      <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
+990:                      <span className="text-[10px] font-semibold bg-emerald-600/10 dark:bg-emerald-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-emerald-900 dark:text-emerald-300">{loanFunnelData.disbursed.count} Funded</span>
+991:                  </div>
+992:              </div>
+993:           </CardContent>
+994:         </Card>
+995: 
+996:         {/* Monthly Targets */}
+997:         <Card className="border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[32%] bg-slate-50 dark:bg-white/5 shadow-inner">
+998:             <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 bg-white dark:bg-transparent">
+999:                 <div className="flex flex-col gap-2">
+1000:                    <div className="flex items-center justify-between">
+1001:                        <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Branch Targets</CardTitle>
+1002:                        <button onClick={() => setShowTargetLeaders(!showTargetLeaders)} className={`text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-colors ${showTargetLeaders ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'}`}>
+1003:                            {showTargetLeaders ? 'Show Targets' : 'Show Leaders'}
+1004:                        </button>
+1005:                    </div>
+1006:                    <div className="flex items-center">
+1007:                        <input 
+1008:                            type="month" 
+1009:                            value={targetMonthStr}
+1010:                            onChange={(e) => setTargetMonthStr(e.target.value)}
+1011:                            className="text-[11px] uppercase font-bold text-indigo-600 dark:text-indigo-400 tracking-wider bg-transparent border border-slate-200 dark:border-slate-700 rounded px-2 py-1 outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+1012:                        />
+1013:                    </div>
+1014:                 </div>
+1015:             </CardHeader>
+1016:             <CardContent className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
+1017:                 {(() => {
+1018:                     const [tYearStr, tMonthStr] = targetMonthStr.split('-');
+1019:                     const tYear = parseInt(tYearStr);
+1020:                     const tMonth = parseInt(tMonthStr) - 1;
+1021: 
+1022:                     let branchData = branches.filter(b => user?.role === 'admin' || b.id === user?.branchId).map(b => {
+1023:                         const targetAmt = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr)?.targetAmount || 0;
+1024:                         let achSum = 0;
+1025:                         validEntries.forEach(e => {
+1026:                             if (e.branchId !== b.id) return;
+1027:                             const isAch = !e.recordType || e.recordType === 'achievement';
+1028:                             if (!isAch) return;
+1029:                             const ed = new Date(e.entryDate);
+1030:                             if (ed.getMonth() === tMonth && ed.getFullYear() === tYear) {
+1031:                                 e.items.forEach(i => { achSum += (Number(i.disbursedAmount) || 0) });
+1032:                             }
+1033:                         });
+1034:                         const progress = targetAmt > 0 ? (achSum / targetAmt) * 100 : (achSum > 0 ? 100 : 0);
+1035:                         const isAchieved = progress >= 100 && targetAmt > 0;
+1036:                         return { ...b, targetAmt, achSum, progress, isAchieved };
+1037:                     });
+1038: 
+1039:                     if (showTargetLeaders) {
+1040:                         branchData = branchData.sort((a, b) => b.achSum - a.achSum);
+1041:                     }
+1042: 
+1043:                     return branchData.map((b, index) => {
+1044:                         const branchColors: Record<string, {text: string, bg: string, bar: string}> = {
+1045:                             'Guwahati': { text: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20', bar: 'bg-purple-500' },
+1046:                             'Manipur': { text: 'text-rose-700 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20', bar: 'bg-rose-500' },
+1047:                             'Itanagar': { text: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20', bar: 'bg-amber-500' },
+1048:                             'Nagaland & Mizoram': { text: 'text-cyan-700 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20', bar: 'bg-cyan-500' }
+1049:                         };
+1050:                         const colorObj = branchColors[b.name] || { text: 'text-indigo-700 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20', bar: 'bg-indigo-500' };
+1051: 
+1052:                         return (
+1053:                             <div key={b.id} className={`flex flex-col justify-center gap-2 p-5 rounded-xl border shadow-sm relative overflow-hidden min-h-[110px] ${colorObj.bg}`}>
+1054:                                 <div className="flex items-center justify-between">
+1055:                                     <div className="flex items-center gap-2">
+1056:                                         {showTargetLeaders && (
+1057:                                             <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700">
+1058:                                                 #{index + 1}
+1059:                                             </div>
+1060:                                         )}
+1061:                                         <span className={`text-[13px] md:text-sm font-bold uppercase tracking-wider ${colorObj.text}`}>{b.name}</span>
+1062:                                     </div>
+1063:                                     <div className="z-10">
+1064:                                         <button 
+1065:                                             onClick={() => {
+1066:                                                 setProductTargetModal({
+1067:                                                     isOpen: true,
+1068:                                                     branchId: b.id,
+1069:                                                     branchName: b.name,
+1070:                                                     isEdit: b.targetAmt === 0 && user?.role === 'admin'
+1071:                                                 });
+1072:                                                 const currentTargetRecord = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr);
+1073:                                                 const pt = (currentTargetRecord?.productTargets || {}) as Record<string, any>;
+1074:                                                 const initialInputs: Record<string, string> = {};
+1075:                                                 products.forEach(p => {
+1076:                                                     initialInputs[p.name] = pt[p.name] !== undefined ? pt[p.name].toString() : '';
+1077:                                                 });
+1078:                                                 setModalTargetInputs(initialInputs);
+1079:                                             }}
+1080:                                             className={`text-xs font-mono font-bold px-2 py-1 rounded transition-colors ${
+1081:                                                 b.targetAmt > 0 
+1082:                                                 ? 'text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800' 
+1083:                                                 : 'text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700'
+1084:                                             }`}
+1085:                                         >
+1086:                                             {b.targetAmt > 0 ? `₹${b.targetAmt.toLocaleString('en-IN')}` : (user?.role === 'admin' ? 'Set Targets' : 'No Target Set')}
+1087:                                         </button>
+1088:                                     </div>
+1089:                                 </div>
+1090:                                 <div className="flex items-center justify-between text-xs mt-2 relative z-10">
+1091:                                     <span className="text-slate-600 dark:text-slate-400 font-medium">Achieved: <span className="font-mono text-slate-900 dark:text-white font-bold ml-1">₹{b.achSum.toLocaleString('en-IN')}</span></span>
+1092:                                     <div className="flex items-center gap-2">
+1093:                                         {b.targetAmt > 0 && (
+1094:                                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${b.progress >= 100 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'}`}>
+1095:                                                 {Math.abs(b.progress - 100) < 0.1 ? 'On Target' : b.progress > 100 ? `+${(b.progress - 100).toFixed(1)}%` : `-${(100 - b.progress).toFixed(1)}%`}
+1096:                                             </span>
+1097:                                         )}
+1098:                                         <span className={`font-bold ${colorObj.text}`}>{b.progress.toFixed(1)}%</span>
+1099:                                     </div>
+1100:                                 </div>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

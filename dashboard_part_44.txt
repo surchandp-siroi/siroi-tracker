@@ -1,0 +1,29 @@
+Created At: 2026-07-26T10:53:51Z
+Completed At: 2026-07-26T10:53:51Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1427
+Total Bytes: 89299
+Showing lines 670 to 690
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+670:                onClick={() => setKpiCategory(cat)}
+671:                className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+672:                   kpiCategory === cat 
+673:                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+674:                   : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
+675:                }`}
+676:             >
+677:                {cat}
+678:             </button>
+679:          ))}
+680:       </div>
+681: 
+682:       {/* KPI Timeline Metrics */}
+683:       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+684:         <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
+685:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+686:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {kpiCategory}</CardTitle>
+687:           </CardHeader>
+688:           <CardContent>
+689:             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
+690:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

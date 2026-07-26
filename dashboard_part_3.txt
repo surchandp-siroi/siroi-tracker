@@ -1,0 +1,109 @@
+Created At: 2026-07-26T07:05:37Z
+Completed At: 2026-07-26T07:05:37Z
+File Path: `file:///c:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1427
+Total Bytes: 89981
+Showing lines 600 to 700
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+600:     <>
+601:       <header className="glass p-4 md:px-6 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 rounded-xl shadow-sm mb-6 border border-white/20 dark:border-white/5">
+602:         <div className="flex flex-col gap-3">
+603:           <div className="flex flex-wrap items-center gap-3">
+604:             <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Financial Portal</h1>
+605: 
+606:             <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 font-bold uppercase tracking-wider border border-indigo-500/30">
+607:               {financialYear}
+608:             </span>
+609:           </div>
+610:           <div className="flex items-center gap-2 flex-wrap">
+611:             <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+612:                 <button 
+613:                   onClick={() => setViewMode('daily')}
+614:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+615:                 >Daily</button>
+616:                 <button 
+617:                   onClick={() => setViewMode('month')}
+618:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+619:                 >Month Wise</button>
+620:                 <button 
+621:                   onClick={() => setViewMode('year')}
+622:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+623:                 >Year Wise</button>
+624:             </div>
+625:             
+626:             <div className="flex items-center gap-3">
+627:               <label 
+628:                 className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
+629:                 onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+630:               >
+631:                 <Calendar className="w-5 h-5 text-indigo-400" />
+632:                 <Input 
+633:                   type="date" 
+634:                   value={selectedDate}
+635:                   onChange={(e) => setSelectedDate(e.target.value)}
+636:                   className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
+637:                 />
+638:                 <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+639:                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+640:                     {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+641:                   </span>
+642:                   <span className="text-[10px] text-slate-500 font-medium">
+643:                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+644:                   </span>
+645:                 </div>
+646:               </label>
+647:               <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden lg:inline-block shrink-0">Select Date Tracker</span>
+648:             </div>
+649:           </div>
+650:         </div>
+651:         <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 border-t border-slate-200 dark:border-white/10 pt-4 md:pt-0 md:border-0">
+652:             <div className="flex flex-col items-start md:items-end">
+653:                 <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Total Business Today</span>
+654:                 <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString('en-IN')}</span>
+655:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+656:             </div>
+657:             <div className="flex flex-col items-start md:items-end">
+658:                 <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
+659:                 <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{Object.values(kpiMetrics).reduce((sum, m) => sum + m.ftd, 0).toLocaleString('en-IN')}</span>
+660:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+661:             </div>
+662:         </div>
+663:       </header>
+664: 
+665:       {/* KPI Category Selector */}
+666:       <div className="flex gap-2 mb-4 overflow-x-auto pb-1 hide-scrollbar">
+667:          {['All Products', ...PRODUCTS_LIST].map(cat => (
+668:             <button
+669:                key={cat}
+670:                onClick={() => setKpiCategory(cat)}
+671:                className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+672:                   kpiCategory === cat 
+673:                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+674:                   : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
+675:                }`}
+676:             >
+677:                {cat}
+678:             </button>
+679:          ))}
+680:       </div>
+681: 
+682:       {/* KPI Timeline Metrics */}
+683:       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+684:         <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
+685:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+686:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {kpiCategory}</CardTitle>
+687:           </CardHeader>
+688:           <CardContent>
+689:             <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
+690:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+691:           </CardContent>
+692:         </Card>
+693:         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
+694:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+695:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD {kpiCategory}</CardTitle>
+696:           </CardHeader>
+697:           <CardContent>
+698:             <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
+699:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-indigo-500/10 inline-block px-2 py-0.5 rounded text-indigo-700 dark:text-indigo-300">{kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+700:           </CardContent>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

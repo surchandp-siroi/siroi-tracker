@@ -1,0 +1,50 @@
+The USER performed the following action:
+Show the contents of file c:\Users\tomas\.gemini\antigravity\playground\polar-omega\Siroi_Tracker-main\src\pages\DashboardPage.tsx from lines 581 to 622
+File Path: `file:///c:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1427
+Total Bytes: 89501
+Showing lines 581 to 622
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+581:               <div className="w-[14px] h-[14px] bg-slate-500 rounded-[2px]"></div>
+582:               <span>Achievement</span>
+583:            </div>
+584:         </div>
+585:          {activeCategories.length > 0 && (
+586:           <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center px-2">
+587:              {activeCategories.map(c => (
+588:                  <div key={c} className="flex items-center gap-1.5">
+589:                      <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[c].ach }}></div>
+590:                      <span className="text-[9px]">{c}</span>
+591:                  </div>
+592:              ))}
+593:           </div>
+594:         )}
+595:       </div>
+596:     );
+597:   };
+598: 
+599:   return (
+600:     <>
+601:       <header className="glass p-4 md:px-6 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 rounded-xl shadow-sm mb-6 border border-white/20 dark:border-white/5">
+602:         <div className="flex flex-col gap-3">
+603:           <div className="flex flex-wrap items-center gap-3">
+604:             <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Financial Portal</h1>
+605: 
+606:             <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 font-bold uppercase tracking-wider border border-indigo-500/30">
+607:               {financialYear}
+608:             </span>
+609:           </div>
+610:           <div className="flex items-center gap-2 flex-wrap">
+611:             <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+612:                 <button 
+613:                   onClick={() => setViewMode('daily')}
+614:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+615:                 >Daily</button>
+616:                 <button 
+617:                   onClick={() => setViewMode('month')}
+618:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+619:                 >Month Wise</button>
+620:                 <button 
+621:                   onClick={() => setViewMode('year')}
+622:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 
@@ -30,6 +30,7 @@ export default function DashboardLayout() {
       avatarSeed: string;
   } | null>(null);
   const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -48,16 +49,44 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-[#0b1120]">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden fixed top-3 left-3 right-3 h-14 bg-gradient-to-br from-[#111145] to-[#0f112e] rounded-2xl border border-white/10 flex items-center px-4 z-40 shadow-xl justify-center">
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex items-center justify-center w-8 h-8">
+            <img src="/logo-transparent.svg" alt="Siroi Forex Logo" className="w-full h-full object-contain brightness-0 invert" />
+          </div>
+          <span className="text-[17px] font-semibold tracking-wide text-white uppercase">
+            SIROI FOREX
+          </span>
+        </div>
+      </div>
+
+      {/* Backdrop for mobile */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-[220px] shrink-0 flex flex-col bg-white/60 dark:bg-slate-900/80 border-r border-slate-200 dark:border-white/5 backdrop-blur-xl">
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-[220px] shrink-0 flex flex-col bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-white/5 backdrop-blur-xl transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo / Branding */}
-        <div className="px-5 pt-6 pb-5">
-          <h1 className="text-base font-black tracking-tight text-slate-900 dark:text-white uppercase">
-            Siroi Forex
-          </h1>
-          <p className="text-[9px] uppercase tracking-[0.25em] text-slate-500 dark:text-slate-500 font-semibold mt-0.5">
-            Admin Terminal
-          </p>
+        <div className="flex items-center justify-between px-5 pt-6 pb-5 md:block">
+          <div>
+            <h1 className="text-base font-black tracking-tight text-slate-900 dark:text-white uppercase">
+              Siroi Forex
+            </h1>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-slate-500 dark:text-slate-500 font-semibold mt-0.5">
+              Admin Terminal
+            </p>
+          </div>
+          <button 
+            className="md:hidden p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Scrollable Navigation Area */}
@@ -77,6 +106,7 @@ export default function DashboardLayout() {
                   key={to}
                   to={to}
                   end={to === '/dashboard'}
+                  onClick={() => setIsMobileSidebarOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
                       isActive
@@ -106,6 +136,7 @@ export default function DashboardLayout() {
             <div className="space-y-0.5">
               <NavLink
                 to="/dashboard/consultant-approval"
+                onClick={() => setIsMobileSidebarOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
                     isActive
@@ -123,6 +154,7 @@ export default function DashboardLayout() {
               </NavLink>
               <NavLink
                 to="/dashboard/consultant-payouts"
+                onClick={() => setIsMobileSidebarOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
                     isActive
@@ -144,7 +176,7 @@ export default function DashboardLayout() {
         </div>
 
         {/* Bottom section */}
-        <div className="mt-auto px-3 pb-4 space-y-3">
+        <div className="mt-auto px-3 pb-24 md:pb-4 space-y-3">
           {/* Theme Toggle */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-black/30 rounded-lg p-1 border border-slate-200 dark:border-white/5">
             <span className="text-[9px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-600 px-2">
@@ -205,11 +237,46 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 pt-24 pb-24 md:pt-6 md:pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="w-full space-y-5">
           <Outlet />
         </div>
       </main>
+
+      {/* Floating Bottom Navigation (Mobile) */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 z-50">
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-lg rounded-2xl border border-slate-200/50 dark:border-white/10 p-2 flex items-center justify-around">
+          {navItems.slice(0, 4).map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/dashboard'}
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                  isActive
+                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
+                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`
+              }
+            >
+              <Icon size={20} strokeWidth={2.5} />
+              <span className="text-[9px] font-bold uppercase tracking-wider mt-1">{label}</span>
+            </NavLink>
+          ))}
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+              isMobileSidebarOpen
+                ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
+                : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            <Menu size={20} strokeWidth={2.5} />
+            <span className="text-[9px] font-bold uppercase tracking-wider mt-1">Menu</span>
+          </button>
+        </div>
+      </div>
 
       {profileModal && profileModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
@@ -318,6 +385,7 @@ export default function DashboardLayout() {
               </div>
           </div>
       )}
+
     </div>
   );
 }

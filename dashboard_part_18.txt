@@ -1,0 +1,59 @@
+Created At: 2026-07-26T09:46:56Z
+Completed At: 2026-07-26T09:46:56Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1521
+Total Bytes: 96696
+Showing lines 100 to 150
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+100:   if (cat === 'Livlong Loan Protector') return <><span className="block">LIVLONG</span><span className="block">LOAN PROTECTOR</span></>;
+101:   if (cat === 'Mutual Fund/SIP') return <><span className="block">MUTUAL</span><span className="block">FUND/SIP</span></>;
+102:   const parts = cat.split(' ');
+103:   if (parts.length > 1) {
+104:     return <><span className="block">{parts[0]}</span><span className="block">{parts.slice(1).join(' ')}</span></>;
+105:   }
+106:   return <span className="block">{cat}</span>;
+107: };
+108: 
+109: const getCategoryIcon = (category: string) => {
+110:   switch (category) {
+111:     case 'All Products': return <LayoutGrid className="w-5 h-5" strokeWidth={2} />;
+112:     case 'Personal Loan': return <User className="w-5 h-5" strokeWidth={2} />;
+113:     case 'Business Loan': return <Briefcase className="w-5 h-5" strokeWidth={2} />;
+114:     case 'Housing Loan/LAP': return <Home className="w-5 h-5" strokeWidth={2} />;
+115:     case 'Life Insurance': return <HeartPulse className="w-5 h-5" strokeWidth={2} />;
+116:     case 'General Insurance': return <Shield className="w-5 h-5" strokeWidth={2} />;
+117:     case 'Livlong Loan Protector': return <ShieldCheck className="w-5 h-5" strokeWidth={2} />;
+118:     case 'Mutual Fund/SIP': return <TrendingUp className="w-5 h-5" strokeWidth={2} />;
+119:     case 'Retail Forex': return <DollarSign className="w-5 h-5" strokeWidth={2} />;
+120:     case 'GST filing': return <FileText className="w-5 h-5" strokeWidth={2} />;
+121:     case 'ITR filing': return <FileCheck className="w-5 h-5" strokeWidth={2} />;
+122:     default: return <LayoutGrid className="w-5 h-5" strokeWidth={2} />;
+123:   }
+124: };
+125: 
+126: export default function DashboardOverview() {
+127:   const { products, channels, branches, entries, branchTargets, setBranchTarget } = useDataStore();
+128:   const { user, isInitialized } = useAuthStore();
+129:   const navigate = useNavigate();
+130: 
+131:   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+132:   const [currentTime, setCurrentTime] = useState(new Date());
+133: 
+134:   useEffect(() => {
+135:     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+136:     return () => clearInterval(timer);
+137:   }, []);
+138:   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
+139:   const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('all');
+140:   const [savingTargets, setSavingTargets] = useState(false);
+141:   const [targetMonthStr, setTargetMonthStr] = useState<string>(() => {
+142:       const d = new Date();
+143:       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+144:   });
+145:   const [showTargetLeaders, setShowTargetLeaders] = useState(false);
+146:   const [productTargetModal, setProductTargetModal] = useState<{
+147:       isOpen: boolean;
+148:       branchId: string;
+149:       branchName: string;
+150:       isEdit: boolean;
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

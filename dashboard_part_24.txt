@@ -1,0 +1,209 @@
+Created At: 2026-07-26T10:12:50Z
+Completed At: 2026-07-26T10:12:50Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1521
+Total Bytes: 96762
+Showing lines 1260 to 1460
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1260:                     </div>
+1261:                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Ensure complete KYC profiles for better relationship management.</p>
+1262:                 </div>
+1263:             </div>
+1264:             
+1265:             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+1266:                 <input 
+1267:                     type="month"
+1268:                     value={dqMonthStr}
+1269:                     onChange={(e) => setDqMonthStr(e.target.value)}
+1270:                     className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all"
+1271:                 />
+1272:                 <select 
+1273:                     value={dqLocation}
+1274:                     onChange={(e) => setDqLocation(e.target.value)}
+1275:                     className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all cursor-pointer appearance-none"
+1276:                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
+1277:                 >
+1278:                     <option value="all">All Locations</option>
+1279:                     {branches.map(b => (
+1280:                         <option key={b.id} value={b.id}>{b.name}</option>
+1281:                     ))}
+1282:                 </select>
+1283:             </div>
+1284:         </div>
+1285: 
+1286:         {dataQuality.totalItems === 0 ? (
+1287:             <div className="relative z-10 flex flex-col items-center justify-center p-12 bg-white/50 dark:bg-slate-950/20 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
+1288:                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+1289:                     <Info className="w-8 h-8 text-slate-400" />
+1290:                 </div>
+1291:                 <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No Entries Found</h3>
+1292:                 <p className="text-sm text-slate-500 text-center max-w-sm mt-2">There is no customer data recorded for this specific location and month. Change the filters above to see data quality metrics.</p>
+1293:             </div>
+1294:         ) : (
+1295:             <div className="relative z-10 flex flex-col md:flex-row gap-8 lg:gap-16 items-center">
+1296:                 {/* Score Display */}
+1297:                 <div className="flex flex-col items-center justify-center min-w-[240px] p-6 bg-white dark:bg-slate-950/50 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+1298:                     <div className="relative w-40 h-40 flex items-center justify-center">
+1299:                         <svg className="w-full h-full -rotate-90 transform drop-shadow-md" viewBox="0 0 100 100">
+1300:                             <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-slate-100 dark:text-slate-800" />
+1301:                             <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray={`${dataQuality.score * 2.827} 282.7`} strokeLinecap="round" className={`${dataQuality.score >= 90 ? 'text-emerald-500' : dataQuality.score >= 70 ? 'text-amber-500' : 'text-rose-500'} transition-all duration-1500 ease-out`} />
+1302:                         </svg>
+1303:                         <div className="absolute flex flex-col items-center justify-center">
+1304:                             <span className="text-4xl font-mono font-black text-slate-900 dark:text-white drop-shadow-sm">{dataQuality.score}%</span>
+1305:                             <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest mt-1">Health Score</span>
+1306:                         </div>
+1307:                     </div>
+1308:                     <div className="mt-5 text-center">
+1309:                         <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] uppercase font-bold text-slate-600 dark:text-slate-300 tracking-wider">
+1310:                             {dataQuality.completeItems} / {dataQuality.totalItems} Complete Entries
+1311:                         </span>
+1312:                     </div>
+1313:                 </div>
+1314: 
+1315:                 {/* Metrics Breakdown */}
+1316:                 <div className="flex-1 w-full">
+1317:                     <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Missing Fields Breakdown</h3>
+1318:                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+1319:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-rose-200 dark:border-rose-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1320:                             <div className="flex items-center gap-2 mb-2 text-rose-500 dark:text-rose-400">
+1321:                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+1322:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Date of Birth</span>
+1323:                             </div>
+1324:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.dob}</span>
+1325:                         </div>
+1326:                         
+1327:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-amber-200 dark:border-amber-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1328:                             <div className="flex items-center gap-2 mb-2 text-amber-500 dark:text-amber-400">
+1329:                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+1330:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Email ID</span>
+1331:                             </div>
+1332:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.email}</span>
+1333:                         </div>
+1334:                         
+1335:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-sky-200 dark:border-sky-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1336:                             <div className="flex items-center gap-2 mb-2 text-sky-500 dark:text-sky-400">
+1337:                                 <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
+1338:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Phone Number</span>
+1339:                             </div>
+1340:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.phone}</span>
+1341:                         </div>
+1342:                         
+1343:                         <div className="bg-white dark:bg-slate-950/50 border-b-2 border-purple-200 dark:border-purple-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+1344:                             <div className="flex items-center gap-2 mb-2 text-purple-500 dark:text-purple-400">
+1345:                                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+1346:                                 <span className="text-[10px] uppercase font-bold tracking-widest">Customer Address</span>
+1347:                             </div>
+1348:                             <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.address}</span>
+1349:                         </div>
+1350:                     </div>
+1351:                 </div>
+1352:             </div>
+1353:         )}
+1354:       </Card>
+1355:       {productTargetModal && productTargetModal.isOpen && (
+1356:           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+1357:               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 max-w-xl w-full text-slate-900 dark:text-white">
+1358:                   <div className="flex justify-between items-center mb-6">
+1359:                       <div>
+1360:                           <h3 className="text-lg font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+1361:                               {productTargetModal.isEdit ? 'Lodge Product Targets' : 'Product Targets Breakdown'}
+1362:                           </h3>
+1363:                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">
+1364:                               {productTargetModal.branchName} • {new Date(targetMonthStr + '-01').toLocaleString('default', { month: 'long', year: 'numeric' })}
+1365:                           </p>
+1366:                       </div>
+1367:                       <button 
+1368:                           onClick={() => setProductTargetModal(null)}
+1369:                           className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+1370:                       >
+1371:                           <X className="w-5 h-5" />
+1372:                       </button>
+1373:                   </div>
+1374: 
+1375:                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+1376:                       {products.map(p => {
+1377:                           // Calculate MTD achievement for this specific product
+1378:                           const [tYearStr, tMonthStr] = targetMonthStr.split('-');
+1379:                           const tYear = parseInt(tYearStr);
+1380:                           const tMonth = parseInt(tMonthStr) - 1;
+1381:                           
+1382:                           let ach = 0;
+1383:                           entries.forEach(e => {
+1384:                               if (e.branchId !== productTargetModal.branchId) return;
+1385:                               const isAch = !e.recordType || e.recordType === 'achievement';
+1386:                               if (!isAch) return;
+1387:                               const ed = new Date(e.entryDate);
+1388:                               if (ed.getMonth() === tMonth && ed.getFullYear() === tYear) {
+1389:                                   e.items.forEach(item => {
+1390:                                       const pName = (item.product || '').trim();
+1391:                                       const amount = Number(item.disbursedAmount) || 0;
+1392: 
+1393:                                       if (item.category === p.category) {
+1394:                                           if (pName === p.name || pName.toLowerCase().startsWith(p.name.toLowerCase())) {
+1395:                                               ach += amount;
+1396:                                           }
+1397:                                       }
+1398:                                   });
+1399:                               }
+1400:                           });
+1401: 
+1402:                           const targetVal = Number(modalTargetInputs[p.name] || 0);
+1403:                           const progress = targetVal > 0 ? (ach / targetVal) * 100 : (ach > 0 ? 100 : 0);
+1404: 
+1405:                           return (
+1406:                               <div key={p.name} className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col gap-2">
+1407:                                   <div className="flex justify-between items-center">
+1408:                                       <div className="flex flex-col">
+1409:                                           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{p.name}</span>
+1410:                                           <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{p.category}</span>
+1411:                                       </div>
+1412:                                       
+1413:                                       {productTargetModal.isEdit ? (
+1414:                                           <div className="flex items-center gap-1.5">
+1415:                                               <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">₹</span>
+1416:                                               <Input
+1417:                                                   type="text"
+1418:                                                   value={modalTargetInputs[p.name] ? Number(modalTargetInputs[p.name]).toLocaleString('en-IN') : ''}
+1419:                                                   onChange={(e) => {
+1420:                                                       const raw = e.target.value.replace(/,/g, '');
+1421:                                                       if (raw === '' || !isNaN(Number(raw))) {
+1422:                                                           setModalTargetInputs(prev => ({ ...prev, [p.name]: raw }));
+1423:                                                       }
+1424:                                                   }}
+1425:                                                   className="h-8 w-32 px-2 py-1 text-xs text-right font-mono font-bold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+1426:                                                   placeholder="Target"
+1427:                                               />
+1428:                                           </div>
+1429:                                       ) : (
+1430:                                           <div className="flex flex-col items-end">
+1431:                                               <span className="text-xs font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+1432:                                                   ₹{targetVal.toLocaleString('en-IN')}
+1433:                                               </span>
+1434:                                               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Target</span>
+1435:                                           </div>
+1436:                                       )}
+1437:                                   </div>
+1438: 
+1439:                                   <div className="flex justify-between items-center text-xs mt-1 text-slate-500 dark:text-slate-400">
+1440:                                       <span>Achieved: <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">₹{ach.toLocaleString('en-IN')}</span></span>
+1441:                                       {targetVal > 0 && (
+1442:                                           <span className="font-bold text-indigo-600 dark:text-indigo-400">{progress.toFixed(1)}%</span>
+1443:                                       )}
+1444:                                   </div>
+1445:                                   
+1446:                                   {targetVal > 0 && (
+1447:                                       <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
+1448:                                           <div className="h-full bg-indigo-500 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, progress)}%` }}></div>
+1449:                                       </div>
+1450:                                   )}
+1451:                               </div>
+1452:                           );
+1453:                       })}
+1454:                   </div>
+1455: 
+1456:                   {/* Summary Total */}
+1457:                   <div className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 flex justify-between items-center">
+1458:                       <span className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Target:</span>
+1459:                       <span className="text-xl font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
+1460:                           ₹{products.reduce((sum, p) => sum + Number(modalTargetInputs[p.name] || 0), 0).toLocaleString('en-IN')}
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

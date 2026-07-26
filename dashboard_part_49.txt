@@ -1,0 +1,29 @@
+Created At: 2026-07-26T10:58:31Z
+Completed At: 2026-07-26T10:58:31Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 863
+Total Bytes: 44693
+Showing lines 90 to 110
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+90:   
+91:   return (
+92:     <text x={x} y={y} fill="#ffffff" textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight="900">
+93:       {`${(percent * 100).toFixed(0)}%`}
+94:     </text>
+95:   );
+96: };
+97: 
+98: 
+99: 
+100: export default function DashboardOverview() {
+101:   const { products, channels, branches, entries, branchTargets, setBranchTarget } = useDataStore();
+102:   const { user, isInitialized } = useAuthStore();
+103:   const navigate = useNavigate();
+104: 
+105:   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+106:   const [currentTime, setCurrentTime] = useState(new Date());
+107: 
+108:   useEffect(() => {
+109:     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+110:     return () => clearInterval(timer);
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

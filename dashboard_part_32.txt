@@ -1,0 +1,39 @@
+Created At: 2026-07-26T10:32:50Z
+Completed At: 2026-07-26T10:32:51Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1692
+Total Bytes: 107644
+Showing lines 700 to 730
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+700:                   className={`flex-1 md:flex-none px-2 md:px-3 py-2 md:py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+701:                 ><span className="md:hidden">Year</span><span className="hidden md:inline">Year Wise</span></button>
+702:             </div>
+703:             
+704:             <div className="flex items-center gap-3 shrink-0">
+705:               <label 
+706:                 className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white p-2 md:px-3 md:py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer relative"
+707:                 onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+708:               >
+709:                 <Calendar className="w-5 h-5 text-indigo-400" />
+710:                 <Input 
+711:                   type="date" 
+712:                   value={selectedDate}
+713:                   onChange={(e) => setSelectedDate(e.target.value)}
+714:                   className="md:hidden absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+715:                 />
+716:                 <Input 
+717:                   type="date" 
+718:                   value={selectedDate}
+719:                   onChange={(e) => setSelectedDate(e.target.value)}
+720:                   className="hidden md:block w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
+721:                 />
+722:                 <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+723:                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+724:                     {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+725:                   </span>
+726:                   <span className="text-[10px] text-slate-500 font-medium">
+727:                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+728:                   </span>
+729:                 </div>
+730:               </label>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

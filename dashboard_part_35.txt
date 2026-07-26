@@ -1,0 +1,49 @@
+Created At: 2026-07-26T10:37:05Z
+Completed At: 2026-07-26T10:37:05Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1694
+Total Bytes: 107931
+Showing lines 890 to 930
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+890:                 {activeCategories.map(c => (
+891:                    <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={PRODUCT_COLORS[c].proj} stroke={PRODUCT_COLORS[c].ach} strokeWidth={1} maxBarSize={50} />
+892:                 ))}
+893: 
+894:                 {/* Achievement Stacks */}
+895:                 {activeCategories.map(c => (
+896:                    <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={PRODUCT_COLORS[c].ach} maxBarSize={50} />
+897:                 ))}
+898:               </BarChart>
+899:             </ResponsiveContainer>
+900:           </CardContent>
+901:         </Card>
+902: 
+903:         {/* Right Column: Mix */}
+904:         <div className="lg:col-span-3 flex flex-col gap-6">
+905:             {/* Business Mix */}
+906:             <Card className="flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
+907:               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
+908:                 <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
+909:                 <div className="flex items-center gap-3">
+910:                     <BranchSelect 
+911:                         value={selectedBusinessBranch}
+912:                         onChange={setSelectedBusinessBranch}
+913:                         branches={branches}
+914:                         includeAllOption={true}
+915:                         allOptionText="All Branches"
+916:                         className="w-[140px]"
+917:                     />
+918:                 </div>
+919:               </CardHeader>
+920:               <CardContent className="flex-1 flex justify-center items-center p-4">
+921:                 {/* Desktop View: Pie Chart */}
+922:                 <div className="hidden md:block w-full h-[250px]">
+923:                   <ResponsiveContainer width="100%" height="100%">
+924:                     <PieChart>
+925:                       <Pie
+926:                         data={businessByCategory}
+927:                         cx="50%"
+928:                         cy="50%"
+929:                         innerRadius={90}
+930:                         outerRadius={140}
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

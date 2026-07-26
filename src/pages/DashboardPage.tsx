@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Calendar, X, Info } from 'lucide-react';
+import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck, ArrowDown } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { BranchSelect } from '@/components/BranchSelect';
 
@@ -566,7 +566,7 @@ export default function DashboardOverview() {
     return (
       <div className="flex flex-col gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
         <div className="flex items-center gap-6 justify-center border-b border-slate-800/50 pb-2">
-           <div className="flex items-center gap-2">
+           <div className="flex items-center gap-2 flex-wrap mt-2 md:mt-0 w-full md:w-auto">
               <svg width="14" height="14" className="rounded-[2px] border border-slate-400">
                   <defs>
                       <pattern id="legend-stripe" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
@@ -577,7 +577,7 @@ export default function DashboardOverview() {
               </svg>
               <span>Projection</span>
            </div>
-           <div className="flex items-center gap-2">
+           <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
               <div className="w-[14px] h-[14px] bg-slate-500 rounded-[2px]"></div>
               <span>Achievement</span>
            </div>
@@ -598,7 +598,70 @@ export default function DashboardOverview() {
 
   return (
     <>
-      <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+      {/* Mobile View */}
+      <div className="md:hidden font-sans text-slate-800 mb-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div className="flex items-center gap-3 mb-5">
+              <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Financial Portal</h1>
+              <span className="px-2 py-1 bg-indigo-100 text-indigo-600 text-[10px] font-bold rounded uppercase tracking-wider">{financialYear}</span>
+            </div>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex bg-slate-100 p-1 rounded-xl flex-1">
+                <button 
+                  onClick={() => setViewMode('daily')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'daily' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  DAILY
+                </button>
+                <button 
+                  onClick={() => setViewMode('month')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'month' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  MONTH
+                </button>
+                <button 
+                  onClick={() => setViewMode('year')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'year' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  YEAR
+                </button>
+              </div>
+
+              <label 
+                className="relative flex-shrink-0 flex items-center justify-center w-11 h-11 bg-indigo-600 text-white rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
+                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+              >
+                <Calendar className="h-5 w-5" />
+                <Input 
+                  type="date" 
+                  value={selectedDate}
+                  onChange={(e: any) => setSelectedDate(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full p-0 m-0"
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="flex flex-col items-center border-r border-slate-100 pr-2 text-center">
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 leading-tight h-6 flex items-center justify-center">Projected Total Business Today</span>
+                <span className="text-2xl font-mono font-black text-slate-900 mt-1">
+                  ₹{projectedTotalBusinessToday.toLocaleString('en-IN')}
+                </span>
+                <span className="text-[10px] text-slate-400 mt-1 font-semibold">{selectedDate.split('-').reverse().join('-')}</span>
+              </div>
+              <div className="flex flex-col items-center pl-2 text-center">
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 leading-tight h-6 flex items-center justify-center">Total Achievement Today</span>
+                <span className="text-2xl font-mono font-black text-emerald-500 mt-1">
+                  ₹{(kpiMetrics['All Products']?.ftd || 0).toLocaleString('en-IN')}
+                </span>
+                <span className="text-[10px] text-slate-400 mt-1 font-semibold">{selectedDate.split('-').reverse().join('-')}</span>
+              </div>
+            </div>
+        </div>
+      </div>
+      
+      <header className="hidden md:flex glass px-6 py-4 flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Financial Portal</h1>
@@ -632,7 +695,7 @@ export default function DashboardOverview() {
                 <Input 
                   type="date" 
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e: any) => setSelectedDate(e.target.value)}
                   className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
                 />
                 <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
@@ -686,7 +749,7 @@ export default function DashboardOverview() {
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {kpiCategory}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
+            <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
@@ -695,7 +758,7 @@ export default function DashboardOverview() {
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD {kpiCategory}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
+            <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-indigo-500/10 inline-block px-2 py-0.5 rounded text-indigo-700 dark:text-indigo-300">{kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
@@ -704,7 +767,7 @@ export default function DashboardOverview() {
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD {kpiCategory}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
+            <div className="text-xl lg:text-2xl font-mono font-bold text-slate-900 dark:text-white truncate tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-emerald-500/10 inline-block px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300">{kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
           </CardContent>
         </Card>
@@ -844,7 +907,7 @@ export default function DashboardOverview() {
                            <Input 
                              type="date" 
                              value={selectedDate}
-                             onChange={(e) => setSelectedDate(e.target.value)}
+                             onChange={(e: any) => setSelectedDate(e.target.value)}
                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                            />
                            <span className="text-slate-700 dark:text-slate-300 pointer-events-none hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
@@ -1322,7 +1385,7 @@ export default function DashboardOverview() {
                                               <Input
                                                   type="text"
                                                   value={modalTargetInputs[p.name] ? Number(modalTargetInputs[p.name]).toLocaleString('en-IN') : ''}
-                                                  onChange={(e) => {
+                                                  onChange={(e: any) => {
                                                       const raw = e.target.value.replace(/,/g, '');
                                                       if (raw === '' || !isNaN(Number(raw))) {
                                                           setModalTargetInputs(prev => ({ ...prev, [p.name]: raw }));
@@ -1420,7 +1483,6 @@ export default function DashboardOverview() {
               </div>
           </div>
       )}
-
     </>
   );
 }

@@ -1,0 +1,59 @@
+Created At: 2026-07-26T10:53:56Z
+Completed At: 2026-07-26T10:53:57Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1427
+Total Bytes: 89299
+Showing lines 400 to 450
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+400:                  }
+401:              }
+402:          });
+403:      });
+404: 
+405:      const sancPct = loggedCount > 0 ? ((sanctionedCount / loggedCount) * 100).toFixed(1) : '0.0';
+406:      const disbPct = sanctionedCount > 0 ? ((disbursedCount / sanctionedCount) * 100).toFixed(1) : '0.0';
+407: 
+408:      return {
+409:          logged: { count: loggedCount, value: loggedVal },
+410:          sanctioned: { count: sanctionedCount, value: sanctionedVal, conversion: sancPct },
+411:          disbursed: { count: disbursedCount, value: disbursedVal, conversion: disbPct }
+412:      };
+413:   }, [filteredEntries, selectedBusinessBranch]);
+414: 
+415:   const activeCategories = useMemo(() => {
+416:      return PRODUCTS_LIST.filter(c => 
+417:          filteredBranches.some((b: any) => (b[`proj_${c}`] || 0) > 0 || (b[`ach_${c}`] || 0) > 0)
+418:      );
+419:   }, [filteredBranches]);
+420: 
+421:   const granularData = useMemo(() => {
+422:      const data: Record<string, { amount: number, count: number, target: number }> = {};
+423:      
+424:      products.forEach(p => {
+425:          data[p.name] = { amount: 0, count: 0, target: 0 };
+426:      });
+427:      
+428:      // 1. Calculate Targets
+429:      branchTargets.forEach(bt => {
+430:          if (granularLocation !== 'all' && bt.branchId !== granularLocation) return;
+431:          
+432:          const btYear = parseInt(bt.monthYear.split('-')[0]);
+433:          const btMonth = parseInt(bt.monthYear.split('-')[1]) - 1;
+434:          const btIsNewFY = btMonth >= 3;
+435:          const btFyStart = btIsNewFY ? btYear : btYear - 1;
+436: 
+437:          let includeTarget = false;
+438:          if (granularTimeframe === 'MTD') {
+439:              includeTarget = (bt.monthYear === currentMonthStr);
+440:          } else if (granularTimeframe === 'YTD') {
+441:              const btDate = new Date(btYear, btMonth, 1);
+442:              const sd = new Date(selectedYear, selectedMonth, 1);
+443:              includeTarget = (btFyStart === fyStart && btDate <= sd);
+444:          }
+445: 
+446:          if (includeTarget && bt.productTargets) {
+447:              Object.entries(bt.productTargets).forEach(([pName, tAmt]) => {
+448:                  // Try strict match first, fallback to standard mapping
+449:                  let mappedProduct = pName.trim();
+450:                  if (mappedProduct === 'Mortgage' || mappedProduct === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

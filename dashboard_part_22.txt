@@ -1,0 +1,59 @@
+Created At: 2026-07-26T09:54:02Z
+Completed At: 2026-07-26T09:54:02Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1525
+Total Bytes: 97269
+Showing lines 690 to 740
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+690:         </div>
+691:         <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 border-t border-slate-200 dark:border-white/10 pt-4 md:pt-0 md:border-0">
+692:             <div className="flex flex-col items-start md:items-end">
+693:                 <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Total Business Today</span>
+694:                 <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString('en-IN')}</span>
+695:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+696:             </div>
+697:             <div className="flex flex-col items-start md:items-end">
+698:                 <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
+699:                 <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{Object.values(kpiMetrics).reduce((sum, m) => sum + m.ftd, 0).toLocaleString('en-IN')}</span>
+700:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+701:             </div>
+702:         </div>
+703:       </header>
+704: 
+705:       {/* KPI Category Selector */}
+706:       <div className="mb-4 relative">
+707:         <div className="md:hidden flex flex-col items-center">
+708:            <div className="flex gap-3 overflow-x-auto pb-3 hide-scrollbar w-full snap-x snap-mandatory">
+709:               {['All Products', ...PRODUCTS_LIST].map(cat => (
+710:                  <button
+711:                     key={cat}
+712:                     onClick={() => setKpiCategory(cat)}
+713:                     className={`flex flex-col items-center justify-center w-[90px] h-[90px] shrink-0 p-2 rounded-2xl transition-all border snap-start ${
+714:                        kpiCategory === cat 
+715:                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/30' 
+716:                        : 'bg-white dark:bg-[#0b1120] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50 shadow-sm'
+717:                     }`}
+718:                  >
+719:                     <div className="mb-1">
+720:                        {getCategoryIcon(cat)}
+721:                     </div>
+722:                     <span className="text-[9px] font-bold uppercase tracking-tighter text-center leading-tight w-full flex flex-col items-center justify-center">{splitCategoryName(cat)}</span>
+723:                  </button>
+724:               ))}
+725:            </div>
+726:            {/* Pagination Dots Indicator */}
+727:            <div className="flex justify-center gap-1.5 mt-1">
+728:               <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+729:               <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+730:               <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+731:               <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+732:            </div>
+733:         </div>
+734:         <div className="hidden md:flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+735:            {['All Products', ...PRODUCTS_LIST].map(cat => (
+736:               <button
+737:                  key={cat}
+738:                  onClick={() => setKpiCategory(cat)}
+739:                  className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+740:                     kpiCategory === cat 
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

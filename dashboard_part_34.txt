@@ -1,0 +1,29 @@
+Created At: 2026-07-26T10:33:03Z
+Completed At: 2026-07-26T10:33:03Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1692
+Total Bytes: 107644
+Showing lines 1580 to 1600
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1580:                                           <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{p.name}</span>
+1581:                                           <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">{p.category}</span>
+1582:                                       </div>
+1583:                                       
+1584:                                       {productTargetModal.isEdit ? (
+1585:                                           <div className="flex items-center gap-1.5">
+1586:                                               <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">₹</span>
+1587:                                               <Input
+1588:                                                   type="text"
+1589:                                                   value={modalTargetInputs[p.name] ? Number(modalTargetInputs[p.name]).toLocaleString('en-IN') : ''}
+1590:                                                   onChange={(e) => {
+1591:                                                       const raw = e.target.value.replace(/,/g, '');
+1592:                                                       if (raw === '' || !isNaN(Number(raw))) {
+1593:                                                           setModalTargetInputs(prev => ({ ...prev, [p.name]: raw }));
+1594:                                                       }
+1595:                                                   }}
+1596:                                                   className="h-8 w-32 px-2 py-1 text-xs text-right font-mono font-bold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+1597:                                                   placeholder="Target"
+1598:                                               />
+1599:                                           </div>
+1600:                                       ) : (
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

@@ -1,0 +1,32 @@
+[
+  {
+    "time": "2026-07-26T10:37:12Z",
+    "target": "                        {activeCategories.map(c => (\n                          <linearGradient key={`grad_${c}`} id={`grad_${c}`} x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n                            <stop offset=\"5%\" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0.8}/>\n                            <stop offset=\"95%\" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0}/>\n                          </linearGradient>\n                        ))}",
+    "replacement": "                        {activeCategories.map(c => (\n                          <linearGradient key={`grad_${c}`} id={`grad_${c.replace(/\\s+/g, '_')}`} x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n                            <stop offset=\"5%\" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0.8}/>\n                            <stop offset=\"95%\" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0}/>\n                          </linearGradient>\n                        ))}"
+  },
+  {
+    "time": "2026-07-26T10:37:12Z",
+    "target": "                        <Area \n                          key={`area_${c}`}\n                          type=\"monotone\" \n                          dataKey={`${c}_cum`} \n                          stackId=\"1\" \n                          stroke={PRODUCT_COLORS[c]?.ach || '#94a3b8'} \n                          strokeWidth={2}\n                          fillOpacity={1} \n                          fill={`url(#grad_${c})`} \n                        />",
+    "replacement": "                        <Area \n                          key={`area_${c}`}\n                          type=\"monotone\" \n                          dataKey={`${c}_cum`} \n                          stackId=\"1\" \n                          stroke={PRODUCT_COLORS[c]?.ach || '#94a3b8'} \n                          strokeWidth={2}\n                          fillOpacity={1} \n                          fill={`url(#grad_${c.replace(/\\s+/g, '_')})`} \n                        />"
+  },
+  {
+    "time": "2026-07-26T10:51:05Z",
+    "target": "import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck, ArrowDown } from 'lucide-react';",
+    "replacement": "import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck, ArrowDown, Mail } from 'lucide-react';"
+  },
+  {
+    "time": "2026-07-26T10:57:46Z",
+    "target": "import { Calendar, X, Info } from 'lucide-react';",
+    "replacement": "import { Calendar, X, Info, User, Mail } from 'lucide-react';"
+  },
+  {
+    "time": "2026-07-26T10:58:10Z",
+    "target": "                    const currentTargetRecord = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr);\n                    const targetAmt = currentTargetRecord?.totalTarget || 0;",
+    "replacement": "                    const currentTargetRecord = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr);\n                    const targetAmt = currentTargetRecord?.targetAmount || 0;"
+  },
+  {
+    "time": "2026-07-26T10:59:38Z",
+    "target": "  );\n}\n\nexport default DashboardPage;",
+    "replacement": "  );\n}"
+  }
+]

@@ -1,0 +1,808 @@
+Created At: 2026-07-26T06:20:16Z
+Completed At: 2026-07-26T06:20:17Z
+File Path: `file:///c:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1427
+Total Bytes: 89299
+Showing lines 1 to 800
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: import { useDataStore } from '@/store/useDataStore';
+2: import { useAuthStore } from '@/store/useAuthStore';
+3: import { useNavigate } from 'react-router-dom';
+4: import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
+5: import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+6: import { Calendar, X, Info } from 'lucide-react';
+7: import { useMemo, useState, useEffect } from 'react';
+8: import { BranchSelect } from '@/components/BranchSelect';
+9: 
+10: const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
+11: 
+12: const BRANCH_COLORS: Record<string, string> = {
+13:   'Guwahati': '#818cf8',
+14:   'Manipur': '#34d399',
+15:   'Itanagar': '#38bdf8',
+16:   'Nagaland & Mizoram': '#fbbf24'
+17: };
+18: 
+19: const getPatternId = (name: string) => `pattern_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+20: 
+21: const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: string }> = {
+22:     'Personal Loan': { proj: `url(#${getPatternId('Personal Loan')})`, ach: '#2563eb', textDark: '#1e3a8a' }, // Blue
+23:     'Business Loan': { proj: `url(#${getPatternId('Business Loan')})`, ach: '#ea580c', textDark: '#7c2d12' }, // Orange
+24:     'Housing Loan/LAP': { proj: `url(#${getPatternId('Housing Loan/LAP')})`, ach: '#16a34a', textDark: '#14532d' }, // Green
+25:     'Life Insurance': { proj: `url(#${getPatternId('Life Insurance')})`, ach: '#dc2626', textDark: '#7f1d1d' }, // Red
+26:     'General Insurance': { proj: `url(#${getPatternId('General Insurance')})`, ach: '#9333ea', textDark: '#581c87' }, // Purple
+27:     'Livlong Loan Protector': { proj: `url(#${getPatternId('Livlong Loan Protector')})`, ach: '#0891b2', textDark: '#164e63' }, // Cyan
+28:     'Mutual Fund/SIP': { proj: `url(#${getPatternId('Mutual Fund/SIP')})`, ach: '#ca8a04', textDark: '#713f12' }, // Yellow
+29:     'Retail Forex': { proj: `url(#${getPatternId('Retail Forex')})`, ach: '#db2777', textDark: '#831843' }, // Pink
+30:     'GST filing': { proj: `url(#${getPatternId('GST filing')})`, ach: '#0d9488', textDark: '#134e4a' }, // Teal
+31:     'ITR filing': { proj: `url(#${getPatternId('ITR filing')})`, ach: '#65a30d', textDark: '#3f6212' } // Lime
+32: };
+33: 
+34: const PRODUCTS_LIST = Object.keys(PRODUCT_COLORS);
+35: 
+36: const CustomizedAxisTick = (props: any) => {
+37:   const { x, y, payload } = props;
+38:   const branchName = payload.value;
+39:   const color = BRANCH_COLORS[branchName] || '#94a3b8';
+40:   return (
+41:     <g transform={`translate(${x},${y})`}>
+42:       <circle cx={0} cy={12} r={4} fill={color} />
+43:       <text x={0} y={16} dy={16} textAnchor="middle" fill="#94a3b8" fontSize={11} fontWeight={500}>
+44:         {branchName}
+45:       </text>
+46:     </g>
+47:   );
+48: };
+49: 
+50: const formatYAxis = (value: number) => {
+51:     if (value === 0) return '₹0';
+52:     if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`;
+53:     if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
+54:     if (value >= 1000) return `₹${(value / 1000).toFixed(1)}k`;
+55:     return `₹${value}`;
+56: };
+57: 
+58: const CustomBarTooltip = ({ active, payload, label }: any) => {
+59:     if (active && payload && payload.length) {
+60:         const validPayloads = payload.filter((p: any) => p.value > 0);
+61:         if (validPayloads.length === 0) return null;
+62:         return (
+63:             <div className="bg-[#1e293b] border border-white/10 p-3 rounded-lg shadow-xl">
+64:                 <p className="text-white font-bold mb-2 border-b border-white/10 pb-1">{label}</p>
+65:                 <div className="flex flex-col gap-1">
+66:                     {validPayloads.map((p: any, index: number) => (
+67:                         <div key={index} className="flex items-center justify-between gap-4 text-xs">
+68:                             <span className="flex items-center gap-1.5" style={{ color: p.color }}>
+69:                                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></span>
+70:                                 {p.name.replace('Proj.', 'Projection').replace('Ach.', 'Achievement')}:
+71:                             </span>
+72:                             <span className="text-white font-mono font-semibold">₹{Number(p.value).toLocaleString('en-IN')}</span>
+73:                         </div>
+74:                     ))}
+75:                 </div>
+76:             </div>
+77:         );
+78:     }
+79:     return null;
+80: };
+81: 
+82: const RADIAN = Math.PI / 180;
+83: const renderCustomizedPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name }: any) => {
+84:   if (!percent) return null;
+85:   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+86:   const x = cx + radius * Math.cos(-midAngle * RADIAN);
+87:   const y = cy + radius * Math.sin(-midAngle * RADIAN);
+88:   
+89:   if (percent * 100 < 3) return null;
+90:   
+91:   return (
+92:     <text x={x} y={y} fill="#ffffff" textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight="900">
+93:       {`${(percent * 100).toFixed(0)}%`}
+94:     </text>
+95:   );
+96: };
+97: 
+98: 
+99: 
+100: export default function DashboardOverview() {
+101:   const { products, channels, branches, entries, branchTargets, setBranchTarget } = useDataStore();
+102:   const { user, isInitialized } = useAuthStore();
+103:   const navigate = useNavigate();
+104: 
+105:   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+106:   const [currentTime, setCurrentTime] = useState(new Date());
+107: 
+108:   useEffect(() => {
+109:     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+110:     return () => clearInterval(timer);
+111:   }, []);
+112:   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
+113:   const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('all');
+114:   const [savingTargets, setSavingTargets] = useState(false);
+115:   const [targetMonthStr, setTargetMonthStr] = useState<string>(() => {
+116:       const d = new Date();
+117:       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+118:   });
+119:   const [showTargetLeaders, setShowTargetLeaders] = useState(false);
+120:   const [productTargetModal, setProductTargetModal] = useState<{
+121:       isOpen: boolean;
+122:       branchId: string;
+123:       branchName: string;
+124:       isEdit: boolean;
+125:   } | null>(null);
+126:   const [modalTargetInputs, setModalTargetInputs] = useState<Record<string, string>>({});
+127: 
+128: 
+129:   // Granular Tracking State
+130:   const [granularLocation, setGranularLocation] = useState<string>('all');
+131:   const [granularTimeframe, setGranularTimeframe] = useState<'MTD' | 'YTD'>('MTD');
+132: 
+133:   // Data Quality State
+134:   const [dqLocation, setDqLocation] = useState<string>('all');
+135:   const [dqMonthStr, setDqMonthStr] = useState<string>(() => {
+136:       const d = new Date();
+137:       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+138:   });
+139: 
+140:   // Secure routing
+141:   useEffect(() => {
+142:      if (isInitialized) {
+143:          if (!user) navigate('/login');
+144:          else if (user.role !== 'admin') navigate('/entry');
+145:      }
+146:   }, [user, isInitialized, navigate]);
+147: 
+148:   // Financial Year Logic
+149:   const dateObj = new Date(selectedDate);
+150:   const selectedMonth = dateObj.getMonth();
+151:   const selectedYear = dateObj.getFullYear();
+152:   const isNewFY = selectedMonth >= 3;
+153:   const fyStart = isNewFY ? selectedYear : selectedYear - 1;
+154:   const fyEnd = (fyStart + 1).toString().slice(-2);
+155:   const financialYear = `FY ${fyStart}-${fyEnd}`;
+156:   
+157:   const currentMonthStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+158:   
+159:   
+160: 
+161:   // Deduplicate entries to prevent double counting:
+162:   // For each branch and month, if there is at least one 'monthly' entry, ignore all 'daily' entries for that branch/month.
+163:   const validEntries = useMemo(() => {
+164:      const monthlyPresence = new Set<string>();
+165:      entries.forEach(e => {
+166:          if (e.mode === 'monthly') {
+167:              const d = new Date(e.entryDate);
+168:              monthlyPresence.add(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`);
+169:          }
+170:      });
+171:      return entries.filter(e => {
+172:          if (e.mode === 'daily') {
+173:              const d = new Date(e.entryDate);
+174:              if (monthlyPresence.has(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`)) {
+175:                  return false; // Ignore daily if monthly exists for this branch/month
+176:              }
+177:          }
+178:          return true;
+179:      });
+180:   }, [entries]);
+181: 
+182:   const filteredEntries = useMemo(() => {
+183:      return validEntries.filter(entry => {
+184:          const entryDateStr = entry.entryDate;
+185:          if (viewMode === 'daily') {
+186:              return entryDateStr === selectedDate;
+187:          } else {
+188:              const entryDate = new Date(entryDateStr);
+189:              if (viewMode === 'month') {
+190:                  return entryDate.getMonth() === selectedMonth && entryDate.getFullYear() === selectedYear;
+191:              } else {
+192:                  // FY logic
+193:                  const em = entryDate.getMonth();
+194:                  const ey = entryDate.getFullYear();
+195:                  const eIsNewFY = em >= 3;
+196:                  const eFyStart = eIsNewFY ? ey : ey - 1;
+197:                  return eFyStart === fyStart;
+198:              }
+199:          }
+200:      });
+201:   }, [entries, selectedDate, viewMode, selectedMonth, selectedYear, fyStart]);
+202: 
+203:   const [kpiCategory, setKpiCategory] = useState<string>('All Products');
+204: 
+205:   const { kpiMetrics, projectedTotalBusinessToday } = useMemo(() => {
+206:      const metrics: Record<string, { ftd: number, mtd: number, ytd: number, ftdCount: number, mtdCount: number, ytdCount: number }> = {};
+207:      metrics['All Products'] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 };
+208:      PRODUCTS_LIST.forEach(c => metrics[c] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 });
+209:      let projToday = 0;
+210: 
+211:      const sd = new Date(selectedDate);
+212:      const sdYear = sd.getFullYear();
+213:      const sdMonth = sd.getMonth();
+214:      
+215:      const sdIsNewFY = sdMonth >= 3;
+216:      const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
+217:      
+218:      validEntries.forEach(entry => {
+219:          const isProj = entry.recordType === 'projection';
+220:          const isAch = !entry.recordType || entry.recordType === 'achievement';
+221:          
+222:          const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+223: 
+224:          if (isProj && entry.entryDate === selectedDate) {
+225:              projToday += entryProj;
+226:          }
+227: 
+228:          const ed = new Date(entry.entryDate);
+229:          const edYear = ed.getFullYear();
+230:          const edMonth = ed.getMonth();
+231:          const edIsNewFY = edMonth >= 3;
+232:          const edFyStart = edIsNewFY ? edYear : edYear - 1;
+233: 
+234:          if (isAch && edFyStart === sdFyStart && ed <= sd) {
+235:              entry.items.forEach(item => {
+236:                  const cat = item.category || 'Loan';
+237:                  const prod = item.product || 'Personal Loan';
+238:                  let achAmt = 0;
+239:                  if (cat === 'Loan') {
+240:                      achAmt = Number(item.disbursedAmount) || 0;
+241:                  } else if (cat === 'Insurance') {
+242:                      achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+243:                  } else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') {
+244:                      achAmt = Number(item.amount) || 0;
+245:                  } else {
+246:                      achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
+247:                  }
+248: 
+249:                  if (!metrics[prod]) metrics[prod] = { ftd: 0, mtd: 0, ytd: 0, ftdCount: 0, mtdCount: 0, ytdCount: 0 };
+250:                  
+251:                  metrics[prod].ytd += achAmt;
+252:                  metrics['All Products'].ytd += achAmt;
+253:                  if (achAmt > 0) {
+254:                      metrics[prod].ytdCount++;
+255:                      metrics['All Products'].ytdCount++;
+256:                  }
+257: 
+258:                  if (edMonth === sdMonth && edYear === sdYear) {
+259:                      metrics[prod].mtd += achAmt;
+260:                      metrics['All Products'].mtd += achAmt;
+261:                      if (achAmt > 0) {
+262:                          metrics[prod].mtdCount++;
+263:                          metrics['All Products'].mtdCount++;
+264:                      }
+265: 
+266:                      if (entry.entryDate === selectedDate) {
+267:                          metrics[prod].ftd += achAmt;
+268:                          metrics['All Products'].ftd += achAmt;
+269:                          if (achAmt > 0) {
+270:                              metrics[prod].ftdCount++;
+271:                              metrics['All Products'].ftdCount++;
+272:                          }
+273:                      }
+274:                  }
+275:              });
+276:          }
+277:      });
+278:      return { kpiMetrics: metrics, projectedTotalBusinessToday: projToday };
+279:   }, [validEntries, selectedDate]);
+280: 
+281:   const { filteredBranches, totalBusiness, businessByCategory } = useMemo(() => {
+282:      const branchMap = new Map();
+283:      branches.forEach(b => {
+284:          const initialCategories = PRODUCTS_LIST.reduce((acc, c) => {
+285:              acc[`proj_${c}`] = 0;
+286:              acc[`ach_${c}`] = 0;
+287:              return acc;
+288:          }, {} as any);
+289: 
+290:          branchMap.set(b.id, { 
+291:              ...b, 
+292:              dailyAchievement: 0,
+293:              dailyProjection: 0,
+294:              ...initialCategories
+295:          });
+296:      });
+297: 
+298:      let total = 0;
+299:      const catMap = new Map();
+300: 
+301:      filteredEntries.forEach(entry => {
+302:           const b = branchMap.get(entry.branchId);
+303:           if (!b) return;
+304: 
+305:           const isProj = entry.recordType === 'projection';
+306:           const isAch = !entry.recordType || entry.recordType === 'achievement';
+307: 
+308:           let entryAch = 0;
+309:           let entryProj = 0;
+310:           
+311:           if (selectedBusinessBranch === 'all' || selectedBusinessBranch === b.id) {
+312:               entry.items.forEach(item => {
+313:                   let prod = (item.product || 'Personal Loan').trim();
+314:                   
+315:                   // Standardize product names to match PRODUCTS_LIST exactly so they show up on the charts
+316:                   const pLower = prod.toLowerCase();
+317:                   if (pLower === 'mortgage' || pLower === 'home loan' || pLower.includes('housing')) prod = 'Housing Loan/LAP';
+318:                   else if (pLower.includes('mutual') || pLower.includes('sip')) prod = 'Mutual Fund/SIP';
+319:                   else if (pLower.startsWith('personal loan') || pLower.startsWith('pl')) prod = 'Personal Loan';
+320:                   else if (pLower.startsWith('business loan') || pLower.startsWith('bl')) prod = 'Business Loan';
+321:                   else if (pLower.includes('life insurance')) prod = 'Life Insurance';
+322:                   else if (pLower.includes('general insurance')) prod = 'General Insurance';
+323:                   else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
+324:                   else if (pLower.includes('forex')) prod = 'Retail Forex';
+325:                   else if (pLower.includes('gst')) prod = 'GST filing';
+326:                   else if (pLower.includes('itr')) prod = 'ITR filing';
+327: 
+328:                   let achAmt = 0;
+329:                   let projAmt = 0;
+330:                   
+331:                   if (item.category === 'Loan') {
+332:                       achAmt = Number(item.disbursedAmount) || 0;
+333:                       projAmt = Number(item.amount) || 0;
+334:                   } else if (item.category === 'Insurance') {
+335:                       achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+336:                       projAmt = Number(item.amount) || 0;
+337:                   } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
+338:                       achAmt = Number(item.amount) || 0;
+339:                       projAmt = Number(item.amount) || 0;
+340:                   } else {
+341:                       achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
+342:                       projAmt = Number(item.amount) || 0;
+343:                   }
+344: 
+345:                   if (isAch) {
+346:                       catMap.set(prod, (catMap.get(prod) || 0) + achAmt);
+347:                       b[`ach_${prod}`] = (b[`ach_${prod}`] || 0) + achAmt;
+348:                       b[`proj_${prod}`] = (b[`proj_${prod}`] || 0) + projAmt; // Line item login amounts act as projections
+349:                       entryAch += achAmt;
+350:                       entryProj += projAmt;
+351:                   }
+352:                   if (isProj) {
+353:                       // Modal daily projections (often just category-level)
+354:                       b[`proj_${prod}`] = (b[`proj_${prod}`] || 0) + (Number(item.amount) || 0);
+355:                       entryProj += (Number(item.amount) || 0);
+356:                   }
+357:               });
+358:           }
+359:           
+360:           b.dailyAchievement += entryAch;
+361:           b.dailyProjection += entryProj;
+362:           total += entryAch;
+363:      });
+364: 
+365:      const fb = Array.from(branchMap.values());
+366:      const rbC = Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
+367: 
+368:      return { filteredBranches: fb, totalBusiness: total, businessByCategory: rbC };
+369:   }, [filteredEntries, branches, selectedBusinessBranch]);
+370: 
+371:   const loanFunnelData = useMemo(() => {
+372:      let loggedCount = 0, loggedVal = 0;
+373:      let sanctionedCount = 0, sanctionedVal = 0;
+374:      let disbursedCount = 0, disbursedVal = 0;
+375: 
+376:      filteredEntries.forEach(entry => {
+377:          if (selectedBusinessBranch !== 'all' && entry.branchId !== selectedBusinessBranch) return;
+378: 
+379:          const isAch = !entry.recordType || entry.recordType === 'achievement';
+380:          if (!isAch) return;
+381: 
+382:          entry.items.forEach(item => {
+383:              if (item.category === 'Loan') {
+384:                  const amt = Number(item.amount) || 0;
+385:                  const sanc = Number(item.sanctionedAmount) || 0;
+386:                  const disb = Number(item.disbursedAmount) || 0;
+387:                  const status = item.fileStatus || '';
+388: 
+389:                  loggedCount++;
+390:                  loggedVal += amt;
+391: 
+392:                  if (sanc > 0 || disb > 0 || ['Sanctioned', 'Disbursed'].includes(status)) {
+393:                      sanctionedCount++;
+394:                      sanctionedVal += sanc > 0 ? sanc : amt;
+395:                  }
+396: 
+397:                  if (disb > 0 || status === 'Disbursed') {
+398:                      disbursedCount++;
+399:                      disbursedVal += disb > 0 ? disb : (sanc > 0 ? sanc : amt);
+400:                  }
+401:              }
+402:          });
+403:      });
+404: 
+405:      const sancPct = loggedCount > 0 ? ((sanctionedCount / loggedCount) * 100).toFixed(1) : '0.0';
+406:      const disbPct = sanctionedCount > 0 ? ((disbursedCount / sanctionedCount) * 100).toFixed(1) : '0.0';
+407: 
+408:      return {
+409:          logged: { count: loggedCount, value: loggedVal },
+410:          sanctioned: { count: sanctionedCount, value: sanctionedVal, conversion: sancPct },
+411:          disbursed: { count: disbursedCount, value: disbursedVal, conversion: disbPct }
+412:      };
+413:   }, [filteredEntries, selectedBusinessBranch]);
+414: 
+415:   const activeCategories = useMemo(() => {
+416:      return PRODUCTS_LIST.filter(c => 
+417:          filteredBranches.some((b: any) => (b[`proj_${c}`] || 0) > 0 || (b[`ach_${c}`] || 0) > 0)
+418:      );
+419:   }, [filteredBranches]);
+420: 
+421:   const granularData = useMemo(() => {
+422:      const data: Record<string, { amount: number, count: number, target: number }> = {};
+423:      
+424:      products.forEach(p => {
+425:          data[p.name] = { amount: 0, count: 0, target: 0 };
+426:      });
+427:      
+428:      // 1. Calculate Targets
+429:      branchTargets.forEach(bt => {
+430:          if (granularLocation !== 'all' && bt.branchId !== granularLocation) return;
+431:          
+432:          const btYear = parseInt(bt.monthYear.split('-')[0]);
+433:          const btMonth = parseInt(bt.monthYear.split('-')[1]) - 1;
+434:          const btIsNewFY = btMonth >= 3;
+435:          const btFyStart = btIsNewFY ? btYear : btYear - 1;
+436: 
+437:          let includeTarget = false;
+438:          if (granularTimeframe === 'MTD') {
+439:              includeTarget = (bt.monthYear === currentMonthStr);
+440:          } else if (granularTimeframe === 'YTD') {
+441:              const btDate = new Date(btYear, btMonth, 1);
+442:              const sd = new Date(selectedYear, selectedMonth, 1);
+443:              includeTarget = (btFyStart === fyStart && btDate <= sd);
+444:          }
+445: 
+446:          if (includeTarget && bt.productTargets) {
+447:              Object.entries(bt.productTargets).forEach(([pName, tAmt]) => {
+448:                  // Try strict match first, fallback to standard mapping
+449:                  let mappedProduct = pName.trim();
+450:                  if (mappedProduct === 'Mortgage' || mappedProduct === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
+451:                  else if (mappedProduct === 'SIP & Mutual Fund' || mappedProduct === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
+452:                  
+453:                  if (data[mappedProduct]) {
+454:                      data[mappedProduct].target += Number(tAmt) || 0;
+455:                  }
+456:              });
+457:          }
+458:      });
+459: 
+460:      // 2. Calculate Achievements
+461:      validEntries.forEach(entry => {
+462:          if (granularLocation !== 'all' && entry.branchId !== granularLocation) return;
+463:          
+464:          const isAch = !entry.recordType || entry.recordType === 'achievement';
+465:          if (!isAch) return;
+466: 
+467:          const ed = new Date(entry.entryDate);
+468:          const edYear = ed.getFullYear();
+469:          const edMonth = ed.getMonth();
+470:          const edIsNewFY = edMonth >= 3;
+471:          const edFyStart = edIsNewFY ? edYear : edYear - 1;
+472: 
+473:          let includeAch = false;
+474:          if (granularTimeframe === 'MTD') {
+475:              includeAch = (edMonth === selectedMonth && edYear === selectedYear);
+476:          } else if (granularTimeframe === 'YTD') {
+477:              const sd = new Date(selectedDate);
+478:              includeAch = (edFyStart === fyStart && ed <= sd);
+479:          }
+480:          if (!includeAch) return;
+481: 
+482:          entry.items.forEach(item => {
+483:              const pName = (item.product || '').trim();
+484:              
+485:              let amt = 0;
+486:              if (item.category === 'Loan') {
+487:                  amt = Number(item.disbursedAmount) || 0;
+488:              } else if (item.category === 'Insurance') {
+489:                  amt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+490:              } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
+491:                  amt = Number(item.amount) || 0;
+492:              } else {
+493:                  amt = Number(item.disbursedAmount) || Number(item.amount) || 0;
+494:              }
+495:              
+496:              if (amt <= 0) return;
+497:              
+498:              let mappedProduct = pName;
+499:              const exactProduct = products.find(p => p.name === pName);
+500:              if (exactProduct) {
+501:                  mappedProduct = exactProduct.name;
+502:              } else {
+503:                  if (pName === 'Mortgage' || pName === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
+504:                  else if (pName === 'SIP & Mutual Fund' || pName === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
+505:                  else if (item.category === 'Forex') mappedProduct = 'Retail Forex';
+506:              }
+507: 
+508:              if (data[mappedProduct]) {
+509:                  data[mappedProduct].amount += amt;
+510:                  data[mappedProduct].count++;
+511:              }
+512:          });
+513:      });
+514:      
+515:      return data;
+516:   }, [validEntries, granularLocation, granularTimeframe, products, branchTargets, currentMonthStr, fyStart, selectedMonth, selectedYear, selectedDate]);
+517: 
+518:   const maxYValue = useMemo(() => {
+519:      let max = 0;
+520:      filteredBranches.forEach((b: any) => {
+521:          let projSum = 0;
+522:          let achSum = 0;
+523:          PRODUCTS_LIST.forEach(c => {
+524:              projSum += (b[`proj_${c}`] || 0);
+525:              achSum += (b[`ach_${c}`] || 0);
+526:          });
+527:          max = Math.max(max, projSum, achSum);
+528:      });
+529:      return max > 0 ? max : 1000;
+530:   }, [filteredBranches]);
+531: 
+532:   const dataQuality = useMemo(() => {
+533:      let totalItems = 0;
+534:      let completeItems = 0;
+535:      let missingFields = { dob: 0, email: 0, phone: 0, address: 0 };
+536:      
+537:      const filteredEntries = validEntries.filter(entry => {
+538:          if (dqLocation !== 'all' && entry.branchId !== dqLocation) return false;
+539:          
+540:          const entryDate = new Date(entry.entryDate);
+541:          const entryMonthStr = `${entryDate.getFullYear()}-${String(entryDate.getMonth() + 1).padStart(2, '0')}`;
+542:          if (entryMonthStr !== dqMonthStr) return false;
+543:          
+544:          return true;
+545:      });
+546: 
+547:      filteredEntries.forEach(entry => {
+548:          entry.items.forEach(item => {
+549:              totalItems++;
+550:              let isComplete = true;
+551:              
+552:              if (!item.customerDOB) { isComplete = false; missingFields.dob++; }
+553:              if (!item.emailId) { isComplete = false; missingFields.email++; }
+554:              if (!item.phoneNumber) { isComplete = false; missingFields.phone++; }
+555:              if (!item.customerAddress) { isComplete = false; missingFields.address++; }
+556:              
+557:              if (isComplete) completeItems++;
+558:          });
+559:      });
+560:      
+561:      const score = totalItems > 0 ? Math.round((completeItems / totalItems) * 100) : 0;
+562:      return { score, totalItems, completeItems, missingFields };
+563:   }, [validEntries, dqLocation, dqMonthStr]);
+564: 
+565:   const renderCustomLegend = (props: any) => {
+566:     return (
+567:       <div className="flex flex-col gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+568:         <div className="flex items-center gap-6 justify-center border-b border-slate-800/50 pb-2">
+569:            <div className="flex items-center gap-2">
+570:               <svg width="14" height="14" className="rounded-[2px] border border-slate-400">
+571:                   <defs>
+572:                       <pattern id="legend-stripe" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
+573:                           <line x1="0" y="0" x2="0" y2="4" stroke="#94a3b8" strokeWidth="2" />
+574:                       </pattern>
+575:                   </defs>
+576:                   <rect width="14" height="14" fill="url(#legend-stripe)" />
+577:               </svg>
+578:               <span>Projection</span>
+579:            </div>
+580:            <div className="flex items-center gap-2">
+581:               <div className="w-[14px] h-[14px] bg-slate-500 rounded-[2px]"></div>
+582:               <span>Achievement</span>
+583:            </div>
+584:         </div>
+585:          {activeCategories.length > 0 && (
+586:           <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center px-2">
+587:              {activeCategories.map(c => (
+588:                  <div key={c} className="flex items-center gap-1.5">
+589:                      <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: PRODUCT_COLORS[c].ach }}></div>
+590:                      <span className="text-[9px]">{c}</span>
+591:                  </div>
+592:              ))}
+593:           </div>
+594:         )}
+595:       </div>
+596:     );
+597:   };
+598: 
+599:   return (
+600:     <>
+601:       <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+602:         <div className="flex flex-col gap-3">
+603:           <div className="flex flex-wrap items-center gap-3">
+604:             <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Financial Portal</h1>
+605: 
+606:             <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 font-bold uppercase tracking-wider border border-indigo-500/30">
+607:               {financialYear}
+608:             </span>
+609:           </div>
+610:           <div className="flex items-center gap-2 flex-wrap">
+611:             <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+612:                 <button 
+613:                   onClick={() => setViewMode('daily')}
+614:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+615:                 >Daily</button>
+616:                 <button 
+617:                   onClick={() => setViewMode('month')}
+618:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+619:                 >Month Wise</button>
+620:                 <button 
+621:                   onClick={() => setViewMode('year')}
+622:                   className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+623:                 >Year Wise</button>
+624:             </div>
+625:             
+626:             <div className="flex items-center gap-3">
+627:               <label 
+628:                 className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
+629:                 onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+630:               >
+631:                 <Calendar className="w-5 h-5 text-indigo-400" />
+632:                 <Input 
+633:                   type="date" 
+634:                   value={selectedDate}
+635:                   onChange={(e) => setSelectedDate(e.target.value)}
+636:                   className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white dark:[color-scheme:dark] focus:ring-0 cursor-pointer"
+637:                 />
+638:                 <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+639:                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+640:                     {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+641:                   </span>
+642:                   <span className="text-[10px] text-slate-500 font-medium">
+643:                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+644:                   </span>
+645:                 </div>
+646:               </label>
+647:               <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden lg:inline-block shrink-0">Select Date Tracker</span>
+648:             </div>
+649:           </div>
+650:         </div>
+651:         <div className="flex gap-6 sm:gap-8">
+652:             <div className="flex flex-col items-end">
+653:                 <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Total Business Today</span>
+654:                 <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString('en-IN')}</span>
+655:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+656:             </div>
+657:             <div className="flex flex-col items-end">
+658:                 <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
+659:                 <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{Object.values(kpiMetrics).reduce((sum, m) => sum + m.ftd, 0).toLocaleString('en-IN')}</span>
+660:                 <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+661:             </div>
+662:         </div>
+663:       </header>
+664: 
+665:       {/* KPI Category Selector */}
+666:       <div className="flex gap-2 mb-4 overflow-x-auto pb-1 hide-scrollbar">
+667:          {['All Products', ...PRODUCTS_LIST].map(cat => (
+668:             <button
+669:                key={cat}
+670:                onClick={() => setKpiCategory(cat)}
+671:                className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
+672:                   kpiCategory === cat 
+673:                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+674:                   : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
+675:                }`}
+676:             >
+677:                {cat}
+678:             </button>
+679:          ))}
+680:       </div>
+681: 
+682:       {/* KPI Timeline Metrics */}
+683:       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+684:         <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
+685:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+686:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {kpiCategory}</CardTitle>
+687:           </CardHeader>
+688:           <CardContent>
+689:             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
+690:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+691:           </CardContent>
+692:         </Card>
+693:         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
+694:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+695:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD {kpiCategory}</CardTitle>
+696:           </CardHeader>
+697:           <CardContent>
+698:             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
+699:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-indigo-500/10 inline-block px-2 py-0.5 rounded text-indigo-700 dark:text-indigo-300">{kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+700:           </CardContent>
+701:         </Card>
+702:         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
+703:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+704:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD {kpiCategory}</CardTitle>
+705:           </CardHeader>
+706:           <CardContent>
+707:             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
+708:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-emerald-500/10 inline-block px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300">{kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
+709:           </CardContent>
+710:         </Card>
+711:         <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
+712:           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
+713:             <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Daily Proj.</CardTitle>
+714:           </CardHeader>
+715:           <CardContent>
+716:             <div className="text-2xl font-mono font-bold text-slate-900 dark:text-white">
+717:                 ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
+718:             </div>
+719:             <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">All branches</p>
+720:           </CardContent>
+721:         </Card>
+722:       </div>
+723: 
+724:       <div className="grid gap-6 lg:grid-cols-7 mb-6">
+725:         {/* Branches Performance */}
+726:         <Card className="lg:col-span-4 flex flex-col border-slate-900/10 dark:border-white/10 min-h-[450px]">
+727:           <CardHeader className="flex justify-between items-center py-4 border-slate-900/10 dark:border-white/10 uppercase">
+728:             <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300">Branch Performance ({viewMode === 'daily' ? 'Daily' : viewMode === 'month' ? 'Monthly' : 'Yearly'})</span>
+729:           </CardHeader>
+730:           <CardContent className="flex-1 p-4 pb-0">
+731:             <ResponsiveContainer width="100%" height="100%">
+732:               <BarChart data={filteredBranches} margin={{ top: 20, right: 10, left: 0, bottom: 0 }} barGap={4} barCategoryGap="25%">
+733:                 <defs>
+734:                    {PRODUCTS_LIST.map(p => (
+735:                        <pattern key={`pattern_${p}`} id={getPatternId(p)} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+736:                            <line x1="0" y="0" x2="0" y2="6" stroke={PRODUCT_COLORS[p].ach} strokeWidth="3" />
+737:                        </pattern>
+738:                    ))}
+739:                 </defs>
+740:                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
+741:                 <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
+742:                 <YAxis 
+743:                     domain={[0, Math.ceil(maxYValue * 1.1)]} 
+744:                     tick={{fill: '#94a3b8', fontSize: 11}} 
+745:                     axisLine={false} 
+746:                     tickLine={false} 
+747:                     tickFormatter={formatYAxis} 
+748:                     width={60}
+749:                 />
+750:                 <RechartsTooltip 
+751:                     cursor={{fill: 'rgba(150,150,150,0.1)'}}
+752:                     content={<CustomBarTooltip />}
+753:                 />
+754:                 
+755:                 {/* Custom Legend */}
+756:                 <Legend content={renderCustomLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
+757: 
+758:                 {/* Projection Stacks */}
+759:                 {activeCategories.map(c => (
+760:                    <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={PRODUCT_COLORS[c].proj} stroke={PRODUCT_COLORS[c].ach} strokeWidth={1} maxBarSize={50} />
+761:                 ))}
+762: 
+763:                 {/* Achievement Stacks */}
+764:                 {activeCategories.map(c => (
+765:                    <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={PRODUCT_COLORS[c].ach} maxBarSize={50} />
+766:                 ))}
+767:               </BarChart>
+768:             </ResponsiveContainer>
+769:           </CardContent>
+770:         </Card>
+771: 
+772:         {/* Right Column: Mix */}
+773:         <div className="lg:col-span-3 flex flex-col gap-6">
+774:             {/* Business Mix */}
+775:             <Card className="flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
+776:               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
+777:                 <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
+778:                 <div className="flex items-center gap-3">
+779:                     <BranchSelect 
+780:                         value={selectedBusinessBranch}
+781:                         onChange={setSelectedBusinessBranch}
+782:                         branches={branches}
+783:                         includeAllOption={true}
+784:                         allOptionText="All Branches"
+785:                         className="w-[140px]"
+786:                     />
+787:                 </div>
+788:               </CardHeader>
+789:               <CardContent className="flex-1 flex justify-center items-center p-4">
+790:                 <ResponsiveContainer width="100%" height="100%">
+791:                   <PieChart>
+792:                     <Pie
+793:                       data={businessByCategory}
+794:                       cx="50%"
+795:                       cy="50%"
+796:                       innerRadius={90}
+797:                       outerRadius={140}
+798:                       paddingAngle={5}
+799:                       dataKey="value"
+800:                       stroke="none"
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

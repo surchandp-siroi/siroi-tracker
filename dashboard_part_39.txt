@@ -1,0 +1,209 @@
+Created At: 2026-07-26T10:40:08Z
+Completed At: 2026-07-26T10:40:08Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1694
+Total Bytes: 107973
+Showing lines 1200 to 1400
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1200:                             const isAch = !e.recordType || e.recordType === 'achievement';
+1201:                             if (!isAch) return;
+1202:                             const ed = new Date(e.entryDate);
+1203:                             if (ed.getMonth() === tMonth && ed.getFullYear() === tYear) {
+1204:                                 e.items.forEach(i => { achSum += (Number(i.disbursedAmount) || 0) });
+1205:                             }
+1206:                         });
+1207:                         const progress = targetAmt > 0 ? (achSum / targetAmt) * 100 : (achSum > 0 ? 100 : 0);
+1208:                         const isAchieved = progress >= 100 && targetAmt > 0;
+1209:                         return { ...b, targetAmt, achSum, progress, isAchieved };
+1210:                     });
+1211: 
+1212:                     if (showTargetLeaders) {
+1213:                         branchData = branchData.sort((a, b) => b.achSum - a.achSum);
+1214:                     }
+1215: 
+1216:                     return branchData.map((b, index) => {
+1217:                         const branchColors: Record<string, {text: string, bg: string, bar: string}> = {
+1218:                             'Guwahati': { text: 'text-purple-700 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20', bar: 'bg-purple-500' },
+1219:                             'Manipur': { text: 'text-rose-700 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20', bar: 'bg-rose-500' },
+1220:                             'Itanagar': { text: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20', bar: 'bg-amber-500' },
+1221:                             'Nagaland & Mizoram': { text: 'text-cyan-700 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20', bar: 'bg-cyan-500' }
+1222:                         };
+1223:                         const colorObj = branchColors[b.name] || { text: 'text-indigo-700 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20', bar: 'bg-indigo-500' };
+1224: 
+1225:                         return (
+1226:                             <div key={b.id} className={`flex flex-col justify-center gap-2 p-5 rounded-xl border shadow-sm relative overflow-hidden min-h-[110px] ${colorObj.bg}`}>
+1227:                                 <div className="flex items-center justify-between">
+1228:                                     <div className="flex items-center gap-2">
+1229:                                         {showTargetLeaders && (
+1230:                                             <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-slate-700">
+1231:                                                 #{index + 1}
+1232:                                             </div>
+1233:                                         )}
+1234:                                         <span className={`text-[13px] md:text-sm font-bold uppercase tracking-wider ${colorObj.text}`}>{b.name}</span>
+1235:                                     </div>
+1236:                                     <div className="z-10">
+1237:                                         <button 
+1238:                                             onClick={() => {
+1239:                                                 setProductTargetModal({
+1240:                                                     isOpen: true,
+1241:                                                     branchId: b.id,
+1242:                                                     branchName: b.name,
+1243:                                                     isEdit: b.targetAmt === 0 && user?.role === 'admin'
+1244:                                                 });
+1245:                                                 const currentTargetRecord = branchTargets.find(t => t.branchId === b.id && t.monthYear === targetMonthStr);
+1246:                                                 const pt = (currentTargetRecord?.productTargets || {}) as Record<string, any>;
+1247:                                                 const initialInputs: Record<string, string> = {};
+1248:                                                 products.forEach(p => {
+1249:                                                     initialInputs[p.name] = pt[p.name] !== undefined ? pt[p.name].toString() : '';
+1250:                                                 });
+1251:                                                 setModalTargetInputs(initialInputs);
+1252:                                             }}
+1253:                                             className={`text-xs font-mono font-bold px-2 py-1 rounded transition-colors ${
+1254:                                                 b.targetAmt > 0 
+1255:                                                 ? 'text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800' 
+1256:                                                 : 'text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700'
+1257:                                             }`}
+1258:                                         >
+1259:                                             {b.targetAmt > 0 ? `₹${b.targetAmt.toLocaleString('en-IN')}` : (user?.role === 'admin' ? 'Set Targets' : 'No Target Set')}
+1260:                                         </button>
+1261:                                     </div>
+1262:                                 </div>
+1263:                                 <div className="flex items-center justify-between text-xs mt-2 relative z-10">
+1264:                                     <span className="text-slate-600 dark:text-slate-400 font-medium">Achieved: <span className="font-mono text-slate-900 dark:text-white font-bold ml-1">₹{b.achSum.toLocaleString('en-IN')}</span></span>
+1265:                                     <div className="flex items-center gap-2">
+1266:                                         {b.targetAmt > 0 && (
+1267:                                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${b.progress >= 100 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'}`}>
+1268:                                                 {Math.abs(b.progress - 100) < 0.1 ? 'On Target' : b.progress > 100 ? `+${(b.progress - 100).toFixed(1)}%` : `-${(100 - b.progress).toFixed(1)}%`}
+1269:                                             </span>
+1270:                                         )}
+1271:                                         <span className={`font-bold ${colorObj.text}`}>{b.progress.toFixed(1)}%</span>
+1272:                                     </div>
+1273:                                 </div>
+1274:                                 <div className="w-full h-2 bg-slate-200/60 dark:bg-slate-800/60 rounded-full overflow-hidden mt-1.5 relative z-10">
+1275:                                     <div className={`h-full rounded-full transition-all duration-500 ${b.isAchieved ? 'bg-emerald-500' : colorObj.bar}`} style={{ width: `${Math.min(100, b.progress)}%` }}></div>
+1276:                                 </div>
+1277:                             </div>
+1278:                         );
+1279:                     });
+1280:                 })()}
+1281:             </CardContent>
+1282:         </Card>
+1283:       </div>
+1284: 
+1285:       <hr className="my-10 border-slate-900/10 dark:border-white/10" />
+1286: 
+1287:       <div className="flex flex-col gap-4">
+1288:       <Card className="p-6 border-slate-900/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm">
+1289:           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+1290:               <div>
+1291:                   <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wider">Granular Tracking</h2>
+1292:                   <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Deeper insights</p>
+1293:               </div>
+1294:               <div className="flex flex-wrap items-center gap-4">
+1295:                   {/* Location Filter */}
+1296:                   <div className="hidden md:flex items-center gap-2 flex-wrap">
+1297:                       <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold shrink-0">Filter By:</span>
+1298:                       <button
+1299:                           onClick={() => setGranularLocation('all')}
+1300:                           className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+1301:                               granularLocation === 'all'
+1302:                                   ? 'bg-indigo-500 text-white shadow-sm'
+1303:                                   : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+1304:                           }`}
+1305:                       >
+1306:                           Consolidated
+1307:                       </button>
+1308:                       {branches.map(b => (
+1309:                           <button
+1310:                               key={b.id}
+1311:                               onClick={() => setGranularLocation(b.id)}
+1312:                               className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+1313:                                   granularLocation === b.id
+1314:                                       ? 'bg-indigo-500 text-white shadow-sm'
+1315:                                       : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+1316:                               }`}
+1317:                           >
+1318:                               {b.name}
+1319:                           </button>
+1320:                       ))}
+1321:                   </div>
+1322: 
+1323:                   <div className="md:hidden flex items-center bg-slate-900/5 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 w-full sm:w-auto">
+1324:                       <div className="flex items-center justify-center pl-2 pr-1">
+1325:                           <MapPin className="w-4 h-4 text-indigo-500" />
+1326:                       </div>
+1327:                       <select
+1328:                           value={granularLocation}
+1329:                           onChange={(e) => setGranularLocation(e.target.value)}
+1330:                           className="w-full bg-transparent border-none text-xs font-bold uppercase text-slate-700 dark:text-slate-300 focus:ring-0 appearance-none py-2 pr-6"
+1331:                           style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '1em' }}
+1332:                       >
+1333:                           <option value="all">Consolidated</option>
+1334:                           {branches.map(b => (
+1335:                               <option key={b.id} value={b.id}>{b.name}</option>
+1336:                           ))}
+1337:                       </select>
+1338:                   </div>
+1339: 
+1340:                   {/* Timeframe Toggle */}
+1341:                   <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+1342:                       <button 
+1343:                           onClick={() => setGranularTimeframe('MTD')}
+1344:                           className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'MTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+1345:                       >MTD</button>
+1346:                       <button 
+1347:                           onClick={() => setGranularTimeframe('YTD')}
+1348:                           className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'YTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+1349:                       >YTD</button>
+1350:                   </div>
+1351:               </div>
+1352:           </div>
+1353:       </Card>
+1354:       
+1355:       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+1356:           {[
+1357:               { cat: 'Loan', title: 'Loan Portfolio', colorClass: 'text-indigo-600 dark:text-indigo-400' },
+1358:               { cat: 'Insurance', title: 'Insurance Plans', colorClass: 'text-amber-600 dark:text-amber-400' },
+1359:               { cat: 'Forex', title: 'Forex Services', colorClass: 'text-emerald-600 dark:text-emerald-400' },
+1360:               { cat: 'Consultancy', title: 'Consulting', colorClass: 'text-sky-600 dark:text-sky-400' },
+1361:               { cat: 'Investments', title: 'Investments', colorClass: 'text-purple-600 dark:text-purple-400' }
+1362:           ].map(categoryInfo => {
+1363:               const catProducts = products.filter(p => p.category === categoryInfo.cat);
+1364:               if (catProducts.length === 0) return null;
+1365: 
+1366:               return (
+1367:                   <Card key={categoryInfo.cat} className="border-slate-900/10 dark:border-white/10 flex flex-col">
+1368:                       <CardHeader className="flex flex-row items-center justify-between py-3 border-b border-slate-900/10 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+1369:                           <span className={`text-[10px] font-bold uppercase tracking-widest ${categoryInfo.colorClass}`}>{categoryInfo.title}</span>
+1370:                       </CardHeader>
+1371:                       <CardContent className="p-0 flex-1">
+1372:                           {catProducts.map(p => {
+1373:                               const stats = granularData[p.name] || { amount: 0, count: 0, target: 0 };
+1374:                               const progress = stats.target > 0 ? (stats.amount / stats.target) * 100 : (stats.amount > 0 ? 100 : 0);
+1375: 
+1376:                               return (
+1377:                                   <div key={p.id} className="flex flex-col px-3 py-3 border-b border-slate-900/5 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+1378:                                       <div className="flex items-center justify-between mb-1.5">
+1379:                                           <span className="text-[10px] uppercase font-bold text-slate-800 dark:text-slate-300 pr-2 leading-tight">{p.name}</span>
+1380:                                           <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">{stats.count} {stats.count === 1 ? 'Entry' : 'Entries'}</span>
+1381:                                       </div>
+1382:                                       
+1383:                                       <div className="flex items-end justify-between mt-1">
+1384:                                           <div className="flex flex-col">
+1385:                                               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Achieved</span>
+1386:                                               <span className="text-sm font-mono font-bold text-emerald-500 dark:text-emerald-400 leading-none">₹{stats.amount.toLocaleString('en-IN')}</span>
+1387:                                           </div>
+1388:                                           
+1389:                                           <div className="flex flex-col items-end">
+1390:                                               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Target</span>
+1391:                                               <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-400 leading-none">₹{stats.target.toLocaleString('en-IN')}</span>
+1392:                                           </div>
+1393:                                       </div>
+1394: 
+1395:                                       {stats.target > 0 && (
+1396:                                           <div className="w-full h-1.5 bg-slate-200/60 dark:bg-slate-800/60 rounded-full overflow-hidden mt-2 relative">
+1397:                                               <div className={`h-full rounded-full transition-all duration-500 ${stats.amount >= stats.target ? 'bg-emerald-500' : 'bg-indigo-500'}`} style={{ width: `${Math.min(100, progress)}%` }}></div>
+1398:                                           </div>
+1399:                                       )}
+1400:                                   </div>
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

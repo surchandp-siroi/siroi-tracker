@@ -1,0 +1,80 @@
+              <CardContent className="flex-1 flex justify-center items-center p-4">
+                {/* Desktop View: Pie Chart */}
+                <div className="hidden md:block w-full h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={businessByCategory}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={90}
+                        outerRadius={140}
+                        paddingAngle={5}
+                        dataKey="value"
+                        stroke="none"
+                        labelLine={false}
+                        isAnimationActive={false}
+                        label={renderCustomizedPieLabel}
+                      >
+                        {businessByCategory.map((entry, index) => {
+                          const color = PRODUCT_COLORS[entry.name]?.ach || '#94a3b8';
+                          return <Cell key={`cell-${index}`} fill={color} />
+                        })}
+                      </Pie>
+                      <RechartsTooltip 
+                          formatter={(value: any) => `₹${Number(value || 0).toLocaleString('en-IN')}`}
+                          contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}}  
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Mobile View: Area Chart */}
+                <div className="md:hidden w-full h-[250px] -ml-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dailyTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        {activeCategories.map(c => (
+                          <linearGradient key={`grad_${c}`} id={`grad_${c}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0}/>
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      <XAxis 
+                        dataKey="day" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 10, fill: '#64748b' }} 
+                        tickFormatter={(val) => {
+                          const d = new Date(selectedDate);
+                          return `${d.toLocaleString('default', { month: 'short' })} ${val}`;
+                        }}
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 10, fill: '#64748b' }} 
+                        tickFormatter={(val) => `${val >= 1000 ? (val / 1000).toFixed(0) + 'K' : val}`}
+                      />
+                      <RechartsTooltip 
+                        formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, String(name).replace('_cum', '')]}
+                        labelFormatter={(label) => `Day ${label}`}
+                        contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px', fontSize: '12px'}}  
+                      />
+                      {activeCategories.map(c => (
+                        <Area 
+                          key={`area_${c}`}
+                          type="monotone" 
+                          dataKey={`${c}_cum`} 
+                          stackId="1" 
+                          stroke={PRODUCT_COLORS[c]?.ach || '#94a3b8'} 
+                          strokeWidth={2}
+                          fillOpacity={1} 
+                          fill={`url(#grad_${c})`} 
+                        />
+                      ))}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>

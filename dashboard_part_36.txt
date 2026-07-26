@@ -1,0 +1,59 @@
+Created At: 2026-07-26T10:37:11Z
+Completed At: 2026-07-26T10:37:12Z
+File Path: `file:///C:/Users/tomas/.gemini/antigravity/playground/polar-omega/Siroi_Tracker-main/src/pages/DashboardPage.tsx`
+Total Lines: 1694
+Total Bytes: 107931
+Showing lines 940 to 990
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+940:                           return <Cell key={`cell-${index}`} fill={color} />
+941:                         })}
+942:                       </Pie>
+943:                       <RechartsTooltip 
+944:                           formatter={(value: any) => `₹${Number(value || 0).toLocaleString('en-IN')}`}
+945:                           contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}}  
+946:                       />
+947:                     </PieChart>
+948:                   </ResponsiveContainer>
+949:                 </div>
+950:                 
+951:                 {/* Mobile View: Area Chart */}
+952:                 <div className="md:hidden w-full h-[250px] -ml-2">
+953:                   <ResponsiveContainer width="100%" height="100%">
+954:                     <AreaChart data={dailyTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+955:                       <defs>
+956:                         {activeCategories.map(c => (
+957:                           <linearGradient key={`grad_${c}`} id={`grad_${c}`} x1="0" y1="0" x2="0" y2="1">
+958:                             <stop offset="5%" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0.8}/>
+959:                             <stop offset="95%" stopColor={PRODUCT_COLORS[c]?.ach || '#94a3b8'} stopOpacity={0}/>
+960:                           </linearGradient>
+961:                         ))}
+962:                       </defs>
+963:                       <XAxis 
+964:                         dataKey="day" 
+965:                         axisLine={false} 
+966:                         tickLine={false} 
+967:                         tick={{ fontSize: 10, fill: '#64748b' }} 
+968:                         tickFormatter={(val) => {
+969:                           const d = new Date(selectedDate);
+970:                           return `${d.toLocaleString('default', { month: 'short' })} ${val}`;
+971:                         }}
+972:                       />
+973:                       <YAxis 
+974:                         axisLine={false} 
+975:                         tickLine={false} 
+976:                         tick={{ fontSize: 10, fill: '#64748b' }} 
+977:                         tickFormatter={(val) => `${val >= 1000 ? (val / 1000).toFixed(0) + 'K' : val}`}
+978:                       />
+979:                       <RechartsTooltip 
+980:                         formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, String(name).replace('_cum', '')]}
+981:                         labelFormatter={(label) => `Day ${label}`}
+982:                         contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px', fontSize: '12px'}}  
+983:                       />
+984:                       {activeCategories.map(c => (
+985:                         <Area 
+986:                           key={`area_${c}`}
+987:                           type="monotone" 
+988:                           dataKey={`${c}_cum`} 
+989:                           stackId="1" 
+990:                           stroke={PRODUCT_COLORS[c]?.ach || '#94a3b8'} 
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.
