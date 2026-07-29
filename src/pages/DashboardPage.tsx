@@ -2,7 +2,8 @@ import { useDataStore } from '@/store/useDataStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
+import { format } from 'date-fns';
 import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck, ArrowDown } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { BranchSelect } from '@/components/BranchSelect';
@@ -384,6 +385,70 @@ export default function DashboardOverview() {
 
      return { filteredBranches: fb, totalBusiness: total, businessByCategory: rbC };
   }, [filteredEntries, branches, selectedBusinessBranch]);
+
+  const businessTimeSeries = useMemo(() => {
+      const timeMap = new Map();
+      const endDate = new Date(selectedDate);
+      const activeProducts = new Set<string>();
+      
+      // Initialize map with 0 for all products for the last 7 days ending on selectedDate
+      for (let i = 6; i >= 0; i--) {
+          const d = new Date(endDate);
+          d.setDate(endDate.getDate() - i);
+          
+          const initialProducts: Record<string, number> = {};
+          PRODUCTS_LIST.forEach(p => initialProducts[p] = 0);
+          timeMap.set(format(d, 'MMM dd'), initialProducts);
+      }
+
+      validEntries.forEach(entry => {
+          const isAch = !entry.recordType || entry.recordType === 'achievement';
+          if (!isAch) return;
+          if (selectedBusinessBranch !== 'all' && entry.branchId !== selectedBusinessBranch) return;
+
+          const entryDateObj = new Date(entry.entryDate);
+          if (isNaN(entryDateObj.getTime())) return;
+
+          const entryDateStr = format(entryDateObj, 'MMM dd');
+          if (timeMap.has(entryDateStr)) {
+              const dayData = timeMap.get(entryDateStr);
+              
+              entry.items.forEach(item => {
+                  let prod = (item.product || 'Personal Loan').trim();
+                  
+                  const pLower = prod.toLowerCase();
+                  if (pLower === 'mortgage' || pLower === 'home loan' || pLower.includes('housing')) prod = 'Housing Loan/LAP';
+                  else if (pLower.includes('mutual') || pLower.includes('sip')) prod = 'Mutual Fund/SIP';
+                  else if (pLower.startsWith('personal loan') || pLower.startsWith('pl')) prod = 'Personal Loan';
+                  else if (pLower.startsWith('business loan') || pLower.startsWith('bl')) prod = 'Business Loan';
+                  else if (pLower.includes('life insurance')) prod = 'Life Insurance';
+                  else if (pLower.includes('general insurance')) prod = 'General Insurance';
+                  else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
+                  else if (pLower.includes('forex')) prod = 'Retail Forex';
+                  else if (pLower.includes('gst')) prod = 'GST filing';
+                  else if (pLower.includes('itr')) prod = 'ITR filing';
+
+                  let achAmt = 0;
+                  if (item.category === 'Loan') achAmt = (Number(item.disbursedAmount) || 0);
+                  else if (item.category === 'Insurance') achAmt = (item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0);
+                  else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') achAmt = (Number(item.amount) || 0);
+                  else achAmt = (Number(item.disbursedAmount) || Number(item.amount) || 0);
+                  
+                  if (achAmt > 0) {
+                      activeProducts.add(prod);
+                      if (dayData[prod] !== undefined) {
+                          dayData[prod] += achAmt;
+                      }
+                  }
+              });
+          }
+      });
+
+      return {
+          data: Array.from(timeMap.entries()).map(([date, data]) => ({ date, ...data })),
+          activeProducts: Array.from(activeProducts)
+      };
+  }, [validEntries, selectedDate, selectedBusinessBranch]);
 
   const loanFunnelData = useMemo(() => {
      let loggedCount = 0, loggedVal = 0;
@@ -917,8 +982,8 @@ export default function DashboardOverview() {
 
         {/* Right Column: Mix */}
         <div className="lg:col-span-3 flex flex-col gap-6">
-            {/* Business Mix */}
-            <Card className="flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
+            {/* Desktop Business Mix (Pie Chart) */}
+            <Card className="hidden md:flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
                 <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
                 <div className="flex items-center gap-3">
@@ -967,6 +1032,75 @@ export default function DashboardOverview() {
                           <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
                               <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: color }}></span>
                               {entry.name}
+                          </div>
+                      );
+                  })}
+              </div>
+            </Card>
+
+            {/* Mobile Business Mix (Area Chart) */}
+            <Card className="md:hidden flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[350px]">
+              <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
+                <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Sales Overview</span>
+                <div className="flex items-center gap-3">
+                    <BranchSelect 
+                        value={selectedBusinessBranch}
+                        onChange={setSelectedBusinessBranch}
+                        branches={branches}
+                        includeAllOption={true}
+                        allOptionText="All Branches"
+                        className="w-[110px]"
+                    />
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col p-4">
+                <div className="mb-4">
+                  <p className="text-xs text-slate-500 font-medium mb-1">Total Revenue</p>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">₹{(totalBusiness || 0).toLocaleString('en-IN')}</h3>
+                </div>
+                <div className="flex-1 min-h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={businessTimeSeries.data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                      <defs>
+                        {businessTimeSeries.activeProducts.map(prod => (
+                            <linearGradient key={`grad_${prod}`} id={`color_${prod.replace(/[^a-zA-Z0-9]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={PRODUCT_COLORS[prod]?.ach || '#4f46e5'} stopOpacity={0.4}/>
+                              <stop offset="95%" stopColor={PRODUCT_COLORS[prod]?.ach || '#4f46e5'} stopOpacity={0}/>
+                            </linearGradient>
+                        ))}
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
+                      <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{fill: '#94a3b8', fontSize: 10}} dy={10} />
+                      <YAxis hide={true} />
+                      <RechartsTooltip 
+                        contentStyle={{backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                        itemStyle={{color: '#0f172a', fontWeight: 'bold'}}
+                        formatter={(value: any, name: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, name]}
+                        labelStyle={{color: '#64748b', fontSize: '12px', marginBottom: '4px'}}
+                      />
+                      {businessTimeSeries.activeProducts.map(prod => (
+                          <Area 
+                              key={prod}
+                              type="monotone" 
+                              dataKey={prod} 
+                              stackId="1" 
+                              stroke={PRODUCT_COLORS[prod]?.ach || '#4f46e5'} 
+                              strokeWidth={3} 
+                              fillOpacity={1} 
+                              fill={`url(#color_${prod.replace(/[^a-zA-Z0-9]/g, '')})`} 
+                          />
+                      ))}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+              <div className="px-6 pb-6 flex flex-wrap gap-4 justify-center mt-auto shrink-0 pt-4">
+                  {businessTimeSeries.activeProducts.map((prod) => {
+                      const color = PRODUCT_COLORS[prod]?.ach || '#94a3b8';
+                      return (
+                          <div key={prod} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
+                              <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: color }}></span>
+                              {prod}
                           </div>
                       )
                   })}

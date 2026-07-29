@@ -384,7 +384,7 @@ export default function HomePage() {
       <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 p-6 sm:p-12 relative rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-y-auto">
         
         {/* Top Left Logo (For Mobile/Smaller Screens where left pane is hidden) */}
-        <div className="absolute top-8 left-8 flex lg:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-2 shrink-0 mb-4">
             <LogoIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white uppercase">Siroi Forex</span>
         </div>
