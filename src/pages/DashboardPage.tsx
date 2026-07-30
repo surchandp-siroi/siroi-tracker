@@ -110,7 +110,84 @@ const renderCustomizedPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, 
   );
 };
 
+const BranchFlipCard = ({ branch, productsList, productColors, branchColor }: any) => {
+    const [isFlipped, setIsFlipped] = useState(false);
+    const proj = branch.dailyProjection || 0;
+    const ach = branch.dailyAchievement || 0;
+    const pct = proj > 0 ? Math.min(Math.round((ach / proj) * 100), 100) : 0;
+    
+    // Filter active products for this branch
+    const activeProducts = productsList.filter((p: string) => (branch[`proj_${p}`] || 0) > 0 || (branch[`ach_${p}`] || 0) > 0);
 
+    return (
+        <div 
+            className="relative w-full h-[320px] cursor-pointer"
+            style={{ perspective: '1000px' }}
+            onClick={() => setIsFlipped(!isFlipped)}
+        >
+            <div 
+                className="w-full h-full transition-transform duration-500 ease-in-out relative"
+                style={{ 
+                    transformStyle: 'preserve-3d', 
+                    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' 
+                }}
+            >
+                {/* Front Side */}
+                <div 
+                    className="absolute inset-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-sm"
+                    style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="font-bold text-lg text-slate-900 dark:text-white">{branch.name}</span>
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center border-4" style={{ borderColor: branchColor, color: branchColor }}>
+                            <span className="text-xs font-bold">{pct}%</span>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1 block">Daily Target</span>
+                            <span className="text-2xl font-mono font-bold text-slate-900 dark:text-white">₹{proj.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-1 block">Daily Achievement</span>
+                            <span className="text-2xl font-mono font-bold" style={{ color: branchColor }}>₹{ach.toLocaleString('en-IN')}</span>
+                        </div>
+                    </div>
+                    <div className="text-center mt-2">
+                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full">Tap for details</span>
+                    </div>
+                </div>
+
+                {/* Back Side */}
+                <div 
+                    className="absolute inset-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col shadow-sm overflow-hidden"
+                    style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                >
+                    <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                        <span className="font-bold text-base" style={{ color: branchColor }}>{branch.name}</span>
+                        <span className="text-xs font-semibold text-slate-500">Details</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                        {activeProducts.length === 0 ? (
+                             <div className="text-center text-xs text-slate-500 mt-4">No product data for today.</div>
+                        ) : activeProducts.map((p: string) => (
+                             <div key={p} className="flex flex-col bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                                 <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">{p}</span>
+                                 <div className="flex justify-between items-center text-[11px] font-mono">
+                                     <span className="text-slate-500 dark:text-slate-400">Proj: ₹{(branch[`proj_${p}`] || 0).toLocaleString('en-IN')}</span>
+                                     <span className="font-bold" style={{ color: productColors[p]?.ach || branchColor }}>Ach: ₹{(branch[`ach_${p}`] || 0).toLocaleString('en-IN')}</span>
+                                 </div>
+                             </div>
+                        ))}
+                    </div>
+                     <div className="text-center mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tap to close</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function DashboardOverview() {
   const { products, channels, branches, entries, branchTargets, setBranchTarget } = useDataStore();
@@ -936,47 +1013,65 @@ export default function DashboardOverview() {
         {/* Branches Performance */}
         <Card className="lg:col-span-4 flex flex-col border-slate-900/10 dark:border-white/10 min-h-[450px]">
           <CardHeader className="flex justify-between items-center py-4 border-slate-900/10 dark:border-white/10 uppercase">
-            <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300">Branch Performance ({viewMode === 'daily' ? 'Daily' : viewMode === 'month' ? 'Monthly' : 'Yearly'})</span>
+            <span className="text-base font-bold tracking-widest text-slate-900 dark:text-white uppercase">Branch Performance ({viewMode === 'daily' ? 'Daily' : viewMode === 'month' ? 'Monthly' : 'Yearly'})</span>
           </CardHeader>
-          <CardContent className="flex-1 p-4 pb-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={filteredBranches} margin={{ top: 20, right: 10, left: 0, bottom: 0 }} barGap={4} barCategoryGap="25%">
-                <defs>
-                   {PRODUCTS_LIST.map(p => (
-                       <pattern key={`pattern_${p}`} id={getPatternId(p)} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
-                           <line x1="0" y="0" x2="0" y2="6" stroke={PRODUCT_COLORS[p].ach} strokeWidth="3" />
-                       </pattern>
-                   ))}
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
-                <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
-                <YAxis 
-                    domain={[0, Math.ceil(maxYValue * 1.1)]} 
-                    tick={{fill: '#94a3b8', fontSize: 11}} 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tickFormatter={formatYAxis} 
-                    width={60}
-                />
-                <RechartsTooltip 
-                    cursor={{fill: 'rgba(150,150,150,0.1)'}}
-                    content={<CustomBarTooltip />}
-                />
-                
-                {/* Custom Legend */}
-                <Legend content={renderCustomLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
+          <CardContent className="flex-1 p-4 pb-0 flex flex-col">
+            
+            {/* Desktop View: Bar Chart */}
+            <div className="hidden md:block flex-1 min-h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={filteredBranches} margin={{ top: 20, right: 10, left: 0, bottom: 0 }} barGap={4} barCategoryGap="25%">
+                  <defs>
+                     {PRODUCTS_LIST.map(p => (
+                         <pattern key={`pattern_${p}`} id={getPatternId(p)} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+                             <line x1="0" y="0" x2="0" y2="6" stroke={PRODUCT_COLORS[p].ach} strokeWidth="3" />
+                         </pattern>
+                     ))}
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
+                  <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
+                  <YAxis 
+                      domain={[0, Math.ceil(maxYValue * 1.1)]} 
+                      tick={{fill: '#94a3b8', fontSize: 11}} 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tickFormatter={formatYAxis} 
+                      width={60}
+                  />
+                  <RechartsTooltip 
+                      cursor={{fill: 'rgba(150,150,150,0.1)'}}
+                      content={<CustomBarTooltip />}
+                  />
+                  
+                  {/* Custom Legend */}
+                  <Legend content={renderCustomLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
 
-                {/* Projection Stacks */}
-                {activeCategories.map(c => (
-                   <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={PRODUCT_COLORS[c].proj} stroke={PRODUCT_COLORS[c].ach} strokeWidth={1} maxBarSize={50} />
-                ))}
+                  {/* Projection Stacks */}
+                  {activeCategories.map(c => (
+                     <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={PRODUCT_COLORS[c].proj} stroke={PRODUCT_COLORS[c].ach} strokeWidth={1} maxBarSize={50} />
+                  ))}
 
-                {/* Achievement Stacks */}
-                {activeCategories.map(c => (
-                   <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={PRODUCT_COLORS[c].ach} maxBarSize={50} />
+                  {/* Achievement Stacks */}
+                  {activeCategories.map(c => (
+                     <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={PRODUCT_COLORS[c].ach} maxBarSize={50} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Mobile View: Flipping Cards */}
+            <div className="md:hidden flex flex-col gap-4 py-2 pb-6">
+                {filteredBranches.map((branch: any) => (
+                    <BranchFlipCard 
+                        key={branch.name} 
+                        branch={branch} 
+                        productsList={PRODUCTS_LIST} 
+                        productColors={PRODUCT_COLORS}
+                        branchColor={BRANCH_COLORS[branch.name] || '#1e40af'}
+                    />
                 ))}
-              </BarChart>
-            </ResponsiveContainer>
+            </div>
+
           </CardContent>
         </Card>
 
@@ -985,7 +1080,7 @@ export default function DashboardOverview() {
             {/* Desktop Business Mix (Pie Chart) */}
             <Card className="hidden md:flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
-                <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Business Mix</span>
+                <span className="text-base font-bold tracking-widest text-slate-900 dark:text-white uppercase">Business Mix</span>
                 <div className="flex items-center gap-3">
                     <BranchSelect 
                         value={selectedBusinessBranch}
@@ -1041,7 +1136,7 @@ export default function DashboardOverview() {
             {/* Mobile Business Mix (Area Chart) */}
             <Card className="md:hidden flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[350px]">
               <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
-                <span className="text-[10px] font-bold tracking-widest text-slate-700 dark:text-slate-300 uppercase">Sales Overview</span>
+                <span className="text-base font-bold tracking-widest text-slate-900 dark:text-white uppercase">Sales Overview</span>
                 <div className="flex items-center gap-3">
                     <BranchSelect 
                         value={selectedBusinessBranch}
@@ -1152,7 +1247,8 @@ export default function DashboardOverview() {
              </div>
           </CardHeader>
           <CardContent className="p-6 md:p-8 overflow-x-auto flex items-center justify-center">
-             <div className="flex flex-col items-center w-full max-w-3xl mx-auto py-2">
+             {/* Desktop Funnel View */}
+             <div className="hidden md:flex flex-col items-center w-full max-w-3xl mx-auto py-2">
                  
                  {/* Stage 1: Logged */}
                  <div className="w-full relative h-36 bg-amber-100 dark:bg-amber-500/20 flex flex-col items-center justify-center text-orange-700 dark:text-orange-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-amber-200 dark:border-amber-500/30">
@@ -1191,6 +1287,58 @@ export default function DashboardOverview() {
                      <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-800/80 dark:text-emerald-400/80 mb-1">Disbursed</span>
                      <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
                      <span className="text-[10px] font-semibold bg-emerald-600/10 dark:bg-emerald-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-emerald-900 dark:text-emerald-300">{loanFunnelData.disbursed.count} Funded</span>
+                 </div>
+             </div>
+
+             {/* Mobile Vertical Stepper View */}
+             <div className="flex md:hidden flex-col items-stretch w-full max-w-md mx-auto py-2 gap-0 relative">
+                 {/* Vertical line connecting the steps */}
+                 <div className="absolute left-[31px] top-10 bottom-10 w-0.5 bg-slate-200 dark:bg-slate-800 z-0"></div>
+
+                 {/* Stage 1: Logged */}
+                 <div className="relative z-10 flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm mb-4">
+                     <div className="w-4 h-4 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] shrink-0"></div>
+                     <div className="flex flex-col">
+                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Logged</span>
+                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanFunnelData.logged.value.toLocaleString('en-IN')}</span>
+                         <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">{loanFunnelData.logged.count} Applications</span>
+                     </div>
+                 </div>
+
+                 {/* Conversion 1 */}
+                 <div className="relative z-10 flex items-center pl-[52px] mb-4">
+                     <div className="bg-slate-50 dark:bg-slate-950 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1.5">
+                         <ArrowDown className="w-3 h-3 text-slate-400" />
+                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{loanFunnelData.sanctioned.conversion}% Conversion</span>
+                     </div>
+                 </div>
+
+                 {/* Stage 2: Sanctioned */}
+                 <div className="relative z-10 flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm mb-4">
+                     <div className="w-4 h-4 rounded-full bg-indigo-400 shrink-0"></div>
+                     <div className="flex flex-col">
+                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Sanctioned</span>
+                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanFunnelData.sanctioned.value.toLocaleString('en-IN')}</span>
+                         <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">{loanFunnelData.sanctioned.count} Approvals</span>
+                     </div>
+                 </div>
+
+                 {/* Conversion 2 */}
+                 <div className="relative z-10 flex items-center pl-[52px] mb-4">
+                     <div className="bg-slate-50 dark:bg-slate-950 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1.5">
+                         <ArrowDown className="w-3 h-3 text-slate-400" />
+                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{loanFunnelData.disbursed.conversion}% Conversion</span>
+                     </div>
+                 </div>
+
+                 {/* Stage 3: Disbursed */}
+                 <div className="relative z-10 flex items-center gap-4 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 shadow-sm">
+                     <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] shrink-0"></div>
+                     <div className="flex flex-col">
+                         <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-500">Disbursed</span>
+                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
+                         <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{loanFunnelData.disbursed.count} Funded</span>
+                     </div>
                  </div>
              </div>
           </CardContent>

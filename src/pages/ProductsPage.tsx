@@ -1,7 +1,7 @@
 import { useDataStore } from '@/store/useDataStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, Input } from '@/components/ui';
-import { Calendar } from 'lucide-react';
+import { Calendar, TrendingUp } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 
 export default function ProductsPage() {
@@ -232,7 +232,8 @@ export default function ProductsPage() {
                 Projected
               </button>
             </div>
-            <div className="flex items-center gap-3">
+            {/* Desktop Date Picker */}
+            <div className="hidden sm:flex items-center gap-3">
               <label 
                 className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
                 onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
@@ -254,57 +255,85 @@ export default function ProductsPage() {
                 </div>
               </label>
             </div>
+            {/* Mobile Date Picker */}
+            <div className="sm:hidden flex items-center">
+              <label 
+                className="relative flex-shrink-0 flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
+                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
+              >
+                <Calendar className="h-5 w-5" />
+                <Input 
+                  type="date" 
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                />
+              </label>
+            </div>
           </div>
         </div>
       </header>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="pb-2 border-b-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">FTD {viewMode === 'achievement' ? 'Acquired' : 'Projected'}</span>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
+        {/* HERO KPI (FTD) */}
+        <Card className="col-span-2 lg:col-span-1 border-indigo-500/20 dark:border-indigo-500/20 bg-gradient-to-br from-indigo-50/50 to-white dark:from-indigo-900/10 dark:to-slate-900 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-bl-full -mr-4 -mt-4 pointer-events-none"></div>
+          <CardHeader className="pb-1 border-b-0">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-700 dark:text-indigo-400">FTD {viewMode === 'achievement' ? 'Acquired' : 'Projected'}</span>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{currentFTD.toLocaleString('en-IN')}</div>
-            {viewMode === 'achievement' && <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">vs target ₹{target.toLocaleString('en-IN')}</p>}
+          <CardContent className="flex items-end justify-between pb-4">
+            <div>
+               <div className="text-3xl lg:text-2xl font-mono font-black text-indigo-950 dark:text-white">₹{currentFTD.toLocaleString('en-IN')}</div>
+               {viewMode === 'achievement' && <p className="text-[10px] text-indigo-600/70 dark:text-indigo-400/70 mt-1 uppercase tracking-wider font-bold">vs target ₹{target.toLocaleString('en-IN')}</p>}
+            </div>
+            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
+               <TrendingUp className="w-5 h-5" />
+            </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="pb-2 border-b-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">MTD Volume</span>
+        
+        {/* Remaining 2x2 on Mobile */}
+        <Card className="border-slate-900/10 dark:border-white/10 shadow-sm">
+          <CardHeader className="pb-1 border-b-0">
+            <span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">MTD Volume</span>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{currentMTD.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Month to date</p>
+          <CardContent className="pb-4">
+            <div className="text-xl lg:text-2xl font-mono font-bold dark:text-white">₹{currentMTD.toLocaleString('en-IN')}</div>
+            <p className="text-[9px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Month to date</p>
           </CardContent>
         </Card>
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="pb-2 border-b-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">YTD Bookings</span>
+
+        <Card className="border-slate-900/10 dark:border-white/10 shadow-sm">
+          <CardHeader className="pb-1 border-b-0">
+            <span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">YTD Bookings</span>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">₹{currentYTD.toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Year to date</p>
+          <CardContent className="pb-4">
+            <div className="text-xl lg:text-2xl font-mono font-bold dark:text-white">₹{currentYTD.toLocaleString('en-IN')}</div>
+            <p className="text-[9px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Year to date</p>
           </CardContent>
         </Card>
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="pb-2 border-b-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Achv. %</span>
+
+        <Card className="border-slate-900/10 dark:border-white/10 shadow-sm bg-slate-50/50 dark:bg-slate-800/30">
+          <CardHeader className="pb-1 border-b-0 flex flex-row items-center justify-between space-y-0">
+            <span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Achv. %</span>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-mono font-bold dark:text-white">{achvPct}%</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">FTD vs daily target</p>
+          <CardContent className="pb-4">
+            <div className="text-xl lg:text-2xl font-mono font-bold text-emerald-600 dark:text-emerald-400">{achvPct}%</div>
+            <p className="text-[9px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">FTD vs Target</p>
           </CardContent>
         </Card>
-        <Card className="border-slate-900/10 dark:border-white/10">
-          <CardHeader className="pb-2 border-b-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">FTD Gap</span>
+
+        <Card className="border-slate-900/10 dark:border-white/10 shadow-sm bg-slate-50/50 dark:bg-slate-800/30">
+          <CardHeader className="pb-1 border-b-0">
+            <span className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">FTD Gap</span>
           </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-mono font-bold ${ftdGap >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+          <CardContent className="pb-4">
+            <div className={`text-xl lg:text-2xl font-mono font-bold ${ftdGap >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
               {ftdGap > 0 ? '+' : ''}₹{ftdGap.toLocaleString('en-IN')}
             </div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">{ftdGap >= 0 ? 'Over Achieved' : 'Shortfall'}</p>
+            <p className="text-[9px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">{ftdGap >= 0 ? 'Over Achieved' : 'Shortfall'}</p>
           </CardContent>
         </Card>
       </div>
