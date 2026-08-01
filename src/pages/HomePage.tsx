@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
+import { useAuthStore } from '@/store/useAuthStore';
 import { 
   ArrowRight, ShieldCheck, AlertTriangle, Wallet, Plus, 
   TrendingUp, Activity, Users, BarChart3, PieChart, ArrowUpRight,
-  Clock, CheckCircle2, Building2, Star
+  Clock, CheckCircle2, Building2, Star, Key
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
+import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 
 const AUTHORIZED_EMAILS = [
   // Admins
@@ -42,10 +46,48 @@ const contentSlides = [
 
 export default function HomePage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+  const { login } = useAuthStore();
   const navigate = useNavigate();
+
+  const isNative = Capacitor.isNativePlatform();
+
+  // Biometric Auto-Login
+  useEffect(() => {
+    const tryBiometricLogin = async () => {
+      if (!isNative) return;
+      try {
+        const { value } = await Preferences.get({ key: 'native_credentials' });
+        if (value) {
+          const creds = JSON.parse(value);
+          const info = await BiometricAuth.checkBiometry();
+          if (info.isAvailable) {
+            await BiometricAuth.authenticate({
+              reason: 'Log in to your account',
+              cancelTitle: 'Cancel',
+            });
+            // If authenticate doesn't throw, it was successful
+            setIsLoading(true);
+            await login(creds.email, creds.password, 'HO'); // default to HO for native biometric
+            const updatedUser = useAuthStore.getState().user;
+            if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
+              navigate('/entry');
+            } else {
+              navigate('/dashboard');
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error('Biometric auto-login failed:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    tryBiometricLogin();
+  }, [isNative, login, navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,7 +96,7 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [activeSlide]);
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
@@ -63,18 +105,47 @@ export default function HomePage() {
       return;
     }
 
+    if (isNative && !password) {
+      setError('Please enter your password.');
+      return;
+    }
+
     setIsLoading(true);
 
-    setTimeout(() => {
-      const isAuthorized = AUTHORIZED_EMAILS.includes(email.toLowerCase().trim());
-      
-      if (isAuthorized) {
-        navigate('/login', { state: { email: email.toLowerCase().trim() } });
+    try {
+      if (isNative) {
+        // Native Login directly on HomePage
+        await login(email, password, 'HO'); // default to HO for native
+        
+        // Save for biometric on success
+        await Preferences.set({
+          key: 'native_credentials',
+          value: JSON.stringify({ email, password })
+        });
+
+        const updatedUser = useAuthStore.getState().user;
+        if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
+          navigate('/entry');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
-        setError('Unauthorized access. This email is not assigned.');
-        setIsLoading(false);
+        // Web Flow - Redirect to /login
+        setTimeout(() => {
+          const isAuthorized = AUTHORIZED_EMAILS.includes(email.toLowerCase().trim());
+          if (isAuthorized) {
+            navigate('/login', { state: { email: email.toLowerCase().trim() } });
+          } else {
+            setError('Unauthorized access. This email is not assigned.');
+            setIsLoading(false);
+          }
+        }, 600);
       }
-    }, 600);
+    } catch (err: any) {
+       console.error("Login Error:", err);
+       setError(err.message || 'Authentication failed. Please try again.');
+       setIsLoading(false);
+    }
   };
 
   return (
@@ -410,7 +481,7 @@ export default function HomePage() {
           )}
 
           <form onSubmit={handleContinue} className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                     <ShieldCheck className="w-5 h-5" />
@@ -426,6 +497,24 @@ export default function HomePage() {
                   disabled={isLoading}
                 />
               </div>
+
+              {isNative && (
+                <div className="relative group animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                      <Key className="w-5 h-5" />
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
             </div>
 
             <Button 

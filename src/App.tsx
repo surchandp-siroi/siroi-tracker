@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { InitProvider } from '@/components/InitProvider';
@@ -18,10 +19,20 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { useAuthStore } from '@/store/useAuthStore';
 
 import { SessionTimer } from '@/components/SessionTimer';
+import { AnimatedSplashScreen } from '@/components/AnimatedSplashScreen';
+import { requestAppPermissions } from '@/utils/PermissionsHelper';
+
 export default function App() {
+  const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
+
+  useEffect(() => {
+    requestAppPermissions();
+  }, []);
+
   return (
     <ThemeProvider>
       <InitProvider>
+        {showSplash && <AnimatedSplashScreen onComplete={() => setShowSplash(false)} />}
         <SessionTimer />
         <Routes>
           <Route path="/" element={<HomePage />} />

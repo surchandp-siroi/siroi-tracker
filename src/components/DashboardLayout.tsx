@@ -4,6 +4,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
+import { Capacitor } from '@capacitor/core';
+import Lottie from 'lottie-react';
+import { useEffect } from 'react';
 
 const AVATAR_OPTIONS = [
   'Aneka', 'Surchand', 'Tomas', 'Elena', 'Raj', 
@@ -20,6 +23,48 @@ const navItems = [
   { to: '/dashboard/audit', label: 'Audit Logs', icon: ShieldAlert, adminOnly: true },
 ];
 
+// Placeholder Lottie URLs (Replace these with your actual Lottie JSON URLs)
+const LOTTIE_URLS: Record<string, string> = {
+  Overview: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
+  Products: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
+  Channels: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
+  Branches: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
+  Menu: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
+};
+
+const AnimatedMobileIcon = ({ label, icon: LucideIcon, isActive, isNative }: { label: string, icon: any, isActive: boolean, isNative: boolean }) => {
+  const [animationData, setAnimationData] = useState<any>(null);
+  const [failed, setFailed] = useState(false);
+  const url = LOTTIE_URLS[label];
+
+  useEffect(() => {
+    if (!isNative || !url) { 
+      setFailed(true); 
+      return; 
+    }
+    fetch(url)
+      .then(res => res.json())
+      .then(data => setAnimationData(data))
+      .catch(() => setFailed(true));
+  }, [url, isNative]);
+
+  if (failed || !animationData) {
+    // Fallback to static Lucide icon if Lottie fails to load or not native
+    return <LucideIcon className="w-[clamp(16px,4.5vw,20px)] h-[clamp(16px,4.5vw,20px)]" strokeWidth={2.5} />;
+  }
+
+  return (
+    <div className="w-[clamp(20px,5vw,24px)] h-[clamp(20px,5vw,24px)] flex items-center justify-center">
+      <Lottie 
+        animationData={animationData} 
+        loop={isActive} 
+        autoplay={isActive} 
+        style={{ width: '100%', height: '100%' }} 
+      />
+    </div>
+  );
+};
+
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useTheme();
@@ -31,6 +76,14 @@ export default function DashboardLayout() {
   } | null>(null);
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    setScrollY(e.currentTarget.scrollTop);
+  };
+  
+  const isScrolled = scrollY > 20;
+  const isNative = Capacitor.isNativePlatform();
 
   const handleLogout = async () => {
     try {
@@ -51,8 +104,17 @@ export default function DashboardLayout() {
     <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-[#0b1120]">
       {/* Mobile Top Bar */}
       <div 
-        className="md:hidden fixed top-3 left-3 right-3 h-14 rounded-2xl border border-white/10 flex items-center px-4 z-40 shadow-xl justify-center"
-        style={{ backgroundImage: 'radial-gradient(circle at center, #4f46e5 0%, #4338ca 35%, #3730a3 70%, #1e1b4b 100%)' }}
+        className={`md:hidden fixed left-3 right-3 h-14 rounded-2xl flex items-center px-4 z-40 shadow-xl justify-center transition-all duration-300 ease-in-out ${
+          isScrolled 
+            ? 'top-[calc(env(safe-area-inset-top)+12px)] border border-white/20' 
+            : 'top-[calc(env(safe-area-inset-top)+20px)] border border-transparent opacity-90'
+        }`}
+        style={{ 
+          backgroundImage: isScrolled 
+            ? 'radial-gradient(circle at center, #4f46e5 0%, #4338ca 35%, #3730a3 70%, #1e1b4b 100%)'
+            : 'radial-gradient(circle at center, #6366f1 0%, #4f46e5 100%)',
+          backdropFilter: 'blur(12px)'
+        }}
       >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center w-8 h-8">
@@ -240,7 +302,16 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 pt-24 pb-24 md:pt-6 md:pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <main 
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6" 
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          paddingTop: isNative ? 'calc(env(safe-area-inset-top) + 90px)' : '90px',
+          maskImage: isNative ? 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)' : 'none',
+          WebkitMaskImage: isNative ? 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)' : 'none'
+        }}
+      >
         <div className="w-full space-y-5">
           <Outlet />
         </div>
@@ -263,8 +334,12 @@ export default function DashboardLayout() {
                 }`
               }
             >
-              <Icon className="w-[clamp(16px,4.5vw,20px)] h-[clamp(16px,4.5vw,20px)]" strokeWidth={2.5} />
-              <span className="text-[clamp(8px,2vw,9px)] font-bold uppercase tracking-wider mt-1 line-clamp-1 text-center">{label}</span>
+              {({ isActive }) => (
+                <>
+                  <AnimatedMobileIcon label={label} icon={Icon} isActive={isActive} isNative={isNative} />
+                  <span className="text-[clamp(8px,2vw,9px)] font-bold uppercase tracking-wider mt-1 line-clamp-1 text-center">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
           <button
@@ -275,7 +350,7 @@ export default function DashboardLayout() {
                 : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             }`}
           >
-            <Menu className="w-[clamp(16px,4.5vw,20px)] h-[clamp(16px,4.5vw,20px)]" strokeWidth={2.5} />
+            <AnimatedMobileIcon label="Menu" icon={Menu} isActive={isMobileSidebarOpen} isNative={isNative} />
             <span className="text-[clamp(8px,2vw,9px)] font-bold uppercase tracking-wider mt-1 line-clamp-1 text-center">Menu</span>
           </button>
         </div>
