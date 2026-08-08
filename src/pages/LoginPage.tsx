@@ -102,9 +102,9 @@ export default function LoginPage() {
           loop 
           muted 
           playsInline
-          className="absolute min-w-full min-h-full object-cover opacity-80 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          className="absolute min-w-full min-h-full object-cover opacity-80 top-1/2 left-1/2 -translate-x-1/2 -translate-y-[46%] scale-[1.15] pointer-events-none"
         >
-          <source src="/Earth_New.mp4" type="video/mp4" />
+          <source src="/Earth_Siroi.mp4" type="video/mp4" />
         </video>
       </div>
       {/* Dark overlay to ensure contrast */}
