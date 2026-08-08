@@ -5,6 +5,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
 import { MapPin, Loader2, AlertTriangle, Activity, Server, ShieldCheck } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
+import { DottedMap } from "@/components/magicui/dotted-map";
+import type { Marker } from "@/components/magicui/dotted-map";
+
+const mapMarkers: Marker[] = [
+  {
+    lat: 26.1445,
+    lng: 91.7362,
+    size: 1.2,
+    pulse: true,
+  }
+];
 
 export default function LoginPage() {
   const routerLocation = useLocation();
@@ -102,7 +113,7 @@ export default function LoginPage() {
           loop 
           muted 
           playsInline
-          className="absolute min-w-full min-h-full object-cover opacity-80 top-1/2 left-1/2 -translate-x-1/2 -translate-y-[46%] scale-[1.15] pointer-events-none"
+          className="absolute min-w-full min-h-full object-cover opacity-80 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
         >
           <source src="/Earth_Siroi.mp4" type="video/mp4" />
         </video>
@@ -114,7 +125,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-6xl min-h-[720px] p-6 sm:p-10 rounded-[2.5rem] bg-indigo-900/20 backdrop-blur-xl border border-indigo-300/10 shadow-2xl flex flex-col lg:flex-row items-stretch justify-center gap-8">
         
         {/* Left Rectangle (Floating Content) */}
-        <div className="hidden lg:flex flex-col justify-between w-full lg:w-[55%] bg-indigo-950/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 shadow-xl relative overflow-hidden min-h-[600px]">
+        <div className="hidden lg:flex flex-col justify-center space-y-10 w-full lg:w-[55%] bg-indigo-950/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 shadow-xl relative overflow-hidden min-h-[600px]">
             {/* Subtle glows inside the left card */}
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -127,6 +138,17 @@ export default function LoginPage() {
                  </div>
                  <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md whitespace-nowrap">Siroi Financial Consultancy</h1>
               </div>
+            </div>
+
+            {/* Middle section: Dotted Map */}
+            <div className="relative z-10 w-full pointer-events-none scale-110">
+              <DottedMap 
+                markers={mapMarkers} 
+                pulse={true} 
+                dotColor="rgba(255, 255, 255, 0.45)" 
+                markerColor="#ffffff" 
+                className="w-full relative z-10"
+              />
             </div>
 
             {/* Bottom section: Text */}
