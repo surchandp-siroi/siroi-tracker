@@ -54,6 +54,9 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   const isNative = Capacitor.isNativePlatform();
+  const typedEmail = email.toLowerCase().trim();
+  const isPasswordRequiredForNative = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com'].includes(typedEmail);
+  const showPasswordField = isNative && isPasswordRequiredForNative;
 
   // Biometric Auto-Login
   useEffect(() => {
@@ -105,7 +108,7 @@ export default function HomePage() {
       return;
     }
 
-    if (isNative && !password) {
+    if (showPasswordField && !password) {
       setError('Please enter your password.');
       return;
     }
@@ -113,7 +116,7 @@ export default function HomePage() {
     setIsLoading(true);
 
     try {
-      if (isNative) {
+      if (showPasswordField) {
         // Native Login directly on HomePage
         await login(email, password, 'HO'); // default to HO for native
         
@@ -130,7 +133,7 @@ export default function HomePage() {
           navigate('/dashboard');
         }
       } else {
-        // Web Flow - Redirect to /login
+        // Web Flow OR Native OTP - Redirect to /login
         setTimeout(() => {
           const isAuthorized = AUTHORIZED_EMAILS.includes(email.toLowerCase().trim());
           if (isAuthorized) {
@@ -149,10 +152,23 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-screen flex w-full bg-slate-50 dark:bg-slate-900 selection:bg-indigo-500/30 overflow-hidden p-4 gap-4">
+    <div 
+      className="h-screen flex w-full bg-slate-50 dark:bg-slate-900 selection:bg-indigo-500/30 overflow-hidden gap-4"
+      style={{
+        paddingTop: 'max(1rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+        paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+        paddingRight: 'max(1rem, env(safe-area-inset-right))',
+      }}
+    >
       
       {/* Left Section - Dark Grid & Glassmorphism Cards */}
-      <div className="hidden lg:flex w-[55%] relative flex-col justify-between rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-xl">
+      <div 
+        className="hidden lg:flex w-[55%] relative flex-col justify-between overflow-hidden bg-slate-950 border border-slate-800 shadow-xl"
+        style={{
+          borderRadius: 'max(24px, env(safe-area-inset-bottom))'
+        }}
+      >
         
         {/* Top Left Logo (White) */}
         <Link to="/" className="absolute top-10 left-10 z-20 flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
@@ -452,7 +468,12 @@ export default function HomePage() {
       </div>
 
       {/* Right Section - Login Form */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 p-6 sm:p-12 relative rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-y-auto">
+      <div 
+        className="flex-1 flex flex-col bg-white dark:bg-slate-950 p-6 sm:p-12 relative shadow-xl border border-slate-200 dark:border-slate-800 overflow-y-auto"
+        style={{
+          borderRadius: 'max(24px, env(safe-area-inset-bottom))'
+        }}
+      >
         
         {/* Top Left Logo (For Mobile/Smaller Screens where left pane is hidden) */}
         <div className="flex lg:hidden items-center gap-2 shrink-0 mb-4">
@@ -498,23 +519,27 @@ export default function HomePage() {
                 />
               </div>
 
-              {isNative && (
-                <div className="relative group animate-in fade-in slide-in-from-top-2">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                      <Key className="w-5 h-5" />
+              <div 
+                  className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      showPasswordField ? 'max-h-24 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                  }`}
+              >
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                        <Key className="w-5 h-5" />
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password"
+                      className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full"
+                      required={showPasswordField}
+                      disabled={isLoading}
+                    />
                   </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              )}
+              </div>
             </div>
 
             <Button 

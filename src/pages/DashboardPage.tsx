@@ -751,13 +751,6 @@ export default function DashboardOverview() {
              ))}
           </div>
         )}
-        {showDatePicker && (
-          <CustomDatePicker 
-            selectedDate={selectedDate}
-            onChange={(date) => setSelectedDate(date)}
-            onClose={() => setShowDatePicker(false)}
-          />
-        )}
       </div>
     );
   };
@@ -901,48 +894,78 @@ export default function DashboardOverview() {
 
       {/* KPI Category Selector (Mobile - Swipeable Icons) */}
       <div className="md:hidden mb-6">
-        <div 
-          ref={categoryScrollRef}
-          onScroll={(e) => {
-            const container = e.currentTarget;
-            const scrollLeft = container.scrollLeft;
-            const clientWidth = container.clientWidth;
-            // Avoid division by zero
-            if (clientWidth > 0) {
-                const activePage = Math.round(scrollLeft / clientWidth);
-                setActiveCategoryPage(activePage);
-            }
-          }}
-          className="flex gap-3 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-2 px-1"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-        >
-           {['All Products', ...PRODUCTS_LIST].map((cat) => {
-              const Icon = PRODUCT_ICONS[cat] || LayoutGrid;
-              const isActive = kpiCategory === cat;
-              return (
-                <button
-                   key={cat}
-                   onClick={() => setKpiCategory(cat)}
-                   className={`snap-center shrink-0 w-[clamp(72px,22vw,88px)] aspect-square rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm ${
-                      isActive 
-                      ? 'bg-indigo-600 text-white scale-100 shadow-md shadow-indigo-600/30 border border-indigo-600' 
-                      : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 scale-[0.96] hover:scale-[0.98] border border-slate-100 dark:border-white/5'
-                   }`}
-                >
-                   <Icon className={`w-[clamp(20px,6vw,28px)] h-[clamp(20px,6vw,28px)] mb-1.5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'}`} strokeWidth={2} />
-                   <div className="h-[2.4em] flex items-center justify-center w-full px-0.5">
-                     <span className={`text-[clamp(8px,2.2vw,10px)] font-bold uppercase tracking-wider text-center leading-[1.2em] line-clamp-2 w-full break-words ${isActive ? 'text-indigo-50' : 'text-slate-600 dark:text-slate-300'}`}>
-                       {cat}
-                     </span>
-                   </div>
-                </button>
-              );
-           })}
+        <div className="flex gap-3 pb-2 px-1 w-full overflow-hidden relative">
+          {/* Fixed "All Products" Button */}
+          <div className="shrink-0" style={{ width: 'calc((100% - 36px) / 4)' }}>
+            <button
+               onClick={() => setKpiCategory('All Products')}
+               className={`w-full aspect-square rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm ${
+                  kpiCategory === 'All Products' 
+                  ? 'bg-indigo-600 text-white scale-100 shadow-md shadow-indigo-600/30 border border-indigo-600' 
+                  : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 scale-[0.96] hover:scale-[0.98] border border-slate-100 dark:border-white/5'
+               }`}
+            >
+               <LayoutGrid className={`w-[clamp(20px,6vw,28px)] h-[clamp(20px,6vw,28px)] mb-1.5 transition-colors duration-300 ${kpiCategory === 'All Products' ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'}`} strokeWidth={2} />
+               <div className="h-[2.4em] flex items-center justify-center w-full px-0.5">
+                 <span className={`text-[clamp(8px,2.2vw,10px)] font-bold uppercase tracking-wider text-center leading-[1.2em] line-clamp-2 w-full break-words ${kpiCategory === 'All Products' ? 'text-indigo-50' : 'text-slate-600 dark:text-slate-300'}`}>
+                   All Products
+                 </span>
+               </div>
+            </button>
+          </div>
+          
+          {/* Swipeable Container for other products */}
+          <div 
+            ref={categoryScrollRef}
+            onScroll={(e) => {
+              const container = e.currentTarget;
+              const scrollLeft = container.scrollLeft;
+              const maxScroll = container.scrollWidth - container.clientWidth;
+              if (maxScroll > 0) {
+                  const totalPages = Math.ceil(PRODUCTS_LIST.length / 3);
+                  if (totalPages > 1) {
+                      const scrollFraction = scrollLeft / maxScroll;
+                      const activePage = Math.round(scrollFraction * (totalPages - 1));
+                      setActiveCategoryPage(activePage);
+                  } else {
+                      setActiveCategoryPage(0);
+                  }
+              } else {
+                  setActiveCategoryPage(0);
+              }
+            }}
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory hide-scrollbar flex-1"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+             {PRODUCTS_LIST.map((cat) => {
+                const Icon = PRODUCT_ICONS[cat] || LayoutGrid;
+                const isActive = kpiCategory === cat;
+                return (
+                  <button
+                     key={cat}
+                     onClick={() => setKpiCategory(cat)}
+                     className={`snap-start shrink-0 rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm ${
+                        isActive 
+                        ? 'bg-indigo-600 text-white scale-100 shadow-md shadow-indigo-600/30 border border-indigo-600' 
+                        : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 scale-[0.96] hover:scale-[0.98] border border-slate-100 dark:border-white/5'
+                     }`}
+                     style={{ width: 'calc((100% - 24px) / 3)', aspectRatio: '1/1' }}
+                  >
+                     <Icon className={`w-[clamp(20px,6vw,28px)] h-[clamp(20px,6vw,28px)] mb-1.5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'}`} strokeWidth={2} />
+                     <div className="h-[2.4em] flex items-center justify-center w-full px-0.5">
+                       <span className={`text-[clamp(8px,2.2vw,10px)] font-bold uppercase tracking-wider text-center leading-[1.2em] line-clamp-2 w-full break-words ${isActive ? 'text-indigo-50' : 'text-slate-600 dark:text-slate-300'}`}>
+                         {cat}
+                       </span>
+                     </div>
+                  </button>
+                );
+             })}
+          </div>
         </div>
         
         {/* Pagination Dots */}
         <div className="flex justify-center items-center gap-1.5 mt-2">
-           {Array.from({ length: Math.ceil((PRODUCTS_LIST.length + 1) / 3) }).map((_, index) => (
+           {Array.from({ length: Math.ceil(PRODUCTS_LIST.length / 3) }).map((_, index) => (
              <div 
                 key={index} 
                 className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -1847,6 +1870,14 @@ export default function DashboardOverview() {
                   </div>
               </div>
           </div>
+      )}
+
+      {showDatePicker && (
+        <CustomDatePicker 
+          selectedDate={selectedDate}
+          onChange={(date) => setSelectedDate(date)}
+          onClose={() => setShowDatePicker(false)}
+        />
       )}
     </>
   );

@@ -104,17 +104,11 @@ export default function DashboardLayout() {
     <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-[#0b1120]">
       {/* Mobile Top Bar */}
       <div 
-        className={`md:hidden fixed left-3 right-3 h-14 rounded-2xl flex items-center px-4 z-40 shadow-xl justify-center transition-all duration-300 ease-in-out ${
+        className={`md:hidden fixed left-3 right-3 h-14 rounded-2xl flex items-center px-4 z-40 shadow-xl justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-indigo-600 top-[calc(env(safe-area-inset-top)+16px)] ${
           isScrolled 
-            ? 'top-[calc(env(safe-area-inset-top)+12px)] border border-white/20' 
-            : 'top-[calc(env(safe-area-inset-top)+20px)] border border-transparent opacity-90'
+            ? '-translate-y-12 opacity-0 pointer-events-none scale-95' 
+            : 'translate-y-0 opacity-100 scale-100'
         }`}
-        style={{ 
-          backgroundImage: isScrolled 
-            ? 'radial-gradient(circle at center, #4f46e5 0%, #4338ca 35%, #3730a3 70%, #1e1b4b 100%)'
-            : 'radial-gradient(circle at center, #6366f1 0%, #4f46e5 100%)',
-          backdropFilter: 'blur(12px)'
-        }}
       >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center w-8 h-8">

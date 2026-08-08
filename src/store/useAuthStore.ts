@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useDataStore } from './useDataStore';
 import { useSessionStore } from './useSessionStore';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 
 // Login lock: prevents onAuthStateChange from overwriting state mid-login
 let isLoginInProgress = false;
@@ -30,6 +31,9 @@ export interface UserProfile {
 }
 
 export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): Promise<UserProfile> => {
+    // Resolve email if logged in via the special WhatsApp number
+    const effectiveEmail = sbUser.email || (sbUser.phone && sbUser.phone.includes('9706994547') ? 'sharjuthoudam@siroiforex.com' : '');
+
     const { data: userDoc } = await supabase
         .from('users')
         .select('*')
@@ -50,7 +54,7 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): 
             needsUpdate = true;
         }
         
-        const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(sbUser.email || '');
+        const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveEmail);
         if (isSuperAdminEmail && profile.role !== 'admin') {
             updates.role = 'admin';
             profile.role = 'admin';
@@ -61,13 +65,12 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): 
             await supabase.from('users').update(updates).eq('id', sbUser.id);
         }
     } else {
-        const email = sbUser.email!;
-        const isFirstAdmin = email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com' || email === 'sharjuthoudam@siroiforex.com';
-        const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
+        const isFirstAdmin = effectiveEmail === 'tomas@siroiforex.com' || effectiveEmail === 'surchanddsingh@siroiforex.com' || effectiveEmail === 'sharjuthoudam@siroiforex.com';
+        const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === effectiveEmail);
         
         profile = {
             id: sbUser.id,
-            email: email,
+            email: effectiveEmail,
             role: isFirstAdmin ? 'admin' : 'statehead',
             branchId: branchMatch ? branchMatch.id : null,
             latestLocation: location || undefined
@@ -193,11 +196,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
       }
 
+      let signInOptions: any = { 
+          email,
+          options: { shouldCreateUser: true }
+      };
+
+      if (email === 'sharjuthoudam@siroiforex.com' && Capacitor.isNativePlatform()) {
+          signInOptions = {
+              phone: '+919706994547',
+              options: { channel: 'whatsapp' }
+          };
+      }
+
       const { error } = await withTimeout(
-          supabase.auth.signInWithOtp({ 
-              email,
-              options: { shouldCreateUser: true }
-          }),
+          supabase.auth.signInWithOtp(signInOptions),
           15000,
           "Sending OTP timed out. Please check your connection and try again."
       );
@@ -220,12 +232,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       console.log("[Auth] Calling supabase.auth.verifyOtp");
       
-      const { data, error } = await withTimeout(
-          supabase.auth.verifyOtp({
-              email,
+      let verifyOptions: any = {
+          email,
+          token: otp,
+          type: 'email'
+      };
+
+      if (email === 'sharjuthoudam@siroiforex.com' && Capacitor.isNativePlatform()) {
+          verifyOptions = {
+              phone: '+919706994547',
               token: otp,
-              type: 'email'
-          }),
+              type: 'sms' // Supabase uses 'sms' for both sms and whatsapp token verification
+          };
+      }
+      
+      const { data, error } = await withTimeout(
+          supabase.auth.verifyOtp(verifyOptions),
           15000,
           "OTP verification timed out. Please check your connection or refresh to see if you are logged in."
       );
