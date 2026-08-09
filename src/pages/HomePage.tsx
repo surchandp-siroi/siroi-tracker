@@ -50,13 +50,33 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
-  const { login } = useAuthStore();
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const { login, requestOtpLogin, verifyOtpLogin } = useAuthStore();
   const navigate = useNavigate();
 
   const isNative = Capacitor.isNativePlatform();
   const typedEmail = email.toLowerCase().trim();
   const isPasswordRequiredForNative = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com'].includes(typedEmail);
+  const isOtpRequiredForNative = ['sharjuthoudam@siroiforex.com'].includes(typedEmail);
+  
   const showPasswordField = isNative && isPasswordRequiredForNative;
+  const showOtpField = isNative && isOtpRequiredForNative && otpSent;
+
+  useEffect(() => {
+    if (isNative && 'OTPCredential' in window && otpSent) {
+      const ac = new AbortController();
+      navigator.credentials.get({
+        otp: { transport: ['sms'] },
+        signal: ac.signal
+      } as any).then((otpResponse: any) => {
+        setOtp(otpResponse.code);
+      }).catch(err => {
+        console.log("Web OTP API Error:", err);
+      });
+      return () => ac.abort();
+    }
+  }, [otpSent, isNative]);
 
   // Biometric Auto-Login
   useEffect(() => {
@@ -113,6 +133,11 @@ export default function HomePage() {
       return;
     }
 
+    if (showOtpField && !otp) {
+      setError('Please enter the OTP.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -131,6 +156,21 @@ export default function HomePage() {
           navigate('/entry');
         } else {
           navigate('/dashboard');
+        }
+      } else if (isNative && isOtpRequiredForNative) {
+        if (!otpSent) {
+          await requestOtpLogin(email, 'HO');
+          setOtpSent(true);
+          setIsLoading(false);
+          return;
+        } else {
+          await verifyOtpLogin(email, otp, 'HO');
+          const updatedUser = useAuthStore.getState().user;
+          if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
+            navigate('/entry');
+          } else {
+            navigate('/dashboard');
+          }
         }
       } else {
         // Web Flow OR Native OTP - Redirect to /login
@@ -540,6 +580,29 @@ export default function HomePage() {
                     />
                   </div>
               </div>
+
+              <div 
+                  className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      showOtpField ? 'max-h-24 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                  }`}
+              >
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                        <Key className="w-5 h-5" />
+                    </div>
+                    <Input
+                      id="otp"
+                      type="text"
+                      maxLength={6}
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="6-Digit OTP"
+                      className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full text-center tracking-widest font-mono"
+                      required={showOtpField}
+                      disabled={isLoading}
+                    />
+                  </div>
+              </div>
             </div>
 
             <Button 
@@ -547,7 +610,7 @@ export default function HomePage() {
               className="w-full h-14 text-base font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               disabled={isLoading}
             >
-              {isLoading ? 'Verifying...' : 'Continue'}
+              {isLoading ? 'Verifying...' : (isNative && isOtpRequiredForNative && !otpSent ? 'Request OTP' : (isNative && isOtpRequiredForNative && otpSent ? 'Verify OTP' : 'Continue'))}
             </Button>
           </form>
 

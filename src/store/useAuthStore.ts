@@ -204,7 +204,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (email === 'sharjuthoudam@siroiforex.com' && Capacitor.isNativePlatform()) {
           signInOptions = {
               phone: '+919706994547',
-              options: { channel: 'whatsapp' }
+              options: { channel: 'sms' }
           };
       }
 

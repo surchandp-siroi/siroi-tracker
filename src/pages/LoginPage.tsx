@@ -7,6 +7,7 @@ import { MapPin, Loader2, AlertTriangle, Activity, Server, ShieldCheck } from 'l
 import { LogoIcon } from '@/components/LogoIcon';
 import { DottedMap } from "@/components/magicui/dotted-map";
 import type { Marker } from "@/components/magicui/dotted-map";
+import { Capacitor } from '@capacitor/core';
 
 const mapMarkers: Marker[] = [
   {
@@ -43,8 +44,38 @@ export default function LoginPage() {
   };
 
 
-  const effectiveLoginMode = (loginMode === 'password' && email.toLowerCase() === 'sharjuthoudam@siroiforex.com') ? 'otp' : loginMode;
+  const isMobile = Capacitor.isNativePlatform();
+  const emailLower = email.toLowerCase();
+  const isSurchand = emailLower === 'surchanddsingh@siroiforex.com';
+  const isSharju = emailLower === 'sharjuthoudam@siroiforex.com';
+  
+  useEffect(() => {
+    if (isMobile) {
+      if (isSurchand && loginMode !== 'password') setLoginMode('password');
+      if (isSharju && loginMode !== 'otp') setLoginMode('otp');
+    }
+  }, [emailLower, isMobile, loginMode, isSurchand, isSharju]);
 
+  useEffect(() => {
+    if (isMobile && 'OTPCredential' in window && otpSent) {
+      const ac = new AbortController();
+      navigator.credentials.get({
+        otp: { transport: ['sms'] },
+        signal: ac.signal
+      } as any).then((otpResponse: any) => {
+        setOtp(otpResponse.code);
+      }).catch(err => {
+        console.log("Web OTP API Error:", err);
+      });
+      return () => ac.abort();
+    }
+  }, [otpSent, isMobile]);
+
+  const effectiveLoginMode = (isMobile && isSurchand) ? 'password' : 
+                             (isMobile && isSharju) ? 'otp' : 
+                             (loginMode === 'password' && emailLower === 'sharjuthoudam@siroiforex.com') ? 'otp' : loginMode;
+  
+  const hideLocation = isMobile && (isSurchand || isSharju);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !location) {
@@ -258,13 +289,14 @@ export default function LoginPage() {
                      )}
                  </div>
 
+                 {!hideLocation && (
                  <div className="mb-5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Active Location</label>
                     <select 
                         className="flex h-11 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                         value={location}
                         onChange={e => setLocation(e.target.value)}
-                        required
+                        required={!hideLocation}
                         disabled={otpSent && effectiveLoginMode === 'otp'}
                     >
                         {branches.map(branch => (
@@ -274,6 +306,7 @@ export default function LoginPage() {
                         ))}
                     </select>
                  </div>
+                 )}
 
                   <Button type="submit" className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-medium flex items-center justify-center transition-all shadow-md hover:shadow-lg shadow-indigo-600/20" disabled={isLoading}>
                     {isLoading ? (
@@ -282,7 +315,7 @@ export default function LoginPage() {
                             {locationStatus || 'Authenticating...'}
                         </>
                     ) : effectiveLoginMode === 'otp' ? (
-                        otpSent ? 'Verify OTP & Login' : 'Secure Sign In'
+                        otpSent ? 'Verify OTP & Login' : (isMobile && isSharju ? 'Request OTP' : 'Secure Sign In')
                     ) : 'Secure Sign In'}
                   </Button>
               </form>
