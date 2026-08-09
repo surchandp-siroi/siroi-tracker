@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -42,11 +42,6 @@ export default function LoginPage() {
     setTimeout(() => setWittyMessage(null), 3000);
   };
 
-  useEffect(() => {
-    if (!email) {
-      navigate('/');
-    }
-  }, [email, navigate]);
 
   const effectiveLoginMode = (loginMode === 'password' && email.toLowerCase() === 'sharjuthoudam@siroiforex.com') ? 'otp' : loginMode;
 
@@ -142,13 +137,15 @@ export default function LoginPage() {
 
             {/* Middle section: Dotted Map */}
             <div className="relative z-10 w-full pointer-events-none scale-110">
-              <DottedMap 
-                markers={mapMarkers} 
-                pulse={true} 
-                dotColor="rgba(255, 255, 255, 0.45)" 
-                markerColor="#ffffff" 
-                className="w-full relative z-10"
-              />
+              {useMemo(() => (
+                <DottedMap 
+                  markers={mapMarkers} 
+                  pulse={true} 
+                  dotColor="rgba(255, 255, 255, 0.45)" 
+                  markerColor="#ffffff" 
+                  className="w-full relative z-10"
+                />
+              ), [])}
             </div>
 
             {/* Bottom section: Text */}
