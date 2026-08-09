@@ -109,6 +109,12 @@
       "skillPath": "skills/minimalist-skill/SKILL.md",
       "computedHash": "7e88897e0371184e97a82b8d9ef080323c13f21eb067b58ef71eb05173a08ac2"
     },
+    "mobbin-search": {
+      "source": "mobbin/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mobbin-search/SKILL.md",
+      "computedHash": "6e6e20efde97a7420404499629f0cde54589488856d7022694b53007f670ff36"
+    },
     "pick-ui-library": {
       "source": "emilkowalski/skill",
       "sourceType": "github",

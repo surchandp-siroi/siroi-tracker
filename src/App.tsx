@@ -15,6 +15,7 @@ import AuditLogsPage from '@/pages/AuditLogsPage';
 import ConsultantPayoutsPage from '@/pages/ConsultantPayoutsPage';
 import ConsultantApprovalPage from '@/pages/ConsultantApprovalPage';
 import OnboardingPage from '@/pages/OnboardingPage';
+import CustomerDataEntryPage from '@/pages/CustomerDataEntryPage';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/customer-data" element={<CustomerDataEntryPage />} />
           <Route path="/entry" element={<EntryPage />} />
           {/* Dashboard routes wrapped in sidebar layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>

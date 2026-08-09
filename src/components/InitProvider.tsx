@@ -31,7 +31,7 @@ export function InitProvider({ children }: { children: React.ReactNode }) {
 
     // Auth Guard
     useEffect(() => {
-        if (isInitialized && !user && location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/onboarding' && location.pathname !== '/onboarding/') {
+        if (isInitialized && !user && location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/onboarding' && location.pathname !== '/onboarding/' && location.pathname !== '/customer-data') {
             navigate('/login', { replace: true });
         }
     }, [isInitialized, user, location.pathname, navigate]);

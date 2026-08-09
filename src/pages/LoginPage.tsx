@@ -288,10 +288,14 @@ export default function LoginPage() {
               </form>
               
               <div className="flex flex-col items-center space-y-4">
-                <div className="flex justify-center items-center text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wide">
-                    <MapPin size={12} className="mr-1.5" />
-                    <span>Context Authenticator Active</span>
-                </div>
+                <button 
+                    type="button"
+                    onClick={() => navigate('/customer-data')}
+                    className="relative group text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors py-2"
+                >
+                    Customer Data Entry
+                    <span className="absolute -bottom-0.5 left-1/2 w-0 h-[2px] bg-indigo-600 dark:bg-indigo-400 group-hover:w-full group-hover:left-0 transition-all duration-300 ease-out"></span>
+                </button>
                 
                 <div className="flex items-center justify-center space-x-4 text-xs text-indigo-600 dark:text-indigo-400 font-medium relative">
                     <a href="#" onClick={handleWittyClick} className="hover:underline opacity-80 hover:opacity-100 transition-opacity">Forgot Credentials?</a>
