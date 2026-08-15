@@ -66,8 +66,8 @@ export function CardContent({ className, children }: { className?: string, child
 }
 
 // Table components
-export function Table({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <div className="w-full overflow-auto"><table className={cn("w-full text-left text-sm", className)}>{children}</table></div>
+export function Table({ className, containerClassName, children }: { className?: string, containerClassName?: string, children: React.ReactNode }) {
+  return <div className={cn("w-full overflow-auto", containerClassName)}><table className={cn("w-full text-left text-sm", className)}>{children}</table></div>
 }
 export function TableHeader({ className, children }: { className?: string, children: React.ReactNode }) {
   return <thead className={cn("text-slate-500 text-[10px] uppercase border-b border-black/5 dark:border-white/5", className)}>{children}</thead>

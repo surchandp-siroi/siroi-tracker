@@ -96,19 +96,37 @@ export function CustomDatePicker({ selectedDate, onChange, onClose }: CustomDate
               const isSelected = isSameDay(day, parsedSelectedDate);
               const isCurrentMonth = isSameMonth(day, monthStart);
               const isToday = isSameDay(day, new Date());
+              const isSunday = day.getDay() === 0;
+              
+              // National Holidays (Month is 0-indexed)
+              const isHoliday = 
+                (day.getDate() === 26 && day.getMonth() === 0) || // Jan 26
+                (day.getDate() === 15 && day.getMonth() === 7) || // Aug 15
+                (day.getDate() === 2 && day.getMonth() === 9);    // Oct 2
+                
+              const isSpecialDay = isSunday || isHoliday;
               
               return (
                 <button
                   key={i}
                   onClick={() => handleDateClick(day)}
                   className={`
-                    h-[clamp(32px,10vw,40px)] w-full flex items-center justify-center rounded-xl text-[clamp(12px,3.5vw,14px)] transition-all
-                    ${!isCurrentMonth ? 'text-slate-300 dark:text-slate-600 opacity-50' : 'text-slate-700 dark:text-slate-200'}
+                    h-[clamp(32px,10vw,40px)] w-full flex flex-col items-center justify-center rounded-xl transition-all relative
+                    ${!isCurrentMonth ? 'opacity-50' : ''}
                     ${isSelected ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/30' : 'hover:bg-slate-100 dark:hover:bg-white/5'}
-                    ${isToday && !isSelected ? 'text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-600/30' : ''}
+                    ${!isSelected && isSpecialDay ? 'text-red-500 font-semibold' : ''}
+                    ${!isSelected && !isSpecialDay ? 'text-slate-700 dark:text-slate-200' : ''}
+                    ${isToday && !isSelected && !isSpecialDay ? 'text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-600/30' : ''}
+                    ${isToday && !isSelected && isSpecialDay ? 'border border-red-500/30' : ''}
                   `}
                 >
-                  {format(day, 'd')}
+                  <span className="text-[clamp(12px,3.5vw,14px)]">{format(day, 'd')}</span>
+                  {isSpecialDay && !isSelected && (
+                    <span className="w-1 h-1 bg-red-500 rounded-full absolute bottom-1"></span>
+                  )}
+                  {isSpecialDay && isSelected && (
+                    <span className="w-1 h-1 bg-white rounded-full absolute bottom-1 opacity-80"></span>
+                  )}
                 </button>
               );
             })}

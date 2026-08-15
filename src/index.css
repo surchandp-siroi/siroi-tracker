@@ -86,10 +86,12 @@ body {
 }
 
 /* Custom Scrollbar Styles */
-::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar { height: 8px; width: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; border: 2px solid #0f172a; }
-::-webkit-scrollbar-thumb:hover { background: #64748b; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+:is(.dark ::-webkit-scrollbar-thumb) { background: #475569; }
+:is(.dark ::-webkit-scrollbar-thumb:hover) { background: #64748b; }
 
 /* Hide scrollbar on mobile */
 @media (max-width: 768px) {
@@ -104,3 +106,52 @@ body {
 
 input[type="date"] { color-scheme: light; } :is(.dark input[type="date"]) { color-scheme: dark; }
 input[type="date"]::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }
+
+/* Premium Data Grid Styles (Stitch Principles) */
+.data-grid-table th {
+  letter-spacing: 0.05em;
+  font-size: 10px !important;
+  color: #64748b !important;
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+}
+:is(.dark .data-grid-table th) {
+  color: #94a3b8 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+.data-grid-table input,
+.data-grid-table select,
+.data-grid-table .inline-date-picker {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 4px;
+}
+.data-grid-table input:hover:not(:disabled),
+.data-grid-table select:hover:not(:disabled) {
+  background: rgba(0,0,0,0.02) !important;
+}
+:is(.dark .data-grid-table input:hover:not(:disabled)),
+:is(.dark .data-grid-table select:hover:not(:disabled)) {
+  background: rgba(255,255,255,0.03) !important;
+}
+.data-grid-table input:focus:not(:disabled),
+.data-grid-table select:focus:not(:disabled) {
+  background: white !important;
+  border-color: #6366f1 !important; /* indigo-500 */
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+  outline: none;
+}
+:is(.dark .data-grid-table input:focus:not(:disabled)),
+:is(.dark .data-grid-table select:focus:not(:disabled)) {
+  background: #0f172a !important;
+}
+
+/* Missing Field Indicator refinement */
+.data-grid-table .border-red-500\\/50 {
+  border-color: transparent !important;
+  background-color: rgba(239, 68, 68, 0.04) !important;
+  box-shadow: inset 3px 0 0 0 #ef4444 !important;
+}

@@ -4,18 +4,21 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download , Calendar } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
+import { ThemeSelect, SelectOption } from '../components/ThemeSelect';
 import { BranchSelect } from '@/components/BranchSelect';
 import { AppSelect } from '@/components/AppSelect';
 import { ExecutivePerformanceWidget } from '@/components/ExecutivePerformanceWidget';
 import { StaffNameResolutionDialog } from '@/components/StaffNameResolutionDialog';
 import { ColumnMappingDialog, ColumnMapping } from '@/components/ColumnMappingDialog';
+import { CustomDatePicker } from '@/components/CustomDatePicker';
 
-function CustomDatePicker({ value, onChange, disabled, className, min }: any) {
+function InlineDatePicker({ value, onChange, disabled, className, min }: any) {
     const [displayVal, setDisplayVal] = useState('');
+    const [showPicker, setShowPicker] = useState(false);
     
     useEffect(() => {
         if (!value) {
@@ -51,18 +54,26 @@ function CustomDatePicker({ value, onChange, disabled, className, min }: any) {
                 value={displayVal}
                 onChange={handleTextChange}
                 placeholder="DD-MM-YYYY"
-                className={`pr-8 ${className || ''}`}
+                className={`pr-8 font-mono ${className || ''}`}
             />
-            <input 
-                type="date"
-                min={min}
+            <button 
+                type="button"
                 disabled={disabled}
-                value={value || ''}
-                onChange={(e) => onChange(e.target.value)}
-                className="absolute right-0 top-0 bottom-0 opacity-0 cursor-pointer w-8 z-10"
-                style={{ colorScheme: 'dark' }}
-            />
-            <Calendar className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50 pointer-events-none" />
+                onClick={() => setShowPicker(true)}
+                className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center text-slate-400 hover:text-indigo-500 disabled:opacity-50 transition-colors z-10"
+            >
+                <Calendar className="w-4 h-4" />
+            </button>
+            {showPicker && (
+                <CustomDatePicker
+                    selectedDate={value || new Date().toISOString().split('T')[0]}
+                    onChange={(val) => {
+                        onChange(val);
+                        setShowPicker(false);
+                    }}
+                    onClose={() => setShowPicker(false)}
+                />
+            )}
         </div>
     );
 }
@@ -126,6 +137,7 @@ export default function DataEntryTerminal() {
       const today = new Date().toISOString().split('T')[0];
       return today >= '2026-01-01' ? today : '2026-01-01';
   });
+  const [showDatePicker, setShowDatePicker] = useState(false);
   
   const [items, setItems] = useState<EntryItem[]>([]);
   const [smartPrompt, setSmartPrompt] = useState<string>('');
@@ -1154,68 +1166,85 @@ export default function DataEntryTerminal() {
             <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
         )}
              {/* Sticky Top Control Bar */}
-        <div className="sticky top-0 z-20 glass bg-slate-900/80 dark:bg-black/80 backdrop-blur-md border border-slate-900/10 dark:border-white/10 p-4 mb-6 rounded-xl shadow-lg flex flex-col gap-4">
+        <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 p-4 mb-6 rounded-xl shadow-sm flex flex-col gap-4">
             
-            {/* Row 1: Context Controls */}
-            <div className="flex flex-wrap items-end gap-4">
-                {(user.role === 'admin' || isBackdoor) && (
-                    <div className="w-[150px] shrink-0">
-                        <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
-                            {isBackdoor ? 'Branch Override (Test)' : 'Admin Branch Override'}
-                        </label>
-                        <BranchSelect 
-                            value={adminSelectedBranch || ''}
-                            onChange={(val) => {
-                                if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
-                                setAdminSelectedBranch(val);
-                            }}
-                            branches={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch')}
-                        />
-                    </div>
-                )}
+            {/* Unified Command Center Bar */}
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                {/* Left Section: Context */}
+                <div className="flex flex-wrap items-center gap-3 md:gap-5">
+                    {/* Branch Override */}
+                    {(user.role === 'admin' || isBackdoor) && (
+                        <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
+                                {isBackdoor ? 'Branch (Test)' : 'Admin Branch'}
+                            </label>
+                            <div className="w-[150px] h-[36px]">
+                                <ThemeSelect 
+                                    variant="pill"
+                                    value={adminSelectedBranch || ''}
+                                    onChange={(val) => {
+                                        if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
+                                        setAdminSelectedBranch(val);
+                                    }}
+                                    options={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => ({
+                                        value: b.id,
+                                        label: b.name,
+                                        indicatorColor: b.name === 'Guwahati' ? '#818cf8' : b.name === 'Manipur' ? '#34d399' : b.name === 'Itanagar' ? '#38bdf8' : b.name === 'Nagaland & Mizoram' ? '#fbbf24' : '#6366f1'
+                                    }))}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Divider */}
+                    {(user.role === 'admin' || isBackdoor) && <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>}
 
-                <div className="w-[140px] shrink-0">
-                    <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
-                        Tracking Mode
-                    </label>
-                    <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-0.5 border border-slate-900/10 dark:border-white/10">
-                        <button 
-                            className={`flex-1 text-[10px] font-bold py-1.5 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
-                            onClick={() => {
-                                if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                setEntryMode('monthly');
-                                const today = new Date().toISOString().split('T')[0];
-                                setDateStr(today >= '2026-01-01' ? today.substring(0, 7) + '-01' : '2026-01-01');
-                            }}
-                        >
-                            Monthly
-                        </button>
-                        <button 
-                            className={`flex-1 text-[10px] font-bold py-1.5 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
-                            onClick={() => {
-                                if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                setEntryMode('daily');
-                                const today = new Date().toISOString().split('T')[0];
-                                setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
-                            }}
-                        >
-                            Daily
-                        </button>
+                    {/* Tracking Mode */}
+                    <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
+                            Mode
+                        </label>
+                        <div className="flex bg-slate-100 dark:bg-slate-900/50 rounded-full p-1 border border-slate-200 dark:border-white/5 w-[140px] h-[36px]">
+                            <button 
+                                className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                                onClick={() => {
+                                    if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                    setEntryMode('monthly');
+                                    const today = new Date().toISOString().split('T')[0];
+                                    setDateStr(today >= '2026-01-01' ? today.substring(0, 7) + '-01' : '2026-01-01');
+                                }}
+                            >
+                                Month
+                            </button>
+                            <button 
+                                className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                                onClick={() => {
+                                    if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                    setEntryMode('daily');
+                                    const today = new Date().toISOString().split('T')[0];
+                                    setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
+                                }}
+                            >
+                                Daily
+                            </button>
+                        </div>
                     </div>
-                </div>
-                
-                <div className="shrink-0 flex items-end gap-3">
-                    <div>
-                        <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
+
+                    {/* Divider */}
+                    <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+
+                    {/* Date Context */}
+                    <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
                             Date Context
                         </label>
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center h-[30px] px-2 bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-md hover:bg-slate-900/10 dark:hover:bg-black/60 transition-colors cursor-pointer group">
-                                <Calendar className="w-3.5 h-3.5 text-indigo-500 mr-2 group-hover:text-indigo-400 transition-colors" />
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center h-[36px] px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
+                                <Calendar className="w-4 h-4 text-slate-500 mr-2.5" />
                                 {entryMode === 'monthly' ? (
                                     <input 
                                         type="month" 
-                                        className="bg-transparent text-xs text-slate-900 dark:text-white font-medium outline-none cursor-pointer w-[110px]"
+                                        className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-bold outline-none cursor-pointer w-[110px]"
                                         style={{ colorScheme: 'dark' }}
                                         value={dateStr.substring(0, 7)}
                                         onChange={(e) => {
@@ -1224,134 +1253,123 @@ export default function DataEntryTerminal() {
                                         }}
                                     />
                                 ) : (
-                                    <CustomDatePicker 
-                                        className="bg-transparent text-xs text-slate-900 dark:text-white font-medium outline-none cursor-pointer w-[110px]"
-                                        value={dateStr}
-                                        onChange={(val: string) => {
-                                            if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                            setDateStr(val);
-                                        }}
-                                    />
+                                    <div 
+                                        className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-bold outline-none cursor-pointer min-w-[100px] flex items-center select-none"
+                                        onClick={() => setShowDatePicker(true)}
+                                    >
+                                        {format(new Date(dateStr), 'dd MMM yyyy')}
+                                    </div>
                                 )}
                             </div>
-                            <div className="border-l border-slate-200 dark:border-slate-700 pl-3">
-                                <div className="text-sm font-bold text-slate-900 dark:text-white">{currentTime.split(',')[0]}</div>
-                                <div className="text-[10px] text-slate-500 dark:text-slate-400">{currentTime.split(',')[1]?.trim()}</div>
+                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                                <span className="text-[11px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime.split(',')[0]}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Target */}
-                <div className="flex flex-col justify-end shrink-0 min-w-[150px]">
-                    <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
-                        Target ({dateStr.substring(0, 7)})
-                    </label>
-                    <div className="flex items-center h-[30px] px-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-md text-xs font-extrabold text-emerald-700 dark:text-emerald-400 shadow-sm">
-                        ₹{((branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7))?.targetAmount) || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}
-                    </div>
-                </div>
-
-                {/* Dynamic Totals */}
-                <div className="flex flex-col justify-end shrink-0 min-w-[280px]">
-                    <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                            Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
+                {/* Center Section: Metrics */}
+                <div className="flex flex-wrap items-center gap-5 bg-slate-50 dark:bg-slate-900/50 p-2.5 px-5 rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
+                    {/* Target */}
+                    <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                            Target ({dateStr.substring(0, 7)})
                         </label>
-                        <select 
-                            value={metricCategory}
-                            onChange={(e) => setMetricCategory(e.target.value)}
-                            className="bg-transparent text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase outline-none border-none cursor-pointer p-0 m-0"
-                        >
-                            <option value="Loan">Loan</option>
-                            <option value="Insurance">Insurance</option>
-                            <option value="Forex">Forex</option>
-                            <option value="Consultancy">Consulting</option>
-                            <option value="Investments">Investments</option>
-                            <option value="All">All</option>
-                        </select>
-                    </div>
-                    <div className="flex items-center h-[30px] bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-md overflow-hidden text-xs font-semibold shadow-sm">
-                        {metricCategory === 'Insurance' ? (
-                            <>
-                                <div className="flex-1 px-2 border-r border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
-                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Issued</span>₹{insuranceIssued.toLocaleString('en-IN')}
-                                </div>
-                                <div className="flex-1 px-2 text-indigo-700 dark:text-indigo-300">
-                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Not Issued</span>₹{insuranceNotIssued.toLocaleString('en-IN')}
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex-1 px-2 border-r border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300">
-                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Log</span>₹{metricLogin.toLocaleString('en-IN')}
-                                </div>
-                                <div className="flex-1 px-2 text-indigo-700 dark:text-indigo-300">
-                                    <span className="text-[9px] text-indigo-500 mr-1 uppercase">Disb</span>₹{metricDisbursed.toLocaleString('en-IN')}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* Current Time Clock */}
-                <div className="flex flex-col justify-end shrink-0 min-w-[120px]">
-                    <label className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1.5 block">
-                        Live Time
-                    </label>
-                    <div className="flex items-center h-[30px] px-3 bg-slate-900/5 dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-mono text-slate-500">
-                        {currentTime}
-                    </div>
-                </div>
-            </div>
-
-            {/* Row 2: Actions & Projection */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-3">
-                {!isMIS && (
-                <div className="w-[160px] shrink-0">
-                    <label className="text-[10px] font-bold text-indigo-800 dark:text-indigo-300 uppercase tracking-wider mb-1 flex items-center gap-1">
-                        <UploadCloud size={12} /> Bulk Upload (AI)
-                    </label>
-                    <label 
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        className={`flex items-center justify-center gap-2 h-[30px] px-2 text-[10px] font-medium rounded-md border border-dashed transition-colors cursor-pointer truncate
-                        ${!canModify || isParsing ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400 opacity-50 cursor-not-allowed' : isDragging ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-500 text-indigo-800 dark:text-indigo-200 shadow-sm scale-[1.02]' : 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'}`}
-                    >
-                        {isParsing ? <Loader2 className="animate-spin w-3 h-3 shrink-0" /> : <FileSpreadsheet className="w-3 h-3 shrink-0" />}
-                        <span className="truncate">{isParsing ? `Processing... ${uploadProgress}%` : isDragging ? 'Drop Here' : 'Upload Excel/CSV'}</span>
-                        <input 
-                            type="file" 
-                            accept=".xlsx, .xls, .csv" 
-                            className="hidden" 
-                            disabled={!canModify || isParsing}
-                            onChange={handleFileUpload}
-                        />
-                    </label>
-                </div>
-                )}
-
-                {/* Projection */}
-                <div className="flex-1 flex justify-end items-center gap-4 min-w-[250px]">
-                    <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest">
-                        <div className="text-slate-500 flex items-center">
-                            <button 
-                                onClick={() => setIsProjectionModalOpen(true)}
-                                className={`px-4 py-1.5 rounded border shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                                    isSunday 
-                                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 cursor-not-allowed'
-                                    : isProjectionLodged
-                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100'
-                                        : isTimeLocked
-                                        ? 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 cursor-not-allowed'
-                                        : 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-800/40'
-                                }`}
-                            >
-                                Projection: <span className="text-sm font-extrabold">₹{(isProjectionLodged ? lodgedProjectionAmount : (branchDetails?.dailyProjection || 0)).toLocaleString('en-IN')}</span>
-                            </button>
+                        <div className="text-sm font-black text-slate-800 dark:text-slate-200 font-mono tracking-tight">
+                            ₹{((branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7))?.targetAmount) || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}
                         </div>
                     </div>
+
+                    {/* Divider */}
+                    <div className="w-px h-10 bg-slate-200 dark:bg-slate-800"></div>
+
+                    {/* Totals */}
+                    <div className="flex flex-col min-w-[200px]">
+                        <div className="flex justify-between items-center mb-1 gap-3">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
+                            </label>
+                            <ThemeSelect
+                                variant="inline"
+                                dropdownAlign="right"
+                                value={metricCategory}
+                                onChange={setMetricCategory}
+                                options={[
+                                    { value: 'Loan', label: 'Loan' },
+                                    { value: 'Insurance', label: 'Insurance' },
+                                    { value: 'Forex', label: 'Forex' },
+                                    { value: 'Consultancy', label: 'Consulting' },
+                                    { value: 'Investments', label: 'Investments' },
+                                    { value: 'All', label: 'All' }
+                                ]}
+                            />
+                        </div>
+                        <div className="flex items-center text-xs font-mono font-bold tracking-tight text-slate-700 dark:text-slate-300">
+                            {metricCategory === 'Insurance' ? (
+                                <>
+                                    <div className="flex items-baseline gap-1.5 mr-5">
+                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">ISS</span>
+                                        ₹{insuranceIssued.toLocaleString('en-IN')}
+                                    </div>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">NOT</span>
+                                        ₹{insuranceNotIssued.toLocaleString('en-IN')}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-baseline gap-1.5 mr-5">
+                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">LOG</span>
+                                        ₹{metricLogin.toLocaleString('en-IN')}
+                                    </div>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">DISB</span>
+                                        <span className="text-emerald-600 dark:text-emerald-400">₹{metricDisbursed.toLocaleString('en-IN')}</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Section: Actions */}
+                <div className="flex flex-wrap items-center gap-3">
+                    {!isMIS && (
+                        <label 
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={`flex items-center justify-center gap-2 h-[36px] px-5 text-[10px] font-bold tracking-wide uppercase rounded-full border transition-all cursor-pointer shadow-sm
+                            ${!canModify || isParsing ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 opacity-50 cursor-not-allowed' : isDragging ? 'bg-indigo-50 border-indigo-500 text-indigo-700 scale-[1.02]' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20'}`}
+                        >
+                            {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : <UploadCloud className="w-4 h-4 text-indigo-500" />}
+                            <span>{isParsing ? `Processing ${uploadProgress}%` : isDragging ? 'Drop Here' : 'Bulk Upload'}</span>
+                            <input 
+                                type="file" 
+                                accept=".xlsx, .xls, .csv" 
+                                className="hidden" 
+                                disabled={!canModify || isParsing}
+                                onChange={handleFileUpload}
+                            />
+                        </label>
+                    )}
+
+                    <button 
+                        onClick={() => setIsProjectionModalOpen(true)}
+                        className={`h-[36px] px-6 rounded-full border shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                            isSunday 
+                            ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed'
+                            : isProjectionLodged
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100'
+                                : isTimeLocked
+                                ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed'
+                                : 'bg-indigo-600 hover:bg-indigo-700 border-transparent text-white shadow-[0_2px_10px_rgba(79,70,229,0.2)]'
+                        }`}
+                    >
+                        Project
+                        <span className="font-mono text-[13px] ml-1 tracking-tight">₹{(isProjectionLodged ? lodgedProjectionAmount : (branchDetails?.dailyProjection || 0)).toLocaleString('en-IN')}</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1375,42 +1393,44 @@ export default function DataEntryTerminal() {
                 {isLoadingExisting ? (
                     <div className="flex justify-center items-center h-full min-h-[200px]"><Loader2 className="animate-spin text-slate-300" /></div>
                 ) : (
-                    <Table className="min-w-max border-collapse">
-                        <TableHeader className="bg-indigo-600 dark:bg-indigo-800 sticky top-0 z-10 box-border shadow-sm">
+                    <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 relative">
+                        <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 box-border border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
                             <TableRow>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">1. Staff Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">2. Projection (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[200px]">3. Login Date</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">4. Category</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">5. Product</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[250px]">6. Relationship Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">7. File Login</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">8. Tracking Number</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">9. Channel Partner</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">10. Branch</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">11. Customer Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">12. DOB</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">13. Phone No.</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">14. Email ID</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[280px]">15. Customer Address</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">16. Firm Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">17. File Status</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">18. Sanctioned (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[220px]">19. Disbursed (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">20. Disbursed Dt</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[210px]">21. EMI Date</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">22. Repayment Bank</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">23. Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[230px]">24. Consultant</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-white min-w-[240px]">25. Consultant Email ID</TableHead>
-                                <TableHead className="w-[50px] px-2 sticky right-0 bg-indigo-600 dark:bg-indigo-800 z-10"></TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">1. Staff Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">2. Projection (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px]">3. Login Date</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">4. Category</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">5. Product</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px]">6. Relationship Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">7. File Login</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">8. Tracking Number</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">9. Channel Partner</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">10. Branch</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">11. Customer Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">12. DOB</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. Phone No.</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">14. Email ID</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">15. Customer Address</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">16. Firm Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">17. File Status</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">18. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">19. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">20. Disbursed Dt</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">21. EMI Date</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">22. Repayment Bank</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">23. Manager Name</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">24. Consultant</TableHead>
+                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">25. Consultant Email ID</TableHead>
+                                <TableHead className="w-[50px] px-2 sticky right-0 bg-slate-50 dark:bg-slate-900 z-10 border-l border-slate-200 dark:border-slate-800"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {items.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={25} className="text-center py-12 text-slate-500 text-[10px] uppercase tracking-widest border-b-0">
-                                        No items formulated for {dateStr}
+                                    <TableCell colSpan={26} className="p-0 border-0 h-0">
+                                        <div className="absolute inset-0 flex items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none" style={{ top: '40px' }}>
+                                            No items formulated for {dateStr}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : items.map((item, index) => (
@@ -1579,7 +1599,7 @@ export default function DataEntryTerminal() {
 
                                     {/* 8. Customer DOB */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <CustomDatePicker 
+                                        <InlineDatePicker 
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.customerDOB || ''}
@@ -1693,7 +1713,7 @@ export default function DataEntryTerminal() {
 
                                     {/* 17. Disbursed Date */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <CustomDatePicker 
+                                        <InlineDatePicker 
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.disbursedDate || ''}
@@ -1703,7 +1723,7 @@ export default function DataEntryTerminal() {
 
                                     {/* 19. EMI Date */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <CustomDatePicker 
+                                        <InlineDatePicker 
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.emiDate || ''}
@@ -2111,7 +2131,7 @@ export default function DataEntryTerminal() {
                                             className={`h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 ${!item.amount ? 'border-red-500 border' : ''}`}
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2"><CustomDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><InlineDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.category || ''} 
@@ -2155,7 +2175,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
                                     <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} /></TableCell>
-                                    <TableCell className="p-2"><CustomDatePicker value={item.customerDOB || ''} onChange={(val: string) => handleUpdate('customerDOB', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><InlineDatePicker value={item.customerDOB || ''} onChange={(val: string) => handleUpdate('customerDOB', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.phoneNumber || ''} onChange={e => handleUpdate('phoneNumber', e.target.value.replace(/\D/g,''))} placeholder="Phone..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input type="email" value={item.emailId || ''} onChange={e => handleUpdate('emailId', e.target.value)} placeholder="Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.customerAddress || ''} onChange={e => handleUpdate('customerAddress', e.target.value)} placeholder="Address..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
@@ -2196,8 +2216,8 @@ export default function DataEntryTerminal() {
                                             className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2"><CustomDatePicker value={item.disbursedDate || ''} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    <TableCell className="p-2"><CustomDatePicker value={item.emiDate || ''} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><InlineDatePicker value={item.disbursedDate || ''} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><InlineDatePicker value={item.emiDate || ''} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
@@ -2330,7 +2350,7 @@ export default function DataEntryTerminal() {
                                 style={{ colorScheme: 'dark' }}
                             />
                         ) : (
-                            <CustomDatePicker 
+                            <InlineDatePicker 
                                 min="2026-01-01"
                                 value={dateStr}
                                 onChange={setDateStr}
@@ -2545,6 +2565,16 @@ export default function DataEntryTerminal() {
           </div>
         )}
 
+      {showDatePicker && (
+        <CustomDatePicker 
+          selectedDate={dateStr}
+          onChange={(date) => {
+              if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+              setDateStr(date);
+          }}
+          onClose={() => setShowDatePicker(false)}
+        />
+      )}
     </div>
   );
 }
