@@ -39,7 +39,7 @@ export interface EntryItem {
     isManual?: boolean;
     
     // Expanded schema fields
-    fileLogin?: 'WBO' | 'EXPRESS LINK' | 'ILENS' | '';
+    fileLogin?: 'WBO' | 'EXPRESS LINK' | 'ILENS' | 'Online' | 'Branch walkin' | 'lead force' | '';
     trackingNumber?: string;
     branchLocation?: string;
     customerDOB?: string;
@@ -47,7 +47,7 @@ export interface EntryItem {
     emailId?: string;
     customerAddress?: string;
     firmName?: string;
-    fileStatus?: 'Login' | 'Processing' | 'Underwriting' | 'Sanctioned' | 'Disbursed' | 'Rejected' | 'Issued' | 'Not Issued' | '';
+    fileStatus?: 'Login' | 'Processing' | 'Underwriting' | 'Sanctioned' | 'Disbursed' | 'Rejected' | 'Issued' | 'POLICY ISSUED' | 'Not Issued' | '';
     sanctionedAmount?: number;
     disbursedAmount?: number;
     disbursedDate?: string;
@@ -116,7 +116,9 @@ const staticChannels: Channel[] = [
   'Bandhan Bank', 'Cholamandalam', 'Finnable', 'SMFG India', 'HDFC BANK',
   'ICICI BANK', 'IDFC FIRST BANK', 'INCRED', 'INDUSIND BANK', 'L&T',
   'PIRAMAL CAPITAL', 'POONAWALA', 'TATA CAPITAL', 'YES BANK', 'INDIFI',
-  'Credit SAISON', 'SLICE'
+  'Credit SAISON', 'SLICE', 'ICICI Lombard', 'Niva Bupa', 'Tata AIG',
+  'Manipal Cigna', 'Star Health', 'Care Health', 'SBI', 'Magma',
+  'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank'
 ].map((name, i) => ({ id: `ch-${i}`, name, business: 0 }));
 
 const staticBranches: Branch[] = [
@@ -132,9 +134,10 @@ const staticProducts: Omit<Product, 'business'>[] = [
   { id: 'p3', name: 'Housing Loan/LAP', category: 'Loan' },
   { id: 'p4', name: 'Life Insurance', category: 'Insurance' },
   { id: 'p5', name: 'General Insurance', category: 'Insurance' },
-  { id: 'p6', name: 'Livlong Loan Protector', category: 'Insurance' },
+  { id: 'p6', name: 'Livelong-Loan protector', category: 'Insurance' },
   { id: 'p7', name: 'Mutual Fund/SIP', category: 'Investments' },
-  { id: 'p8', name: 'Retail Forex', category: 'Forex' },
+  { id: 'p8', name: 'Retail forex sales', category: 'Forex' },
+  { id: 'p8_2', name: 'Retail forex purchase', category: 'Forex' },
   { id: 'p9', name: 'GST filing', category: 'Consultancy' },
   { id: 'p10', name: 'ITR filing', category: 'Consultancy' }
 ];

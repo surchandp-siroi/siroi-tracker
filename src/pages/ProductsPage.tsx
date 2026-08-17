@@ -81,7 +81,6 @@ export default function ProductsPage() {
                       let mappedProduct = item.product.trim();
                       if (mappedProduct === 'Mortgage' || mappedProduct === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
                       else if (mappedProduct === 'SIP & Mutual Fund' || mappedProduct === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
-                      else if (item.category === 'Forex') mappedProduct = 'Retail Forex';
 
                       if (isAch) {
                           mapA[mappedProduct] = (mapA[mappedProduct] || 0) + achAmt;

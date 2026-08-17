@@ -540,7 +540,7 @@ export default function DataEntryTerminal() {
             - "relationshipManagerName": string
             - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty
             - "trackingNumber": string or empty
-            - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC if Insurance.
+            - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC, ICICI Lombard, Niva Bupa, Tata AIG, Manipal Cigna, Star Health, Care Health, SBI, Magma, Galaxy Health, SIROI, Bank of Baroda, Punjab & Sind Bank if Insurance.
             - "branchLocation": Map to Branch name exactly as: ${branches.map((b: any) => b.name).join(', ')}. Use the specific branch for the row.
             - "customerDOB": string
             - "phoneNumber": string
@@ -697,14 +697,24 @@ export default function DataEntryTerminal() {
           // Auto-update product if category changes
           if (key === 'category') {
               arr[index].product = ''; // reset
-              if (val !== 'Loan') {
-                  arr[index].fileLogin = ''; // reset if not Loan
-              }
               if (val === 'Insurance') {
                   arr[index].fileStatus = '';
               } else {
-                  if (['Issued', 'Not Issued'].includes(arr[index].fileStatus || '')) {
+                  if (['Issued', 'POLICY ISSUED', 'Not Issued'].includes(arr[index].fileStatus || '')) {
                       arr[index].fileStatus = '';
+                  }
+              }
+              if (val === 'Forex') {
+                  arr[index].fileLogin = 'Online';
+                  arr[index].channel = 'SIROI';
+              }
+          }
+          
+          if (key === 'product') {
+              if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
+                  arr[index].fileLogin = 'lead force';
+                  if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank') {
+                      arr[index].channel = '';
                   }
               }
           }
@@ -712,13 +722,13 @@ export default function DataEntryTerminal() {
           // Automatically update achievement for Insurance
           if (arr[index].category === 'Insurance') {
               if (key === 'fileStatus') {
-                  if (val === 'Issued') {
+                  if (val === 'Issued' || val === 'POLICY ISSUED') {
                       arr[index].disbursedAmount = arr[index].amount;
                   } else if (val === 'Not Issued') {
                       arr[index].disbursedAmount = 0;
                   }
               }
-              if (key === 'amount' && arr[index].fileStatus === 'Issued') {
+              if (key === 'amount' && (arr[index].fileStatus === 'Issued' || arr[index].fileStatus === 'POLICY ISSUED')) {
                   arr[index].disbursedAmount = Number(val) || 0;
               }
           }
@@ -1532,15 +1542,26 @@ export default function DataEntryTerminal() {
                                     {/* 5. File Login */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
-                                            disabled={(!canModify && !item.isManual) || item.category !== 'Loan'}
+                                            disabled={(!canModify && !item.isManual) || item.category === 'Forex'}
                                             className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
                                             value={item.fileLogin || ''}
                                             onChange={(e) => handleUpdateItem(index, 'fileLogin', e.target.value)}
                                         >
                                             <option value="">Select...</option>
-                                            <option value="WBO">WBO</option>
-                                            <option value="EXPRESS LINK">EXPRESS LINK</option>
-                                            <option value="ILENS">ILENS</option>
+                                            {item.category === 'Insurance' || item.category === 'Forex' ? (
+                                                <option value="Online">Online</option>
+                                            ) : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? (
+                                                <option value="lead force">lead force</option>
+                                            ) : (
+                                                <>
+                                                    <option value="WBO">WBO</option>
+                                                    <option value="EXPRESS LINK">EXPRESS LINK</option>
+                                                    <option value="ILENS">ILENS</option>
+                                                    <option value="Online">Online</option>
+                                                    <option value="Branch walkin">Branch walkin</option>
+                                                    <option value="lead force">lead force</option>
+                                                </>
+                                            )}
                                         </select>
                                     </TableCell>
 
@@ -1570,6 +1591,25 @@ export default function DataEntryTerminal() {
                                                     <option value="Bajaj Allianz">Bajaj Allianz</option>
                                                     <option value="Aditya Birla">Aditya Birla</option>
                                                     <option value="LIC">LIC</option>
+                                                    <option value="ICICI Lombard">ICICI Lombard</option>
+                                                    <option value="Niva Bupa">Niva Bupa</option>
+                                                    <option value="Tata AIG">Tata AIG</option>
+                                                    <option value="Manipal Cigna">Manipal Cigna</option>
+                                                    <option value="Star Health">Star Health</option>
+                                                    <option value="Care Health">Care Health</option>
+                                                    <option value="SBI">SBI</option>
+                                                    <option value="Magma">Magma</option>
+                                                    <option value="Galaxy Health">Galaxy Health</option>
+                                                    <option value="SIROI">SIROI</option>
+                                                    <option value="Bank of Baroda">Bank of Baroda</option>
+                                                    <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
+                                                </>
+                                            ) : item.category === 'Forex' ? (
+                                                <option value="SIROI">SIROI</option>
+                                            ) : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? (
+                                                <>
+                                                    <option value="Bank of Baroda">Bank of Baroda</option>
+                                                    <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
                                                 </>
                                             ) : (
                                                 channels.map((c: any) => (
@@ -1663,6 +1703,7 @@ export default function DataEntryTerminal() {
                                             {item.category === 'Insurance' ? (
                                                 <>
                                                     <option value="Issued" className="bg-slate-800 text-green-400">Issued</option>
+                                                    <option value="POLICY ISSUED" className="bg-slate-800 text-green-400">POLICY ISSUED</option>
                                                     <option value="Not Issued" className="bg-slate-800 text-yellow-400">Not Issued</option>
                                                 </>
                                             ) : item.category === 'Loan' ? (
@@ -2048,12 +2089,24 @@ export default function DataEntryTerminal() {
                                     arr[index] = { ...arr[index], [key]: val };
                                     if (key === 'category') {
                                         arr[index].product = '';
-                                        if (val !== 'Loan') arr[index].fileLogin = '';
                                         if (val === 'Insurance') {
                                             arr[index].fileStatus = '';
                                         } else {
-                                            if (['Issued', 'Not Issued'].includes(arr[index].fileStatus || '')) {
+                                            if (['Issued', 'POLICY ISSUED', 'Not Issued'].includes(arr[index].fileStatus || '')) {
                                                 arr[index].fileStatus = '';
+                                            }
+                                        }
+                                        if (val === 'Forex') {
+                                            arr[index].fileLogin = 'Online';
+                                            arr[index].channel = 'SIROI';
+                                        }
+                                    }
+                                    
+                                    if (key === 'product') {
+                                        if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
+                                            arr[index].fileLogin = 'lead force';
+                                            if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank') {
+                                                arr[index].channel = '';
                                             }
                                         }
                                     }
@@ -2151,14 +2204,29 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
                                     <TableCell className="p-2"><Input value={item.relationshipManagerName || ''} onChange={e => handleUpdate('relationshipManagerName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    <TableCell className="p-2"><Input value={item.fileLogin || ''} onChange={e => handleUpdate('fileLogin', e.target.value)} disabled={item.category !== 'Loan'} placeholder="e.g. WBO" className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2">
+                                        <AppSelect 
+                                            value={item.fileLogin || ''} 
+                                            onChange={val => handleUpdate('fileLogin', val)} 
+                                            options={(item.category === 'Insurance' || item.category === 'Forex')
+                                                ? [{id: 'Online', name: 'Online'}]
+                                                : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan'))
+                                                ? [{id: 'lead force', name: 'lead force'}]
+                                                : ['WBO', 'EXPRESS LINK', 'ILENS', 'Online', 'Branch walkin', 'lead force'].map(c => ({id: c, name: c}))
+                                            }
+                                            placeholder="File Login"
+                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white border`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="p-2"><Input value={item.trackingNumber || ''} onChange={e => handleUpdate('trackingNumber', e.target.value)} placeholder="Track No..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.channel || ''} 
                                             onChange={val => handleUpdate('channel', val)} 
                                             options={item.category === 'Insurance' 
-                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC'].map(c => ({id: c, name: c}))
+                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC', 'ICICI Lombard', 'Niva Bupa', 'Tata AIG', 'Manipal Cigna', 'Star Health', 'Care Health', 'SBI', 'Magma', 'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank'].map(c => ({id: c, name: c}))
+                                                : item.category === 'Forex' ? [{id: 'SIROI', name: 'SIROI'}]
+                                                : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? ['Bank of Baroda', 'Punjab & Sind Bank'].map(c => ({id: c, name: c}))
                                                 : channels.map((c: any) => ({id: c.name, name: c.name}))
                                             }
                                             placeholder="Channel"
