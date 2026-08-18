@@ -72,6 +72,7 @@ export interface BranchEntry {
     totalAmount: number;
     authorId: string;
     authorEmail: string;
+    isDeleted?: boolean;
 }
 
 export interface BranchTarget {
