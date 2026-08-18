@@ -19,9 +19,13 @@ export default function CustomerDataEntryPage() {
     const [aadharNumber, setAadharNumber] = useState('');
     const [associationDate, setAssociationDate] = useState('');
     const [address, setAddress] = useState('');
+    const [pincode, setPincode] = useState('');
+    const [city, setCity] = useState('');
+    const [district, setDistrict] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [emailId, setEmailId] = useState('');
     const [entryPersonName, setEntryPersonName] = useState('');
+    const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
     const [entryLocation, setEntryLocation] = useState(branches[0]?.name || 'HO');
     
     // UI State
@@ -64,6 +68,9 @@ export default function CustomerDataEntryPage() {
                 setAadharNumber(data.aadhar_number || '');
                 setAssociationDate(data.association_date || '');
                 setAddress(data.address || '');
+                setPincode(data.pincode || '');
+                setCity(data.city || '');
+                setDistrict(data.district || '');
                 setPhoneNumber(data.phone_number || '');
                 setEmailId(data.email_id || '');
                 setEntryPersonName(data.entry_person_name || '');
@@ -94,6 +101,9 @@ export default function CustomerDataEntryPage() {
                     aadhar_number: aadharNumber,
                     association_date: associationDate,
                     address: address,
+                    pincode: pincode,
+                    city: city,
+                    district: district,
                     phone_number: phoneNumber,
                     email_id: emailId,
                     entry_person_name: entryPersonName,
@@ -111,6 +121,9 @@ export default function CustomerDataEntryPage() {
                 setAadharNumber('');
                 setAssociationDate('');
                 setAddress('');
+                setPincode('');
+                setCity('');
+                setDistrict('');
                 setPhoneNumber('');
                 setEmailId('');
                 setEntryPersonName('');
@@ -255,25 +268,60 @@ export default function CustomerDataEntryPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Address</label>
-                                    <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full Address" required rows={2} className="w-full flex min-h-[80px] rounded-xl border border-slate-200 bg-white/50 px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 text-slate-900" />
+                                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Street Address / House No.</label>
+                                    <Input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="House No, Street, Landmark" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Pincode</label>
+                                        <Input type="text" value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="795001" maxLength={6} required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">City</label>
+                                        <Input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Imphal" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">District</label>
+                                        <Input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Imphal West" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2 pt-5 border-t border-slate-200/60 mt-2">
                                     <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Your Name (Data Enterer)</label>
-                                    <select 
-                                        value={entryPersonName} 
-                                        onChange={(e) => setEntryPersonName(e.target.value)} 
-                                        required 
-                                        className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white/50 px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    >
-                                        <option value="" disabled>Select your name...</option>
-                                        <option value="Surchand Singh">Surchand Singh</option>
-                                        <option value="Sharju Thoudam">Sharju Thoudam</option>
-                                        <option value="Tomas">Tomas</option>
-                                        <option value="Branch Manager">Branch Manager</option>
-                                        <option value="Branch Executive">Branch Executive</option>
-                                    </select>
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
+                                            className="flex items-center justify-between h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
+                                        >
+                                            <span className={entryPersonName ? 'text-slate-900' : 'text-slate-400'}>
+                                                {entryPersonName || 'Select your name...'}
+                                            </span>
+                                            <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isEmployeeDropdownOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        
+                                        {isEmployeeDropdownOpen && (
+                                            <>
+                                                <div className="fixed inset-0 z-40" onClick={() => setIsEmployeeDropdownOpen(false)}></div>
+                                                <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                                                    {['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive'].map(name => (
+                                                        <button
+                                                            key={name}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEntryPersonName(name);
+                                                                setIsEmployeeDropdownOpen(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${entryPersonName === name ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                                                        >
+                                                            {name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
