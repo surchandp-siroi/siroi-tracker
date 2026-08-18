@@ -29,15 +29,24 @@ export default function CustomerDataEntryPage() {
     const [entryLocation, setEntryLocation] = useState(branches[0]?.name || 'HO');
     const [employees, setEmployees] = useState<string[]>(['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive']);
 
+    // Sync initial location when branches load
+    useEffect(() => {
+        if (branches.length > 0 && entryLocation === 'HO') {
+            setEntryLocation(branches[0].name);
+        }
+    }, [branches, entryLocation]);
+
     useEffect(() => {
         const fetchEmployees = async () => {
-            let searchBranch = entryLocation;
-            if (entryLocation === 'HO') searchBranch = 'Guwahati (HO)';
+            let searchBranches = [entryLocation];
+            if (entryLocation === 'HO' || entryLocation === 'Guwahati') {
+                searchBranches = ['Guwahati', 'Guwahati (HO)'];
+            }
             
             const { data, error } = await supabase
                 .from('org_nodes')
                 .select('name')
-                .eq('branch', searchBranch);
+                .in('branch', searchBranches);
                 
             if (!error && data && data.length > 0) {
                 setEmployees(data.map(d => d.name));
