@@ -10,6 +10,9 @@ const config: CapacitorConfig = {
       launchAutoHide: false,
       backgroundColor: "#ffffff",
       showSpinner: false
+    },
+    CapacitorUpdater: {
+      autoUpdate: true
     }
   }
 };

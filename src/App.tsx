@@ -22,12 +22,16 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { SessionTimer } from '@/components/SessionTimer';
 import { AnimatedSplashScreen } from '@/components/AnimatedSplashScreen';
 import { requestAppPermissions } from '@/utils/PermissionsHelper';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
 
   useEffect(() => {
     requestAppPermissions();
+    if (Capacitor.isNativePlatform()) {
+      CapacitorUpdater.notifyAppReady();
+    }
   }, []);
 
   return (

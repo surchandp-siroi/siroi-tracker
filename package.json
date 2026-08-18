@@ -17,6 +17,7 @@
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
     "@capgo/capacitor-navigation-bar": "^8.2.6",
+    "@capgo/capacitor-updater": "^8.51.13",
     "@google/genai": "^1.17.0",
     "@hookform/resolvers": "^5.2.1",
     "@supabase/supabase-js": "^2.104.0",
