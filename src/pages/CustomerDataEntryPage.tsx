@@ -28,6 +28,8 @@ export default function CustomerDataEntryPage() {
     const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
     const [entryLocation, setEntryLocation] = useState(branches[0]?.name || 'HO');
     const [employees, setEmployees] = useState<string[]>(['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive']);
+    const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
+    const employeeDropdownRef = React.useRef<HTMLDivElement>(null);
 
     // Sync initial location when branches load
     useEffect(() => {
@@ -318,10 +320,17 @@ export default function CustomerDataEntryPage() {
 
                                 <div className="space-y-2 pt-5 border-t border-slate-200/60 mt-2">
                                     <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Your Name (Data Enterer)</label>
-                                    <div className="relative">
+                                    <div className="relative" ref={employeeDropdownRef}>
                                         <button
                                             type="button"
-                                            onClick={() => setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen)}
+                                            onClick={() => {
+                                                if (!isEmployeeDropdownOpen && employeeDropdownRef.current) {
+                                                    const rect = employeeDropdownRef.current.getBoundingClientRect();
+                                                    const spaceBelow = window.innerHeight - rect.bottom;
+                                                    setDropdownPosition(spaceBelow < 320 ? 'top' : 'bottom');
+                                                }
+                                                setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen);
+                                            }}
                                             className="flex items-center justify-between h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
                                         >
                                             <span className={entryPersonName ? 'text-slate-900' : 'text-slate-400'}>
@@ -333,7 +342,7 @@ export default function CustomerDataEntryPage() {
                                         {isEmployeeDropdownOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsEmployeeDropdownOpen(false)}></div>
-                                                <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden max-h-[300px] overflow-y-auto">
+                                                <div className={`absolute ${dropdownPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 w-full bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden max-h-[300px] overflow-y-auto`}>
                                                     {employees.map(name => (
                                                         <button
                                                             key={name}
