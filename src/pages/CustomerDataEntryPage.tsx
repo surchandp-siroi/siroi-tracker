@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useDataStore } from '@/store/useDataStore';
@@ -27,6 +27,26 @@ export default function CustomerDataEntryPage() {
     const [entryPersonName, setEntryPersonName] = useState('');
     const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
     const [entryLocation, setEntryLocation] = useState(branches[0]?.name || 'HO');
+    const [employees, setEmployees] = useState<string[]>(['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive']);
+
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            let searchBranch = entryLocation;
+            if (entryLocation === 'HO') searchBranch = 'Guwahati (HO)';
+            
+            const { data, error } = await supabase
+                .from('org_nodes')
+                .select('name')
+                .eq('branch', searchBranch);
+                
+            if (!error && data && data.length > 0) {
+                setEmployees(data.map(d => d.name));
+            } else {
+                setEmployees(['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive']);
+            }
+        };
+        fetchEmployees();
+    }, [entryLocation]);
     
     // UI State
     const [isLoading, setIsLoading] = useState(false);
@@ -304,8 +324,8 @@ export default function CustomerDataEntryPage() {
                                         {isEmployeeDropdownOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsEmployeeDropdownOpen(false)}></div>
-                                                <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-                                                    {['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive'].map(name => (
+                                                <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden max-h-[300px] overflow-y-auto">
+                                                    {employees.map(name => (
                                                         <button
                                                             key={name}
                                                             type="button"
