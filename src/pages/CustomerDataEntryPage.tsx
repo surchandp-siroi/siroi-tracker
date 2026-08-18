@@ -15,7 +15,12 @@ export default function CustomerDataEntryPage() {
     
     // Form State
     const [panNumber, setPanNumber] = useState('');
+    const [customerName, setCustomerName] = useState('');
     const [aadharNumber, setAadharNumber] = useState('');
+    const [associationDate, setAssociationDate] = useState('');
+    const [address, setAddress] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [emailId, setEmailId] = useState('');
     const [entryPersonName, setEntryPersonName] = useState('');
     const [entryLocation, setEntryLocation] = useState(branches[0]?.name || 'HO');
     
@@ -55,8 +60,13 @@ export default function CustomerDataEntryPage() {
                 }
                 
                 // Exists and location matches, auto-populate
-                setAadharNumber(data.aadhar_number);
-                setEntryPersonName(data.entry_person_name);
+                setCustomerName(data.customer_name || '');
+                setAadharNumber(data.aadhar_number || '');
+                setAssociationDate(data.association_date || '');
+                setAddress(data.address || '');
+                setPhoneNumber(data.phone_number || '');
+                setEmailId(data.email_id || '');
+                setEntryPersonName(data.entry_person_name || '');
                 setExistingRecord(data);
             } else {
                 setExistingRecord(null);
@@ -80,7 +90,12 @@ export default function CustomerDataEntryPage() {
                 .from('customer_data')
                 .insert([{
                     pan_number: panNumber.toUpperCase(),
+                    customer_name: customerName,
                     aadhar_number: aadharNumber,
+                    association_date: associationDate,
+                    address: address,
+                    phone_number: phoneNumber,
+                    email_id: emailId,
                     entry_person_name: entryPersonName,
                     entry_location: entryLocation
                 }]);
@@ -92,7 +107,13 @@ export default function CustomerDataEntryPage() {
                 setSuccess(false);
                 setStep(1);
                 setPanNumber('');
+                setCustomerName('');
                 setAadharNumber('');
+                setAssociationDate('');
+                setAddress('');
+                setPhoneNumber('');
+                setEmailId('');
+                setEntryPersonName('');
                 setExistingRecord(null);
             }, 3000);
         } catch (err: any) {
@@ -114,7 +135,7 @@ export default function CustomerDataEntryPage() {
                 shadowIntensity="lg"
                 borderRadius="2.5rem"
                 blurIntensity="lg"
-                className="relative z-10 w-full max-w-xl p-8 sm:p-12 bg-white/60 dark:bg-slate-900/60"
+                className="relative z-10 w-full max-w-2xl p-8 sm:p-12 bg-white/60 dark:bg-slate-900/60"
             >
                 <button 
                     onClick={() => navigate('/')}
@@ -202,34 +223,57 @@ export default function CustomerDataEntryPage() {
                         </div>
                         
                         {step === 2 && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="space-y-5 animate-in fade-in slide-in-from-top-4 duration-500">
                                 {existingRecord && (
                                     <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 text-xs text-center font-medium">
                                         Found existing record for this PAN at {entryLocation}. Fields auto-populated.
                                     </div>
                                 )}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Aadhar Number</label>
-                                    <Input 
-                                        type="text" 
-                                        value={aadharNumber}
-                                        onChange={(e) => setAadharNumber(e.target.value)}
-                                        placeholder="1234 5678 9012"
-                                        maxLength={14}
-                                        required
-                                        className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm"
-                                    />
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer Name</label>
+                                        <Input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Full Name" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Aadhar Number</label>
+                                        <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Association Date</label>
+                                        <Input type="date" value={associationDate} onChange={(e) => setAssociationDate(e.target.value)} required className="h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone Number</label>
+                                        <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+91 9876543210" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
                                 </div>
+                                
                                 <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email ID</label>
+                                    <Input type="email" value={emailId} onChange={(e) => setEmailId(e.target.value)} placeholder="customer@email.com" className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Address</label>
+                                    <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full Address" required rows={2} className="w-full flex min-h-[80px] rounded-xl border border-slate-200 bg-white/50 px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 text-slate-900" />
+                                </div>
+
+                                <div className="space-y-2 pt-5 border-t border-slate-200/60 mt-2">
                                     <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Your Name (Data Enterer)</label>
-                                    <Input 
-                                        type="text" 
-                                        value={entryPersonName}
-                                        onChange={(e) => setEntryPersonName(e.target.value)}
-                                        placeholder="John Doe"
-                                        required
-                                        className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm"
-                                    />
+                                    <select 
+                                        value={entryPersonName} 
+                                        onChange={(e) => setEntryPersonName(e.target.value)} 
+                                        required 
+                                        className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white/50 px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    >
+                                        <option value="" disabled>Select your name...</option>
+                                        <option value="Surchand Singh">Surchand Singh</option>
+                                        <option value="Sharju Thoudam">Sharju Thoudam</option>
+                                        <option value="Tomas">Tomas</option>
+                                        <option value="Branch Manager">Branch Manager</option>
+                                        <option value="Branch Executive">Branch Executive</option>
+                                    </select>
                                 </div>
                             </div>
                         )}
