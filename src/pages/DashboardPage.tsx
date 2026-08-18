@@ -75,18 +75,32 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
         const validPayloads = payload.filter((p: any) => p.value > 0);
         if (validPayloads.length === 0) return null;
         return (
-            <div className="bg-[#1e293b] border border-white/10 p-3 rounded-lg shadow-xl">
-                <p className="text-white font-bold mb-2 border-b border-white/10 pb-1">{label}</p>
-                <div className="flex flex-col gap-1">
-                    {validPayloads.map((p: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between gap-4 text-xs">
-                            <span className="flex items-center gap-1.5" style={{ color: p.color }}>
-                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }}></span>
-                                {p.name.replace('Proj.', 'Projection').replace('Ach.', 'Achievement')}:
-                            </span>
-                            <span className="text-white font-mono font-semibold">₹{Number(p.value).toLocaleString('en-IN')}</span>
-                        </div>
-                    ))}
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 p-4 rounded-xl shadow-2xl min-w-[220px]">
+                <p className="text-slate-900 dark:text-white font-black text-xs tracking-widest uppercase mb-3 border-b border-slate-200 dark:border-slate-700/80 pb-2">{label}</p>
+                <div className="flex flex-col gap-2.5">
+                    {validPayloads.map((p: any, index: number) => {
+                        const isProj = p.name.startsWith('Proj.');
+                        const prodName = p.name.replace('Proj. ', '').replace('Ach. ', '');
+                        const solidColor = PRODUCT_COLORS[prodName]?.ach || p.color || '#000';
+                        
+                        return (
+                            <div key={index} className="flex items-center justify-between gap-6 text-xs">
+                                <span className="flex items-center gap-2 font-medium text-slate-600 dark:text-slate-300">
+                                    <div className="w-3 h-3 rounded-[3px] flex-shrink-0" style={{ 
+                                        backgroundColor: isProj ? 'transparent' : solidColor,
+                                        border: isProj ? `1px solid ${solidColor}` : 'none',
+                                        backgroundImage: isProj ? `repeating-linear-gradient(45deg, transparent, transparent 1px, ${solidColor} 1px, ${solidColor} 2px)` : 'none',
+                                        boxShadow: isProj ? 'none' : `0 0 8px ${solidColor}40`
+                                    }}></div>
+                                    <span className="flex gap-1.5 items-center">
+                                        <span className="font-bold text-slate-800 dark:text-white">{isProj ? 'PROJ.' : 'ACH.'}</span> 
+                                        <span className="opacity-80">{prodName}</span>
+                                    </span>
+                                </span>
+                                <span className="text-slate-900 dark:text-white font-mono font-bold tracking-tight">₹{Number(p.value).toLocaleString('en-IN')}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
