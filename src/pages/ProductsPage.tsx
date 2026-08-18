@@ -49,7 +49,26 @@ export default function ProductsPage() {
     const sdIsNewFY = sdMonth >= 3;
     const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
 
-    entries.forEach(entry => {
+    const monthlyPresence = new Set<string>();
+    entries.forEach(e => {
+        if (e.mode === 'monthly' && !e.isDeleted) {
+            const d = new Date(e.entryDate);
+            monthlyPresence.add(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`);
+        }
+    });
+
+    const validEntries = entries.filter(e => {
+        if (e.isDeleted) return false;
+        if (e.mode === 'daily') {
+            const d = new Date(e.entryDate);
+            if (monthlyPresence.has(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`)) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    validEntries.forEach(entry => {
       const branchMatch = selectedBranch === 'all' || entry.branchId === selectedBranch;
       if (!branchMatch) return;
 
@@ -57,7 +76,15 @@ export default function ProductsPage() {
       const isAch = !entry.recordType || entry.recordType === 'achievement';
 
       const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
-      const entryAch = isAch ? entry.items.reduce((sum, i) => sum + (Number(i.disbursedAmount) || 0), 0) : 0;
+      const entryAch = isAch ? entry.items.reduce((sum, item) => {
+          let amt = 0;
+          const cat = item.category || 'Loan';
+          if (cat === 'Loan') amt = Number(item.disbursedAmount) || 0;
+          else if (cat === 'Insurance') amt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+          else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') amt = Number(item.amount) || 0;
+          else amt = Number(item.disbursedAmount) || Number(item.amount) || 0;
+          return sum + amt;
+      }, 0) : 0;
 
       const ed = new Date(entry.entryDate);
       const edYear = ed.getFullYear();
@@ -75,7 +102,13 @@ export default function ProductsPage() {
               
               entry.items.forEach(item => {
                   const projAmt = Number(item.amount) || 0;
-                  const achAmt = Number(item.disbursedAmount) || 0;
+                  
+                  let achAmt = 0;
+                  const cat = item.category || 'Loan';
+                  if (cat === 'Loan') achAmt = Number(item.disbursedAmount) || 0;
+                  else if (cat === 'Insurance') achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
+                  else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') achAmt = Number(item.amount) || 0;
+                  else achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
 
                   if (item.product && item.product !== 'Grouped') {
                       let mappedProduct = item.product.trim();
@@ -84,21 +117,21 @@ export default function ProductsPage() {
 
                       if (isAch) {
                           mapA[mappedProduct] = (mapA[mappedProduct] || 0) + achAmt;
-                          mapACount[mappedProduct] = (mapACount[mappedProduct] || 0) + 1;
+                          if (achAmt > 0) mapACount[mappedProduct] = (mapACount[mappedProduct] || 0) + 1;
                       }
                       if (isProj) {
                           mapP[mappedProduct] = (mapP[mappedProduct] || 0) + projAmt;
-                          mapPCount[mappedProduct] = (mapPCount[mappedProduct] || 0) + 1;
+                          if (projAmt > 0) mapPCount[mappedProduct] = (mapPCount[mappedProduct] || 0) + 1;
                       }
                   }
                   if (item.category) {
                       if (isAch) {
                           catMapA[item.category] = (catMapA[item.category] || 0) + achAmt;
-                          catMapACount[item.category] = (catMapACount[item.category] || 0) + 1;
+                          if (achAmt > 0) catMapACount[item.category] = (catMapACount[item.category] || 0) + 1;
                       }
                       if (isProj) {
                           catMapP[item.category] = (catMapP[item.category] || 0) + projAmt;
-                          catMapPCount[item.category] = (catMapPCount[item.category] || 0) + 1;
+                          if (projAmt > 0) catMapPCount[item.category] = (catMapPCount[item.category] || 0) + 1;
                       }
                   }
               });
@@ -138,7 +171,7 @@ export default function ProductsPage() {
 
   const getCountLabel = (category: string, count: number) => {
     switch (category) {
-        case 'Loan': return `${count} Logins`;
+        case 'Loan': return `${count} Cases`;
         case 'Insurance': return `${count} Policies`;
         case 'Forex': return `${count} Txns`;
         case 'Investments': return `${count} SIP/MFs`;
