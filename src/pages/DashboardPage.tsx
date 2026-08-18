@@ -446,7 +446,15 @@ export default function DashboardOverview() {
                   }
                   if (isProj) {
                       // Modal daily projections (often just category-level)
-                      b[`proj_${prod}`] = (b[`proj_${prod}`] || 0) + (Number(item.amount) || 0);
+                      let mappedProd = prod;
+                      if (prod === 'Grouped') {
+                          if (item.category === 'Loan') mappedProd = 'Personal Loan';
+                          else if (item.category === 'Insurance') mappedProd = 'Life Insurance';
+                          else if (item.category === 'Investments') mappedProd = 'Mutual Fund/SIP';
+                          else if (item.category === 'Forex') mappedProd = 'Retail Forex';
+                          else if (item.category === 'Consultancy') mappedProd = 'GST filing';
+                      }
+                      b[`proj_${mappedProd}`] = (b[`proj_${mappedProd}`] || 0) + (Number(item.amount) || 0);
                       entryProj += (Number(item.amount) || 0);
                   }
               });

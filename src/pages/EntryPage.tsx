@@ -168,7 +168,7 @@ export default function DataEntryTerminal() {
   const [lodgedProjectionAmount, setLodgedProjectionAmount] = useState(0);
   const [isProjectionModalOpen, setIsProjectionModalOpen] = useState(false);
   const [projectionInputs, setProjectionInputs] = useState<Record<string, number>>({
-      Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0
+      'Personal Loan': 0, 'Business Loan': 0, 'Housing Loan/LAP': 0, 'Life Insurance': 0, 'General Insurance': 0, 'Livlong Loan Protector': 0, 'Mutual Fund/SIP': 0, 'Retail Forex': 0, 'GST filing': 0, 'ITR filing': 0
   });
   const [projectionReason, setProjectionReason] = useState<string>('Business as Usual');
   const [isLodgingProjection, setIsLodgingProjection] = useState(false);
@@ -869,14 +869,22 @@ export default function DataEntryTerminal() {
               entryDate: dateStr,
               mode: entryMode,
               recordType: 'projection',
-              items: Object.entries(projectionInputs).map(([cat, amt]) => ({
-                  isManual: true,
-                  category: cat,
-                  product: 'Grouped',
-                  projectionAmt: amt || 0,
-                  amount: amt || 0,
-                  reason: projectionReason
-              })),
+              items: Object.entries(projectionInputs).map(([prod, amt]) => {
+                  let cat = 'Loan';
+                  if (prod.includes('Insurance') || prod.includes('Protector')) cat = 'Insurance';
+                  else if (prod.includes('Mutual Fund') || prod.includes('SIP')) cat = 'Investments';
+                  else if (prod.includes('Forex')) cat = 'Forex';
+                  else if (prod.includes('filing') || prod.includes('Consult')) cat = 'Consultancy';
+                  
+                  return {
+                      isManual: true,
+                      category: cat,
+                      product: prod,
+                      projectionAmt: amt || 0,
+                      amount: amt || 0,
+                      reason: projectionReason
+                  };
+              }),
               totalAmount: totalProjectionAmtInput,
               authorId: user?.id,
               authorEmail: user?.email,
