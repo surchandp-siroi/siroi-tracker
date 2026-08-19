@@ -444,9 +444,12 @@ export default function DashboardOverview() {
                   } else if (item.category === 'Insurance') {
                       achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
                       projAmt = Number(item.amount) || 0;
-                  } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
+                  } else if (item.category === 'Investments' || item.category === 'Consultancy') {
                       achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
-                      projAmt = (item.category === 'Forex' || item.category === 'Consultancy') ? 0 : (Number(item.amount) || 0);
+                      projAmt = (item.category === 'Consultancy') ? 0 : (Number(item.amount) || 0);
+                  } else if (item.category === 'Forex') {
+                      achAmt = Number(item.disbursedAmount) || 0; // Forex is only achieved when disbursed
+                      projAmt = 0; // Exclude from projections
                   } else {
                       achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
                       projAmt = Number(item.amount) || 0;
@@ -466,7 +469,7 @@ export default function DashboardOverview() {
                           if (item.category === 'Loan') mappedProd = 'Personal Loan';
                           else if (item.category === 'Insurance') mappedProd = 'Life Insurance';
                           else if (item.category === 'Investments') mappedProd = 'Mutual Fund/SIP';
-                          else if (item.category === 'Forex') mappedProd = 'Retail Forex';
+                          else if (item.category === 'Forex') return; // Exclude Forex from projections per requirements
                           else if (item.category === 'Consultancy') mappedProd = 'GST filing';
                       }
                       b[`proj_${mappedProd}`] = (b[`proj_${mappedProd}`] || 0) + (Number(item.amount) || 0);
@@ -531,7 +534,8 @@ export default function DashboardOverview() {
                   let achAmt = 0;
                   if (item.category === 'Loan') achAmt = (Number(item.disbursedAmount) || 0);
                   else if (item.category === 'Insurance') achAmt = (item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0);
-                  else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') achAmt = (Number(item.amount) || 0);
+                  else if (item.category === 'Investments' || item.category === 'Consultancy') achAmt = (Number(item.amount) || 0);
+                  else if (item.category === 'Forex') achAmt = (Number(item.disbursedAmount) || 0);
                   else achAmt = (Number(item.disbursedAmount) || Number(item.amount) || 0);
                   
                   if (achAmt > 0) {
@@ -766,8 +770,10 @@ export default function DashboardOverview() {
                  amt = Number(item.disbursedAmount) || 0;
              } else if (item.category === 'Insurance') {
                  amt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
-             } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
+             } else if (item.category === 'Investments' || item.category === 'Consultancy') {
                  amt = Number(item.amount) || 0;
+             } else if (item.category === 'Forex') {
+                 amt = Number(item.disbursedAmount) || 0;
              } else {
                  amt = Number(item.disbursedAmount) || Number(item.amount) || 0;
              }

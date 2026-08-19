@@ -203,7 +203,7 @@ export default function ConsultantApprovalPage() {
             setPendingConsultants(prev => prev.filter(c => c.id !== id));
             
             if (newStatus === 'approved' && consultantToUpdate) {
-                setApprovedConsultants(prev => [{ ...consultantToUpdate, status: 'approved', bank_name: finalBankName || '' }, ...prev]);
+                setApprovedConsultants(prev => [{ ...consultantToUpdate, status: 'approved', bank_name: finalBankName || '' } as Consultant, ...prev]);
                 
                 // Trigger email notification
                 triggerNotification('onboarding_approved', {
