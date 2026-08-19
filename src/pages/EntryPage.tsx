@@ -783,6 +783,26 @@ export default function DataEntryTerminal() {
       // 11:00 AM restriction check for Projections (Post May 15, 2026)
       // 11:00 AM restriction check removed due to unified entry logic
       
+      if (entryMode === 'monthly') {
+          if (user?.role !== 'admin' && !isBackdoor) {
+              setError("Branch users cannot lodge data in Monthly mode.");
+              return;
+          } else {
+              const execName = window.prompt("WARNING: The Month tab should be a cumulative sum of the daily records.\n\nPlease enter your name to confirm and lodge this monthly data:");
+              if (!execName || !execName.trim()) {
+                  setError("Monthly entry cancelled. Name is required.");
+                  return;
+              }
+              // Record in audit log
+              supabase.from('upload_audit_logs').insert({
+                  filename: 'Manual Monthly Lodge',
+                  uploaded_by: execName.trim(),
+                  email_id: user?.email,
+                  file_url: 'N/A'
+              }).then(({error}) => { if (error) console.error("Audit log error:", error); });
+          }
+      }
+      
       if (items.length === 0) {
           setError("Please add at least one line item.");
           return;
@@ -1247,6 +1267,7 @@ export default function DataEntryTerminal() {
                     {(user.role === 'admin' || isBackdoor) && <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>}
 
                     {/* Tracking Mode */}
+                    {(user?.role === 'admin' || isBackdoor) && (
                     <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
                             Mode
@@ -1276,6 +1297,7 @@ export default function DataEntryTerminal() {
                             </button>
                         </div>
                     </div>
+                    )}
 
                     {/* Divider */}
                     <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
