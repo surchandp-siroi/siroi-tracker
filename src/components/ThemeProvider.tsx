@@ -3,23 +3,38 @@ import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { NavigationBar } from '@capgo/capacitor-navigation-bar';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark';
 
-const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void }>({
+interface ThemeContextType {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType>({
   theme: 'light',
+  setTheme: () => {},
   toggleTheme: () => {},
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
+  const [theme, setThemeState] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem('theme');
-    return (savedTheme as Theme) || 'light';
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
+    return 'light';
   });
   const [mounted, setMounted] = useState(false);
 
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
+
   const toggleTheme = () => {
-    setTheme(prev => {
-      const nextTheme = prev === 'dark' ? 'light' : 'dark';
+    setThemeState((prev) => {
+      const nextTheme = prev === 'light' ? 'dark' : 'light';
       localStorage.setItem('theme', nextTheme);
       return nextTheme;
     });
@@ -27,12 +42,14 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     setMounted(true);
+    const root = document.documentElement;
+
+    root.classList.remove('light', 'dark');
+
     if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
+      root.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
+      root.classList.add('light');
     }
 
     if (Capacitor.isNativePlatform()) {
@@ -54,11 +71,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   }, [theme]);
 
   if (!mounted) {
-      return <div className="min-h-screen bg-slate-50" />; // fallback light background while loading
+    return <div className="min-h-screen bg-slate-50" />;
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

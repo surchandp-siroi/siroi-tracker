@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, Input } from '@/components/ui';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
 import { format } from 'date-fns';
-import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck, ArrowDown } from 'lucide-react';
+import { Calendar, X, Info, MapPin, LayoutGrid, User, Briefcase, Home, HeartPulse, Shield, ShieldCheck, TrendingUp, DollarSign, FileText, FileCheck, ArrowDown, Zap, BarChart3, Trophy, Target, Award, Sparkles, Percent, Activity, Coins, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { BranchSelect } from '@/components/BranchSelect';
 import { CustomDatePicker } from '@/components/CustomDatePicker';
+import { MonthPicker } from '@/components/ui/month-picker';
 const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
 
 const BRANCH_COLORS: Record<string, string> = {
@@ -549,10 +550,43 @@ export default function DashboardOverview() {
       };
   }, [validEntries, selectedDate, selectedBusinessBranch]);
 
-  const loanFunnelData = useMemo(() => {
+  const loanAnalyticsData = useMemo(() => {
      let loggedCount = 0, loggedVal = 0;
      let sanctionedCount = 0, sanctionedVal = 0;
      let disbursedCount = 0, disbursedVal = 0;
+     let highestSingleLoan = 0;
+     let highestLoanProduct = '';
+     let highestLoanCustomer = '';
+
+     // Sub-product tracking for loans
+     const productStats: Record<string, {
+         product: string;
+         loggedVal: number;
+         loggedCount: number;
+         sanctionedVal: number;
+         sanctionedCount: number;
+         disbursedVal: number;
+         disbursedCount: number;
+         maxAmount: number;
+         avgTicket: number;
+         conversionRate: number;
+     }> = {};
+
+     const defaultLoanTypes = ['Personal Loan', 'Business Loan', 'Housing Loan/LAP', 'Livlong Loan Protector'];
+     defaultLoanTypes.forEach(p => {
+         productStats[p] = {
+             product: p,
+             loggedVal: 0,
+             loggedCount: 0,
+             sanctionedVal: 0,
+             sanctionedCount: 0,
+             disbursedVal: 0,
+             disbursedCount: 0,
+             maxAmount: 0,
+             avgTicket: 0,
+             conversionRate: 0
+         };
+     });
 
      filteredEntries.forEach(entry => {
          if (selectedBusinessBranch !== 'all' && entry.branchId !== selectedBusinessBranch) return;
@@ -567,31 +601,95 @@ export default function DashboardOverview() {
                  const disb = Number(item.disbursedAmount) || 0;
                  const status = item.fileStatus || '';
 
+                 let prod = (item.product || 'Personal Loan').trim();
+                 const pLower = prod.toLowerCase();
+                 if (pLower === 'mortgage' || pLower === 'home loan' || pLower.includes('housing')) prod = 'Housing Loan/LAP';
+                 else if (pLower.startsWith('personal loan') || pLower.startsWith('pl')) prod = 'Personal Loan';
+                 else if (pLower.startsWith('business loan') || pLower.startsWith('bl')) prod = 'Business Loan';
+                 else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
+
+                 if (!productStats[prod]) {
+                     productStats[prod] = {
+                         product: prod,
+                         loggedVal: 0,
+                         loggedCount: 0,
+                         sanctionedVal: 0,
+                         sanctionedCount: 0,
+                         disbursedVal: 0,
+                         disbursedCount: 0,
+                         maxAmount: 0,
+                         avgTicket: 0,
+                         conversionRate: 0
+                     };
+                 }
+
                  loggedCount++;
                  loggedVal += amt;
+                 productStats[prod].loggedCount++;
+                 productStats[prod].loggedVal += amt;
+
+                 const effectiveAmt = disb > 0 ? disb : (sanc > 0 ? sanc : amt);
+                 if (effectiveAmt > highestSingleLoan) {
+                     highestSingleLoan = effectiveAmt;
+                     highestLoanProduct = prod;
+                     highestLoanCustomer = item.customerName || '';
+                 }
+                 if (amt > productStats[prod].maxAmount) {
+                     productStats[prod].maxAmount = amt;
+                 }
 
                  if (sanc > 0 || disb > 0 || ['Sanctioned', 'Disbursed'].includes(status)) {
                      sanctionedCount++;
-                     sanctionedVal += sanc > 0 ? sanc : amt;
+                     const sAmt = sanc > 0 ? sanc : amt;
+                     sanctionedVal += sAmt;
+                     productStats[prod].sanctionedCount++;
+                     productStats[prod].sanctionedVal += sAmt;
                  }
 
                  if (disb > 0 || status === 'Disbursed') {
                      disbursedCount++;
-                     disbursedVal += disb > 0 ? disb : (sanc > 0 ? sanc : amt);
+                     const dAmt = disb > 0 ? disb : (sanc > 0 ? sanc : amt);
+                     disbursedVal += dAmt;
+                     productStats[prod].disbursedCount++;
+                     productStats[prod].disbursedVal += dAmt;
                  }
              }
          });
      });
 
+     const productList = Object.values(productStats).map(p => {
+         const conversionRate = p.loggedVal > 0 ? (p.disbursedVal / p.loggedVal) * 100 : (p.disbursedVal > 0 ? 100 : 0);
+         const avgTicket = p.disbursedCount > 0 
+             ? p.disbursedVal / p.disbursedCount 
+             : (p.loggedCount > 0 ? p.loggedVal / p.loggedCount : 0);
+         return {
+             ...p,
+             conversionRate: Number(conversionRate.toFixed(1)),
+             avgTicket: Math.round(avgTicket)
+         };
+     }).filter(p => p.loggedCount > 0 || p.disbursedCount > 0 || ['Personal Loan', 'Business Loan', 'Housing Loan/LAP'].includes(p.product));
+
      const sancPct = loggedCount > 0 ? ((sanctionedCount / loggedCount) * 100).toFixed(1) : '0.0';
      const disbPct = sanctionedCount > 0 ? ((disbursedCount / sanctionedCount) * 100).toFixed(1) : '0.0';
+     const netConversionPct = loggedVal > 0 ? ((disbursedVal / loggedVal) * 100).toFixed(1) : '0.0';
+     const avgOverallTicket = disbursedCount > 0 ? Math.round(disbursedVal / disbursedCount) : (loggedCount > 0 ? Math.round(loggedVal / loggedCount) : 0);
+     const pendingDisbursalVal = Math.max(0, sanctionedVal - disbursedVal);
 
      return {
          logged: { count: loggedCount, value: loggedVal },
          sanctioned: { count: sanctionedCount, value: sanctionedVal, conversion: sancPct },
-         disbursed: { count: disbursedCount, value: disbursedVal, conversion: disbPct }
+         disbursed: { count: disbursedCount, value: disbursedVal, conversion: disbPct },
+         netConversionPct,
+         highestSingleLoan,
+         highestLoanProduct,
+         highestLoanCustomer,
+         avgOverallTicket,
+         pendingDisbursalVal,
+         products: productList
      };
   }, [filteredEntries, selectedBusinessBranch]);
+
+  const loanFunnelData = loanAnalyticsData;
 
   const activeCategories = useMemo(() => {
      return PRODUCTS_LIST.filter(c => 
@@ -836,82 +934,122 @@ export default function DashboardOverview() {
         </div>
       </div>
       
-      <header className="hidden md:flex glass px-6 py-4 flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Financial Portal</h1>
-
-            <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 font-bold uppercase tracking-wider border border-indigo-500/30">
-              {financialYear}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
-                <button 
-                  onClick={() => setViewMode('daily')}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'daily' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
-                >Daily</button>
-                <button 
-                  onClick={() => setViewMode('month')}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'month' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
-                >Month Wise</button>
-                <button 
-                  onClick={() => setViewMode('year')}
-                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${viewMode === 'year' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
-                >Year Wise</button>
+      {/* Desktop Command Header (Fixes the gap on the right) */}
+      <header className="hidden md:flex glass p-4 md:p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 items-center justify-between gap-6 shadow-sm relative z-30">
+        {/* Left: Portal Title + FY Badge + Timeframe View Mode Selector */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white font-black text-lg shadow-md shadow-indigo-500/25 ring-1 ring-white/20 shrink-0">
+              <TrendingUp className="w-5 h-5" />
             </div>
-            
-            <div className="flex items-center gap-3">
-              <button 
-                className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
-                onClick={() => setShowDatePicker(true)}
-              >
-                <Calendar className="w-5 h-5 text-indigo-400" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white px-1">
-                   {selectedDate}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
+                  Financial Portal
+                </h1>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-bold uppercase tracking-wider border border-indigo-500/30">
+                  {financialYear}
                 </span>
-                <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-medium">
-                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                  </span>
-                </div>
-              </button>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden lg:inline-block shrink-0">Select Date Tracker</span>
+              </div>
+              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 font-bold mt-1">
+                Executive Command Center
+              </p>
             </div>
+          </div>
+
+          {/* Segmented Timeframe Switch */}
+          <div className="flex items-center bg-slate-100 dark:bg-black/40 rounded-xl p-1 border border-slate-200/80 dark:border-white/5 shadow-inner">
+            <button 
+              onClick={() => setViewMode('daily')}
+              className={`px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-all ${
+                viewMode === 'daily' 
+                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-white/10' 
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Daily
+            </button>
+            <button 
+              onClick={() => setViewMode('month')}
+              className={`px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-all ${
+                viewMode === 'month' 
+                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-white/10' 
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Month Wise
+            </button>
+            <button 
+              onClick={() => setViewMode('year')}
+              className={`px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-all ${
+                viewMode === 'year' 
+                  ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-white/10' 
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Year Wise
+            </button>
           </div>
         </div>
-        <div className="flex gap-6 sm:gap-8">
-            <div className="flex flex-col items-end">
-                <span className="text-[10px] uppercase text-slate-600 dark:text-slate-400 font-semibold mb-0.5">Projected Total Business Today</span>
-                <span className="text-lg font-mono tracking-tight text-slate-900 dark:text-white">₹{projectedTotalBusinessToday.toLocaleString('en-IN')}</span>
-                <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+
+        {/* Center: Live Date & Clock Pill Tracker */}
+        <div className="flex items-center">
+          <button 
+            className="group flex items-center gap-3 bg-white dark:bg-slate-900/90 text-slate-900 dark:text-white px-3.5 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-indigo-500/50 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+            onClick={() => setShowDatePicker(true)}
+            title="Open Interactive Calendar"
+          >
+            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <Calendar className="w-4 h-4" />
             </div>
-            <div className="flex flex-col items-end">
-                <span className="text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Total Achievement Today</span>
-                <span className="text-lg font-mono text-emerald-400 tracking-tight">₹{Object.values(kpiMetrics).reduce((sum, m) => sum + m.ftd, 0).toLocaleString('en-IN')}</span>
-                <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{selectedDate.split('-').reverse().join('-')}</span>
+            <div className="flex flex-col text-left">
+              <span className="text-xs font-black tracking-tight text-slate-900 dark:text-white">
+                {selectedDate}
+              </span>
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
+                <span>{currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                <span>•</span>
+                <span>{currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+              </div>
             </div>
+          </button>
+        </div>
+
+        {/* Right: Connected Twin KPI Badges */}
+        <div className="flex items-center gap-3">
+          <div className="px-4 py-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-white/5 flex flex-col items-end min-w-[160px] shadow-sm">
+            <span className="text-[9px] uppercase tracking-widest text-slate-400 dark:text-slate-500 font-extrabold">Projected Today</span>
+            <span className="text-base font-mono font-bold text-slate-900 dark:text-white tracking-tight">₹{projectedTotalBusinessToday.toLocaleString('en-IN')}</span>
+            <span className="text-[8px] text-slate-400 font-mono mt-0.5">{selectedDate.split('-').reverse().join('-')}</span>
+          </div>
+          <div className="px-4 py-2 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-500/20 flex flex-col items-end min-w-[160px] shadow-sm">
+            <span className="text-[9px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 font-extrabold">Achieved Today</span>
+            <span className="text-base font-mono font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">₹{Object.values(kpiMetrics).reduce((sum, m) => sum + m.ftd, 0).toLocaleString('en-IN')}</span>
+            <span className="text-[8px] text-emerald-600/70 dark:text-emerald-400/70 font-mono mt-0.5">{selectedDate.split('-').reverse().join('-')}</span>
+          </div>
         </div>
       </header>
 
-      {/* KPI Category Selector (Desktop) */}
-      <div className="hidden md:flex gap-2 mb-4 overflow-x-auto pb-1 hide-scrollbar">
-         {['All Products', ...PRODUCTS_LIST].map(cat => (
-            <button
-               key={cat}
-               onClick={() => setKpiCategory(cat)}
-               className={`px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors border ${
-                  kpiCategory === cat 
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
-                  : 'bg-white dark:bg-black/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-indigo-500/50'
-               }`}
-            >
-               {cat}
-            </button>
-         ))}
+      {/* KPI Category Filter Pills (Desktop) */}
+      <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+         {['All Products', ...PRODUCTS_LIST].map(cat => {
+            const Icon = PRODUCT_ICONS[cat] || LayoutGrid;
+            const isSelected = kpiCategory === cat;
+            return (
+              <button
+                 key={cat}
+                 onClick={() => setKpiCategory(cat)}
+                 className={`group flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-200 border active:scale-[0.98] ${
+                    isSelected 
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 ring-2 ring-indigo-500/20' 
+                    : 'bg-white/85 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-white/5 hover:border-indigo-500/40 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+                 }`}
+              >
+                 <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-500'}`} />
+                 <span>{cat}</span>
+              </button>
+            );
+         })}
       </div>
 
       {/* KPI Category Selector (Mobile - Swipeable Icons) */}
@@ -956,26 +1094,26 @@ export default function DashboardOverview() {
                   setActiveCategoryPage(0);
               }
             }}
-            className="flex gap-3 overflow-x-auto snap-x snap-mandatory hide-scrollbar flex-1"
+            className="flex gap-3 overflow-x-auto snap-x snap-mandatory flex-1 no-scrollbar items-center py-1"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
              {PRODUCTS_LIST.map((cat) => {
                 const Icon = PRODUCT_ICONS[cat] || LayoutGrid;
-                const isActive = kpiCategory === cat;
+                const isSelected = kpiCategory === cat;
                 return (
                   <button
                      key={cat}
                      onClick={() => setKpiCategory(cat)}
-                     className={`snap-start shrink-0 rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm ${
-                        isActive 
+                     style={{ width: 'calc((100% - 24px) / 3)' }}
+                     className={`aspect-square rounded-2xl flex flex-col items-center justify-center p-1.5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0 snap-start shadow-sm ${
+                        isSelected 
                         ? 'bg-indigo-600 text-white scale-100 shadow-md shadow-indigo-600/30 border border-indigo-600' 
                         : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 scale-[0.96] hover:scale-[0.98] border border-slate-100 dark:border-white/5'
                      }`}
-                     style={{ width: 'calc((100% - 24px) / 3)', aspectRatio: '1/1' }}
                   >
-                     <Icon className={`w-[clamp(20px,6vw,28px)] h-[clamp(20px,6vw,28px)] mb-1.5 transition-colors duration-300 ${isActive ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'}`} strokeWidth={2} />
+                     <Icon className={`w-[clamp(20px,6vw,28px)] h-[clamp(20px,6vw,28px)] mb-1.5 transition-colors duration-300 ${isSelected ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'}`} strokeWidth={2} />
                      <div className="h-[2.4em] flex items-center justify-center w-full px-0.5">
-                       <span className={`text-[clamp(8px,2.2vw,10px)] font-bold uppercase tracking-wider text-center leading-[1.2em] line-clamp-2 w-full break-words ${isActive ? 'text-indigo-50' : 'text-slate-600 dark:text-slate-300'}`}>
+                       <span className={`text-[clamp(8px,2.2vw,10px)] font-bold uppercase tracking-wider text-center leading-[1.2em] line-clamp-2 w-full break-words ${isSelected ? 'text-indigo-50' : 'text-slate-600 dark:text-slate-300'}`}>
                          {cat}
                        </span>
                      </div>
@@ -1000,80 +1138,167 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* KPI Timeline Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <Card className="hover:dark:bg-white/5 bg-slate-900/5 transition-colors border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
-              <span>FTD</span>
-              <span className="truncate">{kpiCategory}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-sky-500/10 inline-block px-2 py-0.5 rounded text-sky-700 dark:text-sky-300">{kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
-              <span>MTD</span>
-              <span className="truncate">{kpiCategory}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-indigo-500/10 inline-block px-2 py-0.5 rounded text-indigo-700 dark:text-indigo-300">{kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
-              <span>YTD</span>
-              <span className="truncate">{kpiCategory}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}</div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-semibold bg-emerald-500/10 inline-block px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300">{kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:bg-slate-900/5 dark:hover:bg-white/5 transition-colors border-slate-900/10 dark:border-white/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b-0">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400 flex flex-col gap-0.5 min-h-[2.5rem] justify-center">
-              <span>Daily</span>
-              <span>Proj.</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-[clamp(14px,4vw,24px)] lg:text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-tighter">
-                ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
+      {/* KPI Timeline Metrics Cards (Desktop Doppelrand Architecture with Prominent Icon Badges) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
+        {/* FTD Card (Electric Sky) */}
+        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
+          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 via-sky-500/10 to-transparent text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/30 shadow-lg shadow-sky-500/10 group-hover:scale-105 group-hover:shadow-sky-500/20 transition-all duration-300 shrink-0">
+                  <Zap className="w-6 h-6 stroke-[2.3]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 block">
+                    FTD Summary
+                  </span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                    {kpiCategory}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-full text-sky-700 dark:text-sky-300 shrink-0">
+                {kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
+              </span>
             </div>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">All branches</p>
-          </CardContent>
-        </Card>
+            <div className="mt-1">
+              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>
+                ₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                <span>For Selected Date</span>
+                <span className="text-sky-600 dark:text-sky-400 font-bold">Daily Pulse</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MTD Card (Royal Indigo) */}
+        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
+          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-transparent text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-lg shadow-indigo-500/10 group-hover:scale-105 group-hover:shadow-indigo-500/20 transition-all duration-300 shrink-0">
+                  <BarChart3 className="w-6 h-6 stroke-[2.3]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block">
+                    MTD Summary
+                  </span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                    {kpiCategory}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full text-indigo-700 dark:text-indigo-300 shrink-0">
+                {kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
+              </span>
+            </div>
+            <div className="mt-1">
+              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>
+                ₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                <span>Month-To-Date Volume</span>
+                <span className="text-indigo-600 dark:text-indigo-400 font-bold">Monthly Target</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* YTD Card (Emerald Crown) */}
+        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
+          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 group-hover:shadow-emerald-500/20 transition-all duration-300 shrink-0">
+                  <Trophy className="w-6 h-6 stroke-[2.3]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block">
+                    YTD Summary
+                  </span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                    {kpiCategory}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full text-emerald-700 dark:text-emerald-300 shrink-0">
+                {kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
+              </span>
+            </div>
+            <div className="mt-1">
+              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>
+                ₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                <span>Financial Year Progress</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Annual Cumulative</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Daily Proj Card (Amber Bullseye) */}
+        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
+          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10 group-hover:scale-105 group-hover:shadow-amber-500/20 transition-all duration-300 shrink-0">
+                  <Target className="w-6 h-6 stroke-[2.3]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 block">
+                    Daily Target
+                  </span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                    All Branches
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0">
+                Pipeline
+              </span>
+            </div>
+            <div className="mt-1">
+              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight">
+                ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
+                <span>Consolidated Forecast</span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">Today Target</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-7 mb-6">
-        {/* Branches Performance */}
-        <Card className="lg:col-span-4 flex flex-col border-slate-900/10 dark:border-white/10 min-h-[450px]">
-          <CardHeader className="flex justify-between items-center py-4 border-slate-900/10 dark:border-white/10 uppercase">
-            <span className="text-base font-bold tracking-widest text-slate-900 dark:text-white uppercase">Branch Performance ({viewMode === 'daily' ? 'Daily' : viewMode === 'month' ? 'Monthly' : 'Yearly'})</span>
+      {/* Core Bento Analytics Section */}
+      <div className="grid gap-6 lg:grid-cols-7">
+        {/* Branches Performance (Bar Chart - 4 cols) */}
+        <Card className="lg:col-span-4 flex flex-col border-slate-200/80 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden min-h-[460px]">
+          <CardHeader className="flex justify-between items-center py-4 px-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-sm" />
+              <span className="text-sm font-black tracking-wider text-slate-900 dark:text-white uppercase">
+                Branch Performance ({viewMode === 'daily' ? 'Daily' : viewMode === 'month' ? 'Monthly' : 'Yearly'})
+              </span>
+            </div>
           </CardHeader>
-          <CardContent className="flex-1 p-4 pb-0 flex flex-col">
+          <CardContent className="flex-1 p-5 pb-2 flex flex-col">
             
-            {/* Desktop View: Bar Chart */}
-            <div className="hidden md:block flex-1 min-h-[350px]">
+            {/* Desktop View: Bar Chart with Rounded Range Corners */}
+            <div className="hidden md:block flex-1 min-h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={filteredBranches} margin={{ top: 20, right: 10, left: 0, bottom: 0 }} barGap={4} barCategoryGap="25%">
+                <BarChart data={filteredBranches} margin={{ top: 20, right: 15, left: 0, bottom: 0 }} barGap={8} barCategoryGap="28%">
                   <defs>
                      {PRODUCTS_LIST.map(p => (
                          <pattern key={`pattern_${p}`} id={getPatternId(p)} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
-                             <line x1="0" y="0" x2="0" y2="6" stroke={PRODUCT_COLORS[p].ach} strokeWidth="3" />
+                             <line x1="0" y1="0" x2="0" y2="6" stroke={PRODUCT_COLORS[p].ach} strokeWidth="3" />
                          </pattern>
                      ))}
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.08)" />
                   <XAxis dataKey="name" tick={<CustomizedAxisTick />} axisLine={false} tickLine={false} />
                   <YAxis 
                       domain={[0, Math.ceil(maxYValue * 1.1)]} 
@@ -1081,24 +1306,42 @@ export default function DashboardOverview() {
                       axisLine={false} 
                       tickLine={false} 
                       tickFormatter={formatYAxis} 
-                      width={60}
+                      width={65}
                   />
                   <RechartsTooltip 
-                      cursor={{fill: 'rgba(150,150,150,0.1)'}}
+                      cursor={{fill: 'rgba(150,150,150,0.06)'}}
                       content={<CustomBarTooltip />}
                   />
                   
                   {/* Custom Legend */}
-                  <Legend content={renderCustomLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
+                  <Legend content={renderCustomLegend} verticalAlign="bottom" wrapperStyle={{ paddingTop: '16px' }} />
 
-                  {/* Projection Stacks */}
+                  {/* Projection Stacks with Smooth Rounded Top Corners */}
                   {activeCategories.map(c => (
-                     <Bar key={`proj_${c}`} dataKey={`proj_${c}`} stackId="proj" name={`Proj. ${c}`} fill={PRODUCT_COLORS[c].proj} stroke={PRODUCT_COLORS[c].ach} strokeWidth={1} maxBarSize={50} />
+                     <Bar 
+                        key={`proj_${c}`} 
+                        dataKey={`proj_${c}`} 
+                        stackId="proj" 
+                        name={`Proj. ${c}`} 
+                        fill={PRODUCT_COLORS[c].proj} 
+                        stroke={PRODUCT_COLORS[c].ach} 
+                        strokeWidth={1.5} 
+                        maxBarSize={38} 
+                        radius={[8, 8, 0, 0]}
+                     />
                   ))}
 
-                  {/* Achievement Stacks */}
+                  {/* Achievement Stacks with Smooth Rounded Top Corners */}
                   {activeCategories.map(c => (
-                     <Bar key={`ach_${c}`} dataKey={`ach_${c}`} stackId="ach" name={`Ach. ${c}`} fill={PRODUCT_COLORS[c].ach} maxBarSize={50} />
+                     <Bar 
+                        key={`ach_${c}`} 
+                        dataKey={`ach_${c}`} 
+                        stackId="ach" 
+                        name={`Ach. ${c}`} 
+                        fill={PRODUCT_COLORS[c].ach} 
+                        maxBarSize={38} 
+                        radius={[8, 8, 0, 0]}
+                     />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
@@ -1120,12 +1363,15 @@ export default function DashboardOverview() {
           </CardContent>
         </Card>
 
-        {/* Right Column: Mix */}
+        {/* Business Mix (Donut Chart - 3 cols) */}
         <div className="lg:col-span-3 flex flex-col gap-6">
-            {/* Desktop Business Mix (Pie Chart) */}
-            <Card className="hidden md:flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[300px]">
-              <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
-                <span className="text-base font-bold tracking-widest text-slate-900 dark:text-white uppercase">Business Mix</span>
+            {/* Desktop Business Mix */}
+            <Card className="hidden md:flex flex-col border-slate-200/80 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden flex-1 min-h-[460px]">
+              <CardHeader className="py-4 px-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10 shrink-0 flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" />
+                  <span className="text-sm font-black tracking-wider text-slate-900 dark:text-white uppercase">Business Mix</span>
+                </div>
                 <div className="flex items-center gap-3">
                     <BranchSelect 
                         value={selectedBusinessBranch}
@@ -1133,20 +1379,20 @@ export default function DashboardOverview() {
                         branches={branches}
                         includeAllOption={true}
                         allOptionText="All Branches"
-                        className="w-[140px]"
+                        className="min-w-[170px]"
                     />
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 flex justify-center items-center p-4">
-                <ResponsiveContainer width="100%" height="100%">
+              <CardContent className="flex-1 flex justify-center items-center p-4 relative">
+                <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
                       data={businessByCategory}
                       cx="50%"
                       cy="50%"
-                      innerRadius={90}
-                      outerRadius={140}
-                      paddingAngle={5}
+                      innerRadius={80}
+                      outerRadius={120}
+                      paddingAngle={4}
                       dataKey="value"
                       stroke="none"
                       labelLine={false}
@@ -1160,18 +1406,18 @@ export default function DashboardOverview() {
                     </Pie>
                     <RechartsTooltip 
                         formatter={(value: any) => `₹${Number(value || 0).toLocaleString('en-IN')}`}
-                        contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '8px'}}  
+                        contentStyle={{backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', color: '#f1f5f9', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)'}}  
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
-              <div className="px-6 pb-6 flex flex-wrap gap-4 justify-center mt-auto shrink-0 pt-4">
+              <div className="px-6 pb-5 flex flex-wrap gap-3 justify-center mt-auto shrink-0 pt-2 border-t border-slate-100 dark:border-white/5">
                   {businessByCategory.map((entry) => {
                       const color = PRODUCT_COLORS[entry.name]?.ach || '#94a3b8';
                       return (
-                          <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">
-                              <span className="w-3 h-3 rounded-full mr-2 shadow-sm" style={{ backgroundColor: color }}></span>
-                              {entry.name}
+                          <div key={entry.name} className="flex items-center text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400 bg-slate-100/60 dark:bg-white/5 px-2.5 py-1 rounded-full border border-slate-200/50 dark:border-white/5">
+                              <span className="w-2 h-2 rounded-full mr-1.5 shadow-sm" style={{ backgroundColor: color }}></span>
+                              <span>{entry.name}</span>
                           </div>
                       );
                   })}
@@ -1189,7 +1435,7 @@ export default function DashboardOverview() {
                         branches={branches}
                         includeAllOption={true}
                         allOptionText="All Branches"
-                        className="w-[110px]"
+                        className="min-w-[160px]"
                     />
                 </div>
               </CardHeader>
@@ -1249,32 +1495,31 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Funnel and Targets Section */}
+      {/* Intelligence & Funnel Section */}
       <div className="flex flex-col lg:flex-row gap-6 mb-8 w-full items-stretch">
         
-        {/* Loan Conversion Pipeline */}
-        <Card className="border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[68%]">
-          <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-             <div className="flex flex-col gap-1.5">
-                 <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Loan Conversion Pipeline</CardTitle>
-                 <div className="flex items-center flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+        {/* Loan Conversion & Portfolio Intelligence */}
+        <Card className="border-slate-200/80 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden flex flex-col w-full lg:w-[66%] bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl">
+          <CardHeader className="py-4 px-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+             <div className="flex flex-col gap-1">
+                 <div className="flex items-center gap-2">
+                   <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm animate-pulse" />
+                   <CardTitle className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Loan Conversion & Intelligence</CardTitle>
+                 </div>
+                 <div className="flex items-center flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">
                     <span className="flex items-center gap-1.5">
                         Timeframe: 
-                        <div className="relative flex items-center ml-1">
-                           <Input 
-                             type="date" 
-                             value={selectedDate}
-                             onChange={(e: any) => setSelectedDate(e.target.value)}
-                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                           />
-                           <span className="text-slate-700 dark:text-slate-300 pointer-events-none hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
-                              {new Date(selectedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\d+)/, (match, p1) => {
-                                 const d = parseInt(p1);
-                                 const suffix = ["th", "st", "nd", "rd"][((d % 100) - 20) % 10] || ["th", "st", "nd", "rd"][d % 100] || "th";
-                                 return p1 + suffix;
-                              })}
-                           </span>
-                        </div>
+                        <button
+                           type="button"
+                           onClick={() => setShowDatePicker(true)}
+                           className="ml-1 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-bold underline decoration-dotted decoration-slate-300 dark:decoration-slate-700 underline-offset-4 cursor-pointer"
+                        >
+                           {new Date(selectedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/(\d+)/, (match, p1) => {
+                              const d = parseInt(p1);
+                              const suffix = ["th", "st", "nd", "rd"][((d % 100) - 20) % 10] || ["th", "st", "nd", "rd"][d % 100] || "th";
+                              return p1 + suffix;
+                           })}
+                        </button>
                     </span>
                     <span className="text-slate-300 dark:text-slate-700 mx-1">•</span>
                     <span className="flex items-center gap-1.5">
@@ -1285,68 +1530,76 @@ export default function DashboardOverview() {
                             branches={branches}
                             includeAllOption={true}
                             allOptionText="Consolidated"
-                            className="w-[140px] ml-1"
+                            className="min-w-[175px] ml-1"
                         />
                     </span>
                  </div>
              </div>
+             <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full">
+                  {loanAnalyticsData.netConversionPct}% Net Realization
+                </span>
+             </div>
           </CardHeader>
-          <CardContent className="p-6 md:p-8 overflow-x-auto flex items-center justify-center">
-             {/* Desktop Funnel View */}
-             <div className="hidden md:flex flex-col items-center w-full max-w-3xl mx-auto py-2">
+          <CardContent className="p-5 md:p-6 flex flex-col gap-6">
+             {/* 1. Hero 3-Stage Funnel Stepper */}
+             <div className="hidden md:flex items-center justify-between w-full gap-3">
                  
                  {/* Stage 1: Logged */}
-                 <div className="w-full relative h-36 bg-amber-100 dark:bg-amber-500/20 flex flex-col items-center justify-center text-orange-700 dark:text-orange-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-amber-200 dark:border-amber-500/30">
-                     <span className="text-[11px] font-bold uppercase tracking-widest text-orange-700/80 dark:text-orange-400/80 mb-1">Logged</span>
-                     <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.logged.value.toLocaleString('en-IN')}</span>
-                     <span className="text-[10px] font-semibold bg-orange-600/10 dark:bg-orange-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-orange-800 dark:text-orange-300">{loanFunnelData.logged.count} Applications</span>
+                 <div className="flex-1 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative group hover:scale-[1.02] transition-transform">
+                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-1">1. Logged Pipeline</span>
+                     <span className="text-2xl font-mono font-black text-slate-900 dark:text-white tracking-tight">₹{loanAnalyticsData.logged.value.toLocaleString('en-IN')}</span>
+                     <div className="flex items-center gap-1.5 mt-2">
+                       <span className="text-[10px] font-bold bg-amber-500/20 px-2.5 py-0.5 rounded-full text-amber-800 dark:text-amber-300">{loanAnalyticsData.logged.count} Applications</span>
+                     </div>
                  </div>
 
-                 {/* Conversion Arrow 1 */}
-                 <div className="h-12 flex items-center justify-center relative w-full my-1">
-                     <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-800"></div>
-                     <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-[#1e293b] px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Conversion</span>
-                        <span className="text-xs font-bold text-orange-600 dark:text-orange-400">{loanFunnelData.sanctioned.conversion}%</span>
-                     </div>
+                 {/* Arrow / Conversion 1 */}
+                 <div className="flex flex-col items-center justify-center px-1">
+                     <span className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-500/30 px-2.5 py-1 rounded-full shadow-sm whitespace-nowrap">
+                       {loanAnalyticsData.sanctioned.conversion}%
+                     </span>
+                     <span className="text-slate-300 dark:text-slate-700 text-lg font-black mt-0.5">→</span>
                  </div>
 
                  {/* Stage 2: Sanctioned */}
-                 <div className="w-[80%] relative h-36 bg-blue-100 dark:bg-blue-500/20 flex flex-col items-center justify-center text-blue-800 dark:text-blue-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-blue-200 dark:border-blue-500/30">
-                     <span className="text-[11px] font-bold uppercase tracking-widest text-blue-800/80 dark:text-blue-400/80 mb-1">Sanctioned</span>
-                     <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.sanctioned.value.toLocaleString('en-IN')}</span>
-                     <span className="text-[10px] font-semibold bg-blue-600/10 dark:bg-blue-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-blue-900 dark:text-blue-300">{loanFunnelData.sanctioned.count} Approvals</span>
-                 </div>
-
-                 {/* Conversion Arrow 2 */}
-                 <div className="h-12 flex items-center justify-center relative w-full my-1">
-                     <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-800"></div>
-                     <div className="absolute top-1/2 -translate-y-1/2 bg-white dark:bg-[#1e293b] px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Conversion</span>
-                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{loanFunnelData.disbursed.conversion}%</span>
+                 <div className="flex-1 bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/30 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative group hover:scale-[1.02] transition-transform">
+                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-sky-700 dark:text-sky-400 mb-1">2. Sanctioned</span>
+                     <span className="text-2xl font-mono font-black text-slate-900 dark:text-white tracking-tight">₹{loanAnalyticsData.sanctioned.value.toLocaleString('en-IN')}</span>
+                     <div className="flex items-center gap-1.5 mt-2">
+                       <span className="text-[10px] font-bold bg-sky-500/20 px-2.5 py-0.5 rounded-full text-sky-800 dark:text-sky-300">{loanAnalyticsData.sanctioned.count} Approvals</span>
                      </div>
                  </div>
 
+                 {/* Arrow / Conversion 2 */}
+                 <div className="flex flex-col items-center justify-center px-1">
+                     <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-500/30 px-2.5 py-1 rounded-full shadow-sm whitespace-nowrap">
+                       {loanAnalyticsData.disbursed.conversion}%
+                     </span>
+                     <span className="text-slate-300 dark:text-slate-700 text-lg font-black mt-0.5">→</span>
+                 </div>
+
                  {/* Stage 3: Disbursed */}
-                 <div className="w-[60%] relative h-36 bg-emerald-100 dark:bg-emerald-500/20 flex flex-col items-center justify-center text-emerald-800 dark:text-emerald-400 shadow-lg transition-transform hover:scale-[1.01] rounded-[2.5rem] border border-emerald-200 dark:border-emerald-500/30">
-                     <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-800/80 dark:text-emerald-400/80 mb-1">Disbursed</span>
-                     <span className="text-4xl font-mono font-bold tracking-tight">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
-                     <span className="text-[10px] font-semibold bg-emerald-600/10 dark:bg-emerald-400/20 px-3 py-1 rounded-full mt-2 backdrop-blur-sm text-emerald-900 dark:text-emerald-300">{loanFunnelData.disbursed.count} Funded</span>
+                 <div className="flex-1 bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm relative group hover:scale-[1.02] transition-transform">
+                     <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-1">3. Disbursed</span>
+                     <span className="text-2xl font-mono font-black text-slate-900 dark:text-white tracking-tight">₹{loanAnalyticsData.disbursed.value.toLocaleString('en-IN')}</span>
+                     <div className="flex items-center gap-1.5 mt-2">
+                       <span className="text-[10px] font-bold bg-emerald-500/20 px-2.5 py-0.5 rounded-full text-emerald-800 dark:text-emerald-300">{loanAnalyticsData.disbursed.count} Funded</span>
+                     </div>
                  </div>
              </div>
 
              {/* Mobile Vertical Stepper View */}
              <div className="flex md:hidden flex-col items-stretch w-full max-w-md mx-auto py-2 gap-0 relative">
-                 {/* Vertical line connecting the steps */}
                  <div className="absolute left-[31px] top-10 bottom-10 w-0.5 bg-slate-200 dark:bg-slate-800 z-0"></div>
 
                  {/* Stage 1: Logged */}
                  <div className="relative z-10 flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm mb-4">
-                     <div className="w-4 h-4 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] shrink-0"></div>
+                     <div className="w-4 h-4 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] shrink-0"></div>
                      <div className="flex flex-col">
-                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Logged</span>
-                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanFunnelData.logged.value.toLocaleString('en-IN')}</span>
-                         <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">{loanFunnelData.logged.count} Applications</span>
+                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Logged Pipeline</span>
+                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanAnalyticsData.logged.value.toLocaleString('en-IN')}</span>
+                         <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-1">{loanAnalyticsData.logged.count} Applications</span>
                      </div>
                  </div>
 
@@ -1354,17 +1607,17 @@ export default function DashboardOverview() {
                  <div className="relative z-10 flex items-center pl-[52px] mb-4">
                      <div className="bg-slate-50 dark:bg-slate-950 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1.5">
                          <ArrowDown className="w-3 h-3 text-slate-400" />
-                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{loanFunnelData.sanctioned.conversion}% Conversion</span>
+                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{loanAnalyticsData.sanctioned.conversion}% Conversion</span>
                      </div>
                  </div>
 
                  {/* Stage 2: Sanctioned */}
                  <div className="relative z-10 flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm mb-4">
-                     <div className="w-4 h-4 rounded-full bg-indigo-400 shrink-0"></div>
+                     <div className="w-4 h-4 rounded-full bg-sky-500 shrink-0"></div>
                      <div className="flex flex-col">
                          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Sanctioned</span>
-                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanFunnelData.sanctioned.value.toLocaleString('en-IN')}</span>
-                         <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 mt-1">{loanFunnelData.sanctioned.count} Approvals</span>
+                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanAnalyticsData.sanctioned.value.toLocaleString('en-IN')}</span>
+                         <span className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 mt-1">{loanAnalyticsData.sanctioned.count} Approvals</span>
                      </div>
                  </div>
 
@@ -1372,7 +1625,7 @@ export default function DashboardOverview() {
                  <div className="relative z-10 flex items-center pl-[52px] mb-4">
                      <div className="bg-slate-50 dark:bg-slate-950 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1.5">
                          <ArrowDown className="w-3 h-3 text-slate-400" />
-                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{loanFunnelData.disbursed.conversion}% Conversion</span>
+                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{loanAnalyticsData.disbursed.conversion}% Conversion</span>
                      </div>
                  </div>
 
@@ -1381,30 +1634,161 @@ export default function DashboardOverview() {
                      <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] shrink-0"></div>
                      <div className="flex flex-col">
                          <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-500">Disbursed</span>
-                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanFunnelData.disbursed.value.toLocaleString('en-IN')}</span>
-                         <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{loanFunnelData.disbursed.count} Funded</span>
+                         <span className="text-xl font-mono font-bold tracking-tight text-slate-900 dark:text-white mt-0.5">₹{loanAnalyticsData.disbursed.value.toLocaleString('en-IN')}</span>
+                         <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{loanAnalyticsData.disbursed.count} Funded</span>
                      </div>
+                 </div>
+             </div>
+
+             {/* 2. Key Metric Quick-Stats Strip (4 Mini-KPIs) */}
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                 <div className="p-3.5 bg-slate-50/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/5 rounded-xl flex flex-col justify-between">
+                     <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                         <span>Highest Loan</span>
+                         <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                     </div>
+                     <div className="mt-2">
+                         <span className="text-base font-mono font-black text-slate-900 dark:text-white tracking-tight">
+                             ₹{loanAnalyticsData.highestSingleLoan.toLocaleString('en-IN')}
+                         </span>
+                         <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 block truncate mt-0.5">
+                             {loanAnalyticsData.highestLoanProduct || 'All Loans'}
+                         </span>
+                     </div>
+                 </div>
+
+                 <div className="p-3.5 bg-slate-50/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/5 rounded-xl flex flex-col justify-between">
+                     <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                         <span>Average Ticket</span>
+                         <Activity className="w-3.5 h-3.5 text-sky-500" />
+                     </div>
+                     <div className="mt-2">
+                         <span className="text-base font-mono font-black text-slate-900 dark:text-white tracking-tight">
+                             ₹{loanAnalyticsData.avgOverallTicket.toLocaleString('en-IN')}
+                         </span>
+                         <span className="text-[9px] text-slate-400 block mt-0.5">Per Disbursal Case</span>
+                     </div>
+                 </div>
+
+                 <div className="p-3.5 bg-slate-50/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/5 rounded-xl flex flex-col justify-between">
+                     <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                         <span>Pipeline Yield</span>
+                         <Percent className="w-3.5 h-3.5 text-emerald-500" />
+                     </div>
+                     <div className="mt-2">
+                         <span className="text-base font-mono font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                             {loanAnalyticsData.netConversionPct}%
+                         </span>
+                         <span className="text-[9px] text-slate-400 block mt-0.5">Logged → Disbursed</span>
+                     </div>
+                 </div>
+
+                 <div className="p-3.5 bg-slate-50/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/5 rounded-xl flex flex-col justify-between">
+                     <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                         <span>In Pipeline</span>
+                         <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                     </div>
+                     <div className="mt-2">
+                         <span className="text-base font-mono font-black text-slate-900 dark:text-white tracking-tight">
+                             ₹{loanAnalyticsData.pendingDisbursalVal.toLocaleString('en-IN')}
+                         </span>
+                         <span className="text-[9px] text-slate-400 block mt-0.5">Ready for Disbursal</span>
+                     </div>
+                 </div>
+             </div>
+
+             {/* 3. Loan Product Breakdown Matrix (Sub-types logged & converted) */}
+             <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                 <div className="flex items-center justify-between mb-1">
+                     <span className="text-[11px] font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                         Loan Product Conversion Breakdown
+                     </span>
+                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                         Filtered Scope
+                     </span>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                     {loanAnalyticsData.products.map(prod => {
+                         const Icon = PRODUCT_ICONS[prod.product] || Briefcase;
+                         const colorObj = PRODUCT_COLORS[prod.product] || { ach: '#6366f1' };
+                         
+                         return (
+                             <div 
+                                 key={prod.product} 
+                                 className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/40 hover:border-indigo-500/40 hover:bg-slate-50 dark:hover:bg-slate-950/70 transition-all flex flex-col justify-between"
+                             >
+                                 <div className="flex items-center justify-between mb-2">
+                                     <div className="flex items-center gap-2">
+                                         <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm" style={{ backgroundColor: `${colorObj.ach}15`, color: colorObj.ach }}>
+                                             <Icon className="w-3.5 h-3.5" />
+                                         </div>
+                                         <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{prod.product}</span>
+                                     </div>
+                                     <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${prod.conversionRate >= 70 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : prod.conversionRate >= 40 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                                         {prod.conversionRate}% Conv
+                                     </span>
+                                 </div>
+
+                                 <div className="grid grid-cols-3 gap-2 text-center py-2 border-y border-slate-200/60 dark:border-white/5 my-1">
+                                     <div>
+                                         <span className="text-[9px] uppercase font-bold text-slate-400 block">Logged</span>
+                                         <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 block mt-0.5">₹{prod.loggedVal.toLocaleString('en-IN')}</span>
+                                         <span className="text-[9px] text-slate-400">({prod.loggedCount})</span>
+                                     </div>
+                                     <div>
+                                         <span className="text-[9px] uppercase font-bold text-slate-400 block">Sanctioned</span>
+                                         <span className="text-xs font-mono font-bold text-sky-600 dark:text-sky-400 block mt-0.5">₹{prod.sanctionedVal.toLocaleString('en-IN')}</span>
+                                         <span className="text-[9px] text-slate-400">({prod.sanctionedCount})</span>
+                                     </div>
+                                     <div>
+                                         <span className="text-[9px] uppercase font-bold text-slate-400 block">Disbursed</span>
+                                         <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">₹{prod.disbursedVal.toLocaleString('en-IN')}</span>
+                                         <span className="text-[9px] text-slate-400">({prod.disbursedCount})</span>
+                                     </div>
+                                 </div>
+
+                                 {/* Progress Bar & Sub-Metrics */}
+                                 <div className="mt-2">
+                                     <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-1.5">
+                                         <div 
+                                             className="h-full rounded-full transition-all duration-500" 
+                                             style={{ 
+                                                 width: `${Math.min(100, prod.conversionRate)}%`,
+                                                 backgroundColor: colorObj.ach 
+                                             }}
+                                         />
+                                     </div>
+                                     <div className="flex items-center justify-between text-[9px] text-slate-500 dark:text-slate-400 font-semibold">
+                                         <span>Avg: <span className="font-mono font-bold text-slate-700 dark:text-slate-300">₹{prod.avgTicket.toLocaleString('en-IN')}</span></span>
+                                         <span>Max: <span className="font-mono font-bold text-slate-700 dark:text-slate-300">₹{prod.maxAmount.toLocaleString('en-IN')}</span></span>
+                                     </div>
+                                 </div>
+                             </div>
+                         );
+                     })}
                  </div>
              </div>
           </CardContent>
         </Card>
 
-        {/* Monthly Targets */}
-        <Card className="border-slate-900/10 dark:border-white/10 flex flex-col w-full lg:w-[32%] bg-slate-50 dark:bg-white/5 shadow-inner">
-            <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 bg-white dark:bg-transparent">
+        {/* Monthly Targets (34% width) */}
+        <Card className="border-slate-200/80 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden flex flex-col w-full lg:w-[34%] bg-slate-50/50 dark:bg-white/5">
+            <CardHeader className="py-4 px-6 border-b border-slate-100 dark:border-white/5 bg-white dark:bg-transparent">
                 <div className="flex flex-col gap-2">
                    <div className="flex items-center justify-between">
-                       <CardTitle className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Branch Targets</CardTitle>
-                       <button onClick={() => setShowTargetLeaders(!showTargetLeaders)} className={`text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-colors ${showTargetLeaders ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'}`}>
+                       <div className="flex items-center gap-2">
+                         <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm" />
+                         <CardTitle className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Branch Targets</CardTitle>
+                       </div>
+                       <button onClick={() => setShowTargetLeaders(!showTargetLeaders)} className={`text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-colors ${showTargetLeaders ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'}`}>
                            {showTargetLeaders ? 'Show Targets' : 'Show Leaders'}
                        </button>
                    </div>
                    <div className="flex items-center">
-                       <input 
-                           type="month" 
+                       <MonthPicker 
                            value={targetMonthStr}
-                           onChange={(e) => setTargetMonthStr(e.target.value)}
-                           className="text-[11px] uppercase font-bold text-indigo-600 dark:text-indigo-400 tracking-wider bg-transparent border border-slate-200 dark:border-slate-700 rounded px-2 py-1 outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                           onChange={setTargetMonthStr}
                        />
                    </div>
                 </div>
@@ -1505,25 +1889,28 @@ export default function DashboardOverview() {
         </Card>
       </div>
 
-      <hr className="my-10 border-slate-900/10 dark:border-white/10" />
+      <hr className="my-8 border-slate-200/80 dark:border-white/10" />
 
-      <div className="flex flex-col gap-4">
-      <Card className="p-6 border-slate-900/10 dark:border-white/10 bg-white dark:bg-slate-900 shadow-sm">
+      <div className="flex flex-col gap-5">
+      <Card className="p-5 md:p-6 border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-sm rounded-2xl">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wider">Granular Tracking</h2>
-                  <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Deeper insights</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-sm" />
+                    <h2 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">Granular Product Intelligence</h2>
+                  </div>
+                  <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">Deep Portfolio & Performance Breakdown</p>
               </div>
               <div className="flex flex-wrap items-center gap-4">
                   {/* Location Filter */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold shrink-0">Filter By:</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-extrabold mr-1 shrink-0">Branch:</span>
                       <button
                           onClick={() => setGranularLocation('all')}
-                          className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+                          className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all ${
                               granularLocation === 'all'
-                                  ? 'bg-indigo-500 text-white shadow-sm'
-                                  : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                                  ? 'bg-indigo-600 text-white shadow-sm'
+                                  : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/60 dark:border-white/5'
                           }`}
                       >
                           Consolidated
@@ -1532,10 +1919,10 @@ export default function DashboardOverview() {
                           <button
                               key={b.id}
                               onClick={() => setGranularLocation(b.id)}
-                              className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${
+                              className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all ${
                                   granularLocation === b.id
-                                      ? 'bg-indigo-500 text-white shadow-sm'
-                                      : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                                      ? 'bg-indigo-600 text-white shadow-sm'
+                                      : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/60 dark:border-white/5'
                               }`}
                           >
                               {b.name}
@@ -1544,14 +1931,14 @@ export default function DashboardOverview() {
                   </div>
 
                   {/* Timeframe Toggle */}
-                  <div className="flex bg-slate-900/10 dark:bg-black/40 rounded-lg p-1 border border-slate-900/10 dark:border-white/10 shrink-0">
+                  <div className="flex bg-slate-100 dark:bg-black/40 rounded-xl p-1 border border-slate-200/80 dark:border-white/5 shadow-inner shrink-0">
                       <button 
                           onClick={() => setGranularTimeframe('MTD')}
-                          className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'MTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                          className={`px-3.5 py-1 text-[10px] font-extrabold uppercase rounded-lg transition-all ${granularTimeframe === 'MTD' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-white/10' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
                       >MTD</button>
                       <button 
                           onClick={() => setGranularTimeframe('YTD')}
-                          className={`px-4 py-1.5 text-[10px] font-bold uppercase rounded-md transition-colors ${granularTimeframe === 'YTD' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                          className={`px-3.5 py-1 text-[10px] font-extrabold uppercase rounded-lg transition-all ${granularTimeframe === 'YTD' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/60 dark:border-white/10' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
                       >YTD</button>
                   </div>
               </div>
@@ -1570,9 +1957,9 @@ export default function DashboardOverview() {
               if (catProducts.length === 0) return null;
 
               return (
-                  <Card key={categoryInfo.cat} className="border-slate-900/10 dark:border-white/10 flex flex-col">
-                      <CardHeader className="flex flex-row items-center justify-between py-3 border-b border-slate-900/10 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
-                          <span className={`text-[10px] font-bold uppercase tracking-widest ${categoryInfo.colorClass}`}>{categoryInfo.title}</span>
+                  <Card key={categoryInfo.cat} className="border-slate-200/80 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden flex flex-col bg-white/80 dark:bg-slate-900/60">
+                      <CardHeader className="flex flex-row items-center justify-between py-3 px-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                          <span className={`text-[10px] font-extrabold uppercase tracking-widest ${categoryInfo.colorClass}`}>{categoryInfo.title}</span>
                       </CardHeader>
                       <CardContent className="p-0 flex-1">
                           {catProducts.map(p => {
@@ -1642,23 +2029,18 @@ export default function DashboardOverview() {
             </div>
             
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                <input 
-                    type="month"
+                <MonthPicker 
                     value={dqMonthStr}
-                    onChange={(e) => setDqMonthStr(e.target.value)}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all"
+                    onChange={setDqMonthStr}
                 />
-                <select 
+                <BranchSelect 
                     value={dqLocation}
-                    onChange={(e) => setDqLocation(e.target.value)}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-all cursor-pointer appearance-none"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1rem' }}
-                >
-                    <option value="all">All Locations</option>
-                    {branches.map(b => (
-                        <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
-                </select>
+                    onChange={setDqLocation}
+                    branches={branches}
+                    includeAllOption={true}
+                    allOptionText="All Locations"
+                    className="min-w-[180px]"
+                />
             </div>
         </div>
 

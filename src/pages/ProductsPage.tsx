@@ -1,6 +1,7 @@
 import { useDataStore } from '@/store/useDataStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, Input } from '@/components/ui';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Calendar, TrendingUp } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 
@@ -233,7 +234,7 @@ export default function ProductsPage() {
   return (
     <>
       {/* Header */}
-      <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+      <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 relative z-30">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold tracking-tight dark:text-white text-slate-900">Product Offerings</h1>
@@ -264,43 +265,22 @@ export default function ProductsPage() {
                 Projected
               </button>
             </div>
-            {/* Desktop Date Picker */}
-            <div className="hidden sm:flex items-center gap-3">
-              <label 
-                className="flex items-center gap-2 bg-white dark:bg-black text-slate-900 dark:text-white px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 focus-within:ring-2 ring-indigo-500/50 shadow-sm transition-all cursor-pointer"
-                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
-              >
-                <Calendar className="w-5 h-5 text-indigo-400" />
-                <Input 
-                  type="date" 
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-auto h-auto p-0 border-none bg-transparent text-sm font-bold text-slate-900 dark:text-white focus:ring-0 cursor-pointer"
-                />
-                <div className="hidden sm:flex flex-col items-start ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-medium">
-                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                  </span>
-                </div>
-              </label>
-            </div>
-            {/* Mobile Date Picker */}
-            <div className="sm:hidden flex items-center">
-              <label 
-                className="relative flex-shrink-0 flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
-                onClick={(e) => { const input = e.currentTarget.querySelector('input'); if(input && 'showPicker' in input) (input as any).showPicker(); }}
-              >
-                <Calendar className="h-5 w-5" />
-                <Input 
-                  type="date" 
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                />
-              </label>
+            {/* Date Picker with Dropdown Calendar */}
+            <div className="flex items-center gap-3">
+              <DatePicker 
+                value={selectedDate}
+                onChange={(_, dateStr) => setSelectedDate(dateStr)}
+                captionLayout="dropdown"
+                buttonClassName="bg-white dark:bg-black text-slate-900 dark:text-white px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 shadow-sm"
+              />
+              <div className="hidden sm:flex flex-col items-start pl-2 border-l border-slate-200 dark:border-slate-800">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {currentTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                </span>
+              </div>
             </div>
           </div>
         </div>

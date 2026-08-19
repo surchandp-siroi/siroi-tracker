@@ -1,20 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { 
-  format, 
-  addMonths, 
-  subMonths, 
-  startOfMonth, 
-  endOfMonth, 
-  startOfWeek, 
-  endOfWeek, 
-  isSameMonth, 
-  isSameDay,
-  eachDayOfInterval,
-  parseISO
-} from 'date-fns';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Button } from './ui';
+import { Calendar } from './ui/calendar';
+import { X } from 'lucide-react';
+import { CalendarDate, parseDate, today, getLocalTimeZone } from '@internationalized/date';
 
 interface CustomDatePickerProps {
   selectedDate: string; // YYYY-MM-DD
@@ -23,132 +11,48 @@ interface CustomDatePickerProps {
 }
 
 export function CustomDatePicker({ selectedDate, onChange, onClose }: CustomDatePickerProps) {
-  const [currentMonth, setCurrentMonth] = useState(parseISO(selectedDate));
-  const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
-    setMounted(true);
     // Prevent background scrolling while modal is open
     document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
-  
-  const parsedSelectedDate = parseISO(selectedDate);
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart);
-  const endDate = endOfWeek(monthEnd);
+  }, [onClose]);
 
-  const days = eachDayOfInterval({
-    start: startDate,
-    end: endDate
-  });
-
-  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  
-  const handleDateClick = (day: Date) => {
-    onChange(format(day, 'yyyy-MM-dd'));
+  const handleCalendarChange = (calDate: CalendarDate) => {
+    const dateStr = `${calDate.year}-${String(calDate.month).padStart(2, '0')}-${String(calDate.day).padStart(2, '0')}`;
+    onChange(dateStr);
     onClose();
   };
 
-  if (!mounted) return null;
-
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div 
-        className="bg-white dark:bg-[#0b1120] w-[clamp(280px,90vw,380px)] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+        className="relative animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-[clamp(12px,4vw,16px)] border-b border-slate-100 dark:border-white/5">
-          <button 
-            onClick={handlePrevMonth}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors"
-          >
-            <ChevronLeft className="w-[clamp(16px,5vw,20px)] h-[clamp(16px,5vw,20px)]" />
-          </button>
-          
-          <h2 className="text-[clamp(14px,4vw,16px)] font-bold text-slate-900 dark:text-white">
-            {format(currentMonth, 'MMMM yyyy')}
-          </h2>
-          
-          <button 
-            onClick={handleNextMonth}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 transition-colors"
-          >
-            <ChevronRight className="w-[clamp(16px,5vw,20px)] h-[clamp(16px,5vw,20px)]" />
-          </button>
-        </div>
-        
-        <div className="p-[clamp(12px,4vw,16px)] overflow-y-auto">
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-              <div key={day} className="text-center text-[clamp(9px,2.5vw,11px)] font-bold text-slate-400 uppercase tracking-wider py-1">
-                {day}
-              </div>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1">
-            {days.map((day, i) => {
-              const isSelected = isSameDay(day, parsedSelectedDate);
-              const isCurrentMonth = isSameMonth(day, monthStart);
-              const isToday = isSameDay(day, new Date());
-              const isSunday = day.getDay() === 0;
-              
-              // National Holidays (Month is 0-indexed)
-              const isHoliday = 
-                (day.getDate() === 26 && day.getMonth() === 0) || // Jan 26
-                (day.getDate() === 15 && day.getMonth() === 7) || // Aug 15
-                (day.getDate() === 2 && day.getMonth() === 9);    // Oct 2
-                
-              const isSpecialDay = isSunday || isHoliday;
-              
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleDateClick(day)}
-                  className={`
-                    h-[clamp(32px,10vw,40px)] w-full flex flex-col items-center justify-center rounded-xl transition-all relative
-                    ${!isCurrentMonth ? 'opacity-50' : ''}
-                    ${isSelected ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/30' : 'hover:bg-slate-100 dark:hover:bg-white/5'}
-                    ${!isSelected && isSpecialDay ? 'text-red-500 font-semibold' : ''}
-                    ${!isSelected && !isSpecialDay ? 'text-slate-700 dark:text-slate-200' : ''}
-                    ${isToday && !isSelected && !isSpecialDay ? 'text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-600/30' : ''}
-                    ${isToday && !isSelected && isSpecialDay ? 'border border-red-500/30' : ''}
-                  `}
-                >
-                  <span className="text-[clamp(12px,3.5vw,14px)]">{format(day, 'd')}</span>
-                  {isSpecialDay && !isSelected && (
-                    <span className="w-1 h-1 bg-red-500 rounded-full absolute bottom-1"></span>
-                  )}
-                  {isSpecialDay && isSelected && (
-                    <span className="w-1 h-1 bg-white rounded-full absolute bottom-1 opacity-80"></span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        
-        <div className="p-[clamp(12px,4vw,16px)] border-t border-slate-100 dark:border-white/5 flex justify-between gap-3 mt-auto">
-           <Button 
-             variant="ghost" 
-             className="flex-1 text-[clamp(12px,3.5vw,14px)] py-[clamp(6px,2vw,8px)] h-auto"
-             onClick={onClose}
-           >
-             Cancel
-           </Button>
-           <Button 
-             variant="secondary" 
-             className="flex-1 font-semibold text-indigo-600 dark:text-indigo-400 text-[clamp(12px,3.5vw,14px)] py-[clamp(6px,2vw,8px)] h-auto"
-             onClick={() => handleDateClick(new Date())}
-           >
-             Today
-           </Button>
-        </div>
+        <button
+          onClick={onClose}
+          className="absolute -top-3.5 -right-3.5 z-10 w-9 h-9 rounded-full bg-slate-900/90 dark:bg-slate-800 text-white hover:bg-black border border-white/20 flex items-center justify-center shadow-xl transition-all duration-150 hover:scale-110 cursor-pointer"
+          aria-label="Close date picker"
+        >
+          <X className="w-4.5 h-4.5" />
+        </button>
+
+        <Calendar
+          value={selectedDate}
+          captionLayout="dropdown"
+          onChange={handleCalendarChange}
+          className="w-[clamp(350px,92vw,430px)] shadow-2xl border border-slate-200 dark:border-white/15"
+        />
       </div>
     </div>,
     document.body

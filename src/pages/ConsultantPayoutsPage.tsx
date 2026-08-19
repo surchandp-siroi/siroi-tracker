@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Input } from '@/components/ui';
 import { BranchSelect } from '@/components/BranchSelect';
+import { MonthPicker } from '@/components/ui/month-picker';
 import { triggerNotification } from '@/lib/notifications';
 
 const formatDate = (dateStr: string | undefined | null) => {
@@ -136,15 +137,14 @@ export default function ConsultantPayoutsPage() {
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-4">
         {/* Toolbar / Filters */}
         <div className="flex flex-wrap items-center gap-6 bg-slate-50/50 dark:bg-slate-900/50 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800">
-            <div className="w-48 relative">
-              <label className="text-[10px] font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest mb-2 block">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest block">
                 Filter by Month
               </label>
-              <Input 
-                type="month" 
+              <MonthPicker 
                 value={filterMonth} 
-                onChange={(e) => setFilterMonth(e.target.value)} 
-                className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-sm font-semibold text-slate-700 dark:text-slate-300 h-10"
+                onChange={setFilterMonth} 
+                buttonClassName="h-10 px-4 text-xs font-bold bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"
               />
             </div>
             
@@ -157,7 +157,7 @@ export default function ConsultantPayoutsPage() {
                   includeAllOption
                   allOptionText="All Locations"
                   valueField="name"
-                  className="w-48 [&>button]:h-10 [&>button]:bg-white dark:[&>button]:bg-slate-950 [&>button]:border-slate-200 dark:[&>button]:border-slate-800 [&>button]:rounded-md [&>button]:shadow-sm"
+                  className="min-w-[190px] [&>button]:h-10 [&>button]:bg-white dark:[&>button]:bg-slate-950 [&>button]:border-slate-200 dark:[&>button]:border-slate-800 [&>button]:rounded-xl [&>button]:shadow-sm"
                 />
             </div>
             

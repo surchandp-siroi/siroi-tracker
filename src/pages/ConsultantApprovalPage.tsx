@@ -202,16 +202,14 @@ export default function ConsultantApprovalPage() {
             // Remove from list
             setPendingConsultants(prev => prev.filter(c => c.id !== id));
             
-            if (newStatus === 'approved') {
-                if (consultantToUpdate) {
-                    setApprovedConsultants(prev => [{ ...consultantToUpdate, status: 'approved', bank_name: finalBankName }, ...prev]);
-                    
-                    // Trigger email notification
-                    triggerNotification('onboarding_approved', {
-                        email: consultantToUpdate.email,
-                        name: consultantToUpdate.name
-                    });
-                }
+            if (newStatus === 'approved' && consultantToUpdate) {
+                setApprovedConsultants(prev => [{ ...consultantToUpdate, status: 'approved', bank_name: finalBankName || '' }, ...prev]);
+                
+                // Trigger email notification
+                triggerNotification('onboarding_approved', {
+                    email: consultantToUpdate.email,
+                    name: consultantToUpdate.name
+                });
             }
         } catch (error) {
             console.error(`Error ${newStatus} consultant:`, error);

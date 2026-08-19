@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useDataStore } from '@/store/useDataStore';
 import { Button, Input } from '@/components/ui';
+import { DatePicker } from '@/components/ui/date-picker';
 import { ArrowLeft, CheckCircle2, AlertTriangle, Search, Loader2, ChevronDown } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
 
@@ -284,8 +285,13 @@ export default function CustomerDataEntryPage() {
                                         <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Association Date</label>
-                                        <Input type="date" value={associationDate} onChange={(e) => setAssociationDate(e.target.value)} required className="h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm" />
+                                        <DatePicker
+                                          label="Association Date"
+                                          value={associationDate}
+                                          onChange={(_, dateStr) => setAssociationDate(dateStr)}
+                                          captionLayout="dropdown"
+                                          buttonClassName="h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone Number</label>

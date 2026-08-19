@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -6,94 +7,164 @@
   --color-siroi-teal-dark: #074048;
   --color-siroi-yellow: #F1C80E;
   --color-siroi-yellow-dark: #D4B00C;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 body {
-  background-color: #f1f5f9;
-  background-image: 
-    radial-gradient(circle at 0% 0%, #cbd5e1 0%, transparent 50%), 
-    radial-gradient(circle at 100% 100%, #bae6fd 0%, transparent 50%), 
-    radial-gradient(circle at 50% 50%, #c7d2fe 0%, transparent 50%);
-  color: #0f172a;
   min-height: 100vh;
-  background-attachment: fixed;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-:is(.dark body) {
+/* Light Theme Styling */
+html.light body,
+body {
+  background-color: #ffffff;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(238, 242, 255, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(240, 253, 244, 0.8) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(248, 250, 252, 0.9) 0%, transparent 50%);
+  color: #0f172a;
+  background-attachment: fixed;
+}
+
+/* Dark Theme Styling */
+html.dark body {
   background-color: #0f172a;
   background-image: 
     radial-gradient(circle at 0% 0%, #1e293b 0%, transparent 50%), 
     radial-gradient(circle at 100% 100%, #1e3a8a 0%, transparent 50%), 
     radial-gradient(circle at 50% 50%, #312e81 0%, transparent 50%);
   color: #f1f5f9;
+  background-attachment: fixed;
 }
 
+/* Glassmorphism Classes */
 .glass {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
-:is(.dark .glass) {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: none;
+.dark .glass {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
-.stat-card {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 1rem;
-  border-radius: 8px;
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
 
-:is(.dark .stat-card) {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.active-tab {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-:is(.dark .active-tab) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .glass-input {
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   color: #0f172a;
 }
+
+.dark .glass-input {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
 .glass-input:focus {
-  border-color: rgba(0, 0, 0, 0.2);
-  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #6366f1;
 }
 
-:is(.dark .glass-input) {
-  background: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-:is(.dark .glass-input:focus) {
-  border-color: rgba(255, 255, 255, 0.3);
+.dark .glass-input:focus {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: #818cf8;
 }
 
-/* Custom Scrollbar Styles */
-::-webkit-scrollbar { height: 8px; width: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-:is(.dark ::-webkit-scrollbar-thumb) { background: #475569; }
-:is(.dark ::-webkit-scrollbar-thumb:hover) { background: #64748b; }
+/* Double-Bezel High-End Card Architecture */
+.double-bezel {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  padding: 6px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+}
 
-/* Hide scrollbar on mobile */
+.dark .double-bezel {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.double-bezel-inner {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 1), 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.dark .double-bezel-inner {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Stat Cards */
+.stat-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  padding: 1.25rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.dark .stat-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
 @media (max-width: 768px) {
   ::-webkit-scrollbar {
     display: none;
@@ -104,54 +175,16 @@ body {
   }
 }
 
-input[type="date"] { color-scheme: light; } :is(.dark input[type="date"]) { color-scheme: dark; }
-input[type="date"]::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }
-
-/* Premium Data Grid Styles (Stitch Principles) */
-.data-grid-table th {
-  letter-spacing: 0.05em;
-  font-size: 10px !important;
-  color: #64748b !important;
-  background-color: transparent !important;
-  border-bottom: 1px solid rgba(0,0,0,0.05) !important;
-}
-:is(.dark .data-grid-table th) {
-  color: #94a3b8 !important;
-  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+/* Date input cross-browser cleanup */
+input[type="date"] {
+  color-scheme: light;
 }
 
-.data-grid-table input,
-.data-grid-table select,
-.data-grid-table .inline-date-picker {
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 4px;
-}
-.data-grid-table input:hover:not(:disabled),
-.data-grid-table select:hover:not(:disabled) {
-  background: rgba(0,0,0,0.02) !important;
-}
-:is(.dark .data-grid-table input:hover:not(:disabled)),
-:is(.dark .data-grid-table select:hover:not(:disabled)) {
-  background: rgba(255,255,255,0.03) !important;
-}
-.data-grid-table input:focus:not(:disabled),
-.data-grid-table select:focus:not(:disabled) {
-  background: white !important;
-  border-color: #6366f1 !important; /* indigo-500 */
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
-  outline: none;
-}
-:is(.dark .data-grid-table input:focus:not(:disabled)),
-:is(.dark .data-grid-table select:focus:not(:disabled)) {
-  background: #0f172a !important;
+.dark input[type="date"] {
+  color-scheme: dark;
 }
 
-/* Missing Field Indicator refinement */
-.data-grid-table .border-red-500\\/50 {
-  border-color: transparent !important;
-  background-color: rgba(239, 68, 68, 0.04) !important;
-  box-shadow: inset 3px 0 0 0 #ef4444 !important;
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
 }

@@ -15,6 +15,7 @@ import { ExecutivePerformanceWidget } from '@/components/ExecutivePerformanceWid
 import { StaffNameResolutionDialog } from '@/components/StaffNameResolutionDialog';
 import { ColumnMappingDialog, ColumnMapping } from '@/components/ColumnMappingDialog';
 import { CustomDatePicker } from '@/components/CustomDatePicker';
+import { MonthPicker } from '@/components/ui/month-picker';
 
 function InlineDatePicker({ value, onChange, disabled, className, min }: any) {
     const [displayVal, setDisplayVal] = useState('');
@@ -1257,28 +1258,26 @@ export default function DataEntryTerminal() {
                             Date Context
                         </label>
                         <div className="flex items-center gap-4">
-                            <div className="flex items-center h-[36px] px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
-                                <Calendar className="w-4 h-4 text-slate-500 mr-2.5" />
-                                {entryMode === 'monthly' ? (
-                                    <input 
-                                        type="month" 
-                                        className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-bold outline-none cursor-pointer w-[110px]"
-                                        style={{ colorScheme: 'dark' }}
-                                        value={dateStr.substring(0, 7)}
-                                        onChange={(e) => {
-                                            if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                            setDateStr(e.target.value + '-01');
-                                        }}
-                                    />
-                                ) : (
+                            {entryMode === 'monthly' ? (
+                                <MonthPicker 
+                                    value={dateStr.substring(0, 7)}
+                                    onChange={(val) => {
+                                        if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                                        setDateStr(val + '-01');
+                                    }}
+                                    buttonClassName="h-[36px] px-4 rounded-full border-slate-200 dark:border-white/10"
+                                />
+                            ) : (
+                                <div className="flex items-center h-[36px] px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
+                                    <Calendar className="w-4 h-4 text-slate-500 mr-2.5" />
                                     <div 
                                         className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-bold outline-none cursor-pointer min-w-[100px] flex items-center select-none"
                                         onClick={() => setShowDatePicker(true)}
                                     >
                                         {format(new Date(dateStr), 'dd MMM yyyy')}
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            )}
                             <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/5">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                                 <span className="text-[11px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime.split(',')[0]}</span>
@@ -2417,13 +2416,10 @@ export default function DataEntryTerminal() {
                            Date
                        </label>
                        {entryMode === 'monthly' ? (
-                            <Input 
-                                type="month" 
-                                max="2026-04"
+                            <MonthPicker 
                                 value={dateStr.substring(0, 7)}
-                                onChange={(e) => setDateStr(e.target.value + '-01')}
-                                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 w-full"
-                                style={{ colorScheme: 'dark' }}
+                                onChange={(val) => setDateStr(val + '-01')}
+                                buttonClassName="w-full h-10 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                             />
                         ) : (
                             <InlineDatePicker 

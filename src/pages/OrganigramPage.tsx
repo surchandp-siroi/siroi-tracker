@@ -23,6 +23,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { useDataStore } from '@/store/useDataStore';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface OrgNode {
   id: string;
@@ -487,13 +488,21 @@ function OrganigramChart() {
                 </div>
 
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Date of Joining</label>
-                  <input type="date" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" value={formData.doj} onChange={e => setFormData({...formData, doj: e.target.value})} />
+                  <DatePicker
+                    label="Date of Joining"
+                    value={formData.doj}
+                    onChange={(_, dateStr) => setFormData({ ...formData, doj: dateStr })}
+                    captionLayout="dropdown"
+                  />
                 </div>
 
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Birthday (DOB)</label>
-                  <input type="date" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} />
+                  <DatePicker
+                    label="Birthday (DOB)"
+                    value={formData.dob}
+                    onChange={(_, dateStr) => setFormData({ ...formData, dob: dateStr })}
+                    captionLayout="dropdown"
+                  />
                 </div>
 
                 <div className="col-span-2">
