@@ -50,24 +50,7 @@ export default function ProductsPage() {
     const sdIsNewFY = sdMonth >= 3;
     const sdFyStart = sdIsNewFY ? sdYear : sdYear - 1;
 
-    const monthlyPresence = new Set<string>();
-    entries.forEach(e => {
-        if (e.mode === 'monthly' && !e.isDeleted) {
-            const d = new Date(e.entryDate);
-            monthlyPresence.add(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`);
-        }
-    });
-
-    const validEntries = entries.filter(e => {
-        if (e.isDeleted) return false;
-        if (e.mode === 'daily') {
-            const d = new Date(e.entryDate);
-            if (monthlyPresence.has(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`)) {
-                return false;
-            }
-        }
-        return true;
-    });
+    const validEntries = entries.filter(e => !e.isDeleted);
 
     validEntries.forEach(entry => {
       const branchMatch = selectedBranch === 'all' || entry.branchId === selectedBranch;

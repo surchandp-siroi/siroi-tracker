@@ -270,25 +270,9 @@ export default function DashboardOverview() {
   
   
 
-  // Deduplicate entries to prevent double counting:
-  // For each branch and month, if there is at least one 'monthly' entry, ignore all 'daily' entries for that branch/month.
+  // Include all non-deleted entries without mutually exclusive daily/monthly overrides
   const validEntries = useMemo(() => {
-     const monthlyPresence = new Set<string>();
-     entries.forEach(e => {
-         if (e.mode === 'monthly') {
-             const d = new Date(e.entryDate);
-             monthlyPresence.add(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`);
-         }
-     });
-     return entries.filter(e => {
-         if (e.mode === 'daily') {
-             const d = new Date(e.entryDate);
-             if (monthlyPresence.has(`${e.branchId}-${d.getFullYear()}-${d.getMonth()}`)) {
-                 return false; // Ignore daily if monthly exists for this branch/month
-             }
-         }
-         return true;
-     });
+     return entries.filter(e => !e.isDeleted);
   }, [entries]);
 
   const filteredEntries = useMemo(() => {
