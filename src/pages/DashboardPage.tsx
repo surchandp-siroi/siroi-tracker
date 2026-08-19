@@ -453,7 +453,7 @@ export default function DashboardOverview() {
                       projAmt = (item.category === 'Consultancy') ? 0 : (Number(item.amount) || 0);
                   } else if (item.category === 'Forex') {
                       achAmt = Number(item.disbursedAmount) || 0; // Forex is only achieved when disbursed
-                      projAmt = 0; // Exclude from projections
+                      projAmt = Number(item.amount) || 0; // Include in projections
                   } else {
                       achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
                       projAmt = Number(item.amount) || 0;
