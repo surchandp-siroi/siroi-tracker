@@ -328,7 +328,7 @@ export default function DashboardOverview() {
          const isProj = entry.recordType === 'projection';
          const isAch = !entry.recordType || entry.recordType === 'achievement';
          
-         const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+         const entryProj = isProj ? entry.items.reduce((sum, i) => sum + ((i.category === 'Forex' || i.category === 'Consultancy') ? 0 : (Number(i.amount) || 0)), 0) : 0;
 
          if (isProj && entry.entryDate === selectedDate) {
              projToday += entryProj;
@@ -350,7 +350,7 @@ export default function DashboardOverview() {
                  } else if (cat === 'Insurance') {
                      achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
                  } else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') {
-                     achAmt = Number(item.amount) || 0;
+                     achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
                  } else {
                      achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
                  }
@@ -444,8 +444,8 @@ export default function DashboardOverview() {
                       achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
                       projAmt = Number(item.amount) || 0;
                   } else if (item.category === 'Investments' || item.category === 'Forex' || item.category === 'Consultancy') {
-                      achAmt = Number(item.amount) || 0;
-                      projAmt = Number(item.amount) || 0;
+                      achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
+                      projAmt = (item.category === 'Forex' || item.category === 'Consultancy') ? 0 : (Number(item.amount) || 0);
                   } else {
                       achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
                       projAmt = Number(item.amount) || 0;

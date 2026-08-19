@@ -75,13 +75,13 @@ export default function ProductsPage() {
       const isProj = entry.recordType === 'projection';
       const isAch = !entry.recordType || entry.recordType === 'achievement';
 
-      const entryProj = isProj ? entry.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0) : 0;
+      const entryProj = isProj ? entry.items.reduce((sum, i) => sum + ((i.category === 'Forex' || i.category === 'Consultancy') ? 0 : (Number(i.amount) || 0)), 0) : 0;
       const entryAch = isAch ? entry.items.reduce((sum, item) => {
           let amt = 0;
           const cat = item.category || 'Loan';
           if (cat === 'Loan') amt = Number(item.disbursedAmount) || 0;
           else if (cat === 'Insurance') amt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
-          else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') amt = Number(item.amount) || 0;
+          else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') amt = Number(item.disbursedAmount) || Number(item.amount) || 0;
           else amt = Number(item.disbursedAmount) || Number(item.amount) || 0;
           return sum + amt;
       }, 0) : 0;
@@ -101,13 +101,13 @@ export default function ProductsPage() {
               mtdP += entryProj;
               
               entry.items.forEach(item => {
-                  const projAmt = Number(item.amount) || 0;
+                  const projAmt = (item.category === 'Forex' || item.category === 'Consultancy') ? 0 : (Number(item.amount) || 0);
                   
                   let achAmt = 0;
                   const cat = item.category || 'Loan';
                   if (cat === 'Loan') achAmt = Number(item.disbursedAmount) || 0;
                   else if (cat === 'Insurance') achAmt = item.fileStatus === 'Issued' ? (Number(item.amount) || 0) : 0;
-                  else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') achAmt = Number(item.amount) || 0;
+                  else if (cat === 'Investments' || cat === 'Forex' || cat === 'Consultancy') achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
                   else achAmt = Number(item.disbursedAmount) || Number(item.amount) || 0;
 
                   if (item.product && item.product !== 'Grouped') {
