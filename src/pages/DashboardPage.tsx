@@ -28,7 +28,8 @@ const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: stri
     'General Insurance': { proj: `url(#${getPatternId('General Insurance')})`, ach: '#9333ea', textDark: '#581c87' }, // Purple
     'Livlong Loan Protector': { proj: `url(#${getPatternId('Livlong Loan Protector')})`, ach: '#0891b2', textDark: '#164e63' }, // Cyan
     'Mutual Fund/SIP': { proj: `url(#${getPatternId('Mutual Fund/SIP')})`, ach: '#ca8a04', textDark: '#713f12' }, // Yellow
-    'Retail Forex': { proj: `url(#${getPatternId('Retail Forex')})`, ach: '#db2777', textDark: '#831843' }, // Pink
+    'Retail forex sales': { proj: `url(#${getPatternId('Retail forex sales')})`, ach: '#db2777', textDark: '#831843' }, // Pink
+    'Retail forex purchase': { proj: `url(#${getPatternId('Retail forex purchase')})`, ach: '#9d174d', textDark: '#4c0519' }, // Dark Pink
     'GST filing': { proj: `url(#${getPatternId('GST filing')})`, ach: '#0d9488', textDark: '#134e4a' }, // Teal
     'ITR filing': { proj: `url(#${getPatternId('ITR filing')})`, ach: '#65a30d', textDark: '#3f6212' } // Lime
 };
@@ -44,7 +45,8 @@ const PRODUCT_ICONS: Record<string, any> = {
   'General Insurance': Shield,
   'Livlong Loan Protector': ShieldCheck,
   'Mutual Fund/SIP': TrendingUp,
-  'Retail Forex': DollarSign,
+  'Retail forex sales': DollarSign,
+  'Retail forex purchase': DollarSign,
   'GST filing': FileText,
   'ITR filing': FileCheck
 };
@@ -431,7 +433,9 @@ export default function DashboardOverview() {
                   else if (pLower.includes('life insurance')) prod = 'Life Insurance';
                   else if (pLower.includes('general insurance')) prod = 'General Insurance';
                   else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
-                  else if (pLower.includes('forex')) prod = 'Retail Forex';
+                  else if (pLower.includes('forex')) {
+                      prod = pLower.includes('purchase') ? 'Retail forex purchase' : 'Retail forex sales';
+                  }
                   else if (pLower.includes('gst')) prod = 'GST filing';
                   else if (pLower.includes('itr')) prod = 'ITR filing';
 
@@ -527,7 +531,9 @@ export default function DashboardOverview() {
                   else if (pLower.includes('life insurance')) prod = 'Life Insurance';
                   else if (pLower.includes('general insurance')) prod = 'General Insurance';
                   else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
-                  else if (pLower.includes('forex')) prod = 'Retail Forex';
+                  else if (pLower.includes('forex')) {
+                      prod = pLower.includes('purchase') ? 'Retail forex purchase' : 'Retail forex sales';
+                  }
                   else if (pLower.includes('gst')) prod = 'GST filing';
                   else if (pLower.includes('itr')) prod = 'ITR filing';
 
