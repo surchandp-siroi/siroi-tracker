@@ -1439,8 +1439,8 @@ export default function DashboardOverview() {
             </Card>
 
             {/* Mobile Business Mix (Area Chart) */}
-            <Card className="md:hidden flex flex-col border-slate-900/10 dark:border-white/10 flex-1 min-h-[350px]">
-              <CardHeader className="py-4 border-b border-slate-900/10 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
+            <Card className="md:hidden flex flex-col border-slate-200/80 dark:border-white/10 flex-1 min-h-[350px]">
+              <CardHeader className="py-4 border-b border-slate-200/80 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
                 <span className="text-base font-bold tracking-widest text-slate-900 dark:text-white uppercase">Sales Overview</span>
                 <div className="flex items-center gap-3">
                     <BranchSelect 
