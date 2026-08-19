@@ -295,15 +295,16 @@ export default function DashboardLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main 
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6" 
-        style={{ 
+        className="flex-1 overflow-y-auto p-4 pt-[90px] md:p-8 md:pt-8 pb-24 md:pb-6" 
+        style={isNative ? { 
           WebkitOverflowScrolling: 'touch',
-          paddingTop: isNative ? 'calc(env(safe-area-inset-top) + 90px)' : '90px',
-          maskImage: isNative ? 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)' : 'none',
-          WebkitMaskImage: isNative ? 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)' : 'none'
+          paddingTop: 'calc(env(safe-area-inset-top) + 90px)',
+          maskImage: 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)'
+        } : {
+          WebkitOverflowScrolling: 'touch'
         }}
       >
         <div className="w-full space-y-5">
