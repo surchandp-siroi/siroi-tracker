@@ -147,6 +147,9 @@ export default function DataEntryTerminal() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferDate, setTransferDate] = useState<string>('');
+  const [isTransferring, setIsTransferring] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [stagedItems, setStagedItems] = useState<EntryItem[]>([]);
   const [stagedFile, setStagedFile] = useState<File | null>(null);
@@ -199,6 +202,31 @@ export default function DataEntryTerminal() {
           console.error('Error fetching audit logs:', err);
       } finally {
           setLoadingAuditLogs(false);
+      }
+  };
+
+  const handleTransferToDaily = async () => {
+      if (!currentEntryId || !transferDate) return;
+      try {
+          setIsTransferring(true);
+          const { error } = await supabase
+              .from('entries')
+              .update({ mode: 'daily', entryDate: transferDate })
+              .eq('id', currentEntryId);
+              
+          if (error) throw error;
+          
+          setSuccess('Successfully transferred entries to Daily mode');
+          setIsTransferModalOpen(false);
+          // switch mode and date to view the transferred entries
+          setEntryMode('daily');
+          setDateStr(transferDate);
+          setRefreshTrigger(p => p + 1);
+      } catch (e: any) {
+          console.error(e);
+          setError(e.message || 'Error transferring entries');
+      } finally {
+          setIsTransferring(false);
       }
   };
 
@@ -1906,6 +1934,12 @@ export default function DataEntryTerminal() {
                      </Button>
                 )}
                 
+                {hasExistingEntry && entryMode === 'monthly' && (user?.role === 'admin' || isBackdoor) && (
+                      <Button variant="secondary" onClick={() => setIsTransferModalOpen(true)} className="h-[38px] px-6 font-bold shadow-sm bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700 hover:bg-blue-100 hover:border-blue-400 transition-colors">
+                          Transfer to Daily
+                      </Button>
+                 )}
+                
                 {canModify && (
                      <Button variant="secondary" onClick={() => {
                          if (items.length === 0) {
@@ -1933,6 +1967,38 @@ export default function DataEntryTerminal() {
 
         {/* Padding to allow scrolling past sticky footer */}
         <div className="h-24"></div>
+
+        {/* Transfer to Daily Modal */}
+        {isTransferModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsTransferModalOpen(false)}>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white">Transfer to Daily</h2>
+                        <p className="text-sm text-slate-500 mt-1">Select a specific date to transfer these monthly entries into Daily mode.</p>
+                    </div>
+                    <div className="p-6 flex flex-col gap-5">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                                Daily Date
+                            </label>
+                            <input 
+                                type="date"
+                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                value={transferDate}
+                                onChange={(e) => setTransferDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+                        <Button variant="secondary" onClick={() => setIsTransferModalOpen(false)} className="flex-1">Cancel</Button>
+                        <Button onClick={handleTransferToDaily} disabled={!transferDate || isTransferring} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                            {isTransferring ? 'Transferring...' : 'Confirm Transfer'}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && (() => {
