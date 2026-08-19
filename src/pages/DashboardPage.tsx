@@ -787,7 +787,9 @@ export default function DashboardOverview() {
              } else {
                  if (pName === 'Mortgage' || pName === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
                  else if (pName === 'SIP & Mutual Fund' || pName === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
-                 else if (item.category === 'Forex') mappedProduct = 'Retail Forex';
+                 else if (item.category === 'Forex') {
+                     mappedProduct = pName.toLowerCase().includes('purchase') ? 'Retail forex purchase' : 'Retail forex sales';
+                 }
              }
 
              if (data[mappedProduct]) {
