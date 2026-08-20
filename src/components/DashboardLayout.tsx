@@ -79,7 +79,26 @@ export default function DashboardLayout() {
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState('');
+  const [currentBundle, setCurrentBundle] = useState('Unknown');
   const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const fetchCurrentBundle = async () => {
+      try {
+        const current = await CapacitorUpdater.current();
+        if (current?.bundle?.version) {
+          setCurrentBundle(current.bundle.version);
+        }
+      } catch (e) {
+        console.error("Failed to fetch current bundle", e);
+      }
+    };
+    if (Capacitor.isNativePlatform()) {
+      fetchCurrentBundle();
+    }
+  }, []);
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     setScrollY(e.currentTarget.scrollTop);
@@ -99,20 +118,33 @@ export default function DashboardLayout() {
   };
 
   const handleUpdateApp = async () => {
-    setIsCheckingUpdate(true);
+    if (!Capacitor.isNativePlatform()) {
+      alert("Updates are only available on native mobile devices.");
+      return;
+    }
+    
+    setIsMobileSidebarOpen(false); // Close sidebar so modal is clear
+    setShowUpdateModal(true);
+    setUpdateProgress('Connecting to Capgo Cloud...');
+    
     try {
       const latest = await CapacitorUpdater.getLatest();
       if (latest.url) {
+        setUpdateProgress(`Found bundle ${latest.version}. Downloading...`);
         const bundle = await CapacitorUpdater.download({ url: latest.url, version: latest.version });
+        setUpdateProgress(`Download complete. Installing ${bundle.version}...`);
+        
+        // Brief pause so the user can read the "Installing..." message
+        await new Promise(resolve => setTimeout(resolve, 1000));
         await CapacitorUpdater.set({ id: bundle.id });
       } else {
-        alert("You are already on the latest version.");
+        setUpdateProgress('App is already up to date!');
+        setTimeout(() => setShowUpdateModal(false), 2000);
       }
     } catch (error: any) {
       console.error("Update failed", error);
-      alert("Failed to check for updates: " + (error?.message || JSON.stringify(error)));
-    } finally {
-      setIsCheckingUpdate(false);
+      setUpdateProgress("Failed: " + (error?.message || "Unknown error"));
+      setTimeout(() => setShowUpdateModal(false), 4000);
     }
   };
 
@@ -553,6 +585,41 @@ export default function DashboardLayout() {
                   </div>
               </div>
           </div>
+      )}
+
+      {/* Capgo Update Modal Overlay */}
+      {showUpdateModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-6 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+            
+            {/* Spinning Loader */}
+            <div className="relative mb-6">
+              <div className="w-16 h-16 rounded-full border-4 border-slate-100 dark:border-slate-800 absolute inset-0"></div>
+              <div className="w-16 h-16 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center text-indigo-500">
+                <RefreshCw className="w-6 h-6 animate-pulse" />
+              </div>
+            </div>
+
+            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2">
+              System Update
+            </h2>
+            
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-6 px-4 animate-pulse">
+              {updateProgress}
+            </p>
+
+            <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Current Bundle</span>
+                <span className="font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md">
+                  v{currentBundle}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
       )}
 
     </div>
