@@ -275,7 +275,7 @@ export default function DashboardLayout() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-auto px-4 py-4 border-t border-slate-100 dark:border-white/5 space-y-3 bg-slate-50/50 dark:bg-black/20">
+        <div className="mt-auto px-4 py-4 pb-28 md:pb-4 border-t border-slate-100 dark:border-white/5 space-y-3 bg-slate-50/50 dark:bg-black/20">
           {/* Theme Toggle (Light / Dark) */}
           <div className="flex flex-col gap-1.5 bg-white dark:bg-slate-800/80 rounded-xl p-2 border border-slate-200/80 dark:border-white/5 shadow-sm">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 px-1">
