@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Capacitor } from '@capacitor/core';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import Lottie from 'lottie-react';
 import { useEffect } from 'react';
 
@@ -77,6 +78,7 @@ export default function DashboardLayout() {
   } | null>(null);
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
@@ -93,6 +95,24 @@ export default function DashboardLayout() {
       console.error(e);
     } finally {
       navigate('/login');
+    }
+  };
+
+  const handleUpdateApp = async () => {
+    setIsCheckingUpdate(true);
+    try {
+      const latest = await CapacitorUpdater.getLatest();
+      if (latest.url) {
+        const bundle = await CapacitorUpdater.download({ url: latest.url, version: latest.version });
+        await CapacitorUpdater.set({ id: bundle.id });
+      } else {
+        alert("You are already on the latest version.");
+      }
+    } catch (error) {
+      console.error("Update failed", error);
+      alert("Failed to check for updates.");
+    } finally {
+      setIsCheckingUpdate(false);
     }
   };
 
@@ -347,6 +367,16 @@ export default function DashboardLayout() {
               )}
 
               <DropdownMenuSeparator />
+
+              {isNative && (
+                <>
+                  <DropdownMenuItem onClick={handleUpdateApp} disabled={isCheckingUpdate}>
+                    <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                    {isCheckingUpdate ? 'Updating...' : 'Update App'}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
 
               <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                 <LogOut className="w-3.5 h-3.5" />
