@@ -17,7 +17,7 @@ const AVATAR_OPTIONS = [
 ];
 
 const navItems = [
-  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/dashboard/products', label: 'Products', icon: Package },
   { to: '/dashboard/channels', label: 'Channels', icon: Network },
   { to: '/dashboard/branches', label: 'Branches', icon: GitBranch },
