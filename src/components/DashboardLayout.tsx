@@ -152,7 +152,9 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <aside className={`fixed md:static inset-y-0 left-0 z-50 w-[260px] shrink-0 flex flex-col bg-white/85 dark:bg-slate-900/85 border-r border-slate-200/80 dark:border-white/5 backdrop-blur-2xl shadow-xl md:shadow-none transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo / Branding Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-100 dark:border-white/5">
+        <div 
+          className="flex items-center justify-between px-6 pb-5 border-b border-slate-100 dark:border-white/5 pt-[calc(env(safe-area-inset-top,0px)+24px)]"
+        >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-900 flex items-center justify-center shadow-md shadow-indigo-500/20 text-white font-black text-base ring-1 ring-white/20 shrink-0">
               S
@@ -275,7 +277,9 @@ export default function DashboardLayout() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-auto px-4 py-4 pb-28 md:pb-4 border-t border-slate-100 dark:border-white/5 space-y-3 bg-slate-50/50 dark:bg-black/20">
+        <div 
+          className="mt-auto px-4 pt-4 border-t border-slate-100 dark:border-white/5 space-y-3 bg-slate-50/50 dark:bg-black/20 pb-[calc(env(safe-area-inset-bottom,0px)+120px)] md:pb-[calc(env(safe-area-inset-bottom,0px)+16px)]"
+        >
           {/* Theme Toggle (Light / Dark) */}
           <div className="flex flex-col gap-1.5 bg-white dark:bg-slate-800/80 rounded-xl p-2 border border-slate-200/80 dark:border-white/5 shadow-sm">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 px-1">
