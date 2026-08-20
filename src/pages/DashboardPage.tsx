@@ -1147,16 +1147,16 @@ export default function DashboardOverview() {
                   <Zap className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 block truncate">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-sky-600 dark:text-sky-400 block">
                     FTD Summary
                   </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
                     {kpiCategory}
                   </span>
                 </div>
               </div>
               <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 md:py-1 rounded-full text-sky-700 dark:text-sky-300 shrink-0 whitespace-nowrap ml-1">
-                {kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
+                {kpiMetrics[kpiCategory]?.ftdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
               </span>
             </div>
             <div className="mt-1">
@@ -1180,16 +1180,16 @@ export default function DashboardOverview() {
                   <BarChart3 className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block truncate">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400 block">
                     MTD Summary
                   </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
                     {kpiCategory}
                   </span>
                 </div>
               </div>
               <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 md:py-1 rounded-full text-indigo-700 dark:text-indigo-300 shrink-0 whitespace-nowrap ml-1">
-                {kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
+                {kpiMetrics[kpiCategory]?.mtdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
               </span>
             </div>
             <div className="mt-1">
@@ -1213,16 +1213,16 @@ export default function DashboardOverview() {
                   <Trophy className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block truncate">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-400 block">
                     YTD Summary
                   </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
                     {kpiCategory}
                   </span>
                 </div>
               </div>
               <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:py-1 rounded-full text-emerald-700 dark:text-emerald-300 shrink-0 whitespace-nowrap ml-1">
-                {kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
+                {kpiMetrics[kpiCategory]?.ytdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
               </span>
             </div>
             <div className="mt-1">
@@ -1246,17 +1246,15 @@ export default function DashboardOverview() {
                   <Target className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 block truncate">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400 block">
                     Daily Target
                   </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
                     All Branches
                   </span>
                 </div>
               </div>
-              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 md:py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0 whitespace-nowrap ml-1">
-                Pipeline
-              </span>
+              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 md:py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0 whitespace-nowrap ml-1"><span className="hidden sm:inline">Pipeline</span></span>
             </div>
             <div className="mt-1">
               <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight">
