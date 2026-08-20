@@ -108,9 +108,9 @@ export default function DashboardLayout() {
       } else {
         alert("You are already on the latest version.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Update failed", error);
-      alert("Failed to check for updates.");
+      alert("Failed to check for updates: " + (error?.message || JSON.stringify(error)));
     } finally {
       setIsCheckingUpdate(false);
     }

@@ -1141,21 +1141,21 @@ export default function DashboardOverview() {
         {/* FTD Card (Electric Sky) */}
         <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 via-sky-500/10 to-transparent text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/30 shadow-lg shadow-sky-500/10 group-hover:scale-105 group-hover:shadow-sky-500/20 transition-all duration-300 shrink-0">
-                  <Zap className="w-6 h-6 stroke-[2.3]" />
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 via-sky-500/10 to-transparent text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/30 shadow-lg shadow-sky-500/10 group-hover:scale-105 group-hover:shadow-sky-500/20 transition-all duration-300 shrink-0">
+                  <Zap className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 block">
+                <div className="min-w-0">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-sky-600 dark:text-sky-400 block truncate">
                     FTD Summary
                   </span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
                     {kpiCategory}
                   </span>
                 </div>
               </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-full text-sky-700 dark:text-sky-300 shrink-0">
+              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 md:py-1 rounded-full text-sky-700 dark:text-sky-300 shrink-0 whitespace-nowrap ml-1">
                 {kpiMetrics[kpiCategory]?.ftdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
               </span>
             </div>
@@ -1174,21 +1174,21 @@ export default function DashboardOverview() {
         {/* MTD Card (Royal Indigo) */}
         <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-transparent text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-lg shadow-indigo-500/10 group-hover:scale-105 group-hover:shadow-indigo-500/20 transition-all duration-300 shrink-0">
-                  <BarChart3 className="w-6 h-6 stroke-[2.3]" />
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-transparent text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-lg shadow-indigo-500/10 group-hover:scale-105 group-hover:shadow-indigo-500/20 transition-all duration-300 shrink-0">
+                  <BarChart3 className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block">
+                <div className="min-w-0">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 block truncate">
                     MTD Summary
                   </span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
                     {kpiCategory}
                   </span>
                 </div>
               </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full text-indigo-700 dark:text-indigo-300 shrink-0">
+              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 md:py-1 rounded-full text-indigo-700 dark:text-indigo-300 shrink-0 whitespace-nowrap ml-1">
                 {kpiMetrics[kpiCategory]?.mtdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
               </span>
             </div>
@@ -1207,21 +1207,21 @@ export default function DashboardOverview() {
         {/* YTD Card (Emerald Crown) */}
         <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 group-hover:shadow-emerald-500/20 transition-all duration-300 shrink-0">
-                  <Trophy className="w-6 h-6 stroke-[2.3]" />
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 group-hover:shadow-emerald-500/20 transition-all duration-300 shrink-0">
+                  <Trophy className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block">
+                <div className="min-w-0">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 block truncate">
                     YTD Summary
                   </span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
                     {kpiCategory}
                   </span>
                 </div>
               </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full text-emerald-700 dark:text-emerald-300 shrink-0">
+              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:py-1 rounded-full text-emerald-700 dark:text-emerald-300 shrink-0 whitespace-nowrap ml-1">
                 {kpiMetrics[kpiCategory]?.ytdCount || 0} {kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}
               </span>
             </div>
@@ -1240,21 +1240,21 @@ export default function DashboardOverview() {
         {/* Daily Proj Card (Amber Bullseye) */}
         <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10 group-hover:scale-105 group-hover:shadow-amber-500/20 transition-all duration-300 shrink-0">
-                  <Target className="w-6 h-6 stroke-[2.3]" />
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10 group-hover:scale-105 group-hover:shadow-amber-500/20 transition-all duration-300 shrink-0">
+                  <Target className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 block">
+                <div className="min-w-0">
+                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 block truncate">
                     Daily Target
                   </span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px] block mt-0.5">
+                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
                     All Branches
                   </span>
                 </div>
               </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0">
+              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 md:py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0 whitespace-nowrap ml-1">
                 Pipeline
               </span>
             </div>
