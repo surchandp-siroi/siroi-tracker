@@ -8,11 +8,12 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 0,
       launchAutoHide: false,
-      backgroundColor: "#ffffff",
+      backgroundColor: '#ffffff',
       showSpinner: false
     },
     CapacitorUpdater: {
-      autoUpdate: true
+      autoUpdate: true,
+      appId: 'com.siroi.tracker'
     }
   }
 };

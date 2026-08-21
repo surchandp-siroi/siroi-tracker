@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { InitProvider } from '@/components/InitProvider';
@@ -31,6 +31,41 @@ export default function App() {
     requestAppPermissions();
     if (Capacitor.isNativePlatform()) {
       CapacitorUpdater.notifyAppReady();
+      
+      // Self-Hosted OTA Check
+      const checkUpdate = async () => {
+        try {
+          // IMPORTANT: Replace this URL with your actual hosted version.json URL
+          const response = await CapacitorHttp.get({ 
+            url: 'https://mis.siroiforex.com/version.json?t=' + Date.now() 
+          });
+          
+          if (response.status !== 200) return;
+          
+          const data = response.data;
+          const currentVersion = localStorage.getItem('ota_version') || '1.0.0';
+          
+          if (data && data.version && data.version !== currentVersion) {
+            console.log('New update found:', data.version);
+            
+            // Download the zip directly from your web host
+            const bundle = await CapacitorUpdater.download({
+              url: data.url,
+              version: data.version,
+            });
+            
+            // Save the new version so we don't redownload it
+            localStorage.setItem('ota_version', data.version);
+            
+            // Apply the update and restart the app
+            await CapacitorUpdater.set(bundle);
+          }
+        } catch (err) {
+          console.error('Self-Hosted OTA failed:', err);
+        }
+      };
+      
+      checkUpdate();
     }
   }, []);
 
