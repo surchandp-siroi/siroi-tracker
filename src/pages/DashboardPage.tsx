@@ -1143,11 +1143,11 @@ export default function DashboardOverview() {
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 via-sky-500/10 to-transparent text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-500/30 shadow-lg shadow-sky-500/10 group-hover:scale-105 group-hover:shadow-sky-500/20 transition-all duration-300 shrink-0">
+                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 via-sky-500/10 to-transparent text-sky-600 dark:text-sky-400 items-center justify-center border border-sky-500/30 shadow-lg shadow-sky-500/10 group-hover:scale-105 group-hover:shadow-sky-500/20 transition-all duration-300 shrink-0">
                   <Zap className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-sky-600 dark:text-sky-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wide text-sky-600 dark:text-sky-400 block">
                     FTD Summary
                   </span>
                   <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
@@ -1155,15 +1155,15 @@ export default function DashboardOverview() {
                   </span>
                 </div>
               </div>
-              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 md:py-1 rounded-full text-sky-700 dark:text-sky-300 shrink-0 whitespace-nowrap ml-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 md:py-1 rounded-full text-sky-700 dark:text-sky-300 shrink-0 whitespace-nowrap ml-1">
                 {kpiMetrics[kpiCategory]?.ftdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
               </span>
             </div>
             <div className="mt-1">
-              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>
+              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>
                 ₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
                 <span className="truncate">For Selected Date</span>
                 <span className="text-sky-600 dark:text-sky-400 font-bold xl:text-right truncate">Daily Pulse</span>
               </div>
@@ -1176,11 +1176,11 @@ export default function DashboardOverview() {
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-transparent text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/30 shadow-lg shadow-indigo-500/10 group-hover:scale-105 group-hover:shadow-indigo-500/20 transition-all duration-300 shrink-0">
+                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-transparent text-indigo-600 dark:text-indigo-400 items-center justify-center border border-indigo-500/30 shadow-lg shadow-indigo-500/10 group-hover:scale-105 group-hover:shadow-indigo-500/20 transition-all duration-300 shrink-0">
                   <BarChart3 className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400 block">
                     MTD Summary
                   </span>
                   <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
@@ -1188,15 +1188,15 @@ export default function DashboardOverview() {
                   </span>
                 </div>
               </div>
-              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 md:py-1 rounded-full text-indigo-700 dark:text-indigo-300 shrink-0 whitespace-nowrap ml-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 md:py-1 rounded-full text-indigo-700 dark:text-indigo-300 shrink-0 whitespace-nowrap ml-1">
                 {kpiMetrics[kpiCategory]?.mtdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
               </span>
             </div>
             <div className="mt-1">
-              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>
+              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>
                 ₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
                 <span className="truncate">Month-To-Date Vol</span>
                 <span className="text-indigo-600 dark:text-indigo-400 font-bold xl:text-right truncate">Monthly Target</span>
               </div>
@@ -1209,11 +1209,11 @@ export default function DashboardOverview() {
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 group-hover:shadow-emerald-500/20 transition-all duration-300 shrink-0">
+                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent text-emerald-600 dark:text-emerald-400 items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 group-hover:shadow-emerald-500/20 transition-all duration-300 shrink-0">
                   <Trophy className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-400 block">
                     YTD Summary
                   </span>
                   <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
@@ -1221,15 +1221,15 @@ export default function DashboardOverview() {
                   </span>
                 </div>
               </div>
-              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:py-1 rounded-full text-emerald-700 dark:text-emerald-300 shrink-0 whitespace-nowrap ml-1">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:py-1 rounded-full text-emerald-700 dark:text-emerald-300 shrink-0 whitespace-nowrap ml-1">
                 {kpiMetrics[kpiCategory]?.ytdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
               </span>
             </div>
             <div className="mt-1">
-              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>
+              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>
                 ₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
                 <span className="truncate">Financial Year Prog</span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold xl:text-right truncate">Annual Cum.</span>
               </div>
@@ -1242,11 +1242,11 @@ export default function DashboardOverview() {
           <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10 group-hover:scale-105 group-hover:shadow-amber-500/20 transition-all duration-300 shrink-0">
+                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent text-amber-600 dark:text-amber-400 items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10 group-hover:scale-105 group-hover:shadow-amber-500/20 transition-all duration-300 shrink-0">
                   <Target className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400 block">
+                  <span className="text-[10px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400 block">
                     Daily Target
                   </span>
                   <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
@@ -1254,13 +1254,13 @@ export default function DashboardOverview() {
                   </span>
                 </div>
               </div>
-              <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 md:py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0 whitespace-nowrap ml-1"><span className="hidden sm:inline">Pipeline</span></span>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 md:py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0 whitespace-nowrap ml-1"><span className="hidden sm:inline">Pipeline</span></span>
             </div>
             <div className="mt-1">
-              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}`}>
+              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}`}>
                 ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
                 <span className="truncate">Consolidated Forecast</span>
                 <span className="text-amber-600 dark:text-amber-400 font-bold xl:text-right truncate">Today Target</span>
               </div>
