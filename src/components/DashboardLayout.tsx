@@ -112,7 +112,7 @@ export default function DashboardLayout() {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-transparent">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0b0f19]">
       {/* Mobile Top Bar */}
       <div 
         className={`md:hidden fixed left-3 right-3 h-14 rounded-2xl flex items-center px-4 z-40 shadow-xl justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-indigo-600 top-[calc(env(safe-area-inset-top)+16px)] ${
@@ -386,9 +386,7 @@ export default function DashboardLayout() {
         className="flex-1 overflow-y-auto p-4 pt-[90px] md:p-8 md:pt-6 pb-24 md:pb-8" 
         style={isNative ? { 
           WebkitOverflowScrolling: 'touch',
-          paddingTop: 'calc(env(safe-area-inset-top) + 90px)',
-          maskImage: 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black calc(env(safe-area-inset-top) + 80px), black 100%)'
+          paddingTop: 'calc(env(safe-area-inset-top) + 90px)'
         } : {
           WebkitOverflowScrolling: 'touch'
         }}

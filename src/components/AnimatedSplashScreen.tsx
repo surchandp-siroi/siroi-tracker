@@ -21,10 +21,12 @@ export function AnimatedSplashScreen({ onComplete }: { onComplete: () => void })
     // Start the fade out animation after 2 seconds
     const timer = setTimeout(() => {
       setIsVisible(false);
+      // Fallback in case onExitComplete is delayed or doesn't fire
+      setTimeout(onComplete, 600);
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [onComplete]);
 
   return (
     <AnimatePresence onExitComplete={onComplete}>

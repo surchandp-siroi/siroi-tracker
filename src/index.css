@@ -18,24 +18,22 @@ body {
 /* Light Theme Styling */
 html.light body,
 body {
-  background-color: #ffffff;
+  background-color: #f8fafc;
   background-image: 
     radial-gradient(circle at 15% 50%, rgba(238, 242, 255, 0.8) 0%, transparent 50%),
     radial-gradient(circle at 85% 30%, rgba(240, 253, 244, 0.8) 0%, transparent 50%),
     radial-gradient(circle at 50% 100%, rgba(248, 250, 252, 0.9) 0%, transparent 50%);
   color: #0f172a;
-  background-attachment: fixed;
 }
 
 /* Dark Theme Styling */
 html.dark body {
-  background-color: #0f172a;
+  background-color: #0b0f19;
   background-image: 
     radial-gradient(circle at 0% 0%, #1e293b 0%, transparent 50%), 
     radial-gradient(circle at 100% 100%, #1e3a8a 0%, transparent 50%), 
     radial-gradient(circle at 50% 50%, #312e81 0%, transparent 50%);
   color: #f1f5f9;
-  background-attachment: fixed;
 }
 
 /* Glassmorphism Classes */
