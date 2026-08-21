@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
 import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown } from 'lucide-react';

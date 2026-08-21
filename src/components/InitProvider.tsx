@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 
 import { initPushNotifications } from '@/utils/PushNotificationsHelper';
 
