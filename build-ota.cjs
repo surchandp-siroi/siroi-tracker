@@ -5,10 +5,7 @@ const packageJson = require('./package.json');
 
 const DIST_DIR = path.join(__dirname, 'dist');
 const OTA_DIR = path.join(__dirname, 'dist');
-const ZIP_FILE = path.join(OTA_DIR, 'update.zip');
 const VERSION_FILE = path.join(OTA_DIR, 'version.json');
-
-// Replace this with your actual public hosting URL later
 const HOST_URL = 'https://mis.siroiforex.com';
 
 async function buildOta() {
@@ -20,19 +17,25 @@ async function buildOta() {
     fs.mkdirSync(tempDir, { recursive: true });
   }
 
-  // Remove existing update.zip inside dist so it doesn't get zipped into itself!
-  if (fs.existsSync(ZIP_FILE)) {
-    fs.unlinkSync(ZIP_FILE);
+  // Remove existing zip files in dist to prevent bundling old zips
+  if (fs.existsSync(DIST_DIR)) {
+    const existingZips = fs.readdirSync(DIST_DIR).filter(f => f.endsWith('.zip'));
+    for (const zf of existingZips) {
+      try { fs.unlinkSync(path.join(DIST_DIR, zf)); } catch {}
+    }
   }
 
   const version = packageJson.version;
-  console.log(`Building OTA update for version ${version}...`);
+  const zipFileName = `bundle-v${version}.zip`;
+  const finalZipPath = path.join(OTA_DIR, zipFileName);
 
-  // 2. Zip the dist folder (excluding mp4 videos to keep OTA bundle ultra fast ~1.5 MB)
+  console.log(`Building OTA update for version ${version} (${zipFileName})...`);
+
+  // 2. Zip the dist folder (excluding mp4 videos to keep OTA bundle ultra fast ~2.6 MB)
   const zip = new AdmZip();
   const files = fs.readdirSync(DIST_DIR);
   for (const file of files) {
-    if (file.endsWith('.mp4') || file === 'update.zip' || file === 'version.json') continue;
+    if (file.endsWith('.mp4') || file.endsWith('.zip') || file === 'version.json') continue;
     const fullPath = path.join(DIST_DIR, file);
     const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
@@ -42,22 +45,21 @@ async function buildOta() {
     }
   }
   
-  // Save to a temporary location first so it doesn't zip itself
-  const TEMP_ZIP = path.join(tempDir, 'update.zip');
-  zip.writeZip(TEMP_ZIP);
+  // Save to temporary location first
+  const tempZipPath = path.join(tempDir, zipFileName);
+  zip.writeZip(tempZipPath);
   
-  // Move files to dist so Hostinger serves them
-  fs.renameSync(TEMP_ZIP, ZIP_FILE);
+  // Move to dist directory
+  fs.renameSync(tempZipPath, finalZipPath);
   
   const versionData = {
     version: version,
-    url: `${HOST_URL}/dist/update.zip`
+    url: `${HOST_URL}/dist/${zipFileName}`
   };
   fs.writeFileSync(VERSION_FILE, JSON.stringify(versionData, null, 2));
 
-  console.log(`Created update.zip and version.json in dist/ successfully`);
+  console.log(`Created ${zipFileName} and version.json in dist/ successfully`);
   console.log(`\n✅ OTA Build Complete!`);
-  console.log(`Upload the contents of the 'dist' folder (or run git push) to your web host.`);
 }
 
 buildOta().catch(console.error);
