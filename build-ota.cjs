@@ -13,18 +13,37 @@ const HOST_URL = 'https://mis.siroiforex.com';
 
 async function buildOta() {
   if (!fs.existsSync(OTA_DIR)) {
-    fs.mkdirSync(OTA_DIR);
+    fs.mkdirSync(OTA_DIR, { recursive: true });
+  }
+  const tempDir = path.join(__dirname, 'dist-ota');
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  // Remove existing update.zip inside dist so it doesn't get zipped into itself!
+  if (fs.existsSync(ZIP_FILE)) {
+    fs.unlinkSync(ZIP_FILE);
   }
 
   const version = packageJson.version;
   console.log(`Building OTA update for version ${version}...`);
 
-  // 2. Zip the dist folder
+  // 2. Zip the dist folder (excluding mp4 videos to keep OTA bundle ultra fast ~1.5 MB)
   const zip = new AdmZip();
-  zip.addLocalFolder(DIST_DIR);
+  const files = fs.readdirSync(DIST_DIR);
+  for (const file of files) {
+    if (file.endsWith('.mp4') || file === 'update.zip' || file === 'version.json') continue;
+    const fullPath = path.join(DIST_DIR, file);
+    const stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      zip.addLocalFolder(fullPath, file);
+    } else {
+      zip.addLocalFile(fullPath);
+    }
+  }
   
   // Save to a temporary location first so it doesn't zip itself
-  const TEMP_ZIP = path.join(__dirname, 'dist-ota', 'update.zip');
+  const TEMP_ZIP = path.join(tempDir, 'update.zip');
   zip.writeZip(TEMP_ZIP);
   
   // Move files to dist so Hostinger serves them

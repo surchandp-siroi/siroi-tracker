@@ -29,13 +29,14 @@ jobs:
 
         
       - name: Sync files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/ 
           server-dir: ./dist/ 
-          timeout: 300000
+          timeout: 600000
           port: 21
           protocol: ftps
+          security: loose
