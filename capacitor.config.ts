@@ -11,10 +11,7 @@ const config: CapacitorConfig = {
       backgroundColor: '#ffffff',
       showSpinner: false
     },
-    CapacitorUpdater: {
-      autoUpdate: false,
-      appId: 'com.siroi.tracker'
-    },
+
     CapacitorHttp: {
       enabled: true
     }

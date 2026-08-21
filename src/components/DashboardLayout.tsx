@@ -6,7 +6,6 @@ import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
-import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import Lottie from 'lottie-react';
 import { useEffect } from 'react';
 
@@ -84,21 +83,7 @@ export default function DashboardLayout() {
   const [currentBundle, setCurrentBundle] = useState('Unknown');
   const [scrollY, setScrollY] = useState(0);
 
-  useEffect(() => {
-    const fetchCurrentBundle = async () => {
-      try {
-        const current = await CapacitorUpdater.current();
-        if (current?.bundle?.version) {
-          setCurrentBundle(current.bundle.version);
-        }
-      } catch (e) {
-        console.error("Failed to fetch current bundle", e);
-      }
-    };
-    if (Capacitor.isNativePlatform()) {
-      fetchCurrentBundle();
-    }
-  }, []);
+
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     setScrollY(e.currentTarget.scrollTop);
@@ -118,50 +103,7 @@ export default function DashboardLayout() {
   };
 
   const handleUpdateApp = async () => {
-    if (!Capacitor.isNativePlatform()) {
-      alert("Updates are only available on native mobile devices.");
-      return;
-    }
-    
-    setIsMobileSidebarOpen(false); // Close sidebar so modal is clear
-    setShowUpdateModal(true);
-    setUpdateProgress('Checking for updates...');
-    
-    try {
-      const response = await CapacitorHttp.get({ 
-        url: 'https://mis.siroiforex.com/version.json?t=' + Date.now() 
-      });
-      
-      if (response.status !== 200) {
-        throw new Error("Failed to check for updates");
-      }
-      
-      const data = response.data;
-      const currentVersion = localStorage.getItem('ota_version') || '1.0.0';
-      
-      if (data && data.version && data.version !== currentVersion) {
-        setUpdateProgress(`Found version ${data.version}. Downloading...`);
-        
-        const bundle = await CapacitorUpdater.download({
-          url: data.url,
-          version: data.version,
-        });
-        
-        setUpdateProgress(`Download complete. Installing ${data.version}...`);
-        localStorage.setItem('ota_version', data.version);
-        
-        // Brief pause so the user can read the "Installing..." message
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await CapacitorUpdater.set({ id: bundle.id });
-      } else {
-        setUpdateProgress('App is already up to date!');
-        setTimeout(() => setShowUpdateModal(false), 2000);
-      }
-    } catch (error: any) {
-      console.error("Update failed", error);
-      setUpdateProgress("Failed: " + (error?.message || "Unknown error"));
-      setTimeout(() => setShowUpdateModal(false), 4000);
-    }
+    alert("In-app updates are currently disabled.");
   };
 
   // Extract display name from email (before @)
