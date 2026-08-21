@@ -33,8 +33,6 @@
     "clsx": "^2.1.1",
     "dagre": "^0.8.5",
     "date-fns": "^4.1.0",
-    "indian-banks": "github:praveenpuglia/indian-banks",
-    "lottie-react": "^2.4.1",
     "lucide-react": "^0.553.0",
     "motion": "^12.23.24",
     "react": "^19.2.1",

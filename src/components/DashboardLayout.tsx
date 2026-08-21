@@ -9,7 +9,6 @@ import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Geolocation } from '@capacitor/geolocation';
 import { LogoIcon } from '@/components/LogoIcon';
-import Lottie from 'lottie-react';
 import { useEffect } from 'react';
 
 const AVATAR_OPTIONS = [
@@ -27,44 +26,10 @@ const navItems = [
   { to: '/dashboard/audit', label: 'Audit Logs', icon: ShieldAlert, adminOnly: true },
 ];
 
-// Placeholder Lottie URLs (Replace these with your actual Lottie JSON URLs)
-const LOTTIE_URLS: Record<string, string> = {
-  Overview: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
-  Products: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
-  Channels: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
-  Branches: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
-  Menu: 'https://raw.githubusercontent.com/LottieFiles/lottie-react/master/example/src/animation.json', 
-};
-
-const AnimatedMobileIcon = ({ label, icon: LucideIcon, isActive, isNative }: { label: string, icon: any, isActive: boolean, isNative: boolean }) => {
-  const [animationData, setAnimationData] = useState<any>(null);
-  const [failed, setFailed] = useState(false);
-  const url = LOTTIE_URLS[label];
-
-  useEffect(() => {
-    if (!isNative || !url) { 
-      setFailed(true); 
-      return; 
-    }
-    fetch(url)
-      .then(res => res.json())
-      .then(data => setAnimationData(data))
-      .catch(() => setFailed(true));
-  }, [url, isNative]);
-
-  if (failed || !animationData) {
-    // Fallback to static Lucide icon if Lottie fails to load or not native
-    return <LucideIcon className="w-[clamp(16px,4.5vw,20px)] h-[clamp(16px,4.5vw,20px)]" strokeWidth={2.5} />;
-  }
-
+const AnimatedMobileIcon = ({ icon: LucideIcon, isActive }: { label?: string, icon: any, isActive: boolean, isNative?: boolean }) => {
   return (
-    <div className="w-[clamp(20px,5vw,24px)] h-[clamp(20px,5vw,24px)] flex items-center justify-center">
-      <Lottie 
-        animationData={animationData} 
-        loop={isActive} 
-        autoplay={isActive} 
-        style={{ width: '100%', height: '100%' }} 
-      />
+    <div className={`transition-all duration-200 ${isActive ? 'scale-110' : 'scale-100 opacity-70'}`}>
+      <LucideIcon className="w-[clamp(18px,4.8vw,22px)] h-[clamp(18px,4.8vw,22px)]" strokeWidth={isActive ? 2.5 : 2} />
     </div>
   );
 };
