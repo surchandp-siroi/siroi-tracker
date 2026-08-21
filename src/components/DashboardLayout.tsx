@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrig
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Geolocation } from '@capacitor/geolocation';
+import { LogoIcon } from '@/components/LogoIcon';
 import Lottie from 'lottie-react';
 import { useEffect } from 'react';
 
@@ -702,17 +703,9 @@ export default function DashboardLayout() {
             )}
 
             {/* Header / Title */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                {updateStatus === 'downloading' || updateStatus === 'checking' ? (
-                  <RefreshCw className="w-6 h-6 animate-spin" />
-                ) : updateStatus === 'available' ? (
-                  <Sparkles className="w-6 h-6 text-amber-500 animate-pulse" />
-                ) : updateStatus === 'latest' ? (
-                  <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                ) : (
-                  <RefreshCw className="w-6 h-6" />
-                )}
+            <div className="flex items-center gap-3.5 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800 shadow-md shadow-indigo-500/25 flex items-center justify-center shrink-0 ring-1 ring-white/20 p-2.5">
+                <LogoIcon className="w-full h-full text-white" />
               </div>
               <div>
                 <h3 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
