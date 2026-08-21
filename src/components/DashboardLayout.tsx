@@ -5,7 +5,7 @@ import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users,
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import Lottie from 'lottie-react';
 import { useEffect } from 'react';
@@ -125,14 +125,30 @@ export default function DashboardLayout() {
     
     setIsMobileSidebarOpen(false); // Close sidebar so modal is clear
     setShowUpdateModal(true);
-    setUpdateProgress('Connecting to Capgo Cloud...');
+    setUpdateProgress('Checking for updates...');
     
     try {
-      const latest = await CapacitorUpdater.getLatest();
-      if (latest.url) {
-        setUpdateProgress(`Found bundle ${latest.version}. Downloading...`);
-        const bundle = await CapacitorUpdater.download({ url: latest.url, version: latest.version });
-        setUpdateProgress(`Download complete. Installing ${bundle.version}...`);
+      const response = await CapacitorHttp.get({ 
+        url: 'https://mis.siroiforex.com/version.json?t=' + Date.now() 
+      });
+      
+      if (response.status !== 200) {
+        throw new Error("Failed to check for updates");
+      }
+      
+      const data = response.data;
+      const currentVersion = localStorage.getItem('ota_version') || '1.0.0';
+      
+      if (data && data.version && data.version !== currentVersion) {
+        setUpdateProgress(`Found version ${data.version}. Downloading...`);
+        
+        const bundle = await CapacitorUpdater.download({
+          url: data.url,
+          version: data.version,
+        });
+        
+        setUpdateProgress(`Download complete. Installing ${data.version}...`);
+        localStorage.setItem('ota_version', data.version);
         
         // Brief pause so the user can read the "Installing..." message
         await new Promise(resolve => setTimeout(resolve, 1000));

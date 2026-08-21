@@ -12,8 +12,11 @@ const config: CapacitorConfig = {
       showSpinner: false
     },
     CapacitorUpdater: {
-      autoUpdate: true,
+      autoUpdate: false,
       appId: 'com.siroi.tracker'
+    },
+    CapacitorHttp: {
+      enabled: true
     }
   }
 };
