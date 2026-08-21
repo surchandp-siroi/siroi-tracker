@@ -1160,12 +1160,12 @@ export default function DashboardOverview() {
               </span>
             </div>
             <div className="mt-1">
-              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>
+              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>
                 ₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
-                <span>For Selected Date</span>
-                <span className="text-sky-600 dark:text-sky-400 font-bold">Daily Pulse</span>
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+                <span className="truncate">For Selected Date</span>
+                <span className="text-sky-600 dark:text-sky-400 font-bold xl:text-right truncate">Daily Pulse</span>
               </div>
             </div>
           </div>
@@ -1193,12 +1193,12 @@ export default function DashboardOverview() {
               </span>
             </div>
             <div className="mt-1">
-              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>
+              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>
                 ₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
-                <span>Month-To-Date Volume</span>
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold">Monthly Target</span>
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+                <span className="truncate">Month-To-Date Vol</span>
+                <span className="text-indigo-600 dark:text-indigo-400 font-bold xl:text-right truncate">Monthly Target</span>
               </div>
             </div>
           </div>
@@ -1226,12 +1226,12 @@ export default function DashboardOverview() {
               </span>
             </div>
             <div className="mt-1">
-              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>
+              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>
                 ₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
-                <span>Financial Year Progress</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Annual Cumulative</span>
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+                <span className="truncate">Financial Year Prog</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold xl:text-right truncate">Annual Cum.</span>
               </div>
             </div>
           </div>
@@ -1257,12 +1257,12 @@ export default function DashboardOverview() {
               <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 md:py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0 whitespace-nowrap ml-1"><span className="hidden sm:inline">Pipeline</span></span>
             </div>
             <div className="mt-1">
-              <div className="text-2xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight">
+              <div className="text-[15px] min-[375px]:text-base sm:text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tighter sm:tracking-tight truncate" title={`₹${filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}`}>
                 ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
               </div>
-              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1">
-                <span>Consolidated Forecast</span>
-                <span className="text-amber-600 dark:text-amber-400 font-bold">Today Target</span>
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
+                <span className="truncate">Consolidated Forecast</span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold xl:text-right truncate">Today Target</span>
               </div>
             </div>
           </div>
