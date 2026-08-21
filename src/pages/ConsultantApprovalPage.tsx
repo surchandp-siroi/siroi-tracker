@@ -8,51 +8,6 @@ import { EditConsultantDialog } from '@/components/EditConsultantDialog';
 
 
 
-const BANK_MAP: Record<string, string> = {
-  "airp": "Airtel Payments Bank",
-  "aubl": "AU Small Finance Bank Limited",
-  "barb": "Bank of Baroda",
-  "bdbl": "Bandhan Bank",
-  "bkid": "Bank of India",
-  "cbin": "Central Bank of India",
-  "ciub": "City Union Bank",
-  "cnrb": "Canara Bank",
-  "csbk": "CSB Bank Limited",
-  "dcbl": "DCB Bank Limited",
-  "dlxb": "Dhanalakshmi Bank",
-  "esmf": "ESAF Small Finance Bank",
-  "fdrl": "Federal Bank",
-  "fino": "FINO Payments Bank",
-  "hdfc": "HDFC Bank",
-  "ibkl": "IDBI Bank",
-  "icic": "ICICI Bank Limited",
-  "idfb": "IDFC First Bank Limited",
-  "idib": "Indian Bank",
-  "indb": "IndusInd Bank",
-  "ioba": "Indian Overseas Bank",
-  "jaka": "Jammu and Kashmir Bank",
-  "jiop": "Jio Payments Bank",
-  "karb": "Karnataka Bank Limited",
-  "kkbk": "Kotak Mahindra Bank Limited",
-  "kvbl": "Karur Vysya Bank",
-  "mahb": "Bank of Maharashtra",
-  "ntbl": "The Nainital Bank Limited",
-  "psib": "Punjab and Sind Bank",
-  "punb": "Punjab National Bank",
-  "pytm": "Paytm Payments Bank",
-  "ratn": "RBL Bank Limited",
-  "sbin": "State Bank of India",
-  "scbl": "Standard Chartered Bank",
-  "sibl": "South Indian Bank",
-  "tmbl": "Tamilnad Mercantile Bank Limited",
-  "ubin": "Union Bank of India",
-  "ucba": "UCO Bank",
-  "ujvn": "Ujjivan Small Finance Bank Ltd",
-  "utib": "Axis Bank",
-  "yesb": "Yes Bank"
-};
-
-
 const getFormattedBankName = (bankName: string) => {
     if (!bankName) return bankName;
     const name = bankName.toLowerCase().trim();
@@ -60,8 +15,6 @@ const getFormattedBankName = (bankName: string) => {
     // Explicit overrides for common shorthand names and collisions
     if (name.includes('slice')) return 'Slice Small Finance Bank';
     if (name.includes('north east small finance')) return 'North East Small Finance Bank';
-    if (name.includes('slice')) return '/banks/slice.svg';
-    if (name.includes('north east small finance')) return '/banks/nesfb.svg';
     if (name.includes('state bank') || name.includes('sbi')) return 'State Bank of India';
     if (name.includes('pnb') || name.includes('punjab national')) return 'Punjab National Bank';
     if (name.includes('hdfc')) return 'HDFC Bank';
@@ -76,56 +29,16 @@ const getFormattedBankName = (bankName: string) => {
     if (name.includes('maharashtra')) return 'Bank of Maharashtra';
     if (name === 'bank of india' || name.includes('bank of india')) return 'Bank of India';
 
-    // Reverse lookup
-    const sortedBanks = Object.entries(BANK_MAP).sort((a, b) => b[1].length - a[1].length);
-    for (const [slug, fullName] of sortedBanks) {
-        if (name.includes(fullName.toLowerCase()) || fullName.toLowerCase().includes(name)) {
-            return fullName;
-        }
-    }
-    
     // Fallback: Title Case
     return bankName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 };
 
-const getBankLogoUrl = (bankName: string) => {
-    const name = (bankName || '').toLowerCase().trim();
-    
-    // Explicit overrides for common shorthand names and collisions
-    if (name.includes('slice')) return '/banks/slice.svg';
-    if (name.includes('north east small finance')) return '/banks/nesfb.svg';
-    if (name.includes('state bank') || name.includes('sbi')) return '/banks/sbin/symbol.svg';
-    if (name.includes('pnb') || name.includes('punjab national')) return '/banks/punb/symbol.svg';
-    if (name.includes('hdfc')) return '/banks/hdfc/symbol.svg';
-    if (name.includes('icici')) return '/banks/icic/symbol.svg';
-    if (name.includes('axis')) return '/banks/utib/symbol.svg';
-    if (name.includes('kotak')) return '/banks/kkbk/symbol.svg';
-    if (name.includes('yes')) return '/banks/yesb/symbol.svg';
-    if (name.includes('canara')) return '/banks/cnrb/symbol.svg';
-    if (name.includes('bank of baroda')) return '/banks/barb/symbol.svg';
-    if (name.includes('union bank')) return '/banks/ubin/symbol.svg';
-    if (name.includes('central bank')) return '/banks/cbin/symbol.svg';
-    if (name.includes('maharashtra')) return '/banks/mahb/symbol.svg';
-    if (name === 'bank of india' || name.includes('bank of india')) return '/banks/bkid/symbol.svg';
-
-    // Reverse lookup, sort by length descending to avoid substring bugs
-    const sortedBanks = Object.entries(BANK_MAP).sort((a, b) => b[1].length - a[1].length);
-    for (const [slug, fullName] of sortedBanks) {
-        if (name.includes(fullName.toLowerCase()) || fullName.toLowerCase().includes(name)) {
-            return `/banks/${slug}/symbol.svg`;
-        }
-    }
-    return null;
-};
-
-const BankIcon = ({ bankName, className }: { bankName: string, className?: string }) => {
-    const logoUrl = getBankLogoUrl(bankName);
-    const [error, setError] = useState(false);
-
-    if (logoUrl && !error) {
-        return <img src={logoUrl} alt={bankName} className={`${className || ''} object-contain rounded bg-white p-[2px] shadow-sm ring-1 ring-slate-900/5`} onError={() => setError(true)} />;
-    }
-    return <CreditCard className={`${className || ''} text-slate-400`} />;
+const BankIcon = ({ className }: { bankName?: string, className?: string }) => {
+    return (
+        <div className={`w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 ${className || ''}`}>
+            <Building2 className="w-4 h-4" />
+        </div>
+    );
 };
 
 export default function ConsultantApprovalPage() {
