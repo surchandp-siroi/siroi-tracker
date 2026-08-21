@@ -3,6 +3,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+import { initPushNotifications } from '@/utils/PushNotificationsHelper';
+
 export function InitProvider({ children }: { children: React.ReactNode }) {
     const { initAuth, user, isInitialized } = useAuthStore();
     const { initSync, unsubscribeSync } = useDataStore();
@@ -17,6 +19,9 @@ export function InitProvider({ children }: { children: React.ReactNode }) {
         let timer: ReturnType<typeof setTimeout> | undefined;
 
         if (isInitialized && user) {
+            // Register push notifications
+            initPushNotifications(user.id, user.email);
+
             // Defer data sync so navigation completes first
             timer = setTimeout(() => {
                 initSync(user.role, user.branchId);

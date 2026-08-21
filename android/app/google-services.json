@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "450189016155",
+    "project_id": "siroi-mis-tracker",
+    "storage_bucket": "siroi-mis-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:450189016155:android:013562acd1980afd56137e",
+        "android_client_info": {
+          "package_name": "com.siroi.tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAZyD50yGKWuCYD2wx9pYy_jH9G4Bl43I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
