@@ -4,7 +4,7 @@ const AdmZip = require('adm-zip');
 const packageJson = require('./package.json');
 
 const DIST_DIR = path.join(__dirname, 'dist');
-const OTA_DIR = path.join(__dirname, 'dist-ota');
+const OTA_DIR = path.join(__dirname, 'dist');
 const ZIP_FILE = path.join(OTA_DIR, 'update.zip');
 const VERSION_FILE = path.join(OTA_DIR, 'version.json');
 
@@ -19,22 +19,26 @@ async function buildOta() {
   const version = packageJson.version;
   console.log(`Building OTA update for version ${version}...`);
 
-  // 1. Create version.json
+  // 2. Zip the dist folder
+  const zip = new AdmZip();
+  zip.addLocalFolder(DIST_DIR);
+  
+  // Save to a temporary location first so it doesn't zip itself
+  const TEMP_ZIP = path.join(__dirname, 'dist-ota', 'update.zip');
+  zip.writeZip(TEMP_ZIP);
+  
+  // Move files to dist so Hostinger serves them
+  fs.renameSync(TEMP_ZIP, ZIP_FILE);
+  
   const versionData = {
     version: version,
     url: `${HOST_URL}/update.zip`
   };
   fs.writeFileSync(VERSION_FILE, JSON.stringify(versionData, null, 2));
-  console.log(`Created version.json`);
 
-  // 2. Zip the dist folder
-  const zip = new AdmZip();
-  zip.addLocalFolder(DIST_DIR);
-  zip.writeZip(ZIP_FILE);
-
-  console.log(`Created update.zip successfully`);
+  console.log(`Created update.zip and version.json in dist/ successfully`);
   console.log(`\n✅ OTA Build Complete!`);
-  console.log(`Upload the contents of the 'dist-ota' folder to your web host.`);
+  console.log(`Upload the contents of the 'dist' folder (or run git push) to your web host.`);
 }
 
 buildOta().catch(console.error);
