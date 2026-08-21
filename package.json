@@ -1,6 +1,6 @@
 {
   "name": "siroi-tracker",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "private": true,
   "type": "module",
   "scripts": {
@@ -18,6 +18,7 @@
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
+    "@capgo/capacitor-updater": "^8.51.14",
     "@fontsource-variable/geist": "^5.3.0",
     "@google/genai": "^1.17.0",
     "@hookform/resolvers": "^5.2.1",

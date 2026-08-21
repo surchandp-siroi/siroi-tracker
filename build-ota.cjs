@@ -32,7 +32,7 @@ async function buildOta() {
   
   const versionData = {
     version: version,
-    url: `${HOST_URL}/update.zip`
+    url: `${HOST_URL}/dist/update.zip`
   };
   fs.writeFileSync(VERSION_FILE, JSON.stringify(versionData, null, 2));
 
