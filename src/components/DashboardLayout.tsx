@@ -108,7 +108,7 @@ export default function DashboardLayout() {
     } catch (e) {
       console.error(e);
     } finally {
-      navigate('/login');
+      navigate(isNative ? '/' : '/login');
     }
   };
 

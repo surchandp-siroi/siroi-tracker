@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSessionStore } from '@/store/useSessionStore';
 import { Clock } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 const DEFAULT_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 const RESTRICTED_TIMEOUT = 10 * 60 * 1000; // 10 minutes
@@ -58,7 +59,7 @@ export function SessionTimer() {
       if (remaining === 0) {
         window.clearInterval(intervalId);
         await logout();
-        navigate('/login', { replace: true });
+        navigate(Capacitor.isNativePlatform() ? '/' : '/login', { replace: true });
       }
     }, 1000);
 

@@ -295,7 +295,7 @@ export default function DataEntryTerminal() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      navigate('/login');
+      navigate(Capacitor.isNativePlatform() ? '/' : '/login');
     }
     // Auto-select first branch for admin / backdoor
     if (isBackdoor && branches.length > 0 && !adminSelectedBranch) {
@@ -1223,7 +1223,7 @@ export default function DataEntryTerminal() {
                 <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
                     Audit Logs
                 </Button>
-                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { logout(); navigate('/login'); }}>
+                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { logout(); navigate(Capacitor.isNativePlatform() ? '/' : '/login'); }}>
                     <LogOut size={14} className="mr-2" /> Log Out
                 </Button>
             </div>
