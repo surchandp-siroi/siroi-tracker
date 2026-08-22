@@ -18,6 +18,11 @@ const mapMarkers: Marker[] = [
   }
 ];
 
+const MOBILE_SMS_USERS: Record<string, string[]> = {
+  'surchanddsingh@siroiforex.com': ['+918118925964', '+918974053213', '+919706994547'],
+  'sharjuthoudam@siroiforex.com': ['+919706994547', '+918974053214']
+};
+
 export default function LoginPage() {
   const routerLocation = useLocation();
   const [error, setError] = useState('');
@@ -30,6 +35,7 @@ export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<'password' | 'otp'>('otp');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
+  const [selectedPhone, setSelectedPhone] = useState<string>('');
   
   const { login, requestOtpLogin, verifyOtpLogin, isLoading } = useAuthStore();
   const { branches } = useDataStore();
@@ -45,16 +51,27 @@ export default function LoginPage() {
 
 
   const isMobile = Capacitor.isNativePlatform();
-  const emailLower = email.toLowerCase();
-  const isSurchand = emailLower === 'surchanddsingh@siroiforex.com';
-  const isSharju = emailLower === 'sharjuthoudam@siroiforex.com';
+  const emailLower = email.trim().toLowerCase();
+  
+  const availablePhones = MOBILE_SMS_USERS[emailLower] || [];
+  const isSmsUser = isMobile && availablePhones.length > 0;
   
   useEffect(() => {
-    if (isMobile) {
-      if (isSurchand && loginMode !== 'password') setLoginMode('password');
-      if (isSharju && loginMode !== 'otp') setLoginMode('otp');
+    if (isSmsUser) {
+      if (loginMode !== 'otp') setLoginMode('otp');
+      if (!selectedPhone && availablePhones.length > 0) {
+        setSelectedPhone(availablePhones[0]);
+      } else if (selectedPhone && !availablePhones.includes(selectedPhone)) {
+        setSelectedPhone(availablePhones[0]);
+      }
     }
-  }, [emailLower, isMobile, loginMode, isSurchand, isSharju]);
+  }, [isSmsUser, loginMode, availablePhones, selectedPhone]);
+
+  // Keep references for the async WebOTP effect
+  const loginDetailsRef = useRef({ email, location, selectedPhone, isSmsUser });
+  useEffect(() => {
+    loginDetailsRef.current = { email, location, selectedPhone, isSmsUser };
+  }, [email, location, selectedPhone, isSmsUser]);
 
   useEffect(() => {
     if (isMobile && 'OTPCredential' in window && otpSent) {
@@ -62,20 +79,39 @@ export default function LoginPage() {
       navigator.credentials.get({
         otp: { transport: ['sms'] },
         signal: ac.signal
-      } as any).then((otpResponse: any) => {
-        setOtp(otpResponse.code);
+      } as any).then(async (otpResponse: any) => {
+        const receivedOtp = otpResponse.code;
+        setOtp(receivedOtp);
+        
+        // Auto submit logic
+        try {
+            setLocationStatus('Auto-verifying OTP...');
+            const details = loginDetailsRef.current;
+            const loginLocation = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(details.email.toLowerCase()) ? 'HO' : details.location;
+            
+            await verifyOtpLogin(details.email, receivedOtp, loginLocation, details.isSmsUser ? details.selectedPhone : undefined);
+            
+            const updatedUser = useAuthStore.getState().user;
+            if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
+                navigate('/entry');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Auto-verification failed.');
+            setLocationStatus('');
+        }
       }).catch(err => {
         console.log("Web OTP API Error:", err);
       });
       return () => ac.abort();
     }
-  }, [otpSent, isMobile]);
+  }, [otpSent, isMobile, verifyOtpLogin, navigate]);
 
-  const effectiveLoginMode = (isMobile && isSurchand) ? 'password' : 
-                             (isMobile && isSharju) ? 'otp' : 
+  const effectiveLoginMode = isSmsUser ? 'otp' : 
                              (loginMode === 'password' && emailLower === 'sharjuthoudam@siroiforex.com') ? 'otp' : loginMode;
   
-  const hideLocation = isMobile && (isSurchand || isSharju);
+  const hideLocation = isMobile && isSmsUser;
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !location) {
@@ -96,14 +132,14 @@ export default function LoginPage() {
       } else {
          if (!otpSent) {
             setLocationStatus('Sending OTP...');
-            await requestOtpLogin(email, loginLocation);
+            await requestOtpLogin(email, loginLocation, isSmsUser ? selectedPhone : undefined);
             setOtpSent(true);
             setLocationStatus('');
             return; // Wait for user to input OTP
          } else {
             if (!otp) { setError('OTP is required'); return; }
             setLocationStatus('Verifying OTP...');
-            await verifyOtpLogin(email, otp, loginLocation);
+            await verifyOtpLogin(email, otp, loginLocation, isSmsUser ? selectedPhone : undefined);
          }
       }
 
@@ -253,6 +289,23 @@ export default function LoginPage() {
                     />
                  </div>
 
+                 {isSmsUser && !otpSent && (
+                   <div className="mb-5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Select Phone Number for OTP</label>
+                      <select 
+                          className="flex h-11 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent appearance-none"
+                          value={selectedPhone}
+                          onChange={e => setSelectedPhone(e.target.value)}
+                      >
+                          {availablePhones.map(phone => (
+                              <option key={phone} value={phone} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                  {phone.substring(0, 3)} ****** {phone.substring(phone.length - 4)}
+                              </option>
+                          ))}
+                      </select>
+                   </div>
+                 )}
+
                  <div 
                     className="transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden"
                     style={{
@@ -283,6 +336,8 @@ export default function LoginPage() {
                               placeholder="Enter the OTP from your email"
                               maxLength={6}
                               required={effectiveLoginMode === 'otp' && otpSent}
+                              autoComplete="one-time-code"
+                              inputMode="numeric"
                               className="h-11 font-mono tracking-widest text-center"
                           />
                        </div>
@@ -315,7 +370,7 @@ export default function LoginPage() {
                             {locationStatus || 'Authenticating...'}
                         </>
                     ) : effectiveLoginMode === 'otp' ? (
-                        otpSent ? 'Verify OTP & Login' : (isMobile && isSharju ? 'Request OTP' : 'Secure Sign In')
+                        otpSent ? 'Verify OTP & Login' : (isMobile && isSmsUser ? 'Request OTP' : 'Secure Sign In')
                     ) : 'Secure Sign In'}
                   </Button>
               </form>

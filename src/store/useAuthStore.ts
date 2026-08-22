@@ -92,8 +92,8 @@ interface AuthState {
   isLoading: boolean;
   isInitialized: boolean;
   login: (email: string, password: string, location: string) => Promise<void>;
-  requestOtpLogin: (email: string, location: string) => Promise<void>;
-  verifyOtpLogin: (email: string, otp: string, location: string) => Promise<void>;
+  requestOtpLogin: (email: string, location: string, phone?: string) => Promise<void>;
+  verifyOtpLogin: (email: string, otp: string, location: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   initAuth: () => void;
   updateProfile: (displayName: string, avatarSeed: string) => Promise<boolean>;
@@ -178,7 +178,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  requestOtpLogin: async (rawEmail, location) => {
+  requestOtpLogin: async (rawEmail, location, phone) => {
     set({ isLoading: true });
     try {
       const email = rawEmail.trim().toLowerCase();
@@ -201,9 +201,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           options: { shouldCreateUser: true }
       };
 
-      if (email === 'sharjuthoudam@siroiforex.com' && Capacitor.isNativePlatform()) {
+      if (phone && Capacitor.isNativePlatform()) {
           signInOptions = {
-              phone: '+919706994547',
+              phone: phone.replace(/\s+/g, ''), // Ensure no spaces
               options: { channel: 'sms' }
           };
       }
@@ -223,7 +223,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  verifyOtpLogin: async (rawEmail, otp, location) => {
+  verifyOtpLogin: async (rawEmail, otp, location, phone) => {
     isLoginInProgress = true;
     set({ isLoading: true });
     try {
@@ -238,9 +238,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           type: 'email'
       };
 
-      if (email === 'sharjuthoudam@siroiforex.com' && Capacitor.isNativePlatform()) {
+      if (phone && Capacitor.isNativePlatform()) {
           verifyOptions = {
-              phone: '+919706994547',
+              phone: phone.replace(/\s+/g, ''),
               token: otp,
               type: 'sms' // Supabase uses 'sms' for both sms and whatsapp token verification
           };
