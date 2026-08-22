@@ -57,8 +57,8 @@ export default function HomePage() {
 
   const isNative = Capacitor.isNativePlatform();
   const typedEmail = email.toLowerCase().trim();
-  const isPasswordRequiredForNative = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com'].includes(typedEmail);
-  const isOtpRequiredForNative = ['sharjuthoudam@siroiforex.com'].includes(typedEmail);
+  const isPasswordRequiredForNative = ['executive@siroiforex.com', 'tomas@siroiforex.com'].includes(typedEmail);
+  const isOtpRequiredForNative = false; // Delegate OTP to LoginPage for phone dropdown support
   
   const showPasswordField = isNative && isPasswordRequiredForNative;
   const showOtpField = isNative && isOtpRequiredForNative && otpSent;
