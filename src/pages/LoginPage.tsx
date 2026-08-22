@@ -41,6 +41,14 @@ export default function LoginPage() {
   const { branches } = useDataStore();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Prevent direct access to /login without an email (e.g. typing URL directly)
+    // As requested, only enforce this bounce-back on Web/Desktop users.
+    if (!Capacitor.isNativePlatform() && !routerLocation.state?.email) {
+      navigate('/', { replace: true });
+    }
+  }, [routerLocation.state, navigate]);
+
   const [wittyMessage, setWittyMessage] = useState<string | null>(null);
 
   const handleWittyClick = (e: React.MouseEvent) => {
