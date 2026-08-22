@@ -23,6 +23,7 @@ import { SessionTimer } from '@/components/SessionTimer';
 import { AnimatedSplashScreen } from '@/components/AnimatedSplashScreen';
 import { requestAppPermissions } from '@/utils/PermissionsHelper';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { MobileWebBlocker } from '@/components/MobileWebBlocker';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
@@ -37,6 +38,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <InitProvider>
+        <MobileWebBlocker />
         {showSplash && <AnimatedSplashScreen onComplete={() => setShowSplash(false)} />}
         <SessionTimer />
         <Routes>
