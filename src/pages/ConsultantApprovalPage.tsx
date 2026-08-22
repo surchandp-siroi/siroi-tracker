@@ -5,6 +5,9 @@ import { Consultant } from '@/store/useDataStore';
 import { Loader2, Check, X, FileText, Download, Trash2, MoreHorizontal, MapPin, Phone, Mail, Building2, CreditCard, UserCircle } from 'lucide-react';
 import { triggerNotification } from '@/lib/notifications';
 import { EditConsultantDialog } from '@/components/EditConsultantDialog';
+import { getBankLogoPath } from '@/utils/bankMapper';
+import * as XLSX from 'xlsx';
+import { Capacitor } from '@capacitor/core';
 
 
 
@@ -33,7 +36,19 @@ const getFormattedBankName = (bankName: string) => {
     return bankName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 };
 
-const BankIcon = ({ className }: { bankName?: string, className?: string }) => {
+const BankIcon = ({ bankName, className }: { bankName?: string, className?: string }) => {
+    // Skip loading SVGs entirely on native mobile apps for ultra-light performance
+    const isMobileApp = Capacitor.isNativePlatform();
+    const logoPath = !isMobileApp && bankName ? getBankLogoPath(bankName) : null;
+    
+    if (logoPath) {
+        return (
+            <div className={`flex items-center justify-center shrink-0 ${className || ''}`}>
+                <img src={logoPath} alt={bankName} className="w-full h-full object-contain" />
+            </div>
+        );
+    }
+
     return (
         <div className={`w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 ${className || ''}`}>
             <Building2 className="w-4 h-4" />
@@ -214,6 +229,34 @@ export default function ConsultantApprovalPage() {
         }
     };
 
+    const handleDownloadExcel = () => {
+        if (filteredApproved.length === 0) return;
+        try {
+            const exportData = filteredApproved.map(c => ({
+                'Name': c.name,
+                'Email': c.email,
+                'Phone': c.phone,
+                'Bank Name': getFormattedBankName(c.bank_name),
+                'Account Number': c.account_number,
+                'IFSC Code': c.ifsc_code,
+                'Associated Branch': c.associated_branch,
+                'State': c.state,
+                'Pincode': c.pincode,
+                'Address': c.address,
+                'Status': c.status,
+                'Created At': new Date(c.created_at).toLocaleString()
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Consultants");
+            const fileName = `Siroi_Consultants_${filterState}_${filterBranch}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+        } catch (err) {
+            console.error("Export error:", err);
+            alert('Failed to export Excel file');
+        }
+    };
+
     const uniqueStates = Array.from(new Set(approvedConsultants.map(c => c.state))).filter(Boolean).sort();
     const uniqueBranches = Array.from(new Set(approvedConsultants.map(c => c.associated_branch))).filter(Boolean).sort();
 
@@ -288,7 +331,7 @@ export default function ConsultantApprovalPage() {
                                             </td>
                                             <td className="px-6 py-5">
                                                 <div className="text-slate-900 dark:text-white font-medium text-sm flex items-center gap-1.5">
-                                                    <BankIcon bankName={getFormattedBankName(consultant.bank_name)} className="w-6 h-6 shrink-0" /> {getFormattedBankName(consultant.bank_name)}
+                                                    <BankIcon bankName={getFormattedBankName(consultant.bank_name)} className="hidden md:flex w-6 h-6 shrink-0" /> {getFormattedBankName(consultant.bank_name)}
                                                 </div>
                                                 <div className="text-xs text-slate-500 mt-1 font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded inline-block">A/c: {consultant.account_number}</div>
                                                 <div className="text-[10px] text-slate-400 mt-1 uppercase">IFSC: {consultant.ifsc_code}</div>
@@ -369,6 +412,18 @@ export default function ConsultantApprovalPage() {
                             </select>
                         </div>
                     </div>
+                    <div className="flex items-center justify-end px-6 pb-2">
+                        <Button
+                            onClick={handleDownloadExcel}
+                            variant="secondary"
+                            size="sm"
+                            disabled={filteredApproved.length === 0}
+                            className="h-8 text-[11px] uppercase font-bold tracking-wider text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center gap-1.5"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            Export Excel
+                        </Button>
+                    </div>
                     <div className="p-0">
                     {isApprovedLoading ? (
                         <div className="flex justify-center p-8">
@@ -416,7 +471,7 @@ export default function ConsultantApprovalPage() {
                                             </td>
                                             <td className="px-6 py-5">
                                                 <div className="text-slate-900 dark:text-white font-medium text-sm flex items-center gap-1.5">
-                                                    <BankIcon bankName={getFormattedBankName(consultant.bank_name)} className="w-6 h-6 shrink-0" /> {getFormattedBankName(consultant.bank_name)}
+                                                    <BankIcon bankName={getFormattedBankName(consultant.bank_name)} className="hidden md:flex w-6 h-6 shrink-0" /> {getFormattedBankName(consultant.bank_name)}
                                                 </div>
                                                 <div className="text-xs text-slate-500 mt-1 font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded inline-block">A/c: {consultant.account_number}</div>
                                                 <div className="text-[10px] text-slate-400 mt-1 uppercase">IFSC: {consultant.ifsc_code}</div>

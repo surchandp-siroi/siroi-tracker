@@ -320,6 +320,7 @@ export default function DataEntryTerminal() {
           setIsLoadingExisting(true);
           setHasExistingEntry(false);
           setFetchError(false);
+          setItems([]); // Clear items immediately when branch changes to prevent stale UI
           
           try {
               // Get branch info
@@ -372,7 +373,7 @@ export default function DataEntryTerminal() {
                 ;
                 
               const timeoutPromise = new Promise((_, reject) => 
-                  setTimeout(() => reject(new Error('TIMEOUT')), 3000)
+                  setTimeout(() => reject(new Error('TIMEOUT')), 10000)
               );
               
               const { data: snap } = await Promise.race([fetchPromise, timeoutPromise]) as any;
