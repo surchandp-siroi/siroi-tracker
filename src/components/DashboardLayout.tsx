@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Package, Network, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Geolocation } from '@capacitor/geolocation';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useEffect } from 'react';
 
@@ -603,6 +604,28 @@ export default function DashboardLayout() {
                               })}
                           </div>
                       </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Device Push Token</label>
+                      </div>
+                      <button
+                          onClick={() => {
+                              const token = localStorage.getItem('fcm_token');
+                              if (token) {
+                                  navigator.clipboard.writeText(token);
+                                  alert('Push token copied to clipboard!');
+                              } else {
+                                  alert('No push token found on this device. Make sure notifications are allowed.');
+                              }
+                          }}
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg transition-colors border border-indigo-100 dark:border-indigo-800"
+                      >
+                          <Copy className="w-4 h-4" />
+                          Copy FCM Token for Testing
+                      </button>
+                      <p className="text-[10px] text-slate-400 mt-2 text-center">Use this token in the Firebase Console to test push notifications.</p>
                   </div>
 
                   <div className="flex gap-3 mt-6">
