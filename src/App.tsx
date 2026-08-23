@@ -7,8 +7,8 @@ import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ProductsPage from '@/pages/ProductsPage';
-import ChannelsPage from '@/pages/ChannelsPage';
-import BranchesPage from '@/pages/BranchesPage';
+import CustomersPage from './pages/CustomersPage';
+import BranchesPage from './pages/BranchesPage';
 import OrganigramPage from '@/pages/OrganigramPage';
 import EntryPage from '@/pages/EntryPage';
 import AuditLogsPage from '@/pages/AuditLogsPage';
@@ -51,7 +51,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="products" element={<ProductsPage />} />
-            <Route path="channels" element={<ChannelsPage />} />
+            <Route path="customers" element={<CustomersPage />} />
             <Route path="branches" element={<BranchesPage />} />
             <Route path="organigram" element={<OrganigramPage />} />
             <Route path="audit" element={<AuditLogsPage />} />
