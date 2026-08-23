@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/useAuthStore';
 import { 
-  ArrowRight, ShieldCheck, AlertTriangle, Wallet, Plus, 
+  ArrowRight, ShieldCheck, Shield, AlertTriangle, Wallet, Plus, 
   TrendingUp, Activity, Users, BarChart3, PieChart, ArrowUpRight,
   Clock, CheckCircle2, Building2, Star, Key, Phone
 } from 'lucide-react';
@@ -57,6 +57,12 @@ export default function HomePage() {
   const [selectedPhone, setSelectedPhone] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
+  
+  const isEmailAuthorized = useMemo(() => {
+    const typedEmail = email.toLowerCase().trim();
+    if (!typedEmail) return false;
+    return AUTHORIZED_EMAILS.includes(typedEmail) || (MOBILE_SMS_USERS[typedEmail] && MOBILE_SMS_USERS[typedEmail].length > 0);
+  }, [email]);
   
   const { login, requestOtpLogin, verifyOtpLogin } = useAuthStore();
   const navigate = useNavigate();
@@ -304,8 +310,12 @@ export default function HomePage() {
           <form onSubmit={handleContinue} className="space-y-6">
             <div className="space-y-4">
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                    <ShieldCheck className="w-5 h-5" />
+                <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-500 ${isEmailAuthorized ? 'text-emerald-500' : 'text-slate-400 group-focus-within:text-indigo-600'}`}>
+                  {isEmailAuthorized ? (
+                    <ShieldCheck className="w-5 h-5 animate-in zoom-in spin-in-12 duration-500" />
+                  ) : (
+                    <Shield className="w-5 h-5" />
+                  )}
                 </div>
                 <Input
                   id="email"
