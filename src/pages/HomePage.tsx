@@ -150,7 +150,7 @@ export default function HomePage() {
     try {
       if (isNative) {
         if (!showPhoneSelector && !otpSent) {
-           setError('Unauthorized access or no phone numbers registered for SMS login.');
+           setError('You are not an Authorised User');
            setIsLoading(false);
            return;
         } else if (showPhoneSelector && !otpSent) {
@@ -181,7 +181,7 @@ export default function HomePage() {
           if (isAuthorized) {
             navigate('/login', { state: { email: typedEmail } });
           } else {
-            setError('Unauthorized access. This email is not assigned.');
+            setError('You are not an Authorised User');
             setIsLoading(false);
           }
         }, 600);
@@ -293,7 +293,7 @@ export default function HomePage() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 animate-in shake">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-3 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300">
               <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
