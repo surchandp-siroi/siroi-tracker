@@ -13,6 +13,13 @@ import { Preferences } from '@capacitor/preferences';
 import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 import { MOBILE_SMS_USERS } from '@/utils/authConstants';
 
+const maskPhoneNumber = (phone: string) => {
+  if (phone.length < 10) return phone;
+  const countryCode = phone.slice(0, phone.length - 10);
+  const last4 = phone.slice(-4);
+  return `${countryCode} XXX XXX ${last4}`;
+};
+
 const AUTHORIZED_EMAILS = [
   // Admins
   'executive@siroiforex.com',
@@ -329,30 +336,49 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* Mobile Only: Phone Selector Dropdown */}
-              {isNative && (
-                <div 
-                    className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                        showPhoneSelector && !otpSent ? 'max-h-24 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
-                    }`}
-                >
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none">
-                          <Phone className="w-5 h-5" />
+                {/* Mobile Only: Phone Selector Custom UI */}
+                {isNative && (
+                  <div 
+                      className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                          showPhoneSelector && !otpSent ? 'max-h-[300px] opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                      }`}
+                  >
+                      <div className="flex flex-col gap-2">
+                        {availablePhones.map((phone) => (
+                           <button
+                             type="button"
+                             key={phone}
+                             onClick={() => setSelectedPhone(phone)}
+                             disabled={isLoading}
+                             className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
+                               selectedPhone === phone 
+                               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-500/50' 
+                               : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+                             }`}
+                           >
+                              {/* radio dot */}
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                                selectedPhone === phone 
+                                ? 'border-indigo-500' 
+                                : 'border-slate-300 dark:border-slate-600'
+                              }`}>
+                                 {selectedPhone === phone && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
+                              </div>
+                              <Phone className={`w-4 h-4 ${
+                                selectedPhone === phone ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'
+                              }`} />
+                              <span className={`text-base font-medium tracking-wide ${
+                                selectedPhone === phone 
+                                ? 'text-indigo-700 dark:text-indigo-300' 
+                                : 'text-slate-700 dark:text-slate-300'
+                              }`}>
+                                {maskPhoneNumber(phone)}
+                              </span>
+                           </button>
+                        ))}
                       </div>
-                      <select 
-                          value={selectedPhone}
-                          onChange={(e) => setSelectedPhone(e.target.value)}
-                          className="pl-12 pr-4 py-3 h-[52px] text-base bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full appearance-none text-slate-900 dark:text-white"
-                          disabled={isLoading}
-                      >
-                          {availablePhones.map((phone, idx) => (
-                              <option key={idx} value={phone}>{phone}</option>
-                          ))}
-                      </select>
-                    </div>
-                </div>
-              )}
+                  </div>
+                )}
 
               {/* Mobile Only: OTP Field */}
               {isNative && (
