@@ -166,7 +166,7 @@ export default function HomePage() {
               setIsLoading(false);
               return;
            }
-           await verifyOtpLogin(typedEmail, otp, 'HO');
+           await verifyOtpLogin(typedEmail, otp, 'HO', selectedPhone);
            const updatedUser = useAuthStore.getState().user;
            if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
              navigate('/entry');
