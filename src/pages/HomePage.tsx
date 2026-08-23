@@ -119,6 +119,22 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [activeSlide]);
 
+  useEffect(() => {
+    if (!isNative) return;
+    const typedEmail = email.toLowerCase().trim();
+    const phones = MOBILE_SMS_USERS[typedEmail] || [];
+    if (phones.length > 0) {
+      setAvailablePhones(phones);
+      setSelectedPhone(phones[0]);
+      setShowPhoneSelector(true);
+      setError('');
+    } else {
+      setShowPhoneSelector(false);
+      setOtpSent(false);
+      setOtp('');
+    }
+  }, [email, isNative]);
+
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -134,26 +150,9 @@ export default function HomePage() {
     try {
       if (isNative) {
         if (!showPhoneSelector && !otpSent) {
-           // Step 1: Validate email and show phone selector
-           const isAuthorized = AUTHORIZED_EMAILS.includes(typedEmail);
-           if (!isAuthorized) {
-              setError('Unauthorized access. This email is not assigned.');
-              setIsLoading(false);
-              return;
-           }
-           
-           const phones = MOBILE_SMS_USERS[typedEmail] || [];
-           if (phones.length > 0) {
-              setAvailablePhones(phones);
-              setSelectedPhone(phones[0]);
-              setShowPhoneSelector(true);
-              setIsLoading(false);
-              return;
-           } else {
-              setError('No phone numbers registered for SMS login.');
-              setIsLoading(false);
-              return;
-           }
+           setError('Unauthorized access or no phone numbers registered for SMS login.');
+           setIsLoading(false);
+           return;
         } else if (showPhoneSelector && !otpSent) {
            // Step 2: Request OTP
            await requestOtpLogin(typedEmail, 'HO', selectedPhone);
@@ -192,16 +191,6 @@ export default function HomePage() {
        setError(err.message || 'Authentication failed. Please try again.');
        setIsLoading(false);
     }
-  };
-
-  // When email changes, hide the phone selector if it was showing
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setEmail(e.target.value);
-      if (showPhoneSelector || otpSent) {
-          setShowPhoneSelector(false);
-          setOtpSent(false);
-          setOtp('');
-      }
   };
 
   // Determine button text
@@ -322,11 +311,11 @@ export default function HomePage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={handleEmailChange}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@siroiforex.com"
                   className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full"
                   required
-                  disabled={isLoading || showPhoneSelector || otpSent}
+                  disabled={isLoading || otpSent}
                 />
               </div>
 
