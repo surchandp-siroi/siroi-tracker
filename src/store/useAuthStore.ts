@@ -30,9 +30,9 @@ export interface UserProfile {
   avatarSeed?: string | null;
 }
 
-export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): Promise<UserProfile> => {
-    // Resolve email if logged in via the special WhatsApp number
-    const effectiveEmail = sbUser.email || (sbUser.phone && sbUser.phone.includes('9706994547') ? 'sharjuthoudam@siroiforex.com' : '');
+export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, emailFromLogin?: string): Promise<UserProfile> => {
+    // Resolve email: use sbUser.email if available, else fallback to the email entered during login.
+    const effectiveEmail = sbUser.email || emailFromLogin || '';
 
     const { data: userDoc } = await supabase
         .from('users')
@@ -58,6 +58,16 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string): 
         if (isSuperAdminEmail && profile.role !== 'admin') {
             updates.role = 'admin';
             profile.role = 'admin';
+            needsUpdate = true;
+        }
+
+        if (effectiveEmail && profile.email !== effectiveEmail) {
+            updates.email = effectiveEmail;
+            profile.email = effectiveEmail;
+            updates.displayName = null;
+            profile.displayName = null;
+            updates.avatarSeed = null;
+            profile.avatarSeed = null;
             needsUpdate = true;
         }
 
@@ -163,7 +173,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       
       const profile = await withTimeout(
-          syncUserProfile(sbUser, location),
+          syncUserProfile(sbUser, location, email),
           15000,
           "Profile synchronization timed out. Please refresh the page or try again."
       );
@@ -260,7 +270,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.log("[Auth] Calling syncUserProfile for user:", data.user.id);
       
       const profile = await withTimeout(
-          syncUserProfile(data.user, location),
+          syncUserProfile(data.user, location, email),
           15000,
           "Profile synchronization timed out. Please refresh the page or try again."
       );
