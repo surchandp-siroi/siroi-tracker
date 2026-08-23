@@ -4,6 +4,7 @@ import { useDataStore } from './useDataStore';
 import { useSessionStore } from './useSessionStore';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
 // Login lock: prevents onAuthStateChange from overwriting state mid-login
 let isLoginInProgress = false;
@@ -316,6 +317,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Preferences.remove({ key: 'native_credentials' });
+      } catch (err) {
+        console.error('Failed to clear native credentials on logout', err);
+      }
+    }
     await supabase.auth.signOut();
     set({ user: null, supabaseUser: null });
   },
