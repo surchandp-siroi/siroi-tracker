@@ -212,7 +212,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           options: { shouldCreateUser: true }
       };
 
-      if (phone && Capacitor.isNativePlatform()) {
+      if (phone) {
           signInOptions = {
               phone: phone.replace(/\s+/g, ''), // Ensure no spaces
               options: { channel: 'sms' }
@@ -249,7 +249,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           type: 'email'
       };
 
-      if (phone && Capacitor.isNativePlatform()) {
+      if (phone) {
           verifyOptions = {
               phone: phone.replace(/\s+/g, ''),
               token: otp,
