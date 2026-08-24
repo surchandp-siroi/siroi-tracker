@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 const TEXTBEE_API_KEY = Deno.env.get('TEXTBEE_API_KEY');
 const SEND_SMS_HOOK_SECRET = Deno.env.get('SEND_SMS_HOOK_SECRET');
@@ -15,17 +16,25 @@ serve(async (req) => {
   }
 
   try {
-    // Validate the secret provided in headers
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || authHeader !== `Bearer ${SEND_SMS_HOOK_SECRET}`) {
-      console.error("Unauthorized request. Invalid secret.");
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    const rawSecret = SEND_SMS_HOOK_SECRET ?? "";
+    const secret = rawSecret.replace(/^v\d+,whsec_/, "");
+
+    const headers = Object.fromEntries(req.headers.entries());
+    const body = await req.text(); // Read as raw text for signature validation
+
+    const wh = new Webhook(secret);
+    let payload;
+    try {
+      payload = wh.verify(body, headers);
+    } catch (err) {
+      console.error("Signature verification failed:", err);
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const { user, sms } = await req.json();
+    const { user, sms } = payload;
 
     if (!user?.phone || !sms?.otp) {
       console.error("Missing required fields: user.phone or sms.otp");
