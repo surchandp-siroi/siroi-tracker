@@ -258,23 +258,23 @@ export default function HomePage() {
                                 <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-full border-[3px] border-indigo-500 border-r-slate-700 flex-shrink-0"></div>
                                     <div>
-                                        <p className="text-lg font-bold text-white">Γé╣8.7Cr</p>
+                                        <p className="text-lg font-bold text-white">₹8.7Cr</p>
                                         <p className="text-[8px] text-indigo-400 font-medium">Total Disbursed</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-white/10 px-1 py-0.5 rounded text-[8px] text-white">This Month Γîä</div>
+                            <div className="bg-white/10 px-1 py-0.5 rounded text-[8px] text-white">This Month ▾</div>
                         </div>
                         <div className="space-y-2.5 mt-3">
                             <div className="flex items-center gap-1.5">
                                 <div className="w-1 h-1 rounded-full bg-indigo-500"></div>
                                 <p className="text-[10px] text-slate-300 flex-1">Personal</p>
-                                <p className="text-[10px] text-white font-medium">Γé╣5.2Cr</p>
+                                <p className="text-[10px] text-white font-medium">₹5.2Cr</p>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <div className="w-1 h-1 rounded-full bg-blue-500"></div>
                                 <p className="text-[10px] text-slate-300 flex-1">Business</p>
-                                <p className="text-[10px] text-white font-medium">Γé╣3.5Cr</p>
+                                <p className="text-[10px] text-white font-medium">₹3.5Cr</p>
                             </div>
                         </div>
                     </div>
@@ -332,7 +332,7 @@ export default function HomePage() {
                     {/* 10. Daily Volume */}
                     <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-[180px] shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col">
                         <p className="text-[10px] font-semibold text-slate-400 mb-1">Daily Volume</p>
-                        <p className="text-2xl font-bold text-white mb-3">Γé╣1.2Cr</p>
+                        <p className="text-2xl font-bold text-white mb-3">₹1.2Cr</p>
                         
                         <div className="flex items-end gap-1 flex-1 mt-2">
                             {[30, 45, 25, 60, 40, 75, 55, 85, 65, 95].map((h, i) => (
@@ -666,7 +666,7 @@ export default function HomePage() {
 
           <div className="mt-12 pt-8 text-center">
             <p className="text-xs text-slate-400 font-medium">
-              Copyright Ac {new Date().getFullYear()} Siroi Forex. All rights reserved.
+              Copyright © {new Date().getFullYear()} Siroi Forex. All rights reserved.
             </p>
           </div>
 
