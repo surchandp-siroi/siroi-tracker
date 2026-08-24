@@ -2,9 +2,27 @@ import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Input } from '@/components/ui';
+import { Mail } from 'lucide-react';
 import { BranchSelect } from '@/components/BranchSelect';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { triggerNotification } from '@/lib/notifications';
+
+const EmailCell = ({ email }: { email: string | undefined }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  if (!email || email === '-') return <span className="text-slate-400 text-sm">-</span>;
+  
+  return (
+    <div 
+      onClick={() => setIsOpen(!isOpen)}
+      className="inline-flex items-center px-2.5 py-1.5 rounded-full bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/50 cursor-pointer transition-all duration-300 overflow-hidden group mx-auto"
+    >
+      <Mail className="w-4 h-4 text-slate-500 group-hover:text-indigo-500 transition-colors shrink-0" />
+      <div className={`transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center ${isOpen ? 'max-w-[250px] opacity-100 ml-2' : 'max-w-0 opacity-0 ml-0'}`}>
+        <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">{email}</span>
+      </div>
+    </div>
+  );
+};
 
 const formatDate = (dateStr: string | undefined | null) => {
   if (!dateStr || dateStr === '-') return '-';
@@ -191,9 +209,9 @@ export default function ConsultantPayoutsPage() {
               <TableRow>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Entry Date</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Disbursed Date</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Consultant Name</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-left">Consultant Name</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Consultant Email</TableHead>
-                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Customer Name</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-left">Customer Name</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Disbursed Amount</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Commission (%)</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Settlement (₹)</TableHead>
@@ -230,16 +248,16 @@ export default function ConsultantPayoutsPage() {
                           <div className="h-9 w-9 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm shrink-0">
                             {initial}
                           </div>
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">{item.consultantName || 'Unknown'}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{branches.find(b => b.id === item._branchId)?.name || 'Unknown Branch'}</span>
+                          <div className="flex flex-col max-w-[160px]">
+                            <span className="font-semibold text-slate-900 dark:text-white leading-tight">{item.consultantName || 'Unknown'}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 leading-tight">{branches.find(b => b.id === item._branchId)?.name || 'Unknown Branch'}</span>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-slate-500 text-sm whitespace-nowrap">
-                        {item.consultantEmail || '-'}
+                      <TableCell className="px-5 py-4 text-center">
+                        <EmailCell email={item.consultantEmail} />
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-slate-500 text-sm whitespace-nowrap">
+                      <TableCell className="px-5 py-4 text-slate-500 text-sm leading-tight min-w-[140px] max-w-[200px]">
                         {item.customerName || '-'}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-center">
