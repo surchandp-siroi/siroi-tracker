@@ -193,6 +193,7 @@ export default function ConsultantPayoutsPage() {
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Disbursed Date</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Consultant Name</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Consultant Email</TableHead>
+                <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Customer Name</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Disbursed Amount</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Commission (%)</TableHead>
                 <TableHead className="px-5 py-4 font-black text-xs text-indigo-900 dark:text-indigo-200 uppercase tracking-widest text-center">Settlement (₹)</TableHead>
@@ -237,6 +238,9 @@ export default function ConsultantPayoutsPage() {
                       </TableCell>
                       <TableCell className="px-5 py-4 text-slate-500 text-sm whitespace-nowrap">
                         {item.consultantEmail || '-'}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-slate-500 text-sm whitespace-nowrap">
+                        {item.customerName || '-'}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-center">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
