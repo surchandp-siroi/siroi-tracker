@@ -287,7 +287,7 @@ export default function LoginPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="name@siroiforex.com"
                         required
-                        disabled={otpSent && effectiveLoginMode === 'otp'}
+                        disabled={!isMobile || (otpSent && effectiveLoginMode === 'otp')}
                         className="h-11"
                     />
                  </div>
