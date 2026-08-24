@@ -58,7 +58,7 @@ export default function LoginPage() {
   const emailLower = email.trim().toLowerCase();
   
   const availablePhones = MOBILE_SMS_USERS[emailLower] || [];
-  const isSmsUser = isMobile && availablePhones.length > 0;
+  const isSmsUser = availablePhones.length > 0;
   
   useEffect(() => {
     if (isSmsUser) {
@@ -112,13 +112,12 @@ export default function LoginPage() {
     }
   }, [otpSent, isMobile, verifyOtpLogin, navigate]);
 
-  const effectiveLoginMode = isSmsUser ? 'otp' : 
-                             (loginMode === 'password' && emailLower === 'sharjuthoudam@siroiforex.com') ? 'otp' : loginMode;
+  const effectiveLoginMode = isSmsUser ? 'otp' : loginMode;
   
-  const hideLocation = isMobile && isSmsUser;
+  const hideLocation = isSmsUser || ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(emailLower);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !location) {
+    if (!email || (!location && !hideLocation)) {
       setError('Please provide email and select location.');
       return;
     }
@@ -374,7 +373,7 @@ export default function LoginPage() {
                             {locationStatus || 'Authenticating...'}
                         </>
                     ) : effectiveLoginMode === 'otp' ? (
-                        otpSent ? 'Verify OTP & Login' : (isMobile && isSmsUser ? 'Request OTP' : 'Secure Sign In')
+                        otpSent ? 'Verify OTP & Login' : (isSmsUser ? 'Request OTP' : 'Secure Sign In')
                     ) : 'Secure Sign In'}
                   </Button>
               </form>
