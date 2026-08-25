@@ -24,8 +24,8 @@ jobs:
       - name: Build Project
         run: npm run build:ota
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: "https://jybkjinujujlsvqsercv.supabase.co"
+          VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5YmtqaW51anVqbHN2cXNlcmN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTUxMDMsImV4cCI6MjA5MjI3MTEwM30.rS2JwGhXgIXQccZXbPaYDr47zrmoXWn6EcAzoFZMKeI"
 
         
       - name: Sync files via FTP
@@ -44,7 +44,7 @@ jobs:
 
       - name: Notify Users of App Update
         run: |
-          curl -X POST "${{ secrets.VITE_SUPABASE_URL }}/functions/v1/notify" \
-            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+          curl -X POST "https://jybkjinujujlsvqsercv.supabase.co/functions/v1/notify" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5YmtqaW51anVqbHN2cXNlcmN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2OTUxMDMsImV4cCI6MjA5MjI3MTEwM30.rS2JwGhXgIXQccZXbPaYDr47zrmoXWn6EcAzoFZMKeI" \
             -H "Content-Type: application/json" \
             -d '{"action": "app_updated", "payload": {}}'
