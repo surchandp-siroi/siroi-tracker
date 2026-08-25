@@ -40,6 +40,7 @@ export default function LoginPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [selectedPhone, setSelectedPhone] = useState<string>('');
+  const [timeLeft, setTimeLeft] = useState(60);
   
   const { login, requestOtpLogin, verifyOtpLogin, isLoading } = useAuthStore();
   const { branches } = useDataStore();
@@ -84,6 +85,18 @@ export default function LoginPage() {
   useEffect(() => {
     loginDetailsRef.current = { email, location, selectedPhone, isSmsUser };
   }, [email, location, selectedPhone, isSmsUser]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (otpSent && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (!otpSent) {
+      setTimeLeft(60);
+    }
+    return () => clearInterval(interval);
+  }, [otpSent, timeLeft]);
 
   useEffect(() => {
     if (isMobile && 'OTPCredential' in window && otpSent) {
@@ -173,6 +186,22 @@ export default function LoginPage() {
       } else {
         setError(err.message || 'Authentication failed. Please try again.');
       }
+      setLocationStatus('');
+    }
+  };
+
+  const handleResend = async () => {
+    if (timeLeft > 0) return;
+    try {
+      setLocationStatus('Resending OTP...');
+      const isSpecialAccount = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(emailLower);
+      const loginLocation = isSpecialAccount ? 'HO' : location;
+      await requestOtpLogin(email, loginLocation, isSmsUser ? selectedPhone : undefined);
+      setTimeLeft(60);
+      setLocationStatus('OTP Resent');
+      setTimeout(() => setLocationStatus(''), 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend OTP.');
       setLocationStatus('');
     }
   };
@@ -273,7 +302,7 @@ export default function LoginPage() {
                   <button
                       type="button"
                       className={`flex-1 py-2.5 text-xs font-semibold rounded-md transition-all ${loginMode === 'otp' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                      onClick={() => { setLoginMode('otp'); setOtpSent(false); setError(''); }}
+                      onClick={() => { setLoginMode('otp'); setOtpSent(false); setTimeLeft(60); setError(''); }}
                   >
                       Branch Login
                   </button>
@@ -339,10 +368,10 @@ export default function LoginPage() {
                    </div>
                  )}
 
-                 <div 
+                  <div 
                     className="transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden"
                     style={{
-                       maxHeight: (effectiveLoginMode === 'password' || (effectiveLoginMode === 'otp' && otpSent)) ? '100px' : '0px',
+                       maxHeight: (effectiveLoginMode === 'password' || (effectiveLoginMode === 'otp' && otpSent)) ? '140px' : '0px',
                        opacity: (effectiveLoginMode === 'password' || (effectiveLoginMode === 'otp' && otpSent)) ? 1 : 0,
                        marginBottom: (effectiveLoginMode === 'password' || (effectiveLoginMode === 'otp' && otpSent)) ? '20px' : '0px',
                     }}
@@ -366,13 +395,37 @@ export default function LoginPage() {
                               type="text" 
                               value={otp}
                               onChange={(e) => setOtp(e.target.value)}
-                              placeholder="Enter the OTP from your email"
+                              placeholder={isSmsUser ? "Enter the OTP sent to your phone" : "Enter the OTP from your email"}
                               maxLength={6}
                               required={effectiveLoginMode === 'otp' && otpSent}
                               autoComplete="one-time-code"
                               inputMode="numeric"
                               className="h-11 font-mono tracking-widest text-center"
                           />
+                          {otpSent && effectiveLoginMode === 'otp' && (
+                             <div className="flex justify-between items-center mt-3 px-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="relative flex items-center justify-center w-5 h-5">
+                                     <svg className="w-5 h-5 -rotate-90 transform" viewBox="0 0 36 36">
+                                        <path className="text-slate-200 dark:text-slate-800" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        <path className="text-indigo-500 transition-all duration-1000 ease-linear" strokeDasharray={`${(timeLeft/60)*100}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                     </svg>
+                                     <span className="absolute text-[8px] font-bold text-slate-600 dark:text-slate-400">{timeLeft}</span>
+                                  </div>
+                                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                     {timeLeft > 0 ? 'Valid for 60s' : 'OTP Expired'}
+                                  </span>
+                                </div>
+                                <button
+                                   type="button"
+                                   onClick={handleResend}
+                                   disabled={timeLeft > 0 || isLoading}
+                                   className={`text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all ${timeLeft > 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 active:scale-95'}`}
+                                >
+                                   Resend OTP
+                                </button>
+                             </div>
+                          )}
                        </div>
                      )}
                  </div>

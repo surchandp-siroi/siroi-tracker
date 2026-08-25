@@ -65,6 +65,7 @@ export default function HomePage() {
   const [selectedPhone, setSelectedPhone] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
+  const [timeLeft, setTimeLeft] = useState(60);
   
   const isEmailAuthorized = useMemo(() => {
     const typedEmail = email.toLowerCase().trim();
@@ -91,6 +92,18 @@ export default function HomePage() {
       return () => ac.abort();
     }
   }, [otpSent, isNative]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (otpSent && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (!otpSent) {
+      setTimeLeft(60);
+    }
+    return () => clearInterval(interval);
+  }, [otpSent, timeLeft]);
 
   // Biometric Auto-Login
   useEffect(() => {
@@ -146,6 +159,7 @@ export default function HomePage() {
       setShowPhoneSelector(false);
       setOtpSent(false);
       setOtp('');
+      setTimeLeft(60);
     }
   }, [email, isNative]);
 
@@ -171,6 +185,7 @@ export default function HomePage() {
            // Step 2: Request OTP
            await requestOtpLogin(typedEmail, 'HO', selectedPhone);
            setOtpSent(true);
+           setTimeLeft(60);
            setIsLoading(false);
            return;
         } else if (otpSent) {
@@ -204,6 +219,19 @@ export default function HomePage() {
        console.error("Login Error:", err);
        setError(err.message || 'Authentication failed. Please try again.');
        setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (timeLeft > 0 || !email) return;
+    try {
+      setIsLoading(true);
+      await requestOtpLogin(email.toLowerCase().trim(), 'HO', selectedPhone);
+      setTimeLeft(60);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend OTP.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -633,7 +661,7 @@ export default function HomePage() {
               {isNative && (
                 <div 
                     className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                        otpSent ? 'max-h-24 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                        otpSent ? 'max-h-32 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
                     }`}
                 >
                     <div className="relative group">
@@ -646,11 +674,35 @@ export default function HomePage() {
                         maxLength={6}
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
-                        placeholder="6-Digit OTP"
+                        placeholder="Enter the OTP sent to your phone"
                         className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full text-center tracking-widest font-mono"
                         required={otpSent}
                         disabled={isLoading}
                       />
+                      {otpSent && (
+                         <div className="flex justify-between items-center mt-3 px-1">
+                            <div className="flex items-center gap-2">
+                              <div className="relative flex items-center justify-center w-5 h-5">
+                                 <svg className="w-5 h-5 -rotate-90 transform" viewBox="0 0 36 36">
+                                    <path className="text-slate-200 dark:text-slate-800" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path className="text-indigo-500 transition-all duration-1000 ease-linear" strokeDasharray={`${(timeLeft/60)*100}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                 </svg>
+                                 <span className="absolute text-[8px] font-bold text-slate-600 dark:text-slate-400">{timeLeft}</span>
+                              </div>
+                              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                 {timeLeft > 0 ? 'Valid for 60s' : 'OTP Expired'}
+                              </span>
+                            </div>
+                            <button
+                               type="button"
+                               onClick={handleResend}
+                               disabled={timeLeft > 0 || isLoading}
+                               className={`text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all ${timeLeft > 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 active:scale-95'}`}
+                            >
+                               Resend OTP
+                            </button>
+                         </div>
+                      )}
                     </div>
                 </div>
               )}
