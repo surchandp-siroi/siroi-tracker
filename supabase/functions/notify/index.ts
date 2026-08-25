@@ -192,7 +192,7 @@ serve(async (req) => {
       const { data: tokensData, error } = await supabase
         .from('user_push_tokens')
         .select('token, email')
-        .in('email', ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com', 'anekathoudam@siroiforex.com']);
+        .in('email', ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com']);
 
       if (error || !tokensData || tokensData.length === 0) {
         console.log("No admin push tokens found.", error);
