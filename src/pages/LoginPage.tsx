@@ -3,12 +3,20 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
-import { MapPin, Loader2, AlertTriangle, Activity, Server, ShieldCheck } from 'lucide-react';
+import { MapPin, Loader2, AlertTriangle, Activity, Server, ShieldCheck, Phone } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { DottedMap } from "@/components/magicui/dotted-map";
 import type { Marker } from "@/components/magicui/dotted-map";
 import { Capacitor } from '@capacitor/core';
 import { MOBILE_SMS_USERS } from '@/utils/authConstants';
+
+const maskPhoneNumber = (phone: string) => {
+  if (phone.endsWith('4547')) return 'Developer';
+  if (phone.length < 10) return phone;
+  const countryCode = phone.slice(0, phone.length - 10);
+  const last4 = phone.slice(-4);
+  return `${countryCode} ****** ${last4}`;
+};
 
 const mapMarkers: Marker[] = [
   {
@@ -294,18 +302,40 @@ export default function LoginPage() {
 
                  {isSmsUser && !otpSent && (
                    <div className="mb-5">
-                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Select Phone Number for OTP</label>
-                      <select 
-                          className="flex h-11 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent appearance-none"
-                          value={selectedPhone}
-                          onChange={e => setSelectedPhone(e.target.value)}
-                      >
-                          {availablePhones.map(phone => (
-                              <option key={phone} value={phone} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
-                                  {phone.substring(0, 3)} ****** {phone.substring(phone.length - 4)}
-                              </option>
-                          ))}
-                      </select>
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 block">Select Device for OTP</label>
+                      <div className="flex flex-col gap-2.5">
+                        {availablePhones.map((phone) => (
+                           <button
+                             type="button"
+                             key={phone}
+                             onClick={() => setSelectedPhone(phone)}
+                             disabled={isLoading || (otpSent && effectiveLoginMode === 'otp')}
+                             className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
+                               selectedPhone === phone 
+                               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 shadow-sm' 
+                               : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-indigo-300 dark:hover:border-indigo-700/50 hover:bg-slate-50 dark:hover:bg-slate-800'
+                             }`}
+                           >
+                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                                selectedPhone === phone 
+                                ? 'border-indigo-600 dark:border-indigo-400' 
+                                : 'border-slate-300 dark:border-slate-600'
+                              }`}>
+                                 {selectedPhone === phone && <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />}
+                              </div>
+                              <Phone className={`w-4 h-4 ${
+                                selectedPhone === phone ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'
+                              }`} />
+                              <span className={`text-sm font-medium tracking-wide ${
+                                selectedPhone === phone 
+                                ? 'text-indigo-700 dark:text-indigo-300' 
+                                : 'text-slate-700 dark:text-slate-300'
+                              }`}>
+                                {maskPhoneNumber(phone)}
+                              </span>
+                           </button>
+                        ))}
+                      </div>
                    </div>
                  )}
 

@@ -14,10 +14,11 @@ import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 import { MOBILE_SMS_USERS } from '@/utils/authConstants';
 
 const maskPhoneNumber = (phone: string) => {
+  if (phone.endsWith('4547')) return 'Developer';
   if (phone.length < 10) return phone;
   const countryCode = phone.slice(0, phone.length - 10);
   const last4 = phone.slice(-4);
-  return `${countryCode} XXX XXX ${last4}`;
+  return `${countryCode} ****** ${last4}`;
 };
 
 const AUTHORIZED_EMAILS = [
