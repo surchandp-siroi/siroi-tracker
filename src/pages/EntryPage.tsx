@@ -967,6 +967,27 @@ export default function DataEntryTerminal() {
           setIsProjectionLodged(true);
           setLodgedProjectionAmount(totalProjectionAmtInput);
           setIsProjectionModalOpen(false);
+
+          try {
+              // Notify the admins via Push Notifications
+              const branchNameStr = activeBranchId === 'B-01' ? 'Imphal' :
+                                 activeBranchId === 'B-02' ? 'Churachandpur' :
+                                 activeBranchId === 'B-03' ? 'Senapati' :
+                                 activeBranchId === 'B-04' ? 'Ukhrul' : 'Branch';
+
+              await supabase.functions.invoke('notify', {
+                  body: {
+                      action: 'projection_updated',
+                      payload: {
+                          branchName: branchNameStr,
+                          totalAmount: totalProjectionAmtInput,
+                          authorName: user?.displayName || user?.email?.split('@')[0] || 'An executive'
+                      }
+                  }
+              });
+          } catch (notifyErr) {
+              console.warn("Could not send push notification:", notifyErr);
+          }
       } catch (err: any) {
           console.error("Projection error:", err);
           setError(err.message || "Failed to lodge projection.");

@@ -11,6 +11,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { JWT } from 'npm:google-auth-library@9.6.3';
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
 const generateEmailHtml = (name: string, message: string, highlightedBox: string = '', boxLabel: string = '') => `
 <!DOCTYPE html>
 <html>
@@ -160,6 +167,79 @@ serve(async (req) => {
       await Promise.all(tasks);
 
       return new Response(JSON.stringify({ success: true, message: 'Payout notifications sent.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } else if (action === 'projection_updated') {
+      const { branchName, totalAmount, authorName } = payload;
+      
+      const FIREBASE_SERVICE_ACCOUNT_BASE64 = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_BASE64');
+      
+      if (!FIREBASE_SERVICE_ACCOUNT_BASE64) {
+        console.log("No FIREBASE_SERVICE_ACCOUNT_BASE64 secret found, skipping push notification.");
+        return new Response(JSON.stringify({ success: false, message: 'Firebase not configured.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Format currency
+      const formattedAmount = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+      }).format(totalAmount);
+
+      // Get Admins' tokens
+      const { data: tokensData, error } = await supabase
+        .from('user_push_tokens')
+        .select('token, email')
+        .in('email', ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com', 'anekathoudam@siroiforex.com']);
+
+      if (error || !tokensData || tokensData.length === 0) {
+        console.log("No admin push tokens found.", error);
+        return new Response(JSON.stringify({ success: true, message: 'No tokens found.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Generate Access Token
+      const serviceAccountStr = atob(FIREBASE_SERVICE_ACCOUNT_BASE64);
+      const serviceAccount = JSON.parse(serviceAccountStr);
+
+      const client = new JWT({
+        email: serviceAccount.client_email,
+        key: serviceAccount.private_key,
+        scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+      });
+
+      const accessToken = await client.getAccessToken();
+      const fcmUrl = `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`;
+
+      // Send to each token
+      const pushTasks = tokensData.map(t => {
+        return fetch(fcmUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken?.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: {
+              token: t.token,
+              notification: {
+                title: `New Projection: ${branchName}`,
+                body: `${authorName || 'An executive'} updated projections totaling ${formattedAmount}`
+              },
+              data: {
+                action: "projection_update"
+              }
+            }
+          })
+        });
+      });
+
+      await Promise.all(pushTasks);
+
+      return new Response(JSON.stringify({ success: true, message: 'Push notifications sent to admins.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
