@@ -242,6 +242,69 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: 'Push notifications sent to admins.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    } else if (action === 'app_updated') {
+      const FIREBASE_SERVICE_ACCOUNT_BASE64 = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_BASE64');
+      
+      if (!FIREBASE_SERVICE_ACCOUNT_BASE64) {
+        console.log("No FIREBASE_SERVICE_ACCOUNT_BASE64 secret found, skipping push notification.");
+        return new Response(JSON.stringify({ success: false, message: 'Firebase not configured.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Get ALL tokens
+      const { data: tokensData, error } = await supabase
+        .from('user_push_tokens')
+        .select('token');
+
+      if (error || !tokensData || tokensData.length === 0) {
+        console.log("No push tokens found.", error);
+        return new Response(JSON.stringify({ success: true, message: 'No tokens found.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Generate Access Token
+      const serviceAccountStr = atob(FIREBASE_SERVICE_ACCOUNT_BASE64);
+      const serviceAccount = JSON.parse(serviceAccountStr);
+
+      const client = new JWT({
+        email: serviceAccount.client_email,
+        key: serviceAccount.private_key,
+        scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+      });
+
+      const accessToken = await client.getAccessToken();
+      const fcmUrl = `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`;
+
+      // Send to each token
+      const pushTasks = tokensData.map(t => {
+        return fetch(fcmUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken?.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: {
+              token: t.token,
+              notification: {
+                title: `App Update Available! 🚀`,
+                body: `A new version of Siroi Tracker is available. Please open the menu and tap Update App.`
+              },
+              data: {
+                action: "app_update_available"
+              }
+            }
+          })
+        });
+      });
+
+      await Promise.all(pushTasks);
+
+      return new Response(JSON.stringify({ success: true, message: 'Push notifications sent to all users.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(JSON.stringify({ error: 'Unknown action' }), {

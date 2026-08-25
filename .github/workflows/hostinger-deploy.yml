@@ -42,3 +42,9 @@ jobs:
           protocol: ftps
           security: loose
 
+      - name: Notify Users of App Update
+        run: |
+          curl -X POST "${{ secrets.VITE_SUPABASE_URL }}/functions/v1/notify" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"action": "app_updated", "payload": {}}'
