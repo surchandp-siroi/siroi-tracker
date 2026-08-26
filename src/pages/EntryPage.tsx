@@ -1232,8 +1232,8 @@ export default function DataEntryTerminal() {
   });
 
   return (
-    <div className="min-h-screen p-4 md:p-8 flex flex-col w-full">
-        <header className="glass px-6 py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 rounded-xl">
+    <div className="min-h-screen p-3 md:p-8 flex flex-col w-full">
+        <header className="glass px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-4 mb-4 md:mb-6 rounded-xl">
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
                     {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
@@ -1256,15 +1256,15 @@ export default function DataEntryTerminal() {
             <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
         )}
              {/* Sticky Top Control Bar */}
-        <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 p-4 mb-6 rounded-xl shadow-sm flex flex-col gap-4">
+        <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 p-3 md:p-4 mb-4 md:mb-6 rounded-xl shadow-sm flex flex-col gap-3 md:gap-4">
             
             {/* Unified Command Center Bar */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 {/* Left Section: Context */}
-                <div className="flex flex-wrap items-center gap-3 md:gap-5">
+                <div className="flex items-center gap-3 md:gap-5 overflow-x-auto pb-1 hide-scrollbar">
                     {/* Branch Override */}
                     {(user.role === 'admin' || isBackdoor) && (
-                        <div className="flex flex-col">
+                        <div className="flex flex-col shrink-0">
                             <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
                                 {isBackdoor ? 'Branch (Test)' : 'Admin Branch'}
                             </label>
@@ -1360,7 +1360,7 @@ export default function DataEntryTerminal() {
                 </div>
 
                 {/* Center Section: Metrics */}
-                <div className="flex flex-wrap items-center gap-5 bg-slate-50 dark:bg-slate-900/50 p-2.5 px-5 rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3 md:gap-5 bg-slate-50 dark:bg-slate-900/50 p-2 md:p-2.5 px-3 md:px-5 rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
                     {/* Target */}
                     <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
@@ -1424,7 +1424,7 @@ export default function DataEntryTerminal() {
                 </div>
 
                 {/* Right Section: Actions */}
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-row overflow-x-auto pb-2 md:pb-0 hide-scrollbar items-center gap-2 md:gap-3 w-full xl:w-auto">
                     {!isMIS && (
                         <label 
                             onDragOver={handleDragOver}
