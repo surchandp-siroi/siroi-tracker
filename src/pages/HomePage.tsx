@@ -594,7 +594,7 @@ export default function HomePage() {
           <form onSubmit={handleContinue} className="space-y-6">
             <div className="space-y-4">
               <div className="relative group">
-                <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-500 ${isEmailAuthorized ? 'text-emerald-500' : 'text-slate-400 group-focus-within:text-indigo-600'}`}>
+                <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-500 pointer-events-none ${isEmailAuthorized ? 'text-emerald-500' : 'text-slate-400 group-focus-within:text-indigo-600'}`}>
                   {isEmailAuthorized ? (
                     <ShieldCheck className="w-5 h-5 animate-in zoom-in spin-in-12 duration-500" />
                   ) : (
@@ -661,26 +661,31 @@ export default function HomePage() {
               {isNative && (
                 <div 
                     className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                        otpSent ? 'max-h-32 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                        otpSent ? 'max-h-40 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
                     }`}
                 >
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                          <Key className="w-5 h-5" />
+                    <div className="flex flex-col gap-3">
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none">
+                            <Key className="w-5 h-5" />
+                        </div>
+                        <Input
+                          id="otp"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                          placeholder="6-digit OTP"
+                          className="pl-12 pr-4 py-6 text-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full tracking-[0.5em] font-mono text-slate-900 dark:text-white"
+                          required={otpSent}
+                          disabled={isLoading}
+                        />
                       </div>
-                      <Input
-                        id="otp"
-                        type="text"
-                        maxLength={6}
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        placeholder="Enter the OTP sent to your phone"
-                        className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full text-center tracking-widest font-mono"
-                        required={otpSent}
-                        disabled={isLoading}
-                      />
+                      
                       {otpSent && (
-                         <div className="flex justify-between items-center mt-3 px-1">
+                         <div className="flex justify-between items-center px-1">
                             <div className="flex items-center gap-2">
                               <div className="relative flex items-center justify-center w-5 h-5">
                                  <svg className="w-5 h-5 -rotate-90 transform" viewBox="0 0 36 36">
@@ -717,23 +722,21 @@ export default function HomePage() {
             </Button>
           </form>
 
-          <div className="mt-12 pt-8 text-center">
+          <div className="mt-12 pt-8 text-center flex flex-col items-center gap-4">
             <p className="text-xs text-slate-400 font-medium">
               Copyright © {new Date().getFullYear()} Siroi Forex. All rights reserved.
             </p>
+            <a 
+              href="https://mis.siroiforex.com/onboarding/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-slate-500 hover:text-indigo-600 font-medium transition-colors border border-slate-200 dark:border-slate-800 hover:border-indigo-600/30 px-4 py-2 rounded-full bg-slate-50 dark:bg-slate-900 shadow-sm hover:shadow inline-flex items-center"
+            >
+              Are you a vendor?
+            </a>
           </div>
 
         </div>
-        
-        {/* Vendor Button placed inside the right card */}
-        <a 
-          href="https://mis.siroiforex.com/onboarding/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute bottom-6 right-6 lg:right-8 text-xs text-slate-500 hover:text-indigo-600 font-medium transition-colors border border-slate-200 dark:border-slate-800 hover:border-indigo-600/30 px-4 py-2 rounded-full bg-slate-50 dark:bg-slate-900 shadow-sm hover:shadow"
-        >
-          Are you a vendor?
-        </a>
 
       </div>
       
