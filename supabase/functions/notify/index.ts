@@ -309,6 +309,77 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: 'Push notifications sent to all users.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    } else if (action === 'test_quirky') {
+      const { branchName } = payload || { branchName: 'Guwahati' };
+      const FIREBASE_SERVICE_ACCOUNT_BASE64 = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_BASE64');
+      
+      if (!FIREBASE_SERVICE_ACCOUNT_BASE64) {
+        return new Response(JSON.stringify({ success: false, message: 'Firebase not configured.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const quirkyMessages = [
+        `Hey ${branchName}, the tumbleweeds are blowing through your projections. Care to fill them in? 🌵`,
+        `Did ${branchName} forget the way to the projection board? We're waiting! ⏳`,
+        `Knock knock, ${branchName}. It's 11 AM and your projections are still asleep 😴`,
+        `Is ${branchName} playing hide and seek with today's numbers? 🫣`,
+        `Breaking news: ${branchName}’s projections are missing in action! 🚨`,
+        `Hola ${branchName}! Your projections are feeling a little left out today. 🥺`,
+        `A wild missing projection appeared at ${branchName}! Gotta catch 'em all! 🕵️`
+      ];
+      
+      const randomMsg = quirkyMessages[Math.floor(Math.random() * quirkyMessages.length)];
+
+      const { data: tokensData, error } = await supabase
+        .from('user_push_tokens')
+        .select('token');
+
+      if (error || !tokensData || tokensData.length === 0) {
+        return new Response(JSON.stringify({ success: true, message: 'No tokens found.' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const serviceAccountStr = atob(FIREBASE_SERVICE_ACCOUNT_BASE64);
+      const serviceAccount = JSON.parse(serviceAccountStr);
+
+      const client = new JWT({
+        email: serviceAccount.client_email,
+        key: serviceAccount.private_key,
+        scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+      });
+
+      const accessToken = await client.getAccessToken();
+      const fcmUrl = `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`;
+
+      const pushTasks = tokensData.map(t => {
+        return fetch(fcmUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken?.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: {
+              token: t.token,
+              notification: {
+                title: `Missing Projection! 📋`,
+                body: randomMsg
+              },
+              data: {
+                action: "missing_projection"
+              }
+            }
+          })
+        });
+      });
+
+      await Promise.all(pushTasks);
+
+      return new Response(JSON.stringify({ success: true, message: 'Quirky test notification sent.', randomMsg }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(JSON.stringify({ error: 'Unknown action' }), {

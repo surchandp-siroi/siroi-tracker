@@ -66,8 +66,14 @@ export default function LoginPage() {
   const isMobile = Capacitor.isNativePlatform();
   const emailLower = email.trim().toLowerCase();
   
-  const availablePhones = MOBILE_SMS_USERS[emailLower] || [];
+  // Allow partial matching (at least 4 characters) for SMS users to prevent "device restriction" confusion
+  const matchedSmsEmail = Object.keys(MOBILE_SMS_USERS).find(
+    key => emailLower.length >= 4 && key.startsWith(emailLower)
+  );
+  
+  const availablePhones = matchedSmsEmail ? MOBILE_SMS_USERS[matchedSmsEmail] : [];
   const isSmsUser = availablePhones.length > 0;
+  const effectiveLoginEmail = matchedSmsEmail || emailLower;
   
   useEffect(() => {
     if (isSmsUser) {
@@ -81,10 +87,10 @@ export default function LoginPage() {
   }, [isSmsUser, loginMode, availablePhones, selectedPhone]);
 
   // Keep references for the async WebOTP effect
-  const loginDetailsRef = useRef({ email, location, selectedPhone, isSmsUser });
+  const loginDetailsRef = useRef({ email: effectiveLoginEmail, location, selectedPhone, isSmsUser });
   useEffect(() => {
-    loginDetailsRef.current = { email, location, selectedPhone, isSmsUser };
-  }, [email, location, selectedPhone, isSmsUser]);
+    loginDetailsRef.current = { email: effectiveLoginEmail, location, selectedPhone, isSmsUser };
+  }, [effectiveLoginEmail, location, selectedPhone, isSmsUser]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -136,9 +142,10 @@ export default function LoginPage() {
   const effectiveLoginMode = isSmsUser ? 'otp' : loginMode;
   
   const hideLocation = isSmsUser || ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(emailLower);
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || (!location && !hideLocation)) {
+    if (!effectiveLoginEmail || (!location && !hideLocation)) {
       setError('Please provide email and select location.');
       return;
     }
@@ -146,24 +153,24 @@ export default function LoginPage() {
 
     try {
       // Force HO location for admin and executive accounts
-      const isSpecialAccount = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(email.toLowerCase());
+      const isSpecialAccount = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveLoginEmail);
       const loginLocation = isSpecialAccount ? 'HO' : location;
 
       if (effectiveLoginMode === 'password') {
          if (!password) { setError('Password is required'); return; }
          setLocationStatus('Authenticating...');
-         await login(email, password, loginLocation);
+         await login(effectiveLoginEmail, password, loginLocation);
       } else {
          if (!otpSent) {
             setLocationStatus('Sending OTP...');
-            await requestOtpLogin(email, loginLocation, isSmsUser ? selectedPhone : undefined);
+            await requestOtpLogin(effectiveLoginEmail, loginLocation, isSmsUser ? selectedPhone : undefined);
             setOtpSent(true);
             setLocationStatus('');
             return; // Wait for user to input OTP
          } else {
             if (!otp) { setError('OTP is required'); return; }
             setLocationStatus('Verifying OTP...');
-            await verifyOtpLogin(email, otp, loginLocation, isSmsUser ? selectedPhone : undefined);
+            await verifyOtpLogin(effectiveLoginEmail, otp, loginLocation, isSmsUser ? selectedPhone : undefined);
          }
       }
 
@@ -192,15 +199,15 @@ export default function LoginPage() {
 
   const handleResend = async () => {
     if (timeLeft > 0) return;
-    try {
-      setLocationStatus('Resending OTP...');
-      const isSpecialAccount = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(emailLower);
-      const loginLocation = isSpecialAccount ? 'HO' : location;
-      await requestOtpLogin(email, loginLocation, isSmsUser ? selectedPhone : undefined);
-      setTimeLeft(60);
-      setLocationStatus('OTP Resent');
-      setTimeout(() => setLocationStatus(''), 2000);
-    } catch (err: any) {
+      try {
+        setLocationStatus('Resending OTP...');
+        const isSpecialAccount = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveLoginEmail);
+        const loginLocation = isSpecialAccount ? 'HO' : location;
+        await requestOtpLogin(effectiveLoginEmail, loginLocation, isSmsUser ? selectedPhone : undefined);
+        setTimeLeft(60);
+        setLocationStatus('OTP Resent');
+        setTimeout(() => setLocationStatus(''), 2000);
+      } catch (err: any) {
       setError(err.message || 'Failed to resend OTP.');
       setLocationStatus('');
     }
