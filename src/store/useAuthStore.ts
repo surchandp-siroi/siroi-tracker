@@ -32,14 +32,14 @@ export interface UserProfile {
 }
 
 export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, emailFromLogin?: string): Promise<UserProfile> => {
-    // Resolve email: use sbUser.email if available, else fallback to the email entered during login.
-    const effectiveEmail = sbUser.email || emailFromLogin || '';
-
     const { data: userDoc } = await supabase
         .from('users')
         .select('*')
         .eq('id', sbUser.id)
         .maybeSingle();
+      
+    // Resolve email: prefer explicit login email, then DB email, then Auth email
+    const effectiveEmail = emailFromLogin || userDoc?.email || sbUser.email || '';
       
     let profile: UserProfile;
     

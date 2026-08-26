@@ -300,7 +300,11 @@ serve(async (req) => {
         });
       });
 
-      await Promise.all(pushTasks);
+      const responses = await Promise.all(pushTasks);
+      for (const res of responses) {
+        const body = await res.text();
+        console.log(`FCM Response: ${res.status} ${res.statusText}`, body);
+      }
 
       return new Response(JSON.stringify({ success: true, message: 'Push notifications sent to all users.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
