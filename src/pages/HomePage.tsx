@@ -163,8 +163,8 @@ export default function HomePage() {
     }
   }, [email, isNative]);
 
-  const handleContinue = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleContinue = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setError('');
     
     if (!email) {
@@ -236,6 +236,12 @@ export default function HomePage() {
   };
 
   // Determine button text
+  useEffect(() => {
+    if (otpSent && otp.length === 6 && !isLoading) {
+      handleContinue();
+    }
+  }, [otp]);
+
   let buttonText = 'Continue';
   if (isLoading) buttonText = 'Verifying...';
   else if (isNative && showPhoneSelector && !otpSent) buttonText = 'Request OTP';
@@ -678,6 +684,7 @@ export default function HomePage() {
                           value={otp}
                           onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                           placeholder="6-digit OTP"
+                          autoComplete="one-time-code"
                           className="pl-12 pr-4 py-6 text-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full tracking-[0.5em] font-mono text-slate-900 dark:text-white"
                           required={otpSent}
                           disabled={isLoading}
