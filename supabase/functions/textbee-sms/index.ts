@@ -58,9 +58,7 @@ serve(async (req) => {
 
     console.log(`Routing OTP for ${phone} via TextBee...`);
 
-    // Send SMS asynchronously so we don't block the Supabase Auth Webhook. 
-    // This prevents login request timeouts during concurrent logins.
-    fetch('https://api.textbee.dev/api/v1/gateway/send-sms', {
+    const res = await fetch('https://api.textbee.dev/api/v1/gateway/send-sms', {
       method: 'POST',
       headers: {
         'x-api-key': TEXTBEE_API_KEY,
@@ -70,20 +68,19 @@ serve(async (req) => {
         recipients: [phone],
         message: message
       })
-    })
-    .then(async (res) => {
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("TextBee API Error:", errorText);
-      } else {
-        console.log(`Successfully dispatched SMS via TextBee to ${phone}`);
-      }
-    })
-    .catch((err) => {
-      console.error("Failed to route SMS via TextBee:", err);
     });
 
-    // Return 200 immediately so Supabase Auth doesn't time out
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("TextBee API Error:", errorText);
+      return new Response(JSON.stringify({ error: 'Failed to route SMS via TextBee' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Successfully dispatched SMS via TextBee to ${phone}`);
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
