@@ -221,7 +221,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const { error } = await withTimeout(
         supabase.auth.signInWithOtp(signInOptions),
-        15000,
+        45000,
         "Sending OTP timed out. Please check your connection and try again."
       );
 

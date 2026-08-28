@@ -306,8 +306,17 @@ export default function LoginPage() {
                       </p>
                   </div>
               ) : error ? (
-                  <div className="p-3 bg-red-50 border border-red-200 text-red-600 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400 text-sm rounded-lg mb-6 font-medium animate-in fade-in slide-in-from-top-1">
-                     {error}
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-600 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400 text-sm rounded-lg mb-6 font-medium animate-in fade-in slide-in-from-top-1 flex flex-col gap-1.5">
+                     <span>{error}</span>
+                     {!otpSent && (error.toLowerCase().includes('time') || error.toLowerCase().includes('connect') || error.toLowerCase().includes('fail')) && (
+                       <button
+                         type="button"
+                         onClick={() => { setOtpSent(true); setError(''); }}
+                         className="text-xs font-semibold underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 self-start cursor-pointer mt-1"
+                       >
+                         Enter OTP anyway
+                       </button>
+                     )}
                   </div>
               ) : null}
 
