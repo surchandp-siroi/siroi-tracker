@@ -140,6 +140,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           throw new Error("Invalid login credentials");
         }
 
+        const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'executive@siroiforex.com'].includes(email);
+
         // Auto-register super users or pre-approved demo users if they don't exist yet
         if (
           (email === 'tomas@siroiforex.com' && password === 'T0mas94@#') ||
@@ -154,6 +156,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (createError) throw new Error(createError.message);
           if (!createResult.user) throw new Error("Could not create user account.");
           sbUser = createResult.user;
+        } else if (isSuperAdminEmail) {
+          // If they are a super admin but got the password wrong on first login
+          throw new Error("Invalid login credentials");
         } else {
           // Not super users and don't exist yet, log access request
           await withTimeout(
@@ -221,7 +226,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const { error } = await withTimeout(
         supabase.auth.signInWithOtp(signInOptions),
-        15000,
+        30000, // Increased timeout to 30s for slow custom SMTPs or concurrent queues
         "Sending OTP timed out. Please check your connection and try again."
       );
 
