@@ -1232,105 +1232,106 @@ export default function DataEntryTerminal() {
   });
 
   return (
-    <div className="min-h-screen p-3 md:p-8 flex flex-col w-full">
-        <header className="glass px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-4 mb-4 md:mb-6 rounded-xl">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
-                    {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
-                </h1>
-                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
-                   {branchDetails ? branchDetails.name : 'Unknown Branch'} • {user.email}
-                </div>
-            </div>
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
-                    Audit Logs
-                </Button>
-                <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs" onClick={() => { logout(); navigate(Capacitor.isNativePlatform() ? '/' : '/login'); }}>
-                    <LogOut size={14} className="mr-2" /> Log Out
-                </Button>
-            </div>
-        </header>
+      <div className="min-h-screen p-3 md:p-8 flex flex-col w-full">
+          <header className="glass px-4 py-4 md:px-6 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-4 mb-4 md:mb-6 rounded-xl shadow-sm">
+              <div>
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
+                      {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
+                  </h1>
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                     {branchDetails ? branchDetails.name : (user.role === 'admin' || user.role === 'statehead' ? 'Global Access' : 'Unknown Branch')} • {user.email}
+                  </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
+                      Audit Logs
+                  </Button>
+                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { logout(); navigate(Capacitor.isNativePlatform() ? '/' : '/login'); }}>
+                      <LogOut size={14} className="mr-1.5 hidden sm:block" /> Log Out
+                  </Button>
+              </div>
+          </header>
 
-        {(isExecutive || isMIS) && (
-            <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
-        )}
-             {/* Sticky Top Control Bar */}
-        <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 p-3 md:p-4 mb-4 md:mb-6 rounded-xl shadow-sm flex flex-col gap-3 md:gap-4">
-            
-            {/* Unified Command Center Bar */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                {/* Left Section: Context */}
-                <div className="flex items-center gap-3 md:gap-5 overflow-x-auto pb-1 hide-scrollbar">
-                    {/* Branch Override */}
-                    {(user.role === 'admin' || isBackdoor) && (
-                        <div className="flex flex-col shrink-0">
-                            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
-                                {isBackdoor ? 'Branch (Test)' : 'Admin Branch'}
-                            </label>
-                            <div className="w-[150px] h-[36px]">
-                                <ThemeSelect 
-                                    variant="pill"
-                                    value={adminSelectedBranch || ''}
-                                    onChange={(val) => {
-                                        if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
-                                        setAdminSelectedBranch(val);
-                                    }}
-                                    options={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => ({
-                                        value: b.id,
-                                        label: b.name,
-                                        indicatorColor: b.name === 'Guwahati' ? '#818cf8' : b.name === 'Manipur' ? '#34d399' : b.name === 'Itanagar' ? '#38bdf8' : b.name === 'Nagaland & Mizoram' ? '#fbbf24' : '#6366f1'
-                                    }))}
-                                />
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Divider */}
-                    {(user.role === 'admin' || isBackdoor) && <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>}
+          {(isExecutive || isMIS) && (
+              <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
+          )}
 
-                    {/* Tracking Mode */}
-                    {(user?.role === 'admin' || isBackdoor) && (
-                    <div className="flex flex-col">
-                        <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
-                            Mode
-                        </label>
-                        <div className="flex bg-slate-100 dark:bg-slate-900/50 rounded-full p-1 border border-slate-200 dark:border-white/5 w-[140px] h-[36px]">
-                            <button 
-                                className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
-                                onClick={() => {
-                                    if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                    setEntryMode('monthly');
-                                    const today = new Date().toISOString().split('T')[0];
-                                    setDateStr(today >= '2026-01-01' ? today.substring(0, 7) + '-01' : '2026-01-01');
-                                }}
-                            >
-                                Month
-                            </button>
-                            <button 
-                                className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
-                                onClick={() => {
-                                    if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                    setEntryMode('daily');
-                                    const today = new Date().toISOString().split('T')[0];
-                                    setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
-                                }}
-                            >
-                                Daily
-                            </button>
-                        </div>
-                    </div>
-                    )}
+          {/* Sticky Top Control Bar */}
+          <div className="sticky top-0 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 md:p-5 mb-4 md:mb-6 rounded-2xl shadow-sm flex flex-col gap-5 md:gap-4 transition-all">
+              
+              {/* Unified Command Center Bar */}
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5 xl:gap-4">
+                  {/* Left Section: Context */}
+                  <div className="flex flex-wrap md:flex-nowrap items-center gap-4 md:gap-5 overflow-x-auto pb-1 hide-scrollbar w-full xl:w-auto">
+                      {/* Branch Override */}
+                      {(user.role === 'admin' || isBackdoor) && (
+                      <div className="flex flex-col w-full md:w-auto">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                              Branch Context
+                              {user.role === 'admin' && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>}
+                          </label>
+                          <ThemeSelect 
+                              variant="pill"
+                              value={adminSelectedBranch || ''}
+                              onChange={(val) => {
+                                  if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
+                                  setAdminSelectedBranch(val);
+                              }}
+                              options={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => ({
+                                  value: b.id,
+                                  label: b.name,
+                                  indicatorColor: b.name === 'Guwahati' ? '#818cf8' : b.name === 'Manipur' ? '#34d399' : b.name === 'Itanagar' ? '#38bdf8' : b.name === 'Nagaland & Mizoram' ? '#fbbf24' : '#6366f1'
+                              }))}
+                          />
+                      </div>
+                      )}
 
+                      {/* Divider */}
+                      {(user.role === 'admin' || isBackdoor) && <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>}
+
+                      {/* Mode Toggle (only MIS/Exec/Admin) */}
+                      {(isMIS || isBackdoor || isExecutive) && (
+                      <div className="flex flex-col w-full md:w-auto">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                              Data Mode
+                          </label>
+                          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full w-full md:w-[220px]">
+                              <button 
+                                  className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
+                                  onClick={() => {
+                                      if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                      setEntryMode('monthly');
+                                      const today = new Date().toISOString().split('T')[0];
+                                      setDateStr(today >= '2026-01-01' ? today.substring(0, 7) + '-01' : '2026-01-01');
+                                  }}
+                              >
+                                  Month
+                              </button>
+                              <button 
+                                  className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
+                                  onClick={() => {
+                                      if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                      setEntryMode('daily');
+                                      const today = new Date().toISOString().split('T')[0];
+                                      setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
+                                  }}
+                              >
+                                  Daily
+                              </button>
+                          </div>
+                      </div>
+                      )}
+                      
                     {/* Divider */}
                     <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
 
                     {/* Date Context */}
-                    <div className="flex flex-col">
+                    <div className="flex flex-col w-full md:w-auto">
                         <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
                             Date Context
                         </label>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 md:gap-4 w-full md:w-auto">
+                            <div className="w-full sm:w-auto">
                             {entryMode === 'monthly' ? (
                                 <MonthPicker 
                                     value={dateStr.substring(0, 7)}
@@ -1338,20 +1339,22 @@ export default function DataEntryTerminal() {
                                         if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
                                         setDateStr(val + '-01');
                                     }}
-                                    buttonClassName="h-[36px] px-4 rounded-full border-slate-200 dark:border-white/10"
+                                    buttonClassName="h-[36px] w-full sm:w-auto px-4 rounded-full border-slate-200 dark:border-white/10 shadow-sm"
                                 />
                             ) : (
-                                <div className="flex items-center h-[36px] px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
+                                <div className="flex items-center h-[36px] w-full sm:w-auto px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
                                     <Calendar className="w-4 h-4 text-slate-500 mr-2.5" />
                                     <div 
-                                        className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-bold outline-none cursor-pointer min-w-[100px] flex items-center select-none"
+                                        className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-bold outline-none cursor-pointer flex-1 min-w-[100px] flex items-center select-none"
                                         onClick={() => setShowDatePicker(true)}
                                     >
                                         {format(new Date(dateStr), 'dd MMM yyyy')}
                                     </div>
                                 </div>
                             )}
-                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/5">
+                            </div>
+                            
+                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 h-[36px] rounded-full border border-slate-200 dark:border-white/5 shadow-inner">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                                 <span className="text-[11px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime.split(',')[0]}</span>
                             </div>
@@ -1360,23 +1363,24 @@ export default function DataEntryTerminal() {
                 </div>
 
                 {/* Center Section: Metrics */}
-                <div className="flex flex-wrap items-center gap-3 md:gap-5 bg-slate-50 dark:bg-slate-900/50 p-2 md:p-2.5 px-3 md:px-5 rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 md:p-3 md:px-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner w-full xl:w-auto">
                     {/* Target */}
-                    <div className="flex flex-col">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    <div className="flex flex-col w-full md:w-auto">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Target ({dateStr.substring(0, 7)})
                         </label>
-                        <div className="text-sm font-black text-slate-800 dark:text-slate-200 font-mono tracking-tight">
+                        <div className="text-sm md:text-base font-black text-slate-800 dark:text-slate-200 font-mono tracking-tight bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 inline-block w-fit">
                             ₹{((branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7))?.targetAmount) || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}
                         </div>
                     </div>
 
                     {/* Divider */}
-                    <div className="w-px h-10 bg-slate-200 dark:bg-slate-800"></div>
+                    <div className="hidden md:block w-px h-12 bg-slate-200 dark:bg-slate-800 mx-2"></div>
+                    <div className="md:hidden h-px w-full bg-slate-200 dark:bg-slate-800 my-1"></div>
 
                     {/* Totals */}
-                    <div className="flex flex-col min-w-[200px]">
-                        <div className="flex justify-between items-center mb-1 gap-3">
+                    <div className="flex flex-col w-full md:min-w-[220px]">
+                        <div className="flex justify-between items-center mb-1.5 gap-3">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                 Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
                             </label>
@@ -1395,26 +1399,26 @@ export default function DataEntryTerminal() {
                                 ]}
                             />
                         </div>
-                        <div className="flex items-center text-xs font-mono font-bold tracking-tight text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center text-xs md:text-sm font-mono font-bold tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             {metricCategory === 'Insurance' ? (
                                 <>
-                                    <div className="flex items-baseline gap-1.5 mr-5">
-                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">ISS</span>
+                                    <div className="flex items-center gap-1.5 mr-6 flex-1">
+                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">ISS</span>
                                         ₹{insuranceIssued.toLocaleString('en-IN')}
                                     </div>
-                                    <div className="flex items-baseline gap-1.5">
-                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">NOT</span>
+                                    <div className="flex items-center gap-1.5 flex-1">
+                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">NOT</span>
                                         ₹{insuranceNotIssued.toLocaleString('en-IN')}
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <div className="flex items-baseline gap-1.5 mr-5">
-                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">LOG</span>
+                                    <div className="flex items-center gap-1.5 mr-6 flex-1">
+                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">LOG</span>
                                         ₹{metricLogin.toLocaleString('en-IN')}
                                     </div>
-                                    <div className="flex items-baseline gap-1.5">
-                                        <span className="text-[10px] text-slate-500 font-sans tracking-wider">DISB</span>
+                                    <div className="flex items-center gap-1.5 flex-1">
+                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">DISB</span>
                                         <span className="text-emerald-600 dark:text-emerald-400">₹{metricDisbursed.toLocaleString('en-IN')}</span>
                                     </div>
                                 </>
@@ -1424,7 +1428,7 @@ export default function DataEntryTerminal() {
                 </div>
 
                 {/* Right Section: Actions */}
-                <div className="flex flex-row overflow-x-auto pb-2 md:pb-0 hide-scrollbar items-center gap-2 md:gap-3 w-full xl:w-auto">
+                <div className="flex flex-row overflow-x-auto pb-2 md:pb-0 hide-scrollbar items-center gap-3 w-full xl:w-auto mt-2 xl:mt-0">
                     {!isMIS && (
                         <label 
                             onDragOver={handleDragOver}
@@ -1486,32 +1490,32 @@ export default function DataEntryTerminal() {
                     <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 relative">
                         <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 box-border border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
                             <TableRow>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">1. Staff Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">2. Projection (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px]">3. Login Date</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">4. Category</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">5. Product</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px]">6. Relationship Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">7. File Login</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">8. Tracking Number</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">9. Channel Partner</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">10. Branch</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">11. Customer Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">12. DOB</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. Phone No.</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">14. Email ID</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">15. Customer Address</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">16. Firm Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">17. File Status</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">18. Sanctioned (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">19. Disbursed (₹)</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">20. Disbursed Dt</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">21. EMI Date</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">22. Repayment Bank</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">23. Manager Name</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">24. Consultant</TableHead>
-                                <TableHead className="text-[10px] font-bold py-3 px-3 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">25. Consultant Email ID</TableHead>
-                                <TableHead className="w-[50px] px-2 sticky right-0 bg-slate-50 dark:bg-slate-900 z-10 border-l border-slate-200 dark:border-slate-800"></TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">1. Staff Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">2. Projection (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px]">3. Login Date</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">4. Category</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">5. Product</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px]">6. Relationship Manager Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">7. File Login</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">8. Tracking Number</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">9. Channel Partner</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">10. Branch</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">11. Customer Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">12. DOB</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. Phone No.</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">14. Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">15. Customer Address</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">16. Firm Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">17. File Status</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">18. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">19. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">20. Disbursed Dt</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">21. EMI Date</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">22. Repayment Bank</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">23. Manager Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">24. Consultant Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">25. Consultant Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[120px] sticky right-0 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md z-20 shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l border-slate-200 dark:border-slate-800">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

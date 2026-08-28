@@ -105,37 +105,43 @@ export default function LoginPage() {
   }, [otpSent, timeLeft]);
 
   useEffect(() => {
-    if (isMobile && 'OTPCredential' in window && otpSent) {
-      const ac = new AbortController();
-      navigator.credentials.get({
-        otp: { transport: ['sms'] },
-        signal: ac.signal
-      } as any).then(async (otpResponse: any) => {
-        const receivedOtp = otpResponse.code;
-        setOtp(receivedOtp);
-        
-        // Auto submit logic
+    if (isMobile && otpSent) {
+      const startSmsRetriever = async () => {
         try {
-            setLocationStatus('Auto-verifying OTP...');
-            const details = loginDetailsRef.current;
-            const loginLocation = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(details.email.toLowerCase()) ? 'HO' : details.location;
+          if (Capacitor.getPlatform() === 'android') {
+            const { AndroidSmsRetriever } = await import('@capawesome/capacitor-android-sms-retriever');
+            const result = await AndroidSmsRetriever.retrieveSms();
+            const receivedOtp = result.message.match(/\b\d{6}\b/)?.[0];
             
-            await verifyOtpLogin(details.email, receivedOtp, loginLocation, details.isSmsUser ? details.selectedPhone : undefined);
-            
-            const updatedUser = useAuthStore.getState().user;
-            if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
-                navigate('/entry');
-            } else {
-                navigate('/dashboard');
+            if (receivedOtp) {
+              setOtp(receivedOtp);
+              
+              // Auto submit logic
+              try {
+                  setLocationStatus('Auto-verifying OTP...');
+                  const details = loginDetailsRef.current;
+                  const loginLocation = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(details.email.toLowerCase()) ? 'HO' : details.location;
+                  
+                  await verifyOtpLogin(details.email, receivedOtp, loginLocation, details.isSmsUser ? details.selectedPhone : undefined);
+                  
+                  const updatedUser = useAuthStore.getState().user;
+                  if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
+                      navigate('/entry');
+                  } else {
+                      navigate('/dashboard');
+                  }
+              } catch (err: any) {
+                  setError(err.message || 'Auto-verification failed.');
+                  setLocationStatus('');
+              }
             }
-        } catch (err: any) {
-            setError(err.message || 'Auto-verification failed.');
-            setLocationStatus('');
+          }
+        } catch (err) {
+          console.log("SMS Retriever API Error:", err);
         }
-      }).catch(err => {
-        console.log("Web OTP API Error:", err);
-      });
-      return () => ac.abort();
+      };
+      
+      startSmsRetriever();
     }
   }, [otpSent, isMobile, verifyOtpLogin, navigate]);
 

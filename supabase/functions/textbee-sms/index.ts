@@ -54,7 +54,7 @@ serve(async (req) => {
     }
 
     const phone = user.phone.startsWith('+') ? user.phone : `+${user.phone}`;
-    const message = `Your Siroi Forex login code is ${sms.otp}\nFA+9qCX9VSu`;
+    const message = `Hey, ${sms.otp} is your Siroi passkey.\n\nFA+9qCX9VSu`;
 
     console.log(`Routing OTP for ${phone} via TextBee...`);
 
