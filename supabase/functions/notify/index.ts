@@ -188,14 +188,13 @@ serve(async (req) => {
         maximumFractionDigits: 0
       }).format(totalAmount);
 
-      // Get Admins' tokens
+      // Get all mobile app users' tokens
       const { data: tokensData, error } = await supabase
         .from('user_push_tokens')
-        .select('token, email')
-        .in('email', ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com']);
+        .select('token, email');
 
       if (error || !tokensData || tokensData.length === 0) {
-        console.log("No admin push tokens found.", error);
+        console.log("No push tokens found.", error);
         return new Response(JSON.stringify({ success: true, message: 'No tokens found.' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

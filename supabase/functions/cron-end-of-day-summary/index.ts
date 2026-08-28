@@ -7,15 +7,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const quirkyMessages = [
-  "Hey {branchName}, the tumbleweeds are blowing through your projections. Care to fill them in? 🌵",
-  "Did {branchName} forget the way to the projection board? We're waiting! ⏳",
-  "Knock knock, {branchName}. It's 11 AM and your projections are still asleep 😴",
-  "Is {branchName} playing hide and seek with today's numbers? 🫣",
-  "Breaking news: {branchName}’s projections are missing in action! 🚨",
-  "Hola {branchName}! Your projections are feeling a little left out today. 🥺",
-  "A wild missing projection appeared at {branchName}! Gotta catch 'em all! 🕵️"
-];
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+    }).format(amount);
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -46,7 +44,7 @@ serve(async (req) => {
 
     // Check if it's Sunday (0 = Sunday in JS) or a Holiday
     if (d.getDay() === 0 || isHoliday) {
-        return new Response(JSON.stringify({ success: true, message: 'It is a Sunday or Holiday. No missing projection notifications sent.' }), {
+        return new Response(JSON.stringify({ success: true, message: 'It is a Sunday or Holiday. No end-of-day summary sent.' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
@@ -55,7 +53,7 @@ serve(async (req) => {
     const reqBody = await req.json().catch(() => ({}));
     const dateStr = reqBody.testDate ? reqBody.testDate : d.toISOString().split('T')[0];
 
-    // 1. Hardcoded branches (since they are static in the frontend)
+    // 1. Hardcoded branches
     const branches = [
         { id: 'b1', name: 'Guwahati', manager_email: 'mis.ghy@siroiforex.com' },
         { id: 'b2', name: 'Manipur', manager_email: 'mis.manipur@siroiforex.com' },
@@ -63,26 +61,33 @@ serve(async (req) => {
         { id: 'b4', name: 'Nagaland & Mizoram', manager_email: 'mis.mizonaga@siroiforex.com' }
     ];
 
-    // 2. Get today's projections to see who has filled them
+    // 2. Get today's achievements
     const { data: entries, error: entriesError } = await supabase
       .from('entries')
-      .select('branchId')
+      .select('branchId, totalAmount, items')
       .eq('entryDate', dateStr)
-      .eq('recordType', 'projection');
+      .eq('recordType', 'achievement');
 
     if (entriesError) throw entriesError;
 
-    const branchesWithEntries = new Set(entries.map(e => e.branchId));
-    const missingBranches = branches.filter(b => !branchesWithEntries.has(b.id));
+    const branchAchievements = new Map<string, number>();
+    const branchHasItems = new Set<string>();
 
-    if (missingBranches.length === 0) {
-      return new Response(JSON.stringify({ success: true, message: 'All branches have lodged their projections today.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    entries.forEach(e => {
+        const amt = e.totalAmount || 0;
+        const currentAmt = branchAchievements.get(e.branchId) || 0;
+        branchAchievements.set(e.branchId, currentAmt + amt);
+        
+        if (e.items && Array.isArray(e.items) && e.items.length > 0) {
+            branchHasItems.add(e.branchId);
+        }
+    });
 
-    // 3. For each missing branch, collect the target emails
-    const branchManagerEmails = missingBranches.map(b => b.manager_email).filter(Boolean);
+    const missingBranches = branches.filter(b => !branchHasItems.has(b.id));
+    const activeBranches = branches.filter(b => branchHasItems.has(b.id));
+
+    // 3. Collect target emails for branch managers
+    const branchManagerEmails = branches.map(b => b.manager_email).filter(Boolean);
     const adminEmails = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'];
     const allEmails = [...new Set([...branchManagerEmails, ...adminEmails])];
 
@@ -95,7 +100,7 @@ serve(async (req) => {
     if (usersError) throw usersError;
     const targetUserIds = users.map(u => u.id);
 
-    // 5. Get push tokens for these users
+    // 5. Get push tokens
     const { data: tokensData, error: tokensError } = await supabase
       .from('user_push_tokens')
       .select('token, user_id, email')
@@ -126,7 +131,12 @@ serve(async (req) => {
 
     // 7. Send notification to Admins
     const adminTokens = tokensData.filter(t => adminEmails.includes(t.email));
-    const adminSummary = `Missing Projections Alert: ${missingBranches.length} branches haven't lodged projections today (${missingBranches.map(b => b.name).join(', ')}).`;
+    
+    let adminSummary = `Day End Report: ${missingBranches.length} missing. `;
+    if (activeBranches.length > 0) {
+        const topBranch = activeBranches.reduce((a, b) => (branchAchievements.get(a.id) || 0) > (branchAchievements.get(b.id) || 0) ? a : b);
+        adminSummary += `${topBranch.name} led with ${formatCurrency(branchAchievements.get(topBranch.id) || 0)}.`;
+    }
 
     adminTokens.forEach(t => {
         pushTasks.push(fetch(fcmUrl, {
@@ -135,50 +145,63 @@ serve(async (req) => {
             body: JSON.stringify({
                 message: {
                     token: t.token,
-                    notification: { title: `Missing Projections ⚠️`, body: adminSummary },
-                    data: { action: "missing_projection_admin" }
+                    notification: { title: `End of Day Summary 📊`, body: adminSummary },
+                    data: { action: "end_of_day_summary" }
                 }
             })
         }));
     });
 
-    // 8. Send custom push to Branch Managers
+    // 8. Send notifications to Branch Managers
     branches.forEach(branch => {
-        const isMissing = missingBranches.some(mb => mb.id === branch.id);
-        if (!isMissing || !branch.manager_email) return;
-
+        if (!branch.manager_email) return;
+        
         const user = users.find(u => u.email === branch.manager_email);
         if (!user) return;
 
         const managerTokens = tokensData.filter(t => t.user_id === user.id);
         if (managerTokens.length === 0) return;
 
-        const randomMsg = quirkyMessages[Math.floor(Math.random() * quirkyMessages.length)]
-          .replace('{branchName}', branch.name);
+        let title = '';
+        let body = '';
+
+        if (!branchHasItems.has(branch.id)) {
+            title = 'Missing Daily Entries! 🚨';
+            body = `Hey ${branch.name}, you haven't logged your daily entries today! Please update them now.`;
+        } else {
+            const amt = branchAchievements.get(branch.id) || 0;
+            title = 'Daily Target Update 🎯';
+            body = `Great job ${branch.name}! Today's achievement is ${formatCurrency(amt)}.`;
+        }
 
         managerTokens.forEach(t => {
             pushTasks.push(fetch(fcmUrl, {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${accessToken?.token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                message: {
-                  token: t.token,
-                  notification: { title: `Missing Projection! 📋`, body: randomMsg },
-                  data: { action: "missing_projection_branch", branchId: branch.id }
-                }
-              })
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${accessToken?.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: {
+                        token: t.token,
+                        notification: { title, body },
+                        data: { action: "end_of_day_branch", branchId: branch.id }
+                    }
+                })
             }));
         });
     });
 
     await Promise.all(pushTasks);
 
-    return new Response(JSON.stringify({ success: true, message: `Sent notifications to ${pushTasks.length} devices.` }), {
+    return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Sent notifications to ${pushTasks.length} devices.`,
+        missing: missingBranches.map(b => b.name),
+        achievements: activeBranches.map(b => ({ name: b.name, amount: branchAchievements.get(b.id) }))
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
