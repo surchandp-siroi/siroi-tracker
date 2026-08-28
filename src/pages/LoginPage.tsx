@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
 import { MapPin, Loader2, AlertTriangle, Activity, Server, ShieldCheck, Phone } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -29,6 +29,12 @@ const mapMarkers: Marker[] = [
 
 export default function LoginPage() {
   const routerLocation = useLocation();
+
+  // Strict Guard: Auto-redirect direct visits to /login back to Home Page '/' if not coming from Home Page email verification
+  if (!Capacitor.isNativePlatform() && !routerLocation.state?.email) {
+    return <Navigate to="/" replace />;
+  }
+
   const [error, setError] = useState('');
   const [email, setEmail] = useState(routerLocation.state?.email || '');
   const [password, setPassword] = useState('');
@@ -45,14 +51,6 @@ export default function LoginPage() {
   const { login, requestOtpLogin, verifyOtpLogin, isLoading } = useAuthStore();
   const { branches } = useDataStore();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Prevent direct access to /login without an email (e.g. typing URL directly)
-    // As requested, only enforce this bounce-back on Web/Desktop users.
-    if (!Capacitor.isNativePlatform() && !routerLocation.state?.email) {
-      navigate('/', { replace: true });
-    }
-  }, [routerLocation.state, navigate]);
 
   const [wittyMessage, setWittyMessage] = useState<string | null>(null);
 
