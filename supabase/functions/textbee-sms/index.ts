@@ -45,14 +45,45 @@ serve(async (req) => {
       });
     }
 
+    const phone = user.phone.startsWith('+') ? user.phone : `+${user.phone}`;
+    const rawNumber = phone.replace(/\D/g, '');
+    const isWhatsApp = payload.channel === 'whatsapp' || payload.sms?.channel === 'whatsapp' || payload.traits?.channel === 'whatsapp';
+
+    if (isWhatsApp) {
+      console.log(`Routing OTP for ${phone} via WhatsApp (Evolution API)...`);
+      const evoDomain = Deno.env.get('EVOLUTION_API_URL') || 'https://evolution-api-production-a510.up.railway.app';
+      const evoKey = Deno.env.get('EVOLUTION_API_KEY') || 'SiroiSecret@2026';
+      const evoInstance = Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'siroi-otp';
+
+      const evoRes = await fetch(`${evoDomain}/message/sendText/${evoInstance}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evoKey
+        },
+        body: JSON.stringify({
+          number: rawNumber,
+          text: `*Siroi Financial Consultancy*\n\nHey, *${sms.otp}* is your Siroi passkey.\n\n_Valid for 10 minutes. Do not share this code._`
+        })
+      });
+
+      if (evoRes.ok) {
+        console.log(`Successfully dispatched WhatsApp OTP via Evolution API to ${phone}`);
+        return new Response(JSON.stringify({ success: true, channel: 'whatsapp' }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        console.error("Evolution API failed, falling back to SMS:", await evoRes.text());
+      }
+    }
+
+    // Default or Fallback: Android SMS Gateway (+918822337819)
+    console.log(`Routing OTP for ${phone} via Android SMS Gateway (+918822337819)...`);
     const username = Deno.env.get('SMS_GATEWAY_USERNAME') || 'SKX1FL';
     const password = Deno.env.get('SMS_GATEWAY_PASSWORD') || 'ldqteztgfwtdtf';
     const basicAuth = btoa(`${username}:${password}`);
-
-    const phone = user.phone.startsWith('+') ? user.phone : `+${user.phone}`;
     const message = `Hey, ${sms.otp} is your Siroi passkey.\n\nFA+9qCX9VSu`;
-
-    console.log(`Routing OTP for ${phone} via Android SMS Gateway (+918822337819)...`);
 
     const res = await fetch('https://api.sms-gate.app/3rdparty/v1/message', {
       method: 'POST',
@@ -77,7 +108,7 @@ serve(async (req) => {
 
     console.log(`Successfully dispatched SMS via Android Gateway to ${phone}`);
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, channel: 'sms' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

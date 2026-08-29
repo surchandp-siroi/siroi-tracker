@@ -189,7 +189,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  requestOtpLogin: async (rawEmail, location, phone) => {
+  requestOtpLogin: async (rawEmail, location, phone, channel = 'whatsapp') => {
     set({ isLoading: true });
     try {
       const email = rawEmail.trim().toLowerCase();
@@ -215,7 +215,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (phone) {
         signInOptions = {
           phone: phone.replace(/\s+/g, ''), // Ensure no spaces
-          options: { channel: 'sms' }
+          options: { channel: channel || 'whatsapp' }
         };
       }
 

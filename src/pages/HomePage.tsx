@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { 
   ArrowRight, ShieldCheck, Shield, AlertTriangle, Wallet, Plus, 
   TrendingUp, Activity, Users, BarChart3, PieChart, ArrowUpRight,
-  Clock, CheckCircle2, Building2, Star, Key, Phone
+  Clock, CheckCircle2, Building2, Star, Key, Phone, MessageSquare
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { Capacitor } from '@capacitor/core';
@@ -23,15 +23,26 @@ const maskPhoneNumber = (phone: string) => {
 
 const AUTHORIZED_EMAILS = [
   // Admins
-  'executive@siroiforex.com',
-  'surchanddsingh@siroiforex.com',
   'tomas@siroiforex.com',
+  'surchanddsingh@siroiforex.com',
   'sharjuthoudam@siroiforex.com',
-  // Branch Managers
+  'executive@siroiforex.com',
+  
+  // Branch Managers (for Web redirect)
   'mis.ghy@siroiforex.com',
   'mis.manipur@siroiforex.com',
+  'mis.meghalaya@siroiforex.com',
+  'mis.mizonaga@siroiforex.com',
+  'mis.tripura@siroiforex.com',
+  'mis.arunachal@siroiforex.com',
+  'mis.dharmanagar@siroiforex.com',
+  'mis.dimapur@siroiforex.com',
+  'mis.aizawl@siroiforex.com',
+  'mis.guwahati@siroiforex.com',
+  'mis.agartala@siroiforex.com',
+  'mis.imphal@siroiforex.com',
   'mis.itanagar@siroiforex.com',
-  'mis.mizonaga@siroiforex.com'
+  'mis.shillong@siroiforex.com'
 ];
 
 const contentSlides = [
@@ -63,6 +74,7 @@ export default function HomePage() {
   const [showPhoneSelector, setShowPhoneSelector] = useState(false);
   const [availablePhones, setAvailablePhones] = useState<string[]>([]);
   const [selectedPhone, setSelectedPhone] = useState('');
+  const [deliveryChannel, setDeliveryChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [timeLeft, setTimeLeft] = useState(60);
@@ -183,7 +195,7 @@ export default function HomePage() {
            return;
         } else if (showPhoneSelector && !otpSent) {
            // Step 2: Request OTP
-           await requestOtpLogin(typedEmail, 'HO', selectedPhone);
+           await requestOtpLogin(typedEmail, 'HO', selectedPhone, deliveryChannel);
            setOtpSent(true);
            setTimeLeft(60);
            setIsLoading(false);
@@ -226,7 +238,7 @@ export default function HomePage() {
     if (timeLeft > 0 || !email) return;
     try {
       setIsLoading(true);
-      await requestOtpLogin(email.toLowerCase().trim(), 'HO', selectedPhone);
+      await requestOtpLogin(email.toLowerCase().trim(), 'HO', selectedPhone, deliveryChannel);
       setTimeLeft(60);
     } catch (err: any) {
       setError(err.message || 'Failed to resend OTP.');
@@ -623,10 +635,40 @@ export default function HomePage() {
                 {isNative && (
                   <div 
                       className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                          showPhoneSelector && !otpSent ? 'max-h-[300px] opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                          showPhoneSelector && !otpSent ? 'max-h-[380px] opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
                       }`}
                   >
                       <div className="flex flex-col gap-2">
+                        {/* Channel selector */}
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <button
+                            type="button"
+                            onClick={() => setDeliveryChannel('whatsapp')}
+                            disabled={isLoading}
+                            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                              deliveryChannel === 'whatsapp'
+                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                            }`}
+                          >
+                            <MessageSquare className="w-4 h-4 text-emerald-500" />
+                            WhatsApp
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeliveryChannel('sms')}
+                            disabled={isLoading}
+                            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                              deliveryChannel === 'sms'
+                                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                            }`}
+                          >
+                            <Phone className="w-4 h-4 text-indigo-500" />
+                            SMS
+                          </button>
+                        </div>
+
                         {availablePhones.map((phone) => (
                            <button
                              type="button"

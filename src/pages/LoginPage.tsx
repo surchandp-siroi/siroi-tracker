@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
-import { MapPin, Loader2, AlertTriangle, Activity, Server, ShieldCheck, Phone } from 'lucide-react';
+import { MapPin, Loader2, AlertTriangle, Activity, Server, ShieldCheck, Phone, MessageSquare } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { DottedMap } from "@/components/magicui/dotted-map";
 import type { Marker } from "@/components/magicui/dotted-map";
@@ -24,6 +24,11 @@ const mapMarkers: Marker[] = [
     lng: 91.7362,
     size: 1.2,
     pulse: true,
+  },
+  {
+    lat: 24.8170,
+    lng: 93.9368,
+    size: 1.2,
   }
 ];
 
@@ -43,6 +48,7 @@ export default function LoginPage() {
   const [location, setLocation] = useState(initialBranches[0]?.name || 'HO');
   const [locationStatus, setLocationStatus] = useState<string>('');
   const [loginMode, setLoginMode] = useState<'password' | 'otp'>('otp');
+  const [deliveryChannel, setDeliveryChannel] = useState<'whatsapp' | 'sms'>('whatsapp');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [selectedPhone, setSelectedPhone] = useState<string>('');
@@ -167,7 +173,7 @@ export default function LoginPage() {
       } else {
          if (!otpSent) {
             setLocationStatus('Sending OTP...');
-            await requestOtpLogin(effectiveLoginEmail, loginLocation, isSmsUser ? selectedPhone : undefined);
+            await requestOtpLogin(effectiveLoginEmail, loginLocation, isSmsUser ? selectedPhone : undefined, deliveryChannel);
             setOtpSent(true);
             setLocationStatus('');
             return; // Wait for user to input OTP
@@ -207,7 +213,7 @@ export default function LoginPage() {
         setLocationStatus('Resending OTP...');
         const isSpecialAccount = ['executive@siroiforex.com', 'surchanddsingh@siroiforex.com', 'tomas@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveLoginEmail);
         const loginLocation = isSpecialAccount ? 'HO' : location;
-        await requestOtpLogin(effectiveLoginEmail, loginLocation, isSmsUser ? selectedPhone : undefined);
+        await requestOtpLogin(effectiveLoginEmail, loginLocation, isSmsUser ? selectedPhone : undefined, deliveryChannel);
         setTimeLeft(60);
         setLocationStatus('OTP Resent');
         setTimeout(() => setLocationStatus(''), 2000);
@@ -351,6 +357,36 @@ export default function LoginPage() {
 
                  {isSmsUser && !otpSent && (
                    <div className="mb-5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Delivery Channel</label>
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryChannel('whatsapp')}
+                          disabled={isLoading}
+                          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                            deliveryChannel === 'whatsapp'
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          }`}
+                        >
+                          <MessageSquare className="w-4 h-4 text-emerald-500" />
+                          WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryChannel('sms')}
+                          disabled={isLoading}
+                          className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                            deliveryChannel === 'sms'
+                              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                              : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          }`}
+                        >
+                          <Phone className="w-4 h-4 text-indigo-500" />
+                          SMS
+                        </button>
+                      </div>
+
                       <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 block">Select Device for OTP</label>
                       <div className="flex flex-col gap-2.5">
                         {availablePhones.map((phone) => (
