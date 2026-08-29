@@ -45,41 +45,37 @@ serve(async (req) => {
       });
     }
 
-    if (!TEXTBEE_API_KEY) {
-      console.error("Missing TEXTBEE_API_KEY in environment variables.");
-      return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const username = Deno.env.get('SMS_GATEWAY_USERNAME') || 'SKX1FL';
+    const password = Deno.env.get('SMS_GATEWAY_PASSWORD') || 'ldqteztgfwtdtf';
+    const basicAuth = btoa(`${username}:${password}`);
 
     const phone = user.phone.startsWith('+') ? user.phone : `+${user.phone}`;
     const message = `Hey, ${sms.otp} is your Siroi passkey.\n\nFA+9qCX9VSu`;
 
-    console.log(`Routing OTP for ${phone} via TextBee...`);
+    console.log(`Routing OTP for ${phone} via Android SMS Gateway (+918822337819)...`);
 
-    const res = await fetch('https://api.textbee.dev/api/v1/gateway/send-sms', {
+    const res = await fetch('https://api.sms-gate.app/3rdparty/v1/message', {
       method: 'POST',
       headers: {
-        'x-api-key': TEXTBEE_API_KEY,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${basicAuth}`
       },
       body: JSON.stringify({
-        recipients: [phone],
-        message: message
+        message: message,
+        phoneNumbers: [phone]
       })
     });
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error("TextBee API Error:", errorText);
-      return new Response(JSON.stringify({ error: 'Failed to route SMS via TextBee' }), {
+      console.error("SMS Gateway API Error:", errorText);
+      return new Response(JSON.stringify({ error: 'Failed to route SMS via Android Gateway' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`Successfully dispatched SMS via TextBee to ${phone}`);
+    console.log(`Successfully dispatched SMS via Android Gateway to ${phone}`);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
