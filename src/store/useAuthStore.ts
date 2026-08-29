@@ -103,7 +103,7 @@ interface AuthState {
   isLoading: boolean;
   isInitialized: boolean;
   login: (email: string, password: string, location: string) => Promise<void>;
-  requestOtpLogin: (email: string, location: string, phone?: string) => Promise<void>;
+  requestOtpLogin: (email: string, location: string, phone?: string, channel?: 'whatsapp' | 'sms') => Promise<void>;
   verifyOtpLogin: (email: string, otp: string, location: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   initAuth: () => void;
