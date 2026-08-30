@@ -469,7 +469,7 @@ export default function LoginPage() {
                                      <span className="absolute text-[8px] font-bold text-slate-600 dark:text-slate-400">{timeLeft}</span>
                                   </div>
                                   <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                                     {timeLeft > 0 ? 'Valid for 60s' : 'OTP Expired'}
+                                     {timeLeft > 0 ? `Resend in ${timeLeft}s` : 'Resend available'}
                                   </span>
                                 </div>
                                 <button
