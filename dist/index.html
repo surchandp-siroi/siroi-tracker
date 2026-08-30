@@ -10,7 +10,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./assets/main-xGXzRaCF.js"></script>
+    <script>
+      (function() {
+        if (typeof window !== 'undefined' && window.location.pathname.length > 1 && window.location.pathname.endsWith('/')) {
+          var cleanPath = window.location.pathname.replace(/\/+$/, '') + window.location.search + window.location.hash;
+          window.location.replace(cleanPath);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/main-CG2E68r6.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/main-CQ_hE3xf.css">
   </head>
   <body class="font-sans antialiased min-h-screen flex flex-col">

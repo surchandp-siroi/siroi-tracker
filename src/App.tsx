@@ -44,6 +44,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/login/" element={<Navigate to="/" replace />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/customer-data" element={<CustomerDataEntryPage />} />
           <Route path="/entry" element={<EntryPage />} />
