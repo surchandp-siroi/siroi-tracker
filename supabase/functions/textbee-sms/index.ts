@@ -91,7 +91,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           number: rawNumber,
-          text: `*Siroi Financial Consultancy*\n\nHey, *${sms.otp}* is your Siroi passkey.\n\n_Valid for 10 minutes. Do not share this code._`
+          text: `✨ *Siroi Financial Consultancy* 📊\n\n🔐 Your login passkey is: *${sms.otp}*\n\n⏳ _Valid for 10 minutes._\n🛡️ _For your security, please do not share this OTP with anyone._`
         })
       });
 
