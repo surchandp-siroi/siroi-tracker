@@ -3,6 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui';
 import { Search, UsersRound, Phone, MapPin, User, Calendar, Mail, Building } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
+import { useAuthStore } from '@/store/useAuthStore';
+import { EditCustomerDialog } from '@/components/EditCustomerDialog';
+import { Edit } from 'lucide-react';
 
 type CustomerData = {
   id: string;
@@ -21,6 +24,9 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerData | null>(null);
+  const currentUser = useAuthStore(state => state.user);
+  const isAdmin = currentUser?.role === 'admin';
 
   useEffect(() => {
     fetchCustomers();
@@ -122,7 +128,18 @@ export default function CustomersPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Entry By</span>
+                    <div className="flex items-center gap-2 justify-end mb-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Entry By</span>
+                      {isAdmin && (
+                        <button 
+                          onClick={() => setEditingCustomer(customer)}
+                          className="text-slate-400 hover:text-indigo-600 transition-colors p-1 bg-slate-50 hover:bg-indigo-50 rounded"
+                          title="Edit Customer"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                     <div className="flex items-center justify-end gap-1 text-xs font-medium text-slate-700">
                       <User className="w-3 h-3" />
                       {customer.entry_person_name || 'Unknown'}
@@ -158,6 +175,16 @@ export default function CustomersPage() {
         )}
       </div>
 
+      {editingCustomer && (
+        <EditCustomerDialog 
+          customer={editingCustomer} 
+          onClose={() => setEditingCustomer(null)}
+          onSuccess={() => {
+            setEditingCustomer(null);
+            fetchCustomers();
+          }}
+        />
+      )}
     </div>
   );
 }

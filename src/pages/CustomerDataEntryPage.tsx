@@ -25,6 +25,10 @@ export default function CustomerDataEntryPage() {
     const [district, setDistrict] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [emailId, setEmailId] = useState('');
+    const [incomeType, setIncomeType] = useState('');
+    const [yearlyIncomeRange, setYearlyIncomeRange] = useState('');
+    const [birthday, setBirthday] = useState('');
+    const [anniversary, setAnniversary] = useState('');
     const [entryPersonName, setEntryPersonName] = useState('');
     const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
     const [entryLocation, setEntryLocation] = useState(branches[0]?.name || 'HO');
@@ -89,24 +93,9 @@ export default function CustomerDataEntryPage() {
             }
             
             if (data) {
-                if (data.entry_location !== entryLocation) {
-                    setError(`This customer entry has already happened at ${data.entry_location}.`);
-                    setIsLoading(false);
-                    return;
-                }
-                
-                // Exists and location matches, auto-populate
-                setCustomerName(data.customer_name || '');
-                setAadharNumber(data.aadhar_number || '');
-                setAssociationDate(data.association_date || '');
-                setAddress(data.address || '');
-                setPincode(data.pincode || '');
-                setCity(data.city || '');
-                setDistrict(data.district || '');
-                setPhoneNumber(data.phone_number || '');
-                setEmailId(data.email_id || '');
-                setEntryPersonName(data.entry_person_name || '');
-                setExistingRecord(data);
+                setError(`This PAN number already exists in the system (entered at ${data.entry_location || 'another location'}).`);
+                setIsLoading(false);
+                return;
             } else {
                 setExistingRecord(null);
             }
@@ -138,6 +127,10 @@ export default function CustomerDataEntryPage() {
                     district: district,
                     phone_number: phoneNumber,
                     email_id: emailId,
+                    income_type: incomeType,
+                    yearly_income_range: yearlyIncomeRange,
+                    birthday: birthday,
+                    anniversary: anniversary,
                     entry_person_name: entryPersonName,
                     entry_location: entryLocation
                 }]);
@@ -158,6 +151,10 @@ export default function CustomerDataEntryPage() {
                 setDistrict('');
                 setPhoneNumber('');
                 setEmailId('');
+                setIncomeType('');
+                setYearlyIncomeRange('');
+                setBirthday('');
+                setAnniversary('');
                 setEntryPersonName('');
                 setExistingRecord(null);
             }, 3000);
@@ -302,6 +299,52 @@ export default function CustomerDataEntryPage() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email ID</label>
                                     <Input type="email" value={emailId} onChange={(e) => setEmailId(e.target.value)} placeholder="customer@email.com" className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Income Type</label>
+                                        <select value={incomeType} onChange={(e) => setIncomeType(e.target.value)} className="w-full h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                                            <option value="">Select Type...</option>
+                                            <option value="Salary">Salary</option>
+                                            <option value="Self-employed">Self-employed</option>
+                                            <option value="SEP - Business">SEP - Business</option>
+                                            <option value="SEP - Private Salary">SEP - Private Salary</option>
+                                            <option value="SEP - Govt Salary">SEP - Govt Salary</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Yearly Income Range (INR)</label>
+                                        <select value={yearlyIncomeRange} onChange={(e) => setYearlyIncomeRange(e.target.value)} className="w-full h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                                            <option value="">Select Range...</option>
+                                            <option value="Below 2.5L">Below 2.5L</option>
+                                            <option value="2.5L - 5L">2.5L - 5L</option>
+                                            <option value="5L - 10L">5L - 10L</option>
+                                            <option value="10L - 20L">10L - 20L</option>
+                                            <option value="Above 20L">Above 20L</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <DatePicker
+                                          label="Birthday"
+                                          value={birthday}
+                                          onChange={(_, dateStr) => setBirthday(dateStr)}
+                                          captionLayout="dropdown"
+                                          buttonClassName="h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <DatePicker
+                                          label="Anniversary"
+                                          value={anniversary}
+                                          onChange={(_, dateStr) => setAnniversary(dateStr)}
+                                          captionLayout="dropdown"
+                                          buttonClassName="h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
