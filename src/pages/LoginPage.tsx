@@ -34,14 +34,15 @@ const mapMarkers: Marker[] = [
 
 export default function LoginPage() {
   const routerLocation = useLocation();
+  const verifiedEmail = routerLocation.state?.email || (typeof window !== 'undefined' ? sessionStorage.getItem('siroi_auth_email') : null);
 
   // Strict Guard: Auto-redirect direct visits to /login back to Home Page '/' if not coming from Home Page email verification
-  if (!Capacitor.isNativePlatform() && !routerLocation.state?.email) {
+  if (!Capacitor.isNativePlatform() && !verifiedEmail) {
     return <Navigate to="/" replace />;
   }
 
   const [error, setError] = useState('');
-  const [email, setEmail] = useState(routerLocation.state?.email || '');
+  const [email, setEmail] = useState(verifiedEmail || '');
   const [password, setPassword] = useState('');
   
   const initialBranches = useDataStore.getState().branches;

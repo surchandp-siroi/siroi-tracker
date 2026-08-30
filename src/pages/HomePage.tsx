@@ -218,14 +218,17 @@ export default function HomePage() {
       } else {
         // Web Flow - Redirect to /login
         setTimeout(() => {
-          const isAuthorized = AUTHORIZED_EMAILS.includes(typedEmail);
+          const isAuthorized = AUTHORIZED_EMAILS.includes(typedEmail) || (MOBILE_SMS_USERS[typedEmail] && MOBILE_SMS_USERS[typedEmail].length > 0);
           if (isAuthorized) {
+            try {
+              sessionStorage.setItem('siroi_auth_email', typedEmail);
+            } catch {}
             navigate('/login', { state: { email: typedEmail } });
           } else {
             setError('You are not an Authorised User');
             setIsLoading(false);
           }
-        }, 600);
+        }, 400);
       }
     } catch (err: any) {
        console.error("Login Error:", err);
