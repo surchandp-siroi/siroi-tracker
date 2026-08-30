@@ -213,8 +213,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       };
 
       if (phone) {
+        const cleanPhone = phone.replace(/\s+/g, '');
+        const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+${cleanPhone}`;
+        
+        try {
+          await supabase.from('otp_preferences').upsert({
+            phone: formattedPhone,
+            channel: channel || 'whatsapp',
+            updated_at: new Date().toISOString()
+          });
+        } catch (prefErr) {
+          console.warn("[Auth] Failed to record otp preference:", prefErr);
+        }
+
         signInOptions = {
-          phone: phone.replace(/\s+/g, ''), // Ensure no spaces
+          phone: cleanPhone,
           options: { channel: channel || 'whatsapp' }
         };
       }
