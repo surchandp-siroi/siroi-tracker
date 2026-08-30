@@ -94,6 +94,7 @@ export function DatePicker({
   const content = (
     <PopoverTrigger isOpen={open} onOpenChange={setOpen} className="w-full">
       <Button
+        type="button"
         variant="outline"
         id={id}
         disabled={disabled}

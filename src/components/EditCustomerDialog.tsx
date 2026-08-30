@@ -149,13 +149,31 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <DatePicker label="Assoc. Date" value={associationDate} onChange={(_, d) => setAssociationDate(d)} buttonClassName="h-10" />
+                <DatePicker 
+                  label="Assoc. Date" 
+                  value={associationDate} 
+                  onChange={(_, d) => setAssociationDate(d)} 
+                  captionLayout="dropdown"
+                  buttonClassName="h-10 bg-white border-slate-200 text-slate-900 rounded-lg shadow-sm" 
+                />
               </div>
               <div className="space-y-1.5">
-                <DatePicker label="Birthday" value={birthday} onChange={(_, d) => setBirthday(d)} buttonClassName="h-10" />
+                <DatePicker 
+                  label="Birthday" 
+                  value={birthday} 
+                  onChange={(_, d) => setBirthday(d)} 
+                  captionLayout="dropdown"
+                  buttonClassName="h-10 bg-white border-slate-200 text-slate-900 rounded-lg shadow-sm" 
+                />
               </div>
               <div className="space-y-1.5">
-                <DatePicker label="Anniversary" value={anniversary} onChange={(_, d) => setAnniversary(d)} buttonClassName="h-10" />
+                <DatePicker 
+                  label="Anniversary" 
+                  value={anniversary} 
+                  onChange={(_, d) => setAnniversary(d)} 
+                  captionLayout="dropdown"
+                  buttonClassName="h-10 bg-white border-slate-200 text-slate-900 rounded-lg shadow-sm" 
+                />
               </div>
             </div>
           </form>

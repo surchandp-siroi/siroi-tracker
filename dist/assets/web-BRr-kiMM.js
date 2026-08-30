@@ -1,1 +1,0 @@
-import{W as e}from"./main-s2FgmTzK.js";class m extends e{async requestPhoneNumber(){throw this.unimplemented("Not implemented on web.")}async retrieveSms(){throw this.unimplemented("Not implemented on web.")}}export{m as AndroidSmsRetrieverWeb};
