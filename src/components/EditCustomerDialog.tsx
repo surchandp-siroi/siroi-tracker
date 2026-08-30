@@ -162,7 +162,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
         </div>
         
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isLoading}>Cancel</Button>
           <Button type="submit" form="edit-customer-form" disabled={isLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Save Changes
