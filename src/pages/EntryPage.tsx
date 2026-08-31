@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -2121,68 +2121,120 @@ export default function DataEntryTerminal() {
             </div>
             
             {items.length > 0 && (
-                <div className="border-t border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-black/40 p-4 shrink-0 flex justify-end">
-                    <div className="flex gap-4 items-center">
-                        <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Total Login Amount:</span>
-                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                            ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
-                        </span>
+                <div className="border-t border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/60 px-4 py-2.5 shrink-0 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
+                        <span>Showing {filteredItemsWithIndex.length} of {items.length} records</span>
+                    </div>
+                    <div className="flex gap-6 items-center">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Login:</span>
+                            <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                                ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Disbursed:</span>
+                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                ₹ {items.reduce((s, i) => s + (Number(i.disbursedAmount) || 0), 0).toLocaleString('en-IN')}
+                            </span>
+                        </div>
                     </div>
                 </div>
             )}
         </div>
 
-        {/* Sticky Bottom Actions */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 z-30 pointer-events-none">
-            <div className="max-w-7xl mx-auto flex justify-end items-center gap-4 pointer-events-auto bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-3 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl">
-                <div className="flex-1 max-w-[400px]">
-                    {error && <div className="text-xs text-red-500 font-bold bg-white dark:bg-slate-900 border border-red-500/20 px-4 py-2 rounded shadow-sm">{error}</div>}
-                    {success && <div className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-white dark:bg-slate-900 border border-emerald-500/20 px-4 py-2 rounded shadow-sm">{success}</div>}
+        {/* Sticky Bottom Control Dock */}
+        <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 z-30 pointer-events-none">
+            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-3 md:px-5 md:py-3 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+                
+                {/* Left Side: Context & Total Summary */}
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                    <div className="flex items-center gap-2">
+                        <div className="px-3.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/70 flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Total Login:
+                            </span>
+                            <span className="font-mono font-bold text-sm md:text-base text-indigo-600 dark:text-indigo-400">
+                                ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
+                            </span>
+                        </div>
+
+                        <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden md:inline-block">
+                            ({items.length} {items.length === 1 ? 'row' : 'rows'})
+                        </span>
+                    </div>
+
+                    {/* Messages (Error / Success) */}
+                    {error && (
+                        <div className="text-xs text-rose-600 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate max-w-[180px] md:max-w-xs">{error}</span>
+                        </div>
+                    )}
+                    {success && (
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate max-w-[180px] md:max-w-xs">{success}</span>
+                        </div>
+                    )}
                 </div>
                 
-                {hasExistingEntry && ((allowDeletion || isExecutive)) && (
-                     <Button 
-                        variant="danger" 
-                        onClick={() => { 
-                          setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
-                          setShowDeleteModal(true); 
-                        }} 
-                        disabled={isDeleting}
-                        className="shadow-sm h-[38px] px-6 font-bold"
-                     >
-                         <Trash2 className="w-4 h-4 mr-2" />
-                         Delete
-                     </Button>
-                )}
-                
-                {hasExistingEntry && entryMode === 'monthly' && (user?.role === 'admin' || isBackdoor) && (
-                      <Button variant="secondary" onClick={() => setIsTransferModalOpen(true)} className="h-[38px] px-6 font-bold shadow-sm bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700 hover:bg-blue-100 hover:border-blue-400 transition-colors">
-                          Transfer to Daily
-                      </Button>
-                 )}
-                
-                {canModify && (
-                     <Button variant="secondary" onClick={() => {
-                         if (items.length === 0) {
-                             setShowContextModal(true);
-                         } else {
-                             handleAddItem();
-                         }
-                     }} className="h-[38px] px-6 font-bold shadow-sm bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 transition-colors">
-                         + Manual Row
-                     </Button>
-                )}
-                
-                {canModify && (
-                    <Button 
-                        disabled={isSaving || items.length === 0} 
-                        onClick={handleSubmit} 
-                        className="h-[38px] px-8 font-bold bg-[#6b21a8] hover:bg-[#581c87] text-white shadow-md transition-all active:scale-95"
-                    >
-                        {isSaving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                        {hasExistingEntry ? 'Update Record' : 'Permanently Lodge Record'}
-                    </Button>
-                )}
+                {/* Right Side: Cohesive Button Cluster */}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                    {hasExistingEntry && ((allowDeletion || isExecutive)) && (
+                         <button 
+                            type="button"
+                            onClick={() => { 
+                              setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
+                              setShowDeleteModal(true); 
+                            }} 
+                            disabled={isDeleting}
+                            className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5"
+                         >
+                             <Trash2 className="w-3.5 h-3.5" />
+                             <span>Delete</span>
+                         </button>
+                    )}
+                    
+                    {hasExistingEntry && entryMode === 'monthly' && (user?.role === 'admin' || isBackdoor) && (
+                          <button 
+                            type="button"
+                            onClick={() => setIsTransferModalOpen(true)} 
+                            className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/50 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
+                          >
+                              Transfer to Daily
+                          </button>
+                     )}
+                    
+                    {canModify && (
+                         <button 
+                            type="button"
+                            onClick={() => { 
+                              if (items.length === 0) {
+                                  setShowContextModal(true);
+                              } else {
+                                  handleAddItem();
+                              }
+                            }} 
+                            className="h-[38px] px-4 md:px-5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
+                         >
+                             <Plus className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                             <span>Manual Row</span>
+                         </button>
+                    )}
+                    
+                    {canModify && (
+                        <button 
+                            type="button"
+                            disabled={isSaving || items.length === 0} 
+                            onClick={handleSubmit} 
+                            className="h-[38px] px-6 md:px-7 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 shadow-md shadow-indigo-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
+                            <span>{hasExistingEntry ? 'Update Record' : 'Lodge Record'}</span>
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
 
