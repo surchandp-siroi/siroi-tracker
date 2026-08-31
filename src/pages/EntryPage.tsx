@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -242,6 +242,46 @@ export default function DataEntryTerminal() {
   const [fetchError, setFetchError] = useState(false);
   
   const [metricCategory, setMetricCategory] = useState<string>('Loan');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const filteredItemsWithIndex = useMemo(() => {
+    return items.map((item, originalIndex) => ({ item, originalIndex })).filter(({ item }) => {
+      // 1. Status Filter
+      if (statusFilter !== 'ALL') {
+        if (statusFilter === 'Disbursed') {
+          if (item.fileStatus !== 'Disbursed' && item.fileStatus !== 'Issued' && item.fileStatus !== 'POLICY ISSUED') return false;
+        } else if (item.fileStatus !== statusFilter) {
+          return false;
+        }
+      }
+      
+      // 2. Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchName = item.customerName?.toLowerCase().includes(q);
+        const matchTrack = item.trackingNumber?.toLowerCase().includes(q);
+        const matchRM = item.relationshipManagerName?.toLowerCase().includes(q);
+        const matchChannel = item.channel?.toLowerCase().includes(q);
+        const matchProduct = item.product?.toLowerCase().includes(q);
+        const matchStaff = item.staffName?.toLowerCase().includes(q);
+        const matchManager = item.managerName?.toLowerCase().includes(q);
+        const matchConsultant = item.consultantName?.toLowerCase().includes(q);
+        const matchPhone = item.phoneNumber?.toLowerCase().includes(q);
+        const matchEmail = item.emailId?.toLowerCase().includes(q);
+        const matchAddress = item.customerAddress?.toLowerCase().includes(q);
+        const matchFirm = item.firmName?.toLowerCase().includes(q);
+        const matchStatus = item.fileStatus?.toLowerCase().includes(q);
+        const matchAmount = item.amount?.toString().includes(q);
+        const matchSanctioned = item.sanctionedAmount?.toString().includes(q);
+        const matchDisbursed = item.disbursedAmount?.toString().includes(q);
+        
+        return !!(matchName || matchTrack || matchRM || matchChannel || matchProduct || matchStaff || matchManager || matchConsultant || matchPhone || matchEmail || matchAddress || matchFirm || matchStatus || matchAmount || matchSanctioned || matchDisbursed);
+      }
+      
+      return true;
+    });
+  }, [items, searchQuery, statusFilter]);
 
   // 60-day deletion window from entry creation date
   const daysSinceCreation = entryCreatedAt
@@ -580,7 +620,7 @@ export default function DataEntryTerminal() {
             - "firmName": string
             - "amount": number. (This is Login Amount) If missing, return 0.
             - "projectionAmt": number. If missing, return 0. Do NOT duplicate 'amount'.
-            - "fileStatus": string. If Insurance: "Issued" or "Not Issued". If Loan/Other: "Login", "Underwriting", "Processing", "Sanctioned", "Disbursed", or "Rejected".
+            - "fileStatus": string. If Insurance: "Issued" or "Not Issued". If Loan/Other: "Login", "Underwriting", "Processing", "Sanctioned", "Disbursed", "Customer Reject", or "Rejected".
             - "sanctionedAmount": number
             - "disbursedAmount": number.
             - "disbursedDate": string
@@ -1192,7 +1232,8 @@ export default function DataEntryTerminal() {
           case 'Processing': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
           case 'Underwriting': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
           case 'Sanctioned': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
-          case 'Disbursed': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30';
+          case 'Disbursed': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30 font-semibold';
+          case 'Customer Reject': return 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30 font-semibold';
           case 'Rejected': return 'bg-rose-100 dark:bg-red-500/20 text-rose-700 dark:text-red-400 border-rose-200 dark:border-red-500/30';
           case 'Issued': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30';
           case 'Not Issued': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
@@ -1470,16 +1511,99 @@ export default function DataEntryTerminal() {
 
         {/* Data Grid Section */}
         <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-sm">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 shrink-0">
-               <div className="flex items-center gap-3">
-                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300">
-                       Line Items ({items.length})
-                   </h3>
+            {/* Toolbar Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3.5 gap-3 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
+               <div className="flex flex-wrap items-center gap-2.5">
+                   <div className="flex items-center gap-2">
+                       <Layers className="w-4 h-4 text-indigo-500" />
+                       <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                           Line Items
+                       </h3>
+                       <span className="px-2 py-0.5 text-[11px] font-mono font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60">
+                           {filteredItemsWithIndex.length}{filteredItemsWithIndex.length !== items.length ? ` of ${items.length}` : ''}
+                       </span>
+                   </div>
+                   
                    {hasExistingEntry && (
-                       <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-500/30">
+                       <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-500/30 flex items-center gap-1">
+                           <CheckCircle2 className="w-3 h-3" />
                            Locked & Processed
                        </span>
                    )}
+
+                   {/* Quick Status Filter Chips */}
+                   <div className="hidden sm:flex items-center gap-1 ml-2 pl-3 border-l border-slate-200 dark:border-slate-800">
+                      {[
+                        { id: 'ALL', label: 'All' },
+                        { id: 'Login', label: 'Login' },
+                        { id: 'Sanctioned', label: 'Sanctioned' },
+                        { id: 'Disbursed', label: 'Disbursed' },
+                        { id: 'Customer Reject', label: 'Cust Reject' },
+                        { id: 'Rejected', label: 'Bank Rejected' },
+                      ].map((chip) => {
+                         const count = chip.id === 'ALL' 
+                           ? items.length 
+                           : items.filter(i => chip.id === 'Disbursed' ? (i.fileStatus === 'Disbursed' || i.fileStatus === 'Issued' || i.fileStatus === 'POLICY ISSUED') : i.fileStatus === chip.id).length;
+                         if (count === 0 && chip.id !== 'ALL' && statusFilter !== chip.id) return null;
+                         
+                         const isActive = statusFilter === chip.id;
+                         return (
+                           <button
+                             type="button"
+                             key={chip.id}
+                             onClick={() => setStatusFilter(chip.id)}
+                             className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 ${
+                               isActive
+                                 ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 scale-[1.02]'
+                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                             }`}
+                           >
+                             <span>{chip.label}</span>
+                             <span className={`text-[9px] px-1 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>
+                               {count}
+                             </span>
+                           </button>
+                         );
+                      })}
+                   </div>
+               </div>
+
+               {/* Live Search Bar */}
+               <div className="flex items-center gap-2 w-full lg:w-auto">
+                   <div className="relative flex-1 lg:w-72">
+                       <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                       <Input
+                           value={searchQuery}
+                           onChange={(e) => setSearchQuery(e.target.value)}
+                           placeholder="Search customer, tracking #, RM..."
+                           className="h-[34px] pl-9 pr-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-indigo-500 font-medium placeholder:text-slate-400"
+                       />
+                       {searchQuery && (
+                           <button
+                               type="button"
+                               onClick={() => setSearchQuery('')}
+                               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                           >
+                               <X className="w-3 h-3" />
+                           </button>
+                       )}
+                   </div>
+                   
+                   {/* Mobile Dropdown Filter */}
+                   <div className="sm:hidden">
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="h-[34px] text-xs px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 outline-none font-bold"
+                      >
+                         <option value="ALL">All Status</option>
+                         <option value="Login">Login</option>
+                         <option value="Sanctioned">Sanctioned</option>
+                         <option value="Disbursed">Disbursed</option>
+                         <option value="Customer Reject">Customer Reject</option>
+                         <option value="Rejected">Rejected</option>
+                      </select>
+                   </div>
                </div>
             </div>
 
@@ -1515,27 +1639,34 @@ export default function DataEntryTerminal() {
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">23. Manager Name</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">24. Consultant Name</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">25. Consultant Email ID</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[120px] sticky right-0 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md z-20 shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l border-slate-200 dark:border-slate-800">Actions</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] sticky right-0 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md z-20 shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l border-slate-200 dark:border-slate-800">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {items.length === 0 ? (
+                            {filteredItemsWithIndex.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={26} className="p-0 border-0 h-0">
-                                        <div className="absolute inset-0 flex items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none" style={{ top: '40px' }}>
-                                            No items formulated for {dateStr}
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none gap-1.5" style={{ top: '50px' }}>
+                                            {items.length === 0 ? (
+                                                <span>No items formulated for {dateStr}</span>
+                                            ) : (
+                                                <>
+                                                    <span className="font-semibold text-slate-600 dark:text-slate-300">No matching line items found</span>
+                                                    <span className="text-[11px] text-slate-400">Clear search query or status filter to view all {items.length} items</span>
+                                                </>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ) : items.map((item, index) => (
-                                <TableRow key={index} className="hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border-b border-slate-900/5 dark:border-white/5">
+                            ) : filteredItemsWithIndex.map(({ item, originalIndex }) => (
+                                <TableRow key={originalIndex} className="hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border-b border-slate-900/5 dark:border-white/5">
                                     {/* 1. Staff Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         {branchStaff.length > 0 ? (
                                             <select
                                                 disabled={!canModify && !item.isManual}
                                                 value={item.staffName || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
+                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
                                                 className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
                                                     isFieldMissing(item, 'staffName')
                                                         ? 'border-red-500/50'
@@ -1555,7 +1686,7 @@ export default function DataEntryTerminal() {
                                                     isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'
                                                 }`}
                                                 value={item.staffName || ''}
-                                                onChange={(e) => handleUpdateItem(index, 'staffName', e.target.value)}
+                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
                                             />
                                         )}
                                     </TableCell>
@@ -1567,7 +1698,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
                                             value={item.amount === 0 ? '' : item.amount}
-                                            onValueChange={(values) => handleUpdateItem(index, 'amount', values.floatValue || 0)}
+                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'amount', values.floatValue || 0)}
                                             thousandSeparator=","
                                             thousandsGroupStyle="lakh"
                                         />
@@ -1586,7 +1717,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'category') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.category || 'Loan'}
-                                            onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'category', e.target.value)}
                                         >
                                             <option value="Loan">Loan</option>
                                             <option value="Insurance">Insurance</option>
@@ -1602,7 +1733,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'product') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.product || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'product', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'product', e.target.value)}
                                         >
                                             <option value="">Select...</option>
                                             {allowedProducts(item.category || 'Loan').map((p: any) => (
@@ -1619,7 +1750,7 @@ export default function DataEntryTerminal() {
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.relationshipManagerName || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'relationshipManagerName', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'relationshipManagerName', e.target.value)}
                                         />
                                     </TableCell>
 
@@ -1629,7 +1760,7 @@ export default function DataEntryTerminal() {
                                             disabled={(!canModify && !item.isManual) || item.category === 'Forex'}
                                             className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
                                             value={item.fileLogin || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'fileLogin', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'fileLogin', e.target.value)}
                                         >
                                             <option value="">Select...</option>
                                             {item.category === 'Insurance' || item.category === 'Forex' ? (
@@ -1656,7 +1787,7 @@ export default function DataEntryTerminal() {
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.trackingNumber || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'trackingNumber', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'trackingNumber', e.target.value)}
                                             placeholder={item.category !== 'Loan' && item.category !== 'Insurance' ? 'N/A' : 'Tracking #'}
                                         />
                                     </TableCell>
@@ -1667,7 +1798,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'channel') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.channel || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'channel', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'channel', e.target.value)}
                                         >
                                             <option value="">Select Channel...</option>
                                             {item.category === 'Insurance' ? (
@@ -1717,7 +1848,7 @@ export default function DataEntryTerminal() {
                                             type="text"
                                             className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
                                             value={item.customerName || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'customerName', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
                                         />
                                     </TableCell>
 
@@ -1727,7 +1858,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.customerDOB || ''}
-                                            onChange={(val: string) => handleUpdateItem(index, 'customerDOB', val)}
+                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'customerDOB', val)}
                                         />
                                     </TableCell>
 
@@ -1738,7 +1869,7 @@ export default function DataEntryTerminal() {
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.phoneNumber || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'phoneNumber', e.target.value.replace(/\D/g,''))}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'phoneNumber', e.target.value.replace(/\D/g,''))}
                                         />
                                     </TableCell>
 
@@ -1749,7 +1880,7 @@ export default function DataEntryTerminal() {
                                             type="email"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.emailId || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'emailId', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'emailId', e.target.value)}
                                         />
                                     </TableCell>
 
@@ -1760,7 +1891,7 @@ export default function DataEntryTerminal() {
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.customerAddress || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'customerAddress', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'customerAddress', e.target.value)}
                                         />
                                     </TableCell>
 
@@ -1771,7 +1902,7 @@ export default function DataEntryTerminal() {
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.firmName || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'firmName', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'firmName', e.target.value)}
                                         />
                                     </TableCell>
 
@@ -1781,7 +1912,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'} ${isFieldMissing(item, 'fileStatus') ? 'border-red-500/50 focus:border-red-500 bg-red-500/5' : ''}`}
                                             value={item.fileStatus || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'fileStatus', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'fileStatus', e.target.value)}
                                         >
                                             <option value="" className="bg-slate-800 text-white">Select...</option>
                                             {item.category === 'Insurance' ? (
@@ -1796,6 +1927,7 @@ export default function DataEntryTerminal() {
                                                     <option value="Underwriting" className="bg-slate-800 text-blue-400">Underwriting</option>
                                                     <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
                                                     <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
+                                                    <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
                                                     <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
                                                 </>
                                             ) : (
@@ -1804,6 +1936,7 @@ export default function DataEntryTerminal() {
                                                     <option value="Processing" className="bg-slate-800 text-blue-400">Processing</option>
                                                     <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
                                                     <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
+                                                    <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
                                                     <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
                                                 </>
                                             )}
@@ -1817,7 +1950,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.sanctionedAmount === 0 ? '' : item.sanctionedAmount}
-                                            onValueChange={(values) => handleUpdateItem(index, 'sanctionedAmount', values.floatValue || 0)}
+                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'sanctionedAmount', values.floatValue || 0)}
                                             thousandSeparator=","
                                             thousandsGroupStyle="lakh"
                                         />
@@ -1830,7 +1963,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.disbursedAmount === 0 ? '' : item.disbursedAmount}
-                                            onValueChange={(values) => handleUpdateItem(index, 'disbursedAmount', values.floatValue || 0)}
+                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'disbursedAmount', values.floatValue || 0)}
                                             thousandSeparator=","
                                             thousandsGroupStyle="lakh"
                                         />
@@ -1842,7 +1975,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.disbursedDate || ''}
-                                            onChange={(val: string) => handleUpdateItem(index, 'disbursedDate', val)}
+                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'disbursedDate', val)}
                                         />
                                     </TableCell>
 
@@ -1852,7 +1985,7 @@ export default function DataEntryTerminal() {
                                             disabled={!canModify && !item.isManual}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.emiDate || ''}
-                                            onChange={(val: string) => handleUpdateItem(index, 'emiDate', val)}
+                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'emiDate', val)}
                                         />
                                     </TableCell>
 
@@ -1864,7 +1997,7 @@ export default function DataEntryTerminal() {
                                             list="repayment-banks"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.repaymentBank || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'repaymentBank', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'repaymentBank', e.target.value)}
                                             placeholder="Enter or select..."
                                         />
                                         <datalist id="repayment-banks">
@@ -1893,7 +2026,7 @@ export default function DataEntryTerminal() {
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.managerName || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'managerName', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
                                         />
                                     </TableCell>
 
@@ -1904,12 +2037,12 @@ export default function DataEntryTerminal() {
                                             className="w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200"
                                             value={item.consultantName || ''}
                                             onChange={(e) => {
-                                                handleUpdateItem(index, 'consultantName', e.target.value);
+                                                handleUpdateItem(originalIndex, 'consultantName', e.target.value);
                                                 const consultant = consultants.find(c => c.name === e.target.value);
                                                 if (consultant) {
-                                                    handleUpdateItem(index, 'consultantEmail', consultant.email);
+                                                    handleUpdateItem(originalIndex, 'consultantEmail', consultant.email);
                                                 } else {
-                                                    handleUpdateItem(index, 'consultantEmail', '');
+                                                    handleUpdateItem(originalIndex, 'consultantEmail', '');
                                                 }
                                             }}
                                         >
@@ -1929,17 +2062,56 @@ export default function DataEntryTerminal() {
                                             type="email"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.consultantEmail || ''}
-                                            onChange={(e) => handleUpdateItem(index, 'consultantEmail', e.target.value)}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'consultantEmail', e.target.value)}
                                         />
                                     </TableCell>
 
-                                    {/* Remove Button */}
-                                    <TableCell className="py-2 px-2 align-top text-right sticky right-0 bg-white dark:bg-slate-900/90 backdrop-blur z-10 border-l border-slate-900/10 dark:border-white/10">
-                                        {canModify && (
-                                            <button onClick={() => handleRemoveItem(index)} className="mt-1 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors">
-                                                <X size={16} />
-                                            </button>
-                                        )}
+                                    {/* Actions & Quick Shortcuts */}
+                                    <TableCell className="py-2 px-3 align-middle sticky right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10 border-l border-slate-200 dark:border-white/10 shadow-[-5px_0_10px_rgba(0,0,0,0.03)]">
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && (
+                                                <button
+                                                    type="button"
+                                                    title="Quick Disburse: Mark as Disbursed and fill date"
+                                                    onClick={() => {
+                                                        handleUpdateItem(originalIndex, 'fileStatus', 'Disbursed');
+                                                        if (!item.disbursedAmount && item.amount) {
+                                                            handleUpdateItem(originalIndex, 'disbursedAmount', item.amount);
+                                                        }
+                                                        if (!item.disbursedDate) {
+                                                            handleUpdateItem(originalIndex, 'disbursedDate', dateStr);
+                                                        }
+                                                    }}
+                                                    className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
+                                                >
+                                                    <Check className="w-2.5 h-2.5" /> Disburse
+                                                </button>
+                                            )}
+
+                                            {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && (
+                                                <button
+                                                    type="button"
+                                                    title="Mark as Customer Reject"
+                                                    onClick={() => {
+                                                        handleUpdateItem(originalIndex, 'fileStatus', 'Customer Reject');
+                                                    }}
+                                                    className="px-2 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/50 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs hover:scale-[1.02]"
+                                                >
+                                                    Reject
+                                                </button>
+                                            )}
+
+                                            {canModify && (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleRemoveItem(originalIndex)} 
+                                                    title="Delete entry" 
+                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                                >
+                                                    <X size={15} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -2377,8 +2549,8 @@ export default function DataEntryTerminal() {
                                             options={item.category === 'Insurance' 
                                                 ? ['Issued', 'Not Issued'].map(c => ({id: c, name: c}))
                                                 : item.category === 'Loan'
-                                                ? ['Login', 'Underwriting', 'Sanctioned', 'Disbursed', 'Rejected'].map(c => ({id: c, name: c}))
-                                                : ['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Rejected'].map(c => ({id: c, name: c}))
+                                                ? ['Login', 'Underwriting', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
+                                                : ['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
                                             }
                                             placeholder="Status"
                                             buttonClassName={`w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.fileStatus ? 'border border-red-500' : 'border'}`}
