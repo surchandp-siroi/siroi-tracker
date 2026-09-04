@@ -808,8 +808,40 @@ export default function DataEntryTerminal() {
       });
   };
   
-  const handleRemoveItem = (index: number) => {
-      setItems(items.filter((_, i) => i !== index));
+  const handleRemoveItem = async (index: number) => {
+      const remaining = items.filter((_, i) => i !== index);
+      setItems(remaining);
+      // Immediately clear in-memory cache to prevent stale restoration
+      fetchCache.current = {};
+
+      // If entry was already lodged in database, update or delete it directly
+      if (hasExistingEntry && currentEntryId) {
+          try {
+              if (remaining.length === 0) {
+                  const { error: delErr } = await supabase
+                      .from('entries')
+                      .delete()
+                      .eq('id', currentEntryId);
+                  if (delErr) throw delErr;
+                  setHasExistingEntry(false);
+                  setCurrentEntryId(null);
+                  setEntryCreatedAt(null);
+                  setSuccess("Record removed from database.");
+              } else {
+                  const newTotal = remaining.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                  const { error: updErr } = await supabase
+                      .from('entries')
+                      .update({ items: remaining, totalAmount: newTotal })
+                      .eq('id', currentEntryId);
+                  if (updErr) throw updErr;
+                  setSuccess("Line item deleted and saved.");
+              }
+              setRefreshTrigger(p => p + 1);
+          } catch (e: any) {
+              console.error("Failed to sync item removal to DB:", e);
+              setError("Failed to sync deletion to database: " + (e.message || ''));
+          }
+      }
   };
 
   const handleSubmit = async () => {
@@ -846,6 +878,32 @@ export default function DataEntryTerminal() {
       }
       
       if (items.length === 0) {
+          if (hasExistingEntry && currentEntryId) {
+              const confirmDel = window.confirm("All line items have been removed. Do you want to permanently delete this record?");
+              if (confirmDel) {
+                  setIsSaving(true);
+                  try {
+                      const { error: deleteError } = await supabase
+                          .from('entries')
+                          .delete()
+                          .eq('id', currentEntryId);
+                      if (deleteError) throw new Error(deleteError.message);
+                      
+                      fetchCache.current = {};
+                      setHasExistingEntry(false);
+                      setItems([]);
+                      setCurrentEntryId(null);
+                      setEntryCreatedAt(null);
+                      setSuccess("Record permanently deleted.");
+                      setRefreshTrigger(p => p + 1);
+                  } catch (err: any) {
+                      setError(err.message || "Failed to delete record.");
+                  } finally {
+                      setIsSaving(false);
+                  }
+                  return;
+              }
+          }
           setError("Please add at least one line item.");
           return;
       }
@@ -930,10 +988,12 @@ export default function DataEntryTerminal() {
               savedId = insertData?.[0]?.id || null;
           }
           
+          fetchCache.current = {};
           setSuccess("Tracking submitted successfully.");
           setShowSuccessModal(true);
           setHasExistingEntry(true);
           setCurrentEntryId(savedId);
+          setRefreshTrigger(p => p + 1);
       } catch (err: any) {
           console.error("Save error:", err);
           setError(err.message || "Failed to submit tracking data.");
@@ -1003,10 +1063,12 @@ export default function DataEntryTerminal() {
               if (insertError) throw new Error(insertError.message);
           }
           
+          fetchCache.current = {};
           setSuccess("Daily Projection lodged successfully.");
           setIsProjectionLodged(true);
           setLodgedProjectionAmount(totalProjectionAmtInput);
           setIsProjectionModalOpen(false);
+          setRefreshTrigger(p => p + 1);
 
           try {
               // Notify the admins via Push Notifications
@@ -1052,6 +1114,9 @@ export default function DataEntryTerminal() {
               setIsDeleting(false);
               return;
           }
+
+          // Immediately clear in-memory cache to prevent stale re-render
+          fetchCache.current = {};
           
           if (selectedCount === totalCount) {
               // Delete entire entry
@@ -1086,6 +1151,7 @@ export default function DataEntryTerminal() {
           
           setSelectedDeleteIndices(new Set());
           setShowDeleteModal(false);
+          setRefreshTrigger(p => p + 1);
       } catch (err: any) {
           console.error("Delete error:", err);
           setError(err.message || "Failed to delete record.");
