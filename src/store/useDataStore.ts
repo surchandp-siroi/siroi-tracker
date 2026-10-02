@@ -60,6 +60,7 @@ export interface EntryItem {
     commissionPercentage?: number;
     settlementStatus?: 'Not Settled' | 'Settled';
     settlementDate?: string;
+    _isSessionEditing?: boolean;
 }
 
 export interface BranchEntry {

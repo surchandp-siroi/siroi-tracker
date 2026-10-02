@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus, ArrowRight } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus, ArrowRight, Lock } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -827,7 +827,7 @@ export default function DataEntryTerminal() {
       }]);
   };
   
-  const handleUpdateItem = (index: number, key: string, val: string | number) => {
+  const handleUpdateItem = (index: number, key: string, val: any) => {
       setItems(prevItems => {
           const arr = [...prevItems];
           arr[index] = { ...arr[index], [key]: val };
@@ -1024,6 +1024,12 @@ export default function DataEntryTerminal() {
               setError(`Row ${i + 1} is missing File Status. Please fill it before logging.`);
               return;
           }
+          if ((item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan') {
+              if (!item.emiDate || !item.emiDate.trim()) {
+                  setError(`Row ${i + 1} (${item.customerName || 'Customer'}) is Disbursed. EMI Date is mandatory for disbursed loans.`);
+                  return;
+              }
+          }
       }
 
       setIsSaving(true);
@@ -1040,7 +1046,7 @@ export default function DataEntryTerminal() {
                   mode: entryMode,
                   recordType: 'achievement',
                   items: items.map(it => {
-                      const { _entryId, _entryDate, ...rest } = it as any;
+                      const { _entryId, _entryDate, _isSessionEditing, ...rest } = it as any;
                       return rest;
                   }),
                   totalAmount,
@@ -1103,7 +1109,7 @@ export default function DataEntryTerminal() {
               for (const [d, groupItems] of Object.entries(dateGroups)) {
                   const groupTotal = groupItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
                   const cleanGroupItems = groupItems.map(it => {
-                      const { _entryId, _entryDate, ...rest } = it as any;
+                      const { _entryId, _entryDate, _isSessionEditing, ...rest } = it as any;
                       return rest;
                   });
 
@@ -1363,6 +1369,16 @@ export default function DataEntryTerminal() {
               
           if (auditError) throw new Error(`Audit log failed: ${auditError.message}`);
           
+          for (let i = 0; i < stagedItems.length; i++) {
+              const item = stagedItems[i];
+              if ((item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan') {
+                  if (!item.emiDate || !item.emiDate.trim()) {
+                      setError(`Staged Row ${i + 1} (${item.customerName || 'Customer'}) is Disbursed. EMI Date is mandatory for disbursed loans.`);
+                      return;
+                  }
+              }
+          }
+          
           const itemsByDate = new Map<string, EntryItem[]>();
           stagedItems.forEach(item => {
               const d = item.date || dateStr;
@@ -1482,6 +1498,7 @@ export default function DataEntryTerminal() {
         if (field === 'customerName' && !item.customerName) return true;
         if (field === 'amount' && (item.amount === undefined || item.amount === null)) return true;
         if (field === 'fileStatus' && !item.fileStatus) return true;
+        if (field === 'emiDate' && (item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan' && !item.emiDate) return true;
         return false;
     };
 
@@ -1943,12 +1960,18 @@ export default function DataEntryTerminal() {
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ) : filteredItemsWithIndex.map(({ item, originalIndex }) => (
-                                <TableRow key={originalIndex} className="hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border-b border-slate-900/5 dark:border-white/5">
+                            ) : (
+                                filteredItemsWithIndex.map(({ item, originalIndex }) => {
+                                const isRowDisbursed = Boolean(item.disbursedDate) || item.fileStatus === 'Disbursed' || (item.category === 'Insurance' && (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED'));
+                                const isRowFrozen = isRowDisbursed && !item._isSessionEditing;
+                                const isFieldDisabled = (!canModify && !item.isManual) || isRowFrozen;
+
+                                return (
+                                <TableRow key={originalIndex} className={`transition-colors border-b border-slate-900/5 dark:border-white/5 ${isRowFrozen ? 'bg-slate-50/50 dark:bg-slate-900/40 opacity-90' : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'}`}>
                                     {/* 1. Customer Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="text"
                                             className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
                                             value={item.customerName || ''}
@@ -1959,7 +1982,7 @@ export default function DataEntryTerminal() {
                                     {/* 2. Category */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'category') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.category || 'Loan'}
                                             onChange={(e) => handleUpdateItem(originalIndex, 'category', e.target.value)}
@@ -1975,7 +1998,7 @@ export default function DataEntryTerminal() {
                                     {/* 3. Product */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'product') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.product || ''}
                                             onChange={(e) => handleUpdateItem(originalIndex, 'product', e.target.value)}
@@ -1991,7 +2014,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
                                             value={item.amount === 0 ? '' : item.amount}
                                             onValueChange={(values) => handleUpdateItem(originalIndex, 'amount', values.floatValue || 0)}
@@ -2004,7 +2027,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         {branchStaff.length > 0 ? (
                                             <select
-                                                disabled={!canModify && !item.isManual}
+                                                disabled={isFieldDisabled}
                                                 value={item.staffName || ''}
                                                 onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
                                                 className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
@@ -2020,7 +2043,7 @@ export default function DataEntryTerminal() {
                                             </select>
                                         ) : (
                                             <Input
-                                                disabled={!canModify && !item.isManual}
+                                                disabled={isFieldDisabled}
                                                 type="text"
                                                 className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${
                                                     isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'
@@ -2034,7 +2057,7 @@ export default function DataEntryTerminal() {
                                     {/* 6. Login Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.date || (dateSelectionType === 'range' ? endDateStr : dateStr)}
                                             onChange={(val: string) => handleUpdateItem(originalIndex, 'date', val)}
@@ -2045,7 +2068,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.projectionAmt === 0 ? '' : item.projectionAmt}
                                             onValueChange={(values) => handleUpdateItem(originalIndex, 'projectionAmt', values.floatValue || 0)}
@@ -2057,7 +2080,7 @@ export default function DataEntryTerminal() {
                                     {/* 8. Relationship Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.relationshipManagerName || ''}
@@ -2065,12 +2088,10 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-
-
-                                    {/* 10. Tracking Number */}
+                                    {/* 9. Tracking Number */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={(!canModify && !item.isManual) || (item.category !== 'Loan' && item.category !== 'Insurance')}
+                                            disabled={isFieldDisabled || (item.category !== 'Loan' && item.category !== 'Insurance')}
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.trackingNumber || ''}
@@ -2079,10 +2100,10 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 11. Channel Partner */}
+                                    {/* 10. Channel Partner */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'channel') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.channel || ''}
                                             onChange={(e) => handleUpdateItem(originalIndex, 'channel', e.target.value)}
@@ -2121,27 +2142,27 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 12. Branch Location */}
+                                    {/* 11. Branch Location */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center truncate">
                                             {branchDetails?.name || ''}
                                         </div>
                                     </TableCell>
 
-                                    {/* 13. Customer DOB */}
+                                    {/* 12. Customer DOB */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.customerDOB || ''}
                                             onChange={(val: string) => handleUpdateItem(originalIndex, 'customerDOB', val)}
                                         />
                                     </TableCell>
 
-                                    {/* 14. Phone Number */}
+                                    {/* 13. Phone Number */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.phoneNumber || ''}
@@ -2149,10 +2170,10 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 15. Email ID */}
+                                    {/* 14. Email ID */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="email"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.emailId || ''}
@@ -2160,10 +2181,10 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 16. Customer Address */}
+                                    {/* 15. Customer Address */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.customerAddress || ''}
@@ -2171,10 +2192,10 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 17. Firm Name */}
+                                    {/* 16. Firm Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.firmName || ''}
@@ -2182,10 +2203,10 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 18. File Status */}
+                                    {/* 17. File Status */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'} ${isFieldMissing(item, 'fileStatus') ? 'border-red-500/50 focus:border-red-500 bg-red-500/5' : ''}`}
                                             value={item.fileStatus || ''}
                                             onChange={(e) => handleUpdateItem(originalIndex, 'fileStatus', e.target.value)}
@@ -2219,11 +2240,11 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 19. Sanctioned Amount */}
+                                    {/* 18. Sanctioned Amount */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.sanctionedAmount === 0 ? '' : item.sanctionedAmount}
                                             onValueChange={(values) => handleUpdateItem(originalIndex, 'sanctionedAmount', values.floatValue || 0)}
@@ -2232,11 +2253,11 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 20. Disbursed Amount */}
+                                    {/* 19. Disbursed Amount */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.disbursedAmount === 0 ? '' : item.disbursedAmount}
                                             onValueChange={(values) => handleUpdateItem(originalIndex, 'disbursedAmount', values.floatValue || 0)}
@@ -2245,30 +2266,30 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 21. Disbursed Date */}
+                                    {/* 20. Disbursed Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.disbursedDate || ''}
                                             onChange={(val: string) => handleUpdateItem(originalIndex, 'disbursedDate', val)}
                                         />
                                     </TableCell>
 
-                                    {/* 22. EMI Date */}
+                                    {/* 21. EMI Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
-                                            disabled={!canModify && !item.isManual}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            disabled={isFieldDisabled}
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'emiDate') ? 'border-red-500/50 focus:border-red-500 border ring-1 ring-red-500/50' : 'dark:border-white/10'}`}
                                             value={item.emiDate || ''}
                                             onChange={(val: string) => handleUpdateItem(originalIndex, 'emiDate', val)}
                                         />
                                     </TableCell>
 
-                                    {/* 23. Repayment Bank */}
+                                    {/* 22. Repayment Bank */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="text"
                                             list="repayment-banks"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
@@ -2295,10 +2316,10 @@ export default function DataEntryTerminal() {
                                         </datalist>
                                     </TableCell>
 
-                                    {/* 24. Manager Name */}
+                                    {/* 23. Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="text"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.managerName || ''}
@@ -2306,10 +2327,10 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 25. Consultant Name */}
+                                    {/* 24. Consultant Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             className="w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200"
                                             value={item.consultantName || ''}
                                             onChange={(e) => {
@@ -2331,10 +2352,10 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 26. Consultant Email ID */}
+                                    {/* 25. Consultant Email ID */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={!canModify && !item.isManual}
+                                            disabled={isFieldDisabled}
                                             type="email"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
                                             value={item.consultantEmail || ''}
@@ -2344,53 +2365,62 @@ export default function DataEntryTerminal() {
 
                                     {/* Actions & Quick Shortcuts */}
                                     <TableCell className="py-2 px-3 align-middle text-right">
-                                        <div className="flex items-center justify-end gap-1.5">
-                                            {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && (
-                                                <button
-                                                    type="button"
-                                                    title="Quick Disburse: Mark as Disbursed and fill date"
-                                                    onClick={() => {
-                                                        handleUpdateItem(originalIndex, 'fileStatus', 'Disbursed');
-                                                        if (!item.disbursedAmount && item.amount) {
-                                                            handleUpdateItem(originalIndex, 'disbursedAmount', item.amount);
-                                                        }
-                                                        if (!item.disbursedDate) {
-                                                            handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
-                                                        }
-                                                    }}
-                                                    className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
-                                                >
-                                                    <Check className="w-2.5 h-2.5" /> Disburse
-                                                </button>
-                                            )}
+                                        {isRowFrozen ? (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold select-none">
+                                                <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Disbursed
+                                            </span>
+                                        ) : (
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && (
+                                                    <button
+                                                        type="button"
+                                                        title="Quick Disburse: Mark as Disbursed and fill date"
+                                                        onClick={() => {
+                                                            handleUpdateItem(originalIndex, 'fileStatus', 'Disbursed');
+                                                            if (!item.disbursedAmount && item.amount) {
+                                                                handleUpdateItem(originalIndex, 'disbursedAmount', item.amount);
+                                                            }
+                                                            if (!item.disbursedDate) {
+                                                                handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
+                                                            }
+                                                            handleUpdateItem(originalIndex, '_isSessionEditing', true);
+                                                        }}
+                                                        className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
+                                                    >
+                                                        <Check className="w-2.5 h-2.5" /> Disburse
+                                                    </button>
+                                                )}
 
-                                            {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && (
-                                                <button
-                                                    type="button"
-                                                    title="Mark as Customer Reject"
-                                                    onClick={() => {
-                                                        handleUpdateItem(originalIndex, 'fileStatus', 'Customer Reject');
-                                                    }}
-                                                    className="px-2 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/50 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs hover:scale-[1.02]"
-                                                >
-                                                    Reject
-                                                </button>
-                                            )}
+                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && (
+                                                    <button
+                                                        type="button"
+                                                        title="Mark as Customer Reject"
+                                                        onClick={() => {
+                                                            handleUpdateItem(originalIndex, 'fileStatus', 'Customer Reject');
+                                                        }}
+                                                        className="px-2 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/50 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs hover:scale-[1.02]"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                )}
 
-                                            {canModify && (
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => handleRemoveItem(originalIndex)} 
-                                                    title="Delete entry" 
-                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
-                                                >
-                                                    <X size={15} />
-                                                </button>
-                                            )}
-                                        </div>
+                                                {canModify && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => handleRemoveItem(originalIndex)} 
+                                                        title="Delete entry" 
+                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                                    >
+                                                        <X size={15} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                                );
+                            })
+                        )}
                         </TableBody>
                     </Table>
                 )}
