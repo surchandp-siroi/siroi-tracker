@@ -254,7 +254,7 @@ export default function DataEntryTerminal() {
   const fetchCache = useRef<Record<string, any>>({});
   const [fetchError, setFetchError] = useState(false);
   
-  const [metricCategory, setMetricCategory] = useState<string>('Loan');
+  const [metricCategory, setMetricCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
@@ -1541,7 +1541,9 @@ export default function DataEntryTerminal() {
         if (field === 'customerName' && !item.customerName) return true;
         if (field === 'amount' && (item.amount === undefined || item.amount === null)) return true;
         if (field === 'fileStatus' && !item.fileStatus) return true;
-        if (field === 'emiDate' && (item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan' && !item.emiDate) return true;
+        if (field === 'emiDate' && item.fileStatus === 'Disbursed' && (item.category === 'Loan' || (!item.category && item.product)) && !item.emiDate?.trim()) return true;
+        if (field === 'disbursedDate' && item.fileStatus === 'Disbursed' && !item.disbursedDate?.trim()) return true;
+        if (field === 'disbursedAmount' && item.fileStatus === 'Disbursed' && (item.disbursedAmount === undefined || item.disbursedAmount === null || Number(item.disbursedAmount) <= 0)) return true;
         return false;
     };
 
@@ -1552,12 +1554,19 @@ export default function DataEntryTerminal() {
   let insuranceNotIssued = 0;
 
   items.forEach((item: any) => {
-      if (metricCategory === 'All' || item.category === metricCategory) {
+      const cat = (item.category || 'Loan') as string;
+      const matchesCategory = metricCategory === 'All'
+          ? true
+          : (metricCategory === 'Consulting' || metricCategory === 'Consultancy')
+              ? (cat === 'Consultancy' || cat === 'Consulting')
+              : cat === metricCategory;
+
+      if (matchesCategory) {
           metricLogin += (Number(item.amount) || 0);
           metricDisbursed += (Number(item.disbursedAmount) || 0);
           
-          if (item.category === 'Insurance') {
-              if (item.fileStatus === 'Issued') insuranceIssued += (Number(item.amount) || 0);
+          if (cat === 'Insurance') {
+              if (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') insuranceIssued += (Number(item.amount) || 0);
               if (item.fileStatus === 'Not Issued') insuranceNotIssued += (Number(item.amount) || 0);
           }
       }
@@ -1742,6 +1751,31 @@ export default function DataEntryTerminal() {
                             )}
                         </div>
                     </div>
+
+                    {/* Divider */}
+                    <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+
+                    {/* Product Type Filter */}
+                    <div className="flex flex-col w-full md:w-auto">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                            Product Type
+                        </label>
+                        <div className="w-full sm:w-[170px] h-[36px]">
+                            <ThemeSelect 
+                                variant="pill"
+                                value={metricCategory}
+                                onChange={setMetricCategory}
+                                options={[
+                                    { value: 'All', label: 'All Products' },
+                                    { value: 'Loan', label: 'Loan', indicatorColor: '#6366f1' },
+                                    { value: 'Insurance', label: 'Insurance', indicatorColor: '#10b981' },
+                                    { value: 'Forex', label: 'Forex', indicatorColor: '#0ea5e9' },
+                                    { value: 'Consultancy', label: 'Consulting', indicatorColor: '#f59e0b' },
+                                    { value: 'Investments', label: 'Investments', indicatorColor: '#8b5cf6' }
+                                ]}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Center Section: Metrics */}
@@ -1769,25 +1803,9 @@ export default function DataEntryTerminal() {
 
                     {/* Totals */}
                     <div className="flex flex-col w-full md:min-w-[220px]">
-                        <div className="flex justify-between items-center mb-1.5 gap-3">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
-                            </label>
-                            <ThemeSelect
-                                variant="inline"
-                                dropdownAlign="right"
-                                value={metricCategory}
-                                onChange={setMetricCategory}
-                                options={[
-                                    { value: 'Loan', label: 'Loan' },
-                                    { value: 'Insurance', label: 'Insurance' },
-                                    { value: 'Forex', label: 'Forex' },
-                                    { value: 'Consultancy', label: 'Consulting' },
-                                    { value: 'Investments', label: 'Investments' },
-                                    { value: 'All', label: 'All' }
-                                ]}
-                            />
-                        </div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                            Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
+                        </label>
                         <div className="flex items-center text-xs md:text-sm font-mono font-bold tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             {metricCategory === 'Insurance' ? (
                                 <>
@@ -2010,11 +2028,16 @@ export default function DataEntryTerminal() {
                                 filteredItemsWithIndex.map(({ item, originalIndex }) => {
                                 const isLoan = item.category === 'Loan' || (!item.category && item.product);
                                 const isInsurance = item.category === 'Insurance';
+                                const hasDisbursedAmount = Number(item.disbursedAmount) > 0;
+                                const hasDisbursedDate = Boolean(item.disbursedDate && item.disbursedDate.trim() !== '');
+                                const hasEmiDate = Boolean(item.emiDate && item.emiDate.trim() !== '');
+
                                 const isFullyCompletedDisbursement = isLoan
-                                    ? (item.fileStatus === 'Disbursed' || Boolean(item.disbursedDate)) && Boolean(item.disbursedDate?.trim()) && Boolean(item.emiDate?.trim())
+                                    ? (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate && hasEmiDate)
                                     : isInsurance
-                                        ? (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED' || Boolean(item.disbursedDate)) && Boolean(item.disbursedDate?.trim())
-                                        : (item.fileStatus === 'Disbursed' || Boolean(item.disbursedDate)) && Boolean(item.disbursedDate?.trim());
+                                        ? ((item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') && hasDisbursedDate)
+                                        : (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate);
+
                                 const isRowFrozen = isFullyCompletedDisbursement && !item._isSessionEditing;
                                 const isFieldDisabled = (!canModify && !item.isManual) || isRowFrozen;
 
@@ -2447,7 +2470,7 @@ export default function DataEntryTerminal() {
                                             </span>
                                         ) : (
                                             <div className="flex items-center justify-end gap-1.5">
-                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && (
+                                                {canModify && item.category !== 'Insurance' && !isFullyCompletedDisbursement && (
                                                     <button
                                                         type="button"
                                                         title="Quick Disburse: Mark as Disbursed and fill date"
@@ -2467,7 +2490,7 @@ export default function DataEntryTerminal() {
                                                     </button>
                                                 )}
 
-                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && (
+                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && !isFullyCompletedDisbursement && (
                                                     <button
                                                         type="button"
                                                         title="Mark as Customer Reject"
