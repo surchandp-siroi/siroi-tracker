@@ -1907,31 +1907,30 @@ export default function DataEntryTerminal() {
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px]">6. Login Date</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">7. Projection (₹)</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px]">8. Relationship Manager Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">9. File Login</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">10. Tracking Number</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">11. Channel Partner</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">12. Branch</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. DOB</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">14. Phone No.</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">15. Email ID</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">16. Customer Address</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">17. Firm Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">18. File Status</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">19. Sanctioned (₹)</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">20. Disbursed (₹)</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">21. Disbursed Dt</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">22. EMI Date</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">23. Repayment Bank</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">24. Manager Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">25. Consultant Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">26. Consultant Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">9. Tracking Number</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">10. Channel Partner</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">11. Branch</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">12. DOB</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. Phone No.</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">14. Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">15. Customer Address</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">16. Firm Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">17. File Status</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">18. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">19. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">20. Disbursed Dt</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">21. EMI Date</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">22. Repayment Bank</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">23. Manager Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">24. Consultant Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">25. Consultant Email ID</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredItemsWithIndex.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={27} className="p-0 border-0 h-0">
+                                    <TableCell colSpan={26} className="p-0 border-0 h-0">
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none gap-1.5" style={{ top: '50px' }}>
                                             {items.length === 0 ? (
                                                 <span>No items formulated for {dateSelectionType === 'range' ? `${startDateStr} to ${endDateStr}` : dateStr}</span>
@@ -2066,31 +2065,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 9. File Login */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <select 
-                                            disabled={(!canModify && !item.isManual) || item.category === 'Forex'}
-                                            className="w-full h-[34px] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50"
-                                            value={item.fileLogin || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'fileLogin', e.target.value)}
-                                        >
-                                            <option value="">Select...</option>
-                                            {item.category === 'Insurance' || item.category === 'Forex' ? (
-                                                <option value="Online">Online</option>
-                                            ) : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? (
-                                                <option value="lead force">lead force</option>
-                                            ) : (
-                                                <>
-                                                    <option value="WBO">WBO</option>
-                                                    <option value="EXPRESS LINK">EXPRESS LINK</option>
-                                                    <option value="ILENS">ILENS</option>
-                                                    <option value="Online">Online</option>
-                                                    <option value="Branch walkin">Branch walkin</option>
-                                                    <option value="lead force">lead force</option>
-                                                </>
-                                            )}
-                                        </select>
-                                    </TableCell>
+
 
                                     {/* 10. Tracking Number */}
                                     <TableCell className="py-2 px-2 align-top">
@@ -2708,24 +2683,23 @@ export default function DataEntryTerminal() {
                                 <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">6. Login Date</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. Projection (₹)</TableHead>
                                 <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Relationship Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. File Login</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Tracking Number</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Channel Partner *</TableHead>
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. Branch Location</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. DOB</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Phone No.</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Email ID</TableHead>
-                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. Customer Address</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. Firm Name</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. File Status *</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Sanctioned (₹)</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. Disbursed (₹)</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. Disbursed Dt</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. EMI Date</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Repayment Bank</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Consultant</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">26. Consultant Email ID</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Tracking Number</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Channel Partner *</TableHead>
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Branch Location</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. DOB</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Phone No.</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Email ID</TableHead>
+                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Customer Address</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. Firm Name</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. File Status *</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. Sanctioned (₹)</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Disbursed (₹)</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. Disbursed Dt</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. EMI Date</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Repayment Bank</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Consultant Email ID</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -2868,21 +2842,7 @@ export default function DataEntryTerminal() {
                                     {/* 8. RM Name */}
                                     <TableCell className="p-2"><Input value={item.relationshipManagerName || ''} onChange={e => handleUpdate('relationshipManagerName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     
-                                    {/* 9. File Login */}
-                                    <TableCell className="p-2">
-                                        <AppSelect 
-                                            value={item.fileLogin || ''} 
-                                            onChange={val => handleUpdate('fileLogin', val)} 
-                                            options={(item.category === 'Insurance' || item.category === 'Forex')
-                                                ? [{id: 'Online', name: 'Online'}]
-                                                : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan'))
-                                                ? [{id: 'lead force', name: 'lead force'}]
-                                                : ['WBO', 'EXPRESS LINK', 'ILENS', 'Online', 'Branch walkin', 'lead force'].map(c => ({id: c, name: c}))
-                                            }
-                                            placeholder="File Login"
-                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white border`}
-                                        />
-                                    </TableCell>
+
 
                                     {/* 10. Tracking Number */}
                                     <TableCell className="p-2"><Input value={item.trackingNumber || ''} onChange={e => handleUpdate('trackingNumber', e.target.value)} placeholder="Track No..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
