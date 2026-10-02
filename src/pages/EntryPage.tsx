@@ -258,9 +258,31 @@ export default function DataEntryTerminal() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
+  const categoryScopedItems = useMemo(() => {
+    return metricCategory === 'All'
+      ? items
+      : items.filter(i => {
+          const cat = (i.category || 'Loan') as string;
+          if (metricCategory === 'Consulting' || metricCategory === 'Consultancy') {
+            return cat === 'Consultancy' || cat === 'Consulting';
+          }
+          return cat === metricCategory;
+        });
+  }, [items, metricCategory]);
+
   const filteredItemsWithIndex = useMemo(() => {
     return items.map((item, originalIndex) => ({ item, originalIndex })).filter(({ item }) => {
-      // 1. Status Filter
+      // 1. Centralised Product / Category Filter
+      if (metricCategory && metricCategory !== 'All') {
+        const itemCat = (item.category || 'Loan') as string;
+        if (metricCategory === 'Consulting' || metricCategory === 'Consultancy') {
+          if (itemCat !== 'Consultancy' && itemCat !== 'Consulting') return false;
+        } else if (itemCat !== metricCategory) {
+          return false;
+        }
+      }
+
+      // 2. Status Filter
       if (statusFilter !== 'ALL') {
         if (statusFilter === 'Disbursed') {
           if (item.fileStatus !== 'Disbursed' && item.fileStatus !== 'Issued' && item.fileStatus !== 'POLICY ISSUED') return false;
@@ -269,7 +291,7 @@ export default function DataEntryTerminal() {
         }
       }
       
-      // 2. Search query filter
+      // 3. Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchName = item.customerName?.toLowerCase().includes(q);
@@ -294,7 +316,7 @@ export default function DataEntryTerminal() {
       
       return true;
     });
-  }, [items, searchQuery, statusFilter]);
+  }, [items, metricCategory, searchQuery, statusFilter]);
 
   // 60-day deletion window from entry creation date
   const daysSinceCreation = entryCreatedAt
@@ -821,7 +843,7 @@ export default function DataEntryTerminal() {
           date: dateSelectionType === 'range' ? endDateStr : dateStr, 
           staffName: '', 
           customerName: '', 
-          category: 'Loan', 
+          category: (metricCategory && metricCategory !== 'All' ? (metricCategory === 'Consulting' ? 'Consultancy' : metricCategory as any) : 'Loan'), 
           product: '', 
           channel: '', 
           amount: 0, 
@@ -1727,10 +1749,17 @@ export default function DataEntryTerminal() {
                     {/* Target */}
                     <div className="flex flex-col w-full md:w-auto">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                            Target ({dateStr.substring(0, 7)})
+                            Target ({metricCategory !== 'All' ? metricCategory : dateStr.substring(0, 7)})
                         </label>
                         <div className="text-sm md:text-base font-black text-slate-800 dark:text-slate-200 font-mono tracking-tight bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 inline-block w-fit">
-                            ₹{((branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7))?.targetAmount) || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN')}
+                            ₹{(() => {
+                                const targetObj = branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7));
+                                const catKey = metricCategory === 'Consulting' ? 'Consultancy' : metricCategory;
+                                if (metricCategory !== 'All' && targetObj?.productTargets?.[catKey] !== undefined) {
+                                    return Number(targetObj.productTargets[catKey]).toLocaleString('en-IN');
+                                }
+                                return (targetObj?.targetAmount || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN');
+                            })()}
                         </div>
                     </div>
 
@@ -1861,8 +1890,8 @@ export default function DataEntryTerminal() {
                         { id: 'Rejected', label: 'Bank Rejected' },
                       ].map((chip) => {
                          const count = chip.id === 'ALL' 
-                           ? items.length 
-                           : items.filter(i => chip.id === 'Disbursed' ? (i.fileStatus === 'Disbursed' || i.fileStatus === 'Issued' || i.fileStatus === 'POLICY ISSUED') : i.fileStatus === chip.id).length;
+                           ? categoryScopedItems.length 
+                           : categoryScopedItems.filter(i => chip.id === 'Disbursed' ? (i.fileStatus === 'Disbursed' || i.fileStatus === 'Issued' || i.fileStatus === 'POLICY ISSUED') : i.fileStatus === chip.id).length;
                          if (count === 0 && chip.id !== 'ALL' && statusFilter !== chip.id) return null;
                          
                          const isActive = statusFilter === chip.id;
@@ -2482,13 +2511,13 @@ export default function DataEntryTerminal() {
                         <div className="flex items-center gap-1.5">
                             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Login:</span>
                             <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                                ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
+                                ₹ {filteredItemsWithIndex.reduce((s, { item }) => s + (Number(item.amount) || 0), 0).toLocaleString('en-IN')}
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Disbursed:</span>
                             <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                ₹ {items.reduce((s, i) => s + (Number(i.disbursedAmount) || 0), 0).toLocaleString('en-IN')}
+                                ₹ {filteredItemsWithIndex.reduce((s, { item }) => s + (Number(item.disbursedAmount) || 0), 0).toLocaleString('en-IN')}
                             </span>
                         </div>
                     </div>
