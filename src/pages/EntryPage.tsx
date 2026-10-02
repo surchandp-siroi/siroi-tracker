@@ -1925,7 +1925,7 @@ export default function DataEntryTerminal() {
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">24. Manager Name</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">25. Consultant Name</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">26. Consultant Email ID</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] sticky right-0 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md z-20 shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l border-slate-200 dark:border-slate-800">Actions</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2368,7 +2368,7 @@ export default function DataEntryTerminal() {
                                     </TableCell>
 
                                     {/* Actions & Quick Shortcuts */}
-                                    <TableCell className="py-2 px-3 align-middle sticky right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-10 border-l border-slate-200 dark:border-white/10 shadow-[-5px_0_10px_rgba(0,0,0,0.03)]">
+                                    <TableCell className="py-2 px-3 align-middle text-right">
                                         <div className="flex items-center justify-end gap-1.5">
                                             {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && (
                                                 <button
