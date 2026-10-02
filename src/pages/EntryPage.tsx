@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus, ArrowRight } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -140,6 +140,19 @@ export default function DataEntryTerminal() {
       return today >= '2026-01-01' ? today : '2026-01-01';
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+  
+  // Date Range States
+  const [dateSelectionType, setDateSelectionType] = useState<'single' | 'range'>('single');
+  const [startDateStr, setStartDateStr] = useState<string>(() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      return d.toISOString().split('T')[0];
+  });
+  const [endDateStr, setEndDateStr] = useState<string>(() => {
+      return new Date().toISOString().split('T')[0];
+  });
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   
   const [items, setItems] = useState<EntryItem[]>([]);
   const [smartPrompt, setSmartPrompt] = useState<string>('');
@@ -354,7 +367,9 @@ export default function DataEntryTerminal() {
   useEffect(() => {
       if (!activeBranchId) return;
       
-      const cacheKey = `${activeBranchId}_${dateStr}_${entryMode}`;
+      const cacheKey = dateSelectionType === 'single'
+          ? `${activeBranchId}_${dateStr}_${entryMode}`
+          : `${activeBranchId}_${startDateStr}_${endDateStr}_${entryMode}`;
       
       const fetchContext = async () => {
           setIsLoadingExisting(true);
@@ -377,7 +392,7 @@ export default function DataEntryTerminal() {
                   } else {
                       setHasExistingEntry(true);
                       setItems(data.items || []);
-                      setCurrentEntryId(data.id);
+                      setCurrentEntryId(data.id || null);
                       setEntryCreatedAt(data.createdAt || null);
                   }
                   
@@ -404,13 +419,24 @@ export default function DataEntryTerminal() {
                   return;
               }
               
-              const fetchPromise = supabase
-                .from('entries')
-                .select('*')
-                .eq('branchId', activeBranchId)
-                .eq('entryDate', dateStr)
-                .eq('mode', entryMode)
-                ;
+              let fetchPromise;
+              if (dateSelectionType === 'single') {
+                  fetchPromise = supabase
+                    .from('entries')
+                    .select('*')
+                    .eq('branchId', activeBranchId)
+                    .eq('entryDate', dateStr)
+                    .eq('mode', entryMode);
+              } else {
+                  fetchPromise = supabase
+                    .from('entries')
+                    .select('*')
+                    .eq('branchId', activeBranchId)
+                    .gte('entryDate', startDateStr)
+                    .lte('entryDate', endDateStr)
+                    .eq('mode', entryMode)
+                    .order('entryDate', { ascending: true });
+              }
                 
               const timeoutPromise = new Promise((_, reject) => 
                   setTimeout(() => reject(new Error('TIMEOUT')), 10000)
@@ -419,40 +445,81 @@ export default function DataEntryTerminal() {
               const { data: snap } = await Promise.race([fetchPromise, timeoutPromise]) as any;
               
               if (snap && snap.length > 0) {
-                  const achievementData = snap.find((e: any) => !e.recordType || e.recordType === 'achievement');
-                  const projectionData = snap.find((e: any) => e.recordType === 'projection');
-                  
-                  if (achievementData) {
-                      setHasExistingEntry(true);
-                      fetchCache.current[cacheKey] = { ...achievementData, _proj: projectionData };
-                      setItems(achievementData.items || []);
-                      setCurrentEntryId(achievementData.id);
-                      setEntryCreatedAt(achievementData.createdAt || null);
-                  } else {
-                      fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionData };
-                      setHasExistingEntry(false);
-                      setItems([]);
-                      setCurrentEntryId(null);
-                      setEntryCreatedAt(null);
-                  }
-                  
-                  if (projectionData) {
-                      setIsProjectionLodged(true);
-                      setLodgedProjectionAmount(projectionData.totalAmount || 0);
+                  if (dateSelectionType === 'single') {
+                      const achievementData = snap.find((e: any) => !e.recordType || e.recordType === 'achievement');
+                      const projectionData = snap.find((e: any) => e.recordType === 'projection');
                       
-                      const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
-                      if (projectionData.items) {
-                          projectionData.items.forEach((item: any) => {
-                              if (item.category && item.category in fetchedInputs) {
-                                  fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
-                              }
-                          });
+                      if (achievementData) {
+                          setHasExistingEntry(true);
+                          fetchCache.current[cacheKey] = { ...achievementData, _proj: projectionData };
+                          setItems(achievementData.items || []);
+                          setCurrentEntryId(achievementData.id);
+                          setEntryCreatedAt(achievementData.createdAt || null);
+                      } else {
+                          fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionData };
+                          setHasExistingEntry(false);
+                          setItems([]);
+                          setCurrentEntryId(null);
+                          setEntryCreatedAt(null);
                       }
-                      setProjectionInputs(fetchedInputs);
+                      
+                      if (projectionData) {
+                          setIsProjectionLodged(true);
+                          setLodgedProjectionAmount(projectionData.totalAmount || 0);
+                          
+                          const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
+                          if (projectionData.items) {
+                              projectionData.items.forEach((item: any) => {
+                                  if (item.category && item.category in fetchedInputs) {
+                                      fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
+                                  }
+                              });
+                          }
+                          setProjectionInputs(fetchedInputs);
+                      } else {
+                          setIsProjectionLodged(false);
+                          setLodgedProjectionAmount(0);
+                          setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
+                      }
                   } else {
-                      setIsProjectionLodged(false);
-                      setLodgedProjectionAmount(0);
-                      setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
+                      // Range mode: Aggregate items across all achievement entries in the range
+                      const achievementEntries = snap.filter((e: any) => !e.recordType || e.recordType === 'achievement');
+                      const projectionEntries = snap.filter((e: any) => e.recordType === 'projection');
+                      
+                      const aggregatedItems: EntryItem[] = [];
+                      achievementEntries.forEach((entry: any) => {
+                          (entry.items || []).forEach((it: any) => {
+                              aggregatedItems.push({
+                                  ...it,
+                                  date: it.date || entry.entryDate,
+                                  _entryId: entry.id,
+                                  _entryDate: entry.entryDate,
+                              });
+                          });
+                      });
+
+                      if (achievementEntries.length > 0) {
+                          setHasExistingEntry(true);
+                          fetchCache.current[cacheKey] = { items: aggregatedItems, _proj: projectionEntries[0] || null, id: achievementEntries[0].id, createdAt: achievementEntries[0].createdAt };
+                          setItems(aggregatedItems);
+                          setCurrentEntryId(achievementEntries[0].id);
+                          setEntryCreatedAt(achievementEntries[0].createdAt || null);
+                      } else {
+                          fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionEntries[0] || null };
+                          setHasExistingEntry(false);
+                          setItems([]);
+                          setCurrentEntryId(null);
+                          setEntryCreatedAt(null);
+                      }
+
+                      if (projectionEntries.length > 0) {
+                          const totalProj = projectionEntries.reduce((sum: number, p: any) => sum + (Number(p.totalAmount) || 0), 0);
+                          setIsProjectionLodged(true);
+                          setLodgedProjectionAmount(totalProj);
+                      } else {
+                          setIsProjectionLodged(false);
+                          setLodgedProjectionAmount(0);
+                      }
                   }
               } else {
                   fetchCache.current[cacheKey] = { empty: true, items: [] };
@@ -474,7 +541,7 @@ export default function DataEntryTerminal() {
           }
       };
       fetchContext();
-  }, [activeBranchId, dateStr, entryMode, branches, refreshTrigger]);
+  }, [activeBranchId, dateStr, startDateStr, endDateStr, dateSelectionType, entryMode, branches, refreshTrigger]);
 
   const processFile = async (file: File) => {
       setIsParsing(true);
@@ -730,7 +797,7 @@ export default function DataEntryTerminal() {
 
   const handleAddItem = () => {
       setItems([...items, { 
-          date: dateStr, 
+          date: dateSelectionType === 'range' ? endDateStr : dateStr, 
           staffName: '', 
           customerName: '', 
           category: 'Loan', 
@@ -809,13 +876,14 @@ export default function DataEntryTerminal() {
   };
   
   const handleRemoveItem = async (index: number) => {
+      const removedItem = items[index];
       const remaining = items.filter((_, i) => i !== index);
       setItems(remaining);
       // Immediately clear in-memory cache to prevent stale restoration
       fetchCache.current = {};
 
-      // If entry was already lodged in database, update or delete it directly
-      if (hasExistingEntry && currentEntryId) {
+      // If single mode and entry was already lodged in database, update or delete it directly
+      if (dateSelectionType === 'single' && hasExistingEntry && currentEntryId) {
           try {
               if (remaining.length === 0) {
                   const { error: delErr } = await supabase
@@ -841,6 +909,27 @@ export default function DataEntryTerminal() {
               console.error("Failed to sync item removal to DB:", e);
               setError("Failed to sync deletion to database: " + (e.message || ''));
           }
+      } else if (dateSelectionType === 'range' && (removedItem as any)?._entryId) {
+          // In range mode, immediately sync the specific entry that held this item
+          const targetEntryId = (removedItem as any)._entryId;
+          const targetDate = removedItem.date || (removedItem as any)._entryDate;
+          const remainingForThisDate = remaining.filter(it => (it.date || (it as any)._entryDate) === targetDate);
+          try {
+              if (remainingForThisDate.length === 0) {
+                  await supabase.from('entries').delete().eq('id', targetEntryId);
+              } else {
+                  const total = remainingForThisDate.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+                  const cleanItems = remainingForThisDate.map(it => {
+                      const { _entryId, _entryDate, ...rest } = it as any;
+                      return rest;
+                  });
+                  await supabase.from('entries').update({ items: cleanItems, totalAmount: total }).eq('id', targetEntryId);
+              }
+              setSuccess("Line item deleted from date range.");
+              setRefreshTrigger(p => p + 1);
+          } catch (e: any) {
+              console.error("Failed to sync range item removal:", e);
+          }
       }
   };
 
@@ -853,9 +942,6 @@ export default function DataEntryTerminal() {
           setError("You do not have a branch assigned yet. Contact Administrator.");
           return;
       }
-      
-      // 11:00 AM restriction check for Projections (Post May 15, 2026)
-      // 11:00 AM restriction check removed due to unified entry logic
       
       if (entryMode === 'monthly') {
           if (user?.role !== 'admin' && !isBackdoor) {
@@ -878,7 +964,7 @@ export default function DataEntryTerminal() {
       }
       
       if (items.length === 0) {
-          if (hasExistingEntry && currentEntryId) {
+          if (hasExistingEntry && currentEntryId && dateSelectionType === 'single') {
               const confirmDel = window.confirm("All line items have been removed. Do you want to permanently delete this record?");
               if (confirmDel) {
                   setIsSaving(true);
@@ -910,20 +996,20 @@ export default function DataEntryTerminal() {
       
       for (let i = 0; i < items.length; i++) {
           const item = items[i];
-          if (!item.staffName || !item.staffName.trim()) {
-              setError(`Row ${i + 1} is missing Staff Name. Please fill it before logging.`);
+          if (!item.customerName || !item.customerName.trim()) {
+              setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
               return;
           }
           if (!item.category) {
               setError(`Row ${i + 1} is missing Category. Please select one before logging.`);
               return;
           }
-          if (!item.customerName || !item.customerName.trim()) {
-              setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
-              return;
-          }
           if (!item.product) {
               setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
+              return;
+          }
+          if (!item.staffName || !item.staffName.trim()) {
+              setError(`Row ${i + 1} is missing Staff Name. Please fill it before logging.`);
               return;
           }
           if (!item.channel) {
@@ -945,54 +1031,133 @@ export default function DataEntryTerminal() {
       setSuccess('');
       
       try {
-          const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+          if (dateSelectionType === 'single') {
+              const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-          const payload = {
-              branchId: activeBranchId,
-              entryDate: dateStr,
-              mode: entryMode,
-              recordType: 'achievement',
-              items: items,
-              totalAmount,
-              authorId: user?.id,
-              authorEmail: user?.email,
-              location: user?.latestLocation || null,
-          };
+              const payload = {
+                  branchId: activeBranchId,
+                  entryDate: dateStr,
+                  mode: entryMode,
+                  recordType: 'achievement',
+                  items: items.map(it => {
+                      const { _entryId, _entryDate, ...rest } = it as any;
+                      return rest;
+                  }),
+                  totalAmount,
+                  authorId: user?.id,
+                  authorEmail: user?.email,
+                  location: user?.latestLocation || null,
+              };
 
-          // Check if an entry already exists for this branch+date+mode+recordType
-          const { data: existing } = await supabase
-            .from('entries')
-            .select('id, recordType')
-            .eq('branchId', activeBranchId)
-            .eq('entryDate', dateStr)
-            .eq('mode', entryMode);
-
-          const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
-          let savedId: string | null = null;
-
-          if (achievementRow) {
-              // Update the existing achievement entry
-              const { error: updateError } = await supabase
+              // Check if an entry already exists for this branch+date+mode+recordType
+              const { data: existing } = await supabase
                 .from('entries')
-                .update({ items, totalAmount, recordType: 'achievement', authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
-                .eq('id', achievementRow.id);
-              if (updateError) throw new Error(updateError.message);
-              savedId = achievementRow.id;
+                .select('id, recordType')
+                .eq('branchId', activeBranchId)
+                .eq('entryDate', dateStr)
+                .eq('mode', entryMode);
+
+              const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
+              let savedId: string | null = null;
+
+              if (achievementRow) {
+                  // Update the existing achievement entry
+                  const { error: updateError } = await supabase
+                    .from('entries')
+                    .update({ items: payload.items, totalAmount, recordType: 'achievement', authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
+                    .eq('id', achievementRow.id);
+                  if (updateError) throw new Error(updateError.message);
+                  savedId = achievementRow.id;
+              } else {
+                  // Insert new entry and capture the returned ID
+                  const { data: insertData, error: insertError } = await supabase
+                    .from('entries')
+                    .insert([{ ...payload, createdAt: new Date().toISOString() }])
+                    .select('id');
+                  if (insertError) throw new Error(insertError.message);
+                  savedId = insertData?.[0]?.id || null;
+              }
+              
+              setCurrentEntryId(savedId);
           } else {
-              // Insert new entry and capture the returned ID
-              const { data: insertData, error: insertError } = await supabase
-                .from('entries')
-                .insert([{ ...payload, createdAt: new Date().toISOString() }])
-                .select('id');
-              if (insertError) throw new Error(insertError.message);
-              savedId = insertData?.[0]?.id || null;
+              // Range Mode: Group items by (item.date || startDateStr)
+              const dateGroups: Record<string, EntryItem[]> = {};
+              items.forEach(item => {
+                  const d = item.date || startDateStr;
+                  if (!dateGroups[d]) dateGroups[d] = [];
+                  dateGroups[d].push(item);
+              });
+
+              // Fetch existing entries in this date range
+              const { data: existingEntries } = await supabase
+                  .from('entries')
+                  .select('id, entryDate, recordType')
+                  .eq('branchId', activeBranchId)
+                  .gte('entryDate', startDateStr)
+                  .lte('entryDate', endDateStr)
+                  .eq('mode', entryMode);
+
+              const achievementEntries = existingEntries?.filter(e => !e.recordType || e.recordType === 'achievement') || [];
+              const handledEntryIds = new Set<string>();
+
+              for (const [d, groupItems] of Object.entries(dateGroups)) {
+                  const groupTotal = groupItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+                  const cleanGroupItems = groupItems.map(it => {
+                      const { _entryId, _entryDate, ...rest } = it as any;
+                      return rest;
+                  });
+
+                  const existingForDate = achievementEntries.find(e => e.entryDate === d);
+                  if (existingForDate) {
+                      handledEntryIds.add(existingForDate.id);
+                      const { error: updErr } = await supabase
+                          .from('entries')
+                          .update({
+                              items: cleanGroupItems,
+                              totalAmount: groupTotal,
+                              recordType: 'achievement',
+                              authorId: user?.id,
+                              authorEmail: user?.email,
+                              location: user?.latestLocation || null
+                          })
+                          .eq('id', existingForDate.id);
+                      if (updErr) throw updErr;
+                  } else {
+                      const { data: insData, error: insErr } = await supabase
+                          .from('entries')
+                          .insert([{
+                              branchId: activeBranchId,
+                              entryDate: d,
+                              mode: entryMode,
+                              recordType: 'achievement',
+                              items: cleanGroupItems,
+                              totalAmount: groupTotal,
+                              authorId: user?.id,
+                              authorEmail: user?.email,
+                              location: user?.latestLocation || null,
+                              createdAt: new Date().toISOString()
+                          }])
+                          .select('id');
+                      if (insErr) throw insErr;
+                      if (insData?.[0]?.id) handledEntryIds.add(insData[0].id);
+                  }
+              }
+
+              // If an existing entry in this date range no longer has any items, remove or clear it
+              for (const ex of achievementEntries) {
+                  if (!handledEntryIds.has(ex.id)) {
+                      await supabase
+                          .from('entries')
+                          .delete()
+                          .eq('id', ex.id);
+                  }
+              }
           }
           
           fetchCache.current = {};
           setSuccess("Tracking submitted successfully.");
           setShowSuccessModal(true);
           setHasExistingEntry(true);
-          setCurrentEntryId(savedId);
           setRefreshTrigger(p => p + 1);
       } catch (err: any) {
           console.error("Save error:", err);
@@ -1434,9 +1599,44 @@ export default function DataEntryTerminal() {
 
                     {/* Date Context */}
                     <div className="flex flex-col w-full md:w-auto">
-                        <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5">
-                            Date Context
-                        </label>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+                                Date Context
+                            </label>
+                            {entryMode === 'daily' && (
+                                <div className="inline-flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full border border-slate-200 dark:border-white/5 text-[9px] font-bold uppercase tracking-wider">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
+                                            setDateSelectionType('single');
+                                        }}
+                                        className={`px-2 py-0.5 rounded-full transition-all ${
+                                            dateSelectionType === 'single'
+                                                ? 'bg-indigo-600 text-white shadow-xs'
+                                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                                        }`}
+                                    >
+                                        Single
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
+                                            setDateSelectionType('range');
+                                        }}
+                                        className={`px-2 py-0.5 rounded-full transition-all ${
+                                            dateSelectionType === 'range'
+                                                ? 'bg-indigo-600 text-white shadow-xs'
+                                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                                        }`}
+                                    >
+                                        Range
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 md:gap-4 w-full md:w-auto">
                             <div className="w-full sm:w-auto">
                             {entryMode === 'monthly' ? (
@@ -1448,7 +1648,7 @@ export default function DataEntryTerminal() {
                                     }}
                                     buttonClassName="h-[36px] w-full sm:w-auto px-4 rounded-full border-slate-200 dark:border-white/10 shadow-sm"
                                 />
-                            ) : (
+                            ) : dateSelectionType === 'single' ? (
                                 <div className="flex items-center h-[36px] w-full sm:w-auto px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
                                     <Calendar className="w-4 h-4 text-slate-500 mr-2.5" />
                                     <div 
@@ -1457,6 +1657,25 @@ export default function DataEntryTerminal() {
                                     >
                                         {format(new Date(dateStr), 'dd MMM yyyy')}
                                     </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 h-[36px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full px-3.5 shadow-sm hover:border-slate-300 dark:hover:border-white/20 transition-colors">
+                                    <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowStartDatePicker(true)}
+                                        className="text-xs text-slate-800 dark:text-slate-100 font-bold hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                    >
+                                        {format(new Date(startDateStr), 'dd MMM yyyy')}
+                                    </button>
+                                    <ArrowRight className="w-3 h-3 text-slate-400" />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEndDatePicker(true)}
+                                        className="text-xs text-slate-800 dark:text-slate-100 font-bold hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                    >
+                                        {format(new Date(endDateStr), 'dd MMM yyyy')}
+                                    </button>
                                 </div>
                             )}
                             </div>
@@ -1680,41 +1899,42 @@ export default function DataEntryTerminal() {
                     <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 relative">
                         <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 box-border border-b border-slate-200 dark:border-slate-800 backdrop-blur-md">
                             <TableRow>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">1. Staff Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">2. Projection (₹)</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px]">3. Login Date</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">4. Category</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">5. Product</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px]">6. Relationship Manager Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">7. File Login</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">8. Tracking Number</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">9. Channel Partner</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">10. Branch</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">11. Customer Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">12. DOB</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. Phone No.</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">14. Email ID</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">15. Customer Address</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">16. Firm Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">17. File Status</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">18. Sanctioned (₹)</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">19. Disbursed (₹)</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">20. Disbursed Dt</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">21. EMI Date</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">22. Repayment Bank</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">23. Manager Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">24. Consultant Name</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">25. Consultant Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">1. Customer Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">2. Category</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">3. Product</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">4. Login Amount (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">5. Staff Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px]">6. Login Date</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">7. Projection (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px]">8. Relationship Manager Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">9. File Login</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">10. Tracking Number</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">11. Channel Partner</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">12. Branch</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. DOB</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">14. Phone No.</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">15. Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">16. Customer Address</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">17. Firm Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">18. File Status</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">19. Sanctioned (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">20. Disbursed (₹)</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">21. Disbursed Dt</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">22. EMI Date</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">23. Repayment Bank</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">24. Manager Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">25. Consultant Name</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">26. Consultant Email ID</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] sticky right-0 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md z-20 shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l border-slate-200 dark:border-slate-800">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredItemsWithIndex.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={26} className="p-0 border-0 h-0">
+                                    <TableCell colSpan={27} className="p-0 border-0 h-0">
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none gap-1.5" style={{ top: '50px' }}>
                                             {items.length === 0 ? (
-                                                <span>No items formulated for {dateStr}</span>
+                                                <span>No items formulated for {dateSelectionType === 'range' ? `${startDateStr} to ${endDateStr}` : dateStr}</span>
                                             ) : (
                                                 <>
                                                     <span className="font-semibold text-slate-600 dark:text-slate-300">No matching line items found</span>
@@ -1726,55 +1946,15 @@ export default function DataEntryTerminal() {
                                 </TableRow>
                             ) : filteredItemsWithIndex.map(({ item, originalIndex }) => (
                                 <TableRow key={originalIndex} className="hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border-b border-slate-900/5 dark:border-white/5">
-                                    {/* 1. Staff Name */}
+                                    {/* 1. Customer Name */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        {branchStaff.length > 0 ? (
-                                            <select
-                                                disabled={!canModify && !item.isManual}
-                                                value={item.staffName || ''}
-                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
-                                                className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
-                                                    isFieldMissing(item, 'staffName')
-                                                        ? 'border-red-500/50'
-                                                        : 'border-slate-200 dark:border-white/10'
-                                                }`}
-                                            >
-                                                <option value="">— Select Staff —</option>
-                                                {branchStaff.map(m => (
-                                                    <option key={m.id} value={m.name}>{m.name}</option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <Input
-                                                disabled={!canModify && !item.isManual}
-                                                type="text"
-                                                className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${
-                                                    isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'
-                                                }`}
-                                                value={item.staffName || ''}
-                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
-                                            />
-                                        )}
-                                    </TableCell>
-
-                                    {/* 2. Projection (₹) */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <NumericFormat 
-                                            customInput={Input}
+                                        <Input 
                                             disabled={!canModify && !item.isManual}
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                            value={item.amount === 0 ? '' : item.amount}
-                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'amount', values.floatValue || 0)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
+                                            type="text"
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
+                                            value={item.customerName || ''}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
                                         />
-                                    </TableCell>
-
-                                    {/* 3. Login Date */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center">
-                                            {item.date}
-                                        </div>
                                     </TableCell>
 
                                     {/* 2. Category */}
@@ -1808,8 +1988,74 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    
-                                    {/* 4. Relationship Manager Name */}
+                                    {/* 4. Login Amount (₹) */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <NumericFormat 
+                                            customInput={Input}
+                                            disabled={!canModify && !item.isManual}
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
+                                            value={item.amount === 0 ? '' : item.amount}
+                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'amount', values.floatValue || 0)}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                        />
+                                    </TableCell>
+
+                                    {/* 5. Staff Name */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        {branchStaff.length > 0 ? (
+                                            <select
+                                                disabled={!canModify && !item.isManual}
+                                                value={item.staffName || ''}
+                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
+                                                className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                    isFieldMissing(item, 'staffName')
+                                                        ? 'border-red-500/50'
+                                                        : 'border-slate-200 dark:border-white/10'
+                                                }`}
+                                            >
+                                                <option value="">— Select Staff —</option>
+                                                {branchStaff.map(m => (
+                                                    <option key={m.id} value={m.name}>{m.name}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <Input
+                                                disabled={!canModify && !item.isManual}
+                                                type="text"
+                                                className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${
+                                                    isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'
+                                                }`}
+                                                value={item.staffName || ''}
+                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
+                                            />
+                                        )}
+                                    </TableCell>
+
+                                    {/* 6. Login Date */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <InlineDatePicker 
+                                            disabled={!canModify && !item.isManual}
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.date || (dateSelectionType === 'range' ? endDateStr : dateStr)}
+                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'date', val)}
+                                        />
+                                    </TableCell>
+
+                                    {/* 7. Projection (₹) */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <NumericFormat 
+                                            customInput={Input}
+                                            disabled={!canModify && !item.isManual}
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                            value={item.projectionAmt === 0 ? '' : item.projectionAmt}
+                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'projectionAmt', values.floatValue || 0)}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                        />
+                                    </TableCell>
+
+                                    {/* 8. Relationship Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1820,7 +2066,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 5. File Login */}
+                                    {/* 9. File Login */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={(!canModify && !item.isManual) || item.category === 'Forex'}
@@ -1846,7 +2092,7 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 6. Tracking Number */}
+                                    {/* 10. Tracking Number */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={(!canModify && !item.isManual) || (item.category !== 'Loan' && item.category !== 'Insurance')}
@@ -1858,7 +2104,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 6. Channel Partner */}
+                                    {/* 11. Channel Partner */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
@@ -1900,25 +2146,14 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 6. Branch Location */}
+                                    {/* 12. Branch Location */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center truncate">
                                             {branchDetails?.name || ''}
                                         </div>
                                     </TableCell>
 
-                                    {/* 8. Customer Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={!canModify && !item.isManual}
-                                            type="text"
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                            value={item.customerName || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 8. Customer DOB */}
+                                    {/* 13. Customer DOB */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
                                             disabled={!canModify && !item.isManual}
@@ -1928,7 +2163,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 9. Phone Number */}
+                                    {/* 14. Phone Number */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1939,7 +2174,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 11. Email ID */}
+                                    {/* 15. Email ID */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1950,7 +2185,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 12. Customer Address */}
+                                    {/* 16. Customer Address */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1961,7 +2196,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 16. Firm Name */}
+                                    {/* 17. Firm Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -1972,7 +2207,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 17. File Status */}
+                                    {/* 18. File Status */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
@@ -2009,7 +2244,7 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 15. Sanctioned Amount */}
+                                    {/* 19. Sanctioned Amount */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
@@ -2022,7 +2257,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 16. Disbursed Amount */}
+                                    {/* 20. Disbursed Amount */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
@@ -2035,7 +2270,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 17. Disbursed Date */}
+                                    {/* 21. Disbursed Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
                                             disabled={!canModify && !item.isManual}
@@ -2045,7 +2280,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 19. EMI Date */}
+                                    {/* 22. EMI Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
                                             disabled={!canModify && !item.isManual}
@@ -2055,7 +2290,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 20. Repayment Bank */}
+                                    {/* 23. Repayment Bank */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -2085,7 +2320,7 @@ export default function DataEntryTerminal() {
                                         </datalist>
                                     </TableCell>
 
-                                    {/* 23. Manager Name */}
+                                    {/* 24. Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -2096,7 +2331,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 22. Consultant Name */}
+                                    {/* 25. Consultant Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={!canModify && !item.isManual}
@@ -2121,7 +2356,7 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
 
-                                    {/* 25. Consultant Email ID */}
+                                    {/* 26. Consultant Email ID */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={!canModify && !item.isManual}
@@ -2145,7 +2380,7 @@ export default function DataEntryTerminal() {
                                                             handleUpdateItem(originalIndex, 'disbursedAmount', item.amount);
                                                         }
                                                         if (!item.disbursedDate) {
-                                                            handleUpdateItem(originalIndex, 'disbursedDate', dateStr);
+                                                            handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
                                                         }
                                                     }}
                                                     className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
@@ -2465,32 +2700,32 @@ export default function DataEntryTerminal() {
                     <Table>
                         <TableHeader className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 shadow-sm backdrop-blur-md">
                             <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
-                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">1. Staff Name *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2. Projection (₹)</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2b. Login Amount (₹) *</TableHead>
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">3. Login Date</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">4. Category *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">5. Product *</TableHead>
-                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">6. Relationship Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. File Login</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Tracking Number</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Channel Partner *</TableHead>
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Branch Location</TableHead>
-                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Customer Name *</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. DOB</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Phone No.</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Email ID</TableHead>
-                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Customer Address</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. Firm Name</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. File Status *</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. Sanctioned (₹)</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Disbursed (₹)</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. Disbursed Dt</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. EMI Date</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Repayment Bank</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Consultant Email ID</TableHead>
+                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">1. Customer Name *</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2. Category *</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">3. Product *</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">4. Login Amount (₹) *</TableHead>
+                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">5. Staff Name *</TableHead>
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">6. Login Date</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. Projection (₹)</TableHead>
+                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Relationship Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. File Login</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Tracking Number</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Channel Partner *</TableHead>
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. Branch Location</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. DOB</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Phone No.</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Email ID</TableHead>
+                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. Customer Address</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. Firm Name</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. File Status *</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Sanctioned (₹)</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. Disbursed (₹)</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. Disbursed Dt</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. EMI Date</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Repayment Bank</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Consultant</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">26. Consultant Email ID</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -2542,6 +2777,45 @@ export default function DataEntryTerminal() {
                                 
                                 return (
                                 <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                    {/* 1. Customer Name */}
+                                    <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} /></TableCell>
+                                    
+                                    {/* 2. Category */}
+                                    <TableCell className="p-2">
+                                        <AppSelect 
+                                            value={item.category || ''} 
+                                            onChange={val => handleUpdate('category', val)} 
+                                            options={['Loan', 'Insurance', 'Forex', 'Consultancy', 'Investments'].map(c => ({id: c, name: c === 'Consultancy' ? 'Consulting' : c}))}
+                                            placeholder="Category"
+                                            buttonClassName={`w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.category ? 'border border-red-500' : 'border'}`}
+                                        />
+                                    </TableCell>
+                                    
+                                    {/* 3. Product */}
+                                    <TableCell className="p-2">
+                                        <AppSelect 
+                                            value={item.product || ''} 
+                                            onChange={val => handleUpdate('product', val)} 
+                                            options={allowedProducts(item.category).map((p: any) => ({id: p.name, name: p.name}))}
+                                            placeholder="Product"
+                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.product ? 'border border-red-500' : 'border'}`}
+                                        />
+                                    </TableCell>
+                                    
+                                    {/* 4. Login Amount */}
+                                    <TableCell className="p-2">
+                                        <NumericFormat
+                                            value={item.amount === 0 ? '' : item.amount}
+                                            thousandSeparator=","
+                                            thousandsGroupStyle="lakh"
+                                            onValueChange={(vals) => handleUpdate('amount', vals.floatValue || 0)}
+                                            customInput={Input}
+                                            placeholder="₹"
+                                            className={`h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 ${!item.amount ? 'border-red-500 border' : ''}`}
+                                        />
+                                    </TableCell>
+
+                                    {/* 5. Staff Name */}
                                     <TableCell className="p-2">
                                         {(() => {
                                             const rowBranchName = item.branchLocation || activeBranchName;
@@ -2574,6 +2848,11 @@ export default function DataEntryTerminal() {
                                             );
                                         })()}
                                     </TableCell>
+
+                                    {/* 6. Login Date */}
+                                    <TableCell className="p-2"><InlineDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                    {/* 7. Projection (₹) */}
                                     <TableCell className="p-2">
                                         <NumericFormat
                                             value={item.projectionAmt === 0 ? '' : item.projectionAmt}
@@ -2585,37 +2864,11 @@ export default function DataEntryTerminal() {
                                             className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2">
-                                        <NumericFormat
-                                            value={item.amount === 0 ? '' : item.amount}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                            onValueChange={(vals) => handleUpdate('amount', vals.floatValue || 0)}
-                                            customInput={Input}
-                                            placeholder="₹"
-                                            className={`h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 ${!item.amount ? 'border-red-500 border' : ''}`}
-                                        />
-                                    </TableCell>
-                                    <TableCell className="p-2"><InlineDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    <TableCell className="p-2">
-                                        <AppSelect 
-                                            value={item.category || ''} 
-                                            onChange={val => handleUpdate('category', val)} 
-                                            options={['Loan', 'Insurance', 'Forex', 'Consultancy', 'Investments'].map(c => ({id: c, name: c === 'Consultancy' ? 'Consulting' : c}))}
-                                            placeholder="Category"
-                                            buttonClassName={`w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.category ? 'border border-red-500' : 'border'}`}
-                                        />
-                                    </TableCell>
-                                    <TableCell className="p-2">
-                                        <AppSelect 
-                                            value={item.product || ''} 
-                                            onChange={val => handleUpdate('product', val)} 
-                                            options={allowedProducts(item.category).map((p: any) => ({id: p.name, name: p.name}))}
-                                            placeholder="Product"
-                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.product ? 'border border-red-500' : 'border'}`}
-                                        />
-                                    </TableCell>
+
+                                    {/* 8. RM Name */}
                                     <TableCell className="p-2"><Input value={item.relationshipManagerName || ''} onChange={e => handleUpdate('relationshipManagerName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 9. File Login */}
                                     <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.fileLogin || ''} 
@@ -2630,7 +2883,11 @@ export default function DataEntryTerminal() {
                                             buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white border`}
                                         />
                                     </TableCell>
+
+                                    {/* 10. Tracking Number */}
                                     <TableCell className="p-2"><Input value={item.trackingNumber || ''} onChange={e => handleUpdate('trackingNumber', e.target.value)} placeholder="Track No..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 11. Channel Partner */}
                                     <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.channel || ''} 
@@ -2645,6 +2902,8 @@ export default function DataEntryTerminal() {
                                             buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.channel ? 'border border-red-500' : 'border'}`}
                                         />
                                     </TableCell>
+                                    
+                                    {/* 12. Branch Location */}
                                     <TableCell className="p-2">
                                         <BranchSelect 
                                             value={item.branchLocation || ''} 
@@ -2654,12 +2913,23 @@ export default function DataEntryTerminal() {
                                             className="w-[120px]"
                                         />
                                     </TableCell>
-                                    <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} /></TableCell>
+                                    
+                                    {/* 13. DOB */}
                                     <TableCell className="p-2"><InlineDatePicker value={item.customerDOB || ''} onChange={(val: string) => handleUpdate('customerDOB', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 14. Phone No. */}
                                     <TableCell className="p-2"><Input value={item.phoneNumber || ''} onChange={e => handleUpdate('phoneNumber', e.target.value.replace(/\D/g,''))} placeholder="Phone..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 15. Email ID */}
                                     <TableCell className="p-2"><Input type="email" value={item.emailId || ''} onChange={e => handleUpdate('emailId', e.target.value)} placeholder="Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 16. Address */}
                                     <TableCell className="p-2"><Input value={item.customerAddress || ''} onChange={e => handleUpdate('customerAddress', e.target.value)} placeholder="Address..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 17. Firm Name */}
                                     <TableCell className="p-2"><Input value={item.firmName || ''} onChange={e => handleUpdate('firmName', e.target.value)} placeholder="Firm Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 18. File Status */}
                                     <TableCell className="p-2">
                                         <AppSelect 
                                             value={item.fileStatus || ''} 
@@ -2674,6 +2944,8 @@ export default function DataEntryTerminal() {
                                             buttonClassName={`w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.fileStatus ? 'border border-red-500' : 'border'}`}
                                         />
                                     </TableCell>
+                                    
+                                    {/* 19. Sanctioned (₹) */}
                                     <TableCell className="p-2">
                                         <NumericFormat
                                             value={item.sanctionedAmount === 0 ? '' : item.sanctionedAmount}
@@ -2685,6 +2957,8 @@ export default function DataEntryTerminal() {
                                             className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
                                         />
                                     </TableCell>
+                                    
+                                    {/* 20. Disbursed (₹) */}
                                     <TableCell className="p-2">
                                         <NumericFormat
                                             value={item.disbursedAmount === 0 ? '' : item.disbursedAmount}
@@ -2696,10 +2970,20 @@ export default function DataEntryTerminal() {
                                             className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
                                         />
                                     </TableCell>
+                                    
+                                    {/* 21. Disbursed Dt */}
                                     <TableCell className="p-2"><InlineDatePicker value={item.disbursedDate || ''} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 22. EMI Date */}
                                     <TableCell className="p-2"><InlineDatePicker value={item.emiDate || ''} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 23. Repayment Bank */}
                                     <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 24. Manager Name */}
                                     <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 25. Consultant Name */}
                                     <TableCell className="p-2">
                                         <select
                                             value={item.consultantName || ''}
@@ -2720,12 +3004,13 @@ export default function DataEntryTerminal() {
                                             ))}
                                         </select>
                                     </TableCell>
+                                    
+                                    {/* 26. Consultant Email ID */}
                                     <TableCell className="p-2"><Input type="email" value={item.consultantEmail || ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder="Consultant Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     <TableCell className="p-2 text-right">
                                         <button onClick={handleRemove} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
                                     </TableCell>
                                 </TableRow>
-
                                 );
                             })}
                         </TableBody>
@@ -3050,6 +3335,28 @@ export default function DataEntryTerminal() {
               setDateStr(date);
           }}
           onClose={() => setShowDatePicker(false)}
+        />
+      )}
+
+      {showStartDatePicker && (
+        <CustomDatePicker 
+          selectedDate={startDateStr}
+          onChange={(date) => {
+              if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+              setStartDateStr(date);
+          }}
+          onClose={() => setShowStartDatePicker(false)}
+        />
+      )}
+
+      {showEndDatePicker && (
+        <CustomDatePicker 
+          selectedDate={endDateStr}
+          onChange={(date) => {
+              if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+              setEndDateStr(date);
+          }}
+          onClose={() => setShowEndDatePicker(false)}
         />
       )}
     </div>
