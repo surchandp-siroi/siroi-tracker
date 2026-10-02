@@ -1552,7 +1552,11 @@ export default function DataEntryTerminal() {
                      {branchDetails ? branchDetails.name : (user.role === 'admin' || user.role === 'statehead' ? 'Global Access' : 'Unknown Branch')} • {user.email}
                   </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 px-3.5 py-1.5 rounded-full border border-slate-200/80 dark:border-white/10 shadow-xs mr-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                      <span className="text-[11px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime}</span>
+                  </div>
                   <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
                       Audit Logs
                   </Button>
@@ -1637,19 +1641,19 @@ export default function DataEntryTerminal() {
 
                     {/* Date Context */}
                     <div className="flex flex-col w-full md:w-auto">
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+                        <div className="flex items-center justify-between gap-3 mb-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                 Date Context
                             </label>
                             {entryMode === 'daily' && (
-                                <div className="inline-flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full border border-slate-200 dark:border-white/5 text-[9px] font-bold uppercase tracking-wider">
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full border border-slate-200 dark:border-white/10 w-[140px]">
                                     <button
                                         type="button"
                                         onClick={() => {
                                             if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
                                             setDateSelectionType('single');
                                         }}
-                                        className={`px-2 py-0.5 rounded-full transition-all ${
+                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-wider py-1 transition-all text-center ${
                                             dateSelectionType === 'single'
                                                 ? 'bg-indigo-600 text-white shadow-xs'
                                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -1663,7 +1667,7 @@ export default function DataEntryTerminal() {
                                             if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
                                             setDateSelectionType('range');
                                         }}
-                                        className={`px-2 py-0.5 rounded-full transition-all ${
+                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-wider py-1 transition-all text-center ${
                                             dateSelectionType === 'range'
                                                 ? 'bg-indigo-600 text-white shadow-xs'
                                                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -1675,8 +1679,7 @@ export default function DataEntryTerminal() {
                             )}
                         </div>
 
-                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 md:gap-4 w-full md:w-auto">
-                            <div className="w-full sm:w-auto">
+                        <div className="w-full sm:w-[270px]">
                             {entryMode === 'monthly' ? (
                                 <MonthPicker 
                                     value={dateStr.substring(0, 7)}
@@ -1684,44 +1687,37 @@ export default function DataEntryTerminal() {
                                         if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
                                         setDateStr(val + '-01');
                                     }}
-                                    buttonClassName="h-[36px] w-full sm:w-auto px-4 rounded-full border-slate-200 dark:border-white/10 shadow-sm"
+                                    buttonClassName="h-[36px] w-full px-4 rounded-full border-slate-200 dark:border-white/10 shadow-sm"
                                 />
                             ) : dateSelectionType === 'single' ? (
-                                <div className="flex items-center h-[36px] w-full sm:w-auto px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
-                                    <Calendar className="w-4 h-4 text-slate-500 mr-2.5" />
-                                    <div 
-                                        className="bg-transparent text-xs text-slate-800 dark:text-slate-100 font-bold outline-none cursor-pointer flex-1 min-w-[100px] flex items-center select-none"
-                                        onClick={() => setShowDatePicker(true)}
-                                    >
-                                        {format(new Date(dateStr), 'dd MMM yyyy')}
-                                    </div>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDatePicker(true)}
+                                    className="flex items-center justify-center gap-2.5 h-[36px] w-full px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-sm transition-all text-xs font-bold text-slate-800 dark:text-slate-100 select-none group"
+                                >
+                                    <Calendar className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
+                                    <span>{format(new Date(dateStr), 'dd MMM yyyy')}</span>
+                                </button>
                             ) : (
-                                <div className="flex items-center gap-2 h-[36px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full px-3.5 shadow-sm hover:border-slate-300 dark:hover:border-white/20 transition-colors">
-                                    <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                <div className="flex items-center justify-between gap-1.5 h-[36px] w-full px-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-sm transition-all text-xs font-bold text-slate-800 dark:text-slate-100">
                                     <button
                                         type="button"
                                         onClick={() => setShowStartDatePicker(true)}
-                                        className="text-xs text-slate-800 dark:text-slate-100 font-bold hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                        className="flex items-center gap-1.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                     >
-                                        {format(new Date(startDateStr), 'dd MMM yyyy')}
+                                        <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                        <span>{format(new Date(startDateStr), 'dd MMM yyyy')}</span>
                                     </button>
-                                    <ArrowRight className="w-3 h-3 text-slate-400" />
+                                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                     <button
                                         type="button"
                                         onClick={() => setShowEndDatePicker(true)}
-                                        className="text-xs text-slate-800 dark:text-slate-100 font-bold hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                        className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                     >
-                                        {format(new Date(endDateStr), 'dd MMM yyyy')}
+                                        <span>{format(new Date(endDateStr), 'dd MMM yyyy')}</span>
                                     </button>
                                 </div>
                             )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 h-[36px] rounded-full border border-slate-200 dark:border-white/5 shadow-inner">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                                <span className="text-[11px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime.split(',')[0]}</span>
-                            </div>
                         </div>
                     </div>
                 </div>
