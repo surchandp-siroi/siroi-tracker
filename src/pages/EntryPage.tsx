@@ -1983,8 +1983,14 @@ export default function DataEntryTerminal() {
                                 </TableRow>
                             ) : (
                                 filteredItemsWithIndex.map(({ item, originalIndex }) => {
-                                const isRowDisbursed = Boolean(item.disbursedDate) || item.fileStatus === 'Disbursed' || (item.category === 'Insurance' && (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED'));
-                                const isRowFrozen = isRowDisbursed && !item._isSessionEditing;
+                                const isLoan = item.category === 'Loan' || (!item.category && item.product);
+                                const isInsurance = item.category === 'Insurance';
+                                const isFullyCompletedDisbursement = isLoan
+                                    ? (item.fileStatus === 'Disbursed' || Boolean(item.disbursedDate)) && Boolean(item.disbursedDate?.trim()) && Boolean(item.emiDate?.trim())
+                                    : isInsurance
+                                        ? (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED' || Boolean(item.disbursedDate)) && Boolean(item.disbursedDate?.trim())
+                                        : (item.fileStatus === 'Disbursed' || Boolean(item.disbursedDate)) && Boolean(item.disbursedDate?.trim());
+                                const isRowFrozen = isFullyCompletedDisbursement && !item._isSessionEditing;
                                 const isFieldDisabled = (!canModify && !item.isManual) || isRowFrozen;
 
                                 return (
