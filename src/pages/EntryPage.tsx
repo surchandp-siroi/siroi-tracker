@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
@@ -329,6 +329,27 @@ export default function DataEntryTerminal() {
       const aBranch = activeBranchName.toLowerCase();
       return mBranch.includes(aBranch) || aBranch.includes(mBranch);
   });
+
+  const getLocationEmployees = useCallback((branchLocationName?: string) => {
+      const targetBranchName = (branchLocationName || activeBranchName || '').trim();
+      const targetBranch = branches.find(b => 
+          (targetBranchName && b.name.toLowerCase() === targetBranchName.toLowerCase()) || 
+          b.id === activeBranchId
+      );
+      const names = new Set<string>();
+      if (targetBranch?.managerName?.trim()) {
+          names.add(targetBranch.managerName.trim());
+      }
+      orgMembers.forEach(m => {
+          if (!m.branch || !m.name) return;
+          const mB = m.branch.toLowerCase();
+          const tB = targetBranchName.toLowerCase();
+          if (!tB || mB.includes(tB) || tB.includes(mB)) {
+              names.add(m.name.trim());
+          }
+      });
+      return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [branches, activeBranchId, activeBranchName, orgMembers]);
 
   // Unsaved Guard
   const isDirty = !hasExistingEntry && items.length > 0;
@@ -2318,13 +2339,37 @@ export default function DataEntryTerminal() {
 
                                     {/* 23. Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.managerName || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
-                                        />
+                                        {(() => {
+                                            const managers = getLocationEmployees(item.branchLocation);
+                                            return managers.length > 0 ? (
+                                                <select
+                                                    disabled={isFieldDisabled}
+                                                    value={item.managerName || ''}
+                                                    onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
+                                                    className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                        isFieldMissing(item, 'managerName')
+                                                            ? 'border-red-500/50'
+                                                            : 'border-slate-200 dark:border-white/10'
+                                                    }`}
+                                                >
+                                                    <option value="">— Select Manager —</option>
+                                                    {item.managerName && !managers.includes(item.managerName) && (
+                                                        <option value={item.managerName}>{item.managerName}</option>
+                                                    )}
+                                                    {managers.map(name => (
+                                                        <option key={name} value={name}>{name}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <Input 
+                                                    disabled={isFieldDisabled}
+                                                    type="text"
+                                                    className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                    value={item.managerName || ''}
+                                                    onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
+                                                />
+                                            );
+                                        })()}
                                     </TableCell>
 
                                     {/* 24. Consultant Name */}
@@ -2971,7 +3016,28 @@ export default function DataEntryTerminal() {
                                     <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     
                                     {/* 24. Manager Name */}
-                                    <TableCell className="p-2"><Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2">
+                                        {(() => {
+                                            const managers = getLocationEmployees(item.branchLocation);
+                                            return managers.length > 0 ? (
+                                                <select
+                                                    value={item.managerName || ''}
+                                                    onChange={e => handleUpdate('managerName', e.target.value)}
+                                                    className="w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700"
+                                                >
+                                                    <option value="">— Manager —</option>
+                                                    {item.managerName && !managers.includes(item.managerName) && (
+                                                        <option value={item.managerName}>{item.managerName}</option>
+                                                    )}
+                                                    {managers.map(name => (
+                                                        <option key={name} value={name}>{name}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" />
+                                            );
+                                        })()}
+                                    </TableCell>
                                     
                                     {/* 25. Consultant Name */}
                                     <TableCell className="p-2">
