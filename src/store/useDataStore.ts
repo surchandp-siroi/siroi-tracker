@@ -57,6 +57,7 @@ export interface EntryItem {
     relationshipManagerName?: string;
     consultantName?: string;
     consultantEmail?: string;
+    rejectionRemark?: string;
     commissionPercentage?: number;
     settlementStatus?: 'Not Settled' | 'Settled';
     settlementDate?: string;

@@ -39,7 +39,8 @@ const SYSTEM_FIELDS: SystemField[] = [
     { key: 'repaymentBank', label: 'Repayment Bank', required: false, aliases: ['repayment bank', 'bank'] },
     { key: 'managerName', label: 'Manager Name', required: false, aliases: ['manager name', 'manager'] },
     { key: 'consultantName', label: 'Consultant', required: false, aliases: ['consultant', 'consultant name'] },
-    { key: 'consultantEmail', label: 'Consultant Email ID', required: false, aliases: ['consultant email', 'consultant email id', 'consultant e-mail'] }
+    { key: 'consultantEmail', label: 'Consultant Email ID', required: false, aliases: ['consultant email', 'consultant email id', 'consultant e-mail'] },
+    { key: 'rejectionRemark', label: 'Rejection Remark', required: false, aliases: ['rejection remark', 'rejection remarks', 'reject remark', 'rejection reason', 'reject reason', 'remarks', 'remark'] }
 ];
 
 function similarity(a: string, b: string): number {

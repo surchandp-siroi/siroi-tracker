@@ -310,8 +310,9 @@ export default function DataEntryTerminal() {
         const matchAmount = item.amount?.toString().includes(q);
         const matchSanctioned = item.sanctionedAmount?.toString().includes(q);
         const matchDisbursed = item.disbursedAmount?.toString().includes(q);
+        const matchRemark = item.rejectionRemark?.toLowerCase().includes(q);
         
-        return !!(matchName || matchTrack || matchRM || matchChannel || matchProduct || matchStaff || matchManager || matchConsultant || matchPhone || matchEmail || matchAddress || matchFirm || matchStatus || matchAmount || matchSanctioned || matchDisbursed);
+        return !!(matchName || matchTrack || matchRM || matchChannel || matchProduct || matchStaff || matchManager || matchConsultant || matchPhone || matchEmail || matchAddress || matchFirm || matchStatus || matchAmount || matchSanctioned || matchDisbursed || matchRemark);
       }
       
       return true;
@@ -739,6 +740,7 @@ export default function DataEntryTerminal() {
             - "managerName": string
             - "consultantName": string
             - "consultantEmail": string
+            - "rejectionRemark": string
             
             Mapped Spreadsheet JSON:
             ${JSON.stringify(mappedJson).substring(0, 50000)} // Limiting to ~50k chars
@@ -866,7 +868,8 @@ export default function DataEntryTerminal() {
           repaymentBank: '',
           managerName: '',
           consultantName: '',
-          consultantEmail: ''
+          consultantEmail: '',
+          rejectionRemark: ''
       }]);
   };
   
@@ -1991,9 +1994,9 @@ export default function DataEntryTerminal() {
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">9. Tracking Number</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">10. Channel Partner</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">11. Branch</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">12. DOB</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. Phone No.</TableHead>
-                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">14. Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">12. Customer DOB</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px]">13. Customer Phone No.</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">14. Customer Email ID</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px]">15. Customer Address</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">16. Firm Name</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">17. File Status</TableHead>
@@ -2005,13 +2008,14 @@ export default function DataEntryTerminal() {
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px]">23. Manager Name</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px]">24. Consultant Name</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px]">25. Consultant Email ID</TableHead>
+                                <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px]">26. Rejection Remark</TableHead>
                                 <TableHead className="text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredItemsWithIndex.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={26} className="p-0 border-0 h-0">
+                                    <TableCell colSpan={27} className="p-0 border-0 h-0">
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none gap-1.5" style={{ top: '50px' }}>
                                             {items.length === 0 ? (
                                                 <span>No items formulated for {dateSelectionType === 'range' ? `${startDateStr} to ${endDateStr}` : dateStr}</span>
@@ -2462,6 +2466,18 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
+                                    {/* 26. Rejection Remark */}
+                                    <TableCell className="py-2 px-2 align-top">
+                                        <Input 
+                                            disabled={isFieldDisabled}
+                                            type="text"
+                                            placeholder="Rejection remark..."
+                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[200px]"
+                                            value={item.rejectionRemark || ''}
+                                            onChange={(e) => handleUpdateItem(originalIndex, 'rejectionRemark', e.target.value)}
+                                        />
+                                    </TableCell>
+
                                     {/* Actions & Quick Shortcuts */}
                                     <TableCell className="py-2 px-3 align-middle text-right">
                                         {isRowFrozen ? (
@@ -2815,9 +2831,9 @@ export default function DataEntryTerminal() {
                                 <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Tracking Number</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Channel Partner *</TableHead>
                                 <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Branch Location</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. DOB</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Phone No.</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Email ID</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. Customer DOB</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Customer Phone No.</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Customer Email ID</TableHead>
                                 <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Customer Address</TableHead>
                                 <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. Firm Name</TableHead>
                                 <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. File Status *</TableHead>
@@ -2829,6 +2845,7 @@ export default function DataEntryTerminal() {
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Manager Name</TableHead>
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant</TableHead>
                                 <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Consultant Email ID</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">26. Rejection Remark</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -3115,8 +3132,12 @@ export default function DataEntryTerminal() {
                                         </select>
                                     </TableCell>
                                     
-                                    {/* 26. Consultant Email ID */}
+                                    {/* 25. Consultant Email ID */}
                                     <TableCell className="p-2"><Input type="email" value={item.consultantEmail || ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder="Consultant Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    
+                                    {/* 26. Rejection Remark */}
+                                    <TableCell className="p-2"><Input type="text" value={item.rejectionRemark || ''} onChange={e => handleUpdate('rejectionRemark', e.target.value)} placeholder="Rejection remark..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 min-w-[200px]" /></TableCell>
+
                                     <TableCell className="p-2 text-right">
                                         <button onClick={handleRemove} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
                                     </TableCell>
