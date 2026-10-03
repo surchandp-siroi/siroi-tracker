@@ -1576,13 +1576,13 @@ export default function DataEntryTerminal() {
   });
 
   return (
-      <div className="min-h-screen p-3 md:p-8 flex flex-col w-full">
-          <header className="glass px-4 py-4 md:px-6 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-4 mb-4 md:mb-6 rounded-xl shadow-sm">
+      <div className="h-screen p-3 md:p-6 flex flex-col w-full overflow-hidden">
+          <header className="glass px-4 py-3 md:px-6 md:py-3 flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-3 md:mb-3 rounded-xl shadow-sm shrink-0">
               <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">
+                  <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.5">
                       {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
                   </h1>
-                  <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                      {branchDetails ? branchDetails.name : (user.role === 'admin' || user.role === 'statehead' ? 'Global Access' : 'Unknown Branch')} • {user.email}
                   </div>
               </div>
@@ -1604,11 +1604,11 @@ export default function DataEntryTerminal() {
               <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
           )}
 
-          {/* Sticky Top Control Bar */}
-          <div className="sticky top-0 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-4 md:p-5 mb-4 md:mb-6 rounded-2xl shadow-sm flex flex-col gap-5 md:gap-4 transition-all">
+          {/* Top Command Center Bar */}
+          <div className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-3.5 md:p-4 mb-3 md:mb-3 rounded-2xl shadow-sm flex flex-col gap-4 shrink-0 transition-all">
               
               {/* Unified Command Center Bar */}
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5 xl:gap-4">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-4">
                   {/* Left Section: Context */}
                   <div className="flex flex-wrap md:flex-nowrap items-center gap-4 md:gap-5 overflow-x-auto pb-1 hide-scrollbar w-full xl:w-auto">
                       {/* Branch Override */}
@@ -1879,9 +1879,9 @@ export default function DataEntryTerminal() {
         </div>
 
         {/* Data Grid Section */}
-        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-sm">
+        <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-sm flex flex-col mb-16">
             {/* Toolbar Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3.5 gap-3 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3 gap-3 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
                <div className="flex flex-wrap items-center gap-2.5">
                    <div className="flex items-center gap-2">
                        <Layers className="w-4 h-4 text-indigo-500" />
