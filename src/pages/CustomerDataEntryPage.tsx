@@ -17,6 +17,7 @@ export default function CustomerDataEntryPage() {
     // Form State
     const [panNumber, setPanNumber] = useState('');
     const [customerName, setCustomerName] = useState('');
+    const [customerType, setCustomerType] = useState('');
     const [aadharNumber, setAadharNumber] = useState('');
     const [associationDate, setAssociationDate] = useState('');
     const [address, setAddress] = useState('');
@@ -110,6 +111,10 @@ export default function CustomerDataEntryPage() {
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!customerType) {
+            setError('Please select a Customer Type.');
+            return;
+        }
         setError('');
         setIsLoading(true);
         
@@ -119,6 +124,7 @@ export default function CustomerDataEntryPage() {
                 .insert([{
                     pan_number: panNumber.toUpperCase(),
                     customer_name: customerName,
+                    customer_type: customerType,
                     aadhar_number: aadharNumber,
                     association_date: associationDate,
                     address: address,
@@ -143,6 +149,7 @@ export default function CustomerDataEntryPage() {
                 setStep(1);
                 setPanNumber('');
                 setCustomerName('');
+                setCustomerType('');
                 setAadharNumber('');
                 setAssociationDate('');
                 setAddress('');
@@ -274,12 +281,44 @@ export default function CustomerDataEntryPage() {
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer Name</label>
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                                            <span>Customer Name</span>
+                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                        </label>
                                         <Input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Full Name" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Aadhar Number</label>
-                                        <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                                            <span>Customer Type</span>
+                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                        </label>
+                                        <select 
+                                            value={customerType} 
+                                            onChange={(e) => setCustomerType(e.target.value)} 
+                                            required 
+                                            className="w-full h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer"
+                                        >
+                                            <option value="">Select Customer Type...</option>
+                                            <option value="Loans">Loans</option>
+                                            <option value="Forex">Forex</option>
+                                            <option value="Insurance">Insurance</option>
+                                            <option value="Consulting">Consulting</option>
+                                            <option value="Investments">Investments</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                                            <span>Aadhar Number</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">Optional</span>
+                                        </label>
+                                        <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                                            <span>Phone Number</span>
+                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                        </label>
+                                        <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+91 9876543210" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
                                     </div>
                                     <div className="space-y-2">
                                         <DatePicker
@@ -291,14 +330,9 @@ export default function CustomerDataEntryPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone Number</label>
-                                        <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+91 9876543210" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email ID</label>
+                                        <Input type="email" value={emailId} onChange={(e) => setEmailId(e.target.value)} placeholder="customer@email.com" className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
                                     </div>
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email ID</label>
-                                    <Input type="email" value={emailId} onChange={(e) => setEmailId(e.target.value)} placeholder="customer@email.com" className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

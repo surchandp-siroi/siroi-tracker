@@ -18,6 +18,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
 
   // Form State
   const [customerName, setCustomerName] = useState(customer.customer_name || '');
+  const [customerType, setCustomerType] = useState(customer.customer_type || '');
   const [aadharNumber, setAadharNumber] = useState(customer.aadhar_number || '');
   const [associationDate, setAssociationDate] = useState(customer.association_date || '');
   const [address, setAddress] = useState(customer.address || '');
@@ -41,6 +42,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
         .from('customer_data')
         .update({
           customer_name: customerName,
+          customer_type: customerType,
           aadhar_number: aadharNumber,
           association_date: associationDate,
           address,
@@ -89,7 +91,22 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                 <Input required value={customerName} onChange={e => setCustomerName(e.target.value)} className="h-10" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Aadhar</label>
+                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer Type</label>
+                <select 
+                  value={customerType} 
+                  onChange={e => setCustomerType(e.target.value)}
+                  className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                >
+                  <option value="">Select Type...</option>
+                  <option value="Loans">Loans</option>
+                  <option value="Forex">Forex</option>
+                  <option value="Insurance">Insurance</option>
+                  <option value="Consulting">Consulting</option>
+                  <option value="Investments">Investments</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Aadhar (Optional)</label>
                 <Input value={aadharNumber} onChange={e => setAadharNumber(e.target.value)} className="h-10" />
               </div>
               <div className="space-y-1.5">

@@ -12,6 +12,7 @@ type CustomerData = {
   created_at: string;
   pan_number: string;
   customer_name: string;
+  customer_type?: string;
   phone_number: string;
   email_id: string;
   entry_person_name: string;
@@ -123,9 +124,16 @@ export default function CustomersPage() {
                     <h3 className="font-bold text-slate-900 text-lg truncate max-w-[200px]" title={customer.customer_name}>
                       {customer.customer_name || 'N/A'}
                     </h3>
-                    <p className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded inline-block mt-1">
-                      {customer.pan_number}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <p className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded inline-block">
+                        {customer.pan_number}
+                      </p>
+                      {customer.customer_type && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
+                          {customer.customer_type}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-2 justify-end mb-1">
