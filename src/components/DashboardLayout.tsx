@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, UsersRound, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2, Copy } from 'lucide-react';
+import { LayoutDashboard, Package, UsersRound, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2, Copy, UserCheck } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -22,6 +22,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/dashboard/products', label: 'Products', icon: Package },
   { to: '/dashboard/customers', label: 'Customers', icon: UsersRound },
+  { to: '/dashboard/consultants', label: 'Consultants', icon: UserCheck },
   { to: '/dashboard/branches', label: 'Branches', icon: GitBranch },
   { to: '/dashboard/organigram', label: 'Organigram', icon: Users, adminOnly: true },
   { to: '/dashboard/audit', label: 'Audit Logs', icon: ShieldAlert, adminOnly: true },
