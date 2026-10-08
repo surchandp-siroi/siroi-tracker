@@ -163,6 +163,7 @@ interface DataState {
   addBranch: (branch: Omit<Branch, 'id' | 'dailyAchievement'>) => void;
   deleteBranch: (id: string) => void;
   setBranchTarget: (branchId: string, monthYear: string, targetAmount: number, authorId: string, productTargets?: Record<string, number>) => Promise<boolean>;
+  refreshOrgMembers: () => Promise<void>;
   updateCommission: (entryId: string, itemIdx: number, updates: { commissionPercentage?: number, settlementStatus?: 'Not Settled' | 'Settled', settlementDate?: string }) => Promise<boolean>;
 }
 
@@ -177,6 +178,21 @@ export const useDataStore = create<DataState>((set) => ({
   orgMembers: [],
   consultants: [],
   isLoading: true,
+  refreshOrgMembers: async () => {
+    try {
+      const { data: orgData } = await supabase.from('org_nodes').select('id, name, branch');
+      if (orgData) {
+        const allOrgMembers = orgData.filter((m: any) => m.name).map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          branch: m.branch || null,
+        }));
+        set({ orgMembers: allOrgMembers });
+      }
+    } catch (e) {
+      console.warn('Could not refresh org_nodes.', e);
+    }
+  },
   addChannel: () => {},
   deleteChannel: () => {},
   addProduct: () => {},

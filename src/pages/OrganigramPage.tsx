@@ -287,6 +287,7 @@ function OrganigramChart() {
     const { error } = await supabase.from('org_nodes').delete().eq('id', id);
     if (!error) {
       fetchHierarchy();
+      useDataStore.getState().refreshOrgMembers();
     } else {
       alert('Failed to delete: ' + error.message);
     }
@@ -312,6 +313,7 @@ function OrganigramChart() {
       const { error } = await supabase.from('org_nodes').update({ parent_id: params.source }).eq('id', params.target);
       if (!error) {
         fetchHierarchy(); // Re-fetch to apply new layout and edges
+        useDataStore.getState().refreshOrgMembers();
       } else {
         alert("Failed to update reporting structure: " + error.message);
       }
@@ -360,6 +362,7 @@ function OrganigramChart() {
       else {
         setIsFormOpen(false);
         fetchHierarchy();
+        useDataStore.getState().refreshOrgMembers();
       }
     } else {
       const { error } = await supabase.from('org_nodes').insert(payload);
@@ -367,6 +370,7 @@ function OrganigramChart() {
       else {
         setIsFormOpen(false);
         fetchHierarchy();
+        useDataStore.getState().refreshOrgMembers();
       }
     }
   };
