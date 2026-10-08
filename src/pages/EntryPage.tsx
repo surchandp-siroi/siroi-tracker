@@ -251,6 +251,32 @@ export default function DataEntryTerminal() {
   // Admin Context
   const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
   
+  // Adaptive Viewport Auto-Scaling (Instantly fits dashboard on laptops with 125%/150% scaling or height < 900px)
+  const [adaptiveScale, setAdaptiveScale] = useState<number>(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (typeof window === 'undefined' || window.innerWidth < 1024) {
+        setAdaptiveScale(1);
+        return;
+      }
+      
+      const idealHeight = 900;
+      const currentHeight = window.innerHeight;
+      
+      if (currentHeight < idealHeight) {
+        const scale = Math.min(1, Math.max(0.76, parseFloat((currentHeight / idealHeight).toFixed(3))));
+        setAdaptiveScale(scale);
+      } else {
+        setAdaptiveScale(1);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+  
   const fetchCache = useRef<Record<string, any>>({});
   const [fetchError, setFetchError] = useState(false);
   
@@ -1576,7 +1602,10 @@ export default function DataEntryTerminal() {
   });
 
   return (
-      <div className="h-screen p-3 md:p-6 flex flex-col w-full overflow-hidden">
+      <div 
+          className="min-h-screen p-3 md:p-6 flex flex-col w-full overflow-x-hidden overflow-y-auto"
+          style={adaptiveScale < 1 ? ({ zoom: adaptiveScale } as React.CSSProperties) : undefined}
+      >
           <header className="glass px-4 py-3 md:px-6 md:py-3 flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-3 md:mb-3 rounded-xl shadow-sm shrink-0">
               <div>
                   <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.5">
@@ -1879,7 +1908,7 @@ export default function DataEntryTerminal() {
         </div>
 
         {/* Data Grid Section */}
-        <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-sm flex flex-col mb-16">
+        <div className="flex-1 min-h-[380px] bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-sm flex flex-col mb-24">
             {/* Toolbar Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3 gap-3 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
                <div className="flex flex-wrap items-center gap-2.5">
@@ -1980,7 +2009,7 @@ export default function DataEntryTerminal() {
                 {isLoadingExisting ? (
                     <div className="flex justify-center items-center h-full min-h-[200px]"><Loader2 className="animate-spin text-slate-300" /></div>
                 ) : (
-                    <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 overflow-auto">
+                    <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 overflow-auto min-h-[300px]">
                         <TableHeader className="bg-slate-50 dark:bg-slate-900 sticky top-0 z-20 box-border border-b border-slate-200 dark:border-slate-800 shadow-xs">
                             <TableRow className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900">
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">1. Customer Name</TableHead>
