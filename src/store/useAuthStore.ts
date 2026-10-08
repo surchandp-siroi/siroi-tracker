@@ -60,44 +60,50 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
   const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveEmail);
   const matchedBranchAccount = BRANCH_ACCOUNTS[effectiveEmail];
 
+  // In-memory application role
   const expectedRole: UserRole = isSuperAdminEmail ? 'admin' : matchedBranchAccount ? matchedBranchAccount.role : 'statehead';
+  // DB column role (stored in database to satisfy Postgres users_role_check constraint)
+  const dbRole = expectedRole === 'manager' ? 'statehead' : expectedRole;
+
   const expectedBranchId: string | null = isSuperAdminEmail ? null : matchedBranchAccount ? matchedBranchAccount.branchId : null;
   const expectedLocation: string | undefined = location || matchedBranchAccount?.branchName || (isSuperAdminEmail ? 'HO' : undefined);
   const expectedDisplayName: string | null = matchedBranchAccount?.managerName || (isSuperAdminEmail ? 'Administrator' : null);
 
   if (userDoc) {
-    profile = userDoc as UserProfile;
+    profile = {
+      ...(userDoc as UserProfile),
+      email: effectiveEmail,
+      role: expectedRole, // Always preserve 'manager' in application memory
+      branchId: expectedBranchId !== null ? expectedBranchId : userDoc.branchId,
+      latestLocation: expectedLocation || userDoc.latestLocation,
+      displayName: expectedDisplayName || userDoc.displayName
+    };
         
     let needsUpdate = false;
     const updates: any = {};
 
-    if (expectedLocation && expectedLocation !== profile.latestLocation) {
+    if (expectedLocation && expectedLocation !== userDoc.latestLocation) {
       updates.latestLocation = expectedLocation;
-      profile.latestLocation = expectedLocation;
       needsUpdate = true;
     }
 
-    if (profile.role !== expectedRole) {
-      updates.role = expectedRole;
-      profile.role = expectedRole;
+    if (userDoc.role !== dbRole) {
+      updates.role = dbRole;
       needsUpdate = true;
     }
 
-    if (expectedBranchId !== undefined && profile.branchId !== expectedBranchId) {
+    if (expectedBranchId !== undefined && userDoc.branchId !== expectedBranchId) {
       updates.branchId = expectedBranchId;
-      profile.branchId = expectedBranchId;
       needsUpdate = true;
     }
 
-    if (expectedDisplayName && (!profile.displayName || profile.displayName !== expectedDisplayName)) {
+    if (expectedDisplayName && (!userDoc.displayName || userDoc.displayName !== expectedDisplayName)) {
       updates.displayName = expectedDisplayName;
-      profile.displayName = expectedDisplayName;
       needsUpdate = true;
     }
 
-    if (effectiveEmail && profile.email !== effectiveEmail) {
+    if (effectiveEmail && userDoc.email !== effectiveEmail) {
       updates.email = effectiveEmail;
-      profile.email = effectiveEmail;
       needsUpdate = true;
     }
 
@@ -108,13 +114,22 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
     profile = {
       id: sbUser.id,
       email: effectiveEmail,
-      role: expectedRole,
+      role: expectedRole, // In application state: 'manager'
       branchId: expectedBranchId,
       latestLocation: expectedLocation,
       displayName: expectedDisplayName
     };
 
-    const { error: insertError } = await supabase.from('users').insert([profile]);
+    const dbInsertPayload = {
+      id: sbUser.id,
+      email: effectiveEmail,
+      role: dbRole, // In database: 'statehead' to satisfy users_role_check constraint
+      branchId: expectedBranchId,
+      latestLocation: expectedLocation,
+      displayName: expectedDisplayName
+    };
+
+    const { error: insertError } = await supabase.from('users').insert([dbInsertPayload]);
 
     if (insertError && !insertError.message.includes("duplicate key value")) {
       console.error("Failed to insert user profile:", insertError);
