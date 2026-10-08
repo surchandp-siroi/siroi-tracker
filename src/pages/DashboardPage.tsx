@@ -219,8 +219,13 @@ export default function DashboardOverview() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+  const isManager = user?.role === 'manager';
+  const managerBranchId = user?.branchId || '';
+  const managerBranchObj = branches.find(b => b.id === managerBranchId);
+  const managerBranchName = managerBranchObj?.name || user?.latestLocation || 'Branch';
+
   const [viewMode, setViewMode] = useState<'daily' | 'month' | 'year'>('daily');
-  const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>('all');
+  const [selectedBusinessBranch, setSelectedBusinessBranch] = useState<string>(() => isManager && managerBranchId ? managerBranchId : 'all');
   const [savingTargets, setSavingTargets] = useState(false);
   const [targetMonthStr, setTargetMonthStr] = useState<string>(() => {
       const d = new Date();
@@ -239,21 +244,29 @@ export default function DashboardOverview() {
   const [activeCategoryPage, setActiveCategoryPage] = useState(0);
 
   // Granular Tracking State
-  const [granularLocation, setGranularLocation] = useState<string>('all');
+  const [granularLocation, setGranularLocation] = useState<string>(() => isManager && managerBranchId ? managerBranchId : 'all');
   const [granularTimeframe, setGranularTimeframe] = useState<'MTD' | 'YTD'>('MTD');
 
   // Data Quality State
-  const [dqLocation, setDqLocation] = useState<string>('all');
+  const [dqLocation, setDqLocation] = useState<string>(() => isManager && managerBranchId ? managerBranchId : 'all');
   const [dqMonthStr, setDqMonthStr] = useState<string>(() => {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  // Secure routing
+  useEffect(() => {
+    if (isManager && managerBranchId) {
+      setSelectedBusinessBranch(managerBranchId);
+      setGranularLocation(managerBranchId);
+      setDqLocation(managerBranchId);
+    }
+  }, [isManager, managerBranchId]);
+
+  // Secure routing (Admins & Branch Managers have Dashboard Access)
   useEffect(() => {
      if (isInitialized) {
          if (!user) navigate('/login');
-         else if (user.role !== 'admin') navigate('/entry');
+         else if (user.role !== 'admin' && user.role !== 'manager') navigate('/entry');
      }
   }, [user, isInitialized, navigate]);
 
@@ -376,7 +389,11 @@ export default function DashboardOverview() {
 
   const { filteredBranches, totalBusiness, businessByCategory } = useMemo(() => {
      const branchMap = new Map();
-     branches.forEach(b => {
+     const branchesToProcess = isManager && managerBranchId
+       ? branches.filter(b => b.id === managerBranchId)
+       : branches;
+
+     branchesToProcess.forEach(b => {
          const initialCategories = PRODUCTS_LIST.reduce((acc, c) => {
              acc[`proj_${c}`] = 0;
              acc[`ach_${c}`] = 0;
@@ -475,7 +492,7 @@ export default function DashboardOverview() {
      const rbC = Array.from(catMap.entries()).map(([name, value]) => ({ name, value }));
 
      return { filteredBranches: fb, totalBusiness: total, businessByCategory: rbC };
-  }, [filteredEntries, branches, selectedBusinessBranch]);
+  }, [filteredEntries, branches, selectedBusinessBranch, isManager, managerBranchId]);
 
   const businessTimeSeries = useMemo(() => {
       const timeMap = new Map();
@@ -943,14 +960,20 @@ export default function DashboardOverview() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
-                  Financial Portal
+                  {isManager ? 'Branch Command Portal' : 'Financial Portal'}
                 </h1>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-bold uppercase tracking-wider border border-indigo-500/30">
                   {financialYear}
                 </span>
+                {isManager && (
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-extrabold uppercase tracking-wider border border-emerald-500/30 flex items-center gap-1 shadow-xs">
+                    <MapPin className="w-3 h-3 text-emerald-500" />
+                    {managerBranchName}
+                  </span>
+                )}
               </div>
               <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 font-bold mt-1">
-                Executive Command Center
+                {isManager ? `${managerBranchName} Branch Management Hub` : 'Executive Command Center'}
               </p>
             </div>
           </div>
@@ -1250,7 +1273,7 @@ export default function DashboardOverview() {
                     Daily Target
                   </span>
                   <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
-                    All Branches
+                    {isManager ? `${managerBranchName} Branch` : 'All Branches'}
                   </span>
                 </div>
               </div>
@@ -1261,7 +1284,7 @@ export default function DashboardOverview() {
                 ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
               </div>
               <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
-                <span className="truncate">Consolidated Forecast</span>
+                <span className="truncate">{isManager ? `${managerBranchName} Forecast` : 'Consolidated Forecast'}</span>
                 <span className="text-amber-600 dark:text-amber-400 font-bold xl:text-right truncate">Today Target</span>
               </div>
             </div>
@@ -1369,6 +1392,12 @@ export default function DashboardOverview() {
                   <span className="text-sm font-black tracking-wider text-slate-900 dark:text-white uppercase">Business Mix</span>
                 </div>
                 <div className="flex items-center gap-3">
+                  {isManager ? (
+                    <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider shadow-xs">
+                      <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>{managerBranchName}</span>
+                    </div>
+                  ) : (
                     <BranchSelect 
                         value={selectedBusinessBranch}
                         onChange={setSelectedBusinessBranch}
@@ -1377,6 +1406,7 @@ export default function DashboardOverview() {
                         allOptionText="All Branches"
                         className="min-w-[170px]"
                     />
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex justify-center items-center p-4 relative">
@@ -1425,6 +1455,12 @@ export default function DashboardOverview() {
               <CardHeader className="py-4 border-b border-slate-200/80 dark:border-white/10 shrink-0 flex flex-row items-center justify-between">
                 <span className="text-base font-bold tracking-widest text-slate-900 dark:text-white uppercase">Sales Overview</span>
                 <div className="flex items-center gap-3">
+                  {isManager ? (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                      <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>{managerBranchName}</span>
+                    </div>
+                  ) : (
                     <BranchSelect 
                         value={selectedBusinessBranch}
                         onChange={setSelectedBusinessBranch}
@@ -1433,6 +1469,7 @@ export default function DashboardOverview() {
                         allOptionText="All Branches"
                         className="min-w-[160px]"
                     />
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-4">
@@ -1520,14 +1557,20 @@ export default function DashboardOverview() {
                     <span className="text-slate-300 dark:text-slate-700 mx-1">•</span>
                     <span className="flex items-center gap-1.5">
                         Branch:
-                        <BranchSelect 
-                            value={selectedBusinessBranch}
-                            onChange={setSelectedBusinessBranch}
-                            branches={branches}
-                            includeAllOption={true}
-                            allOptionText="Consolidated"
-                            className="min-w-[175px] ml-1"
-                        />
+                        {isManager ? (
+                            <span className="font-bold text-slate-800 dark:text-slate-200 ml-1 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-indigo-600 dark:text-indigo-400">
+                                {managerBranchName}
+                            </span>
+                        ) : (
+                            <BranchSelect 
+                                value={selectedBusinessBranch}
+                                onChange={setSelectedBusinessBranch}
+                                branches={branches}
+                                includeAllOption={true}
+                                allOptionText="Consolidated"
+                                className="min-w-[175px] ml-1"
+                            />
+                        )}
                     </span>
                  </div>
              </div>
@@ -1899,32 +1942,39 @@ export default function DashboardOverview() {
               </div>
               <div className="flex flex-wrap items-center gap-4">
                   {/* Location Filter */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-extrabold mr-1 shrink-0">Branch:</span>
-                      <button
-                          onClick={() => setGranularLocation('all')}
-                          className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all ${
-                              granularLocation === 'all'
-                                  ? 'bg-indigo-600 text-white shadow-sm'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/60 dark:border-white/5'
-                          }`}
-                      >
-                          Consolidated
-                      </button>
-                      {branches.map(b => (
+                  {isManager ? (
+                      <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider shadow-xs">
+                          <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>{managerBranchName} Branch</span>
+                      </div>
+                  ) : (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-extrabold mr-1 shrink-0">Branch:</span>
                           <button
-                              key={b.id}
-                              onClick={() => setGranularLocation(b.id)}
+                              onClick={() => setGranularLocation('all')}
                               className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all ${
-                                  granularLocation === b.id
+                                  granularLocation === 'all'
                                       ? 'bg-indigo-600 text-white shadow-sm'
                                       : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/60 dark:border-white/5'
+                              }`}
+                          >
+                              Consolidated
+                          </button>
+                          {branches.map(b => (
+                              <button
+                                  key={b.id}
+                                  onClick={() => setGranularLocation(b.id)}
+                                  className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg transition-all ${
+                                      granularLocation === b.id
+                                          ? 'bg-indigo-600 text-white shadow-sm'
+                                          : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/60 dark:border-white/5'
                               }`}
                           >
                               {b.name}
                           </button>
                       ))}
-                  </div>
+                      </div>
+                  )}
 
                   {/* Timeframe Toggle */}
                   <div className="flex bg-slate-100 dark:bg-black/40 rounded-xl p-1 border border-slate-200/80 dark:border-white/5 shadow-inner shrink-0">
@@ -2029,14 +2079,21 @@ export default function DashboardOverview() {
                     value={dqMonthStr}
                     onChange={setDqMonthStr}
                 />
-                <BranchSelect 
-                    value={dqLocation}
-                    onChange={setDqLocation}
-                    branches={branches}
-                    includeAllOption={true}
-                    allOptionText="All Locations"
-                    className="min-w-[180px]"
-                />
+                {isManager ? (
+                    <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider shadow-sm">
+                        <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>{managerBranchName}</span>
+                    </div>
+                ) : (
+                    <BranchSelect 
+                        value={dqLocation}
+                        onChange={setDqLocation}
+                        branches={branches}
+                        includeAllOption={true}
+                        allOptionText="All Locations"
+                        className="min-w-[180px]"
+                    />
+                )}
             </div>
         </div>
 

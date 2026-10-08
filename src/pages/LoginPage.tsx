@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { useDataStore } from '@/store/useDataStore';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Input } from '@/components/ui';
@@ -90,6 +90,13 @@ export default function LoginPage() {
       }
     }
   }, [isSmsUser, loginMode, availablePhones, selectedPhone]);
+
+  useEffect(() => {
+    const branchInfo = BRANCH_ACCOUNTS[effectiveLoginEmail];
+    if (branchInfo && branchInfo.branchName) {
+      setLocation(branchInfo.branchName);
+    }
+  }, [effectiveLoginEmail]);
 
   // Keep references for the async WebOTP effect
   const loginDetailsRef = useRef({ email: effectiveLoginEmail, location, selectedPhone, isSmsUser });

@@ -18,7 +18,21 @@ const withTimeout = <T>(promise: PromiseLike<T>, timeoutMs = 15000, errorMessage
   return Promise.race([Promise.resolve(promise), timeoutPromise]).finally(() => clearTimeout(timeoutId));
 };
 
-export type UserRole = 'admin' | 'statehead';
+export type UserRole = 'admin' | 'statehead' | 'manager';
+
+export const BRANCH_ACCOUNTS: Record<string, { branchId: string; branchName: string; role: UserRole; managerName: string }> = {
+  // Branch Managers (Access Managers Dashboard)
+  'aroop.sharma@siroiforex.com': { branchId: 'b1', branchName: 'Guwahati', role: 'manager', managerName: 'Aroop Sharma' },
+  'ajay.waikhom@siroiforex.com': { branchId: 'b2', branchName: 'Manipur', role: 'manager', managerName: 'Ajay Waikhom' },
+  'nobin.nani@siroiforex.com': { branchId: 'b3', branchName: 'Itanagar', role: 'manager', managerName: 'Nobin Nani' },
+  'ramesh@siroiforex.com': { branchId: 'b4', branchName: 'Nagaland & Mizoram', role: 'manager', managerName: 'Ramesh Singh' },
+  
+  // MIS Data Entry Accounts (Access Data Entry Terminal /entry)
+  'mis.ghy@siroiforex.com': { branchId: 'b1', branchName: 'Guwahati', role: 'statehead', managerName: 'Aroop Sharma' },
+  'mis.manipur@siroiforex.com': { branchId: 'b2', branchName: 'Manipur', role: 'statehead', managerName: 'Ajay Waikhom' },
+  'mis.itanagar@siroiforex.com': { branchId: 'b3', branchName: 'Itanagar', role: 'statehead', managerName: 'Nobin Nani' },
+  'mis.mizonaga@siroiforex.com': { branchId: 'b4', branchName: 'Nagaland & Mizoram', role: 'statehead', managerName: 'Ramesh Singh' },
+};
 
 export interface UserProfile {
   id: string;
@@ -39,36 +53,51 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
     .maybeSingle();
 
   // Resolve email: prefer explicit login email, then DB email, then Auth email
-  const effectiveEmail = emailFromLogin || userDoc?.email || sbUser.email || '';
+  const effectiveEmail = (emailFromLogin || userDoc?.email || sbUser.email || '').toLowerCase().trim();
 
   let profile: UserProfile;
+
+  const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveEmail);
+  const matchedBranchAccount = BRANCH_ACCOUNTS[effectiveEmail];
+
+  const expectedRole: UserRole = isSuperAdminEmail ? 'admin' : matchedBranchAccount ? matchedBranchAccount.role : 'statehead';
+  const expectedBranchId: string | null = isSuperAdminEmail ? null : matchedBranchAccount ? matchedBranchAccount.branchId : null;
+  const expectedLocation: string | undefined = location || matchedBranchAccount?.branchName || (isSuperAdminEmail ? 'HO' : undefined);
+  const expectedDisplayName: string | null = matchedBranchAccount?.managerName || (isSuperAdminEmail ? 'Administrator' : null);
 
   if (userDoc) {
     profile = userDoc as UserProfile;
         
-        let needsUpdate = false;
+    let needsUpdate = false;
     const updates: any = {};
 
-    if (location && location !== profile.latestLocation) {
-      updates.latestLocation = location;
-      profile.latestLocation = location;
+    if (expectedLocation && expectedLocation !== profile.latestLocation) {
+      updates.latestLocation = expectedLocation;
+      profile.latestLocation = expectedLocation;
       needsUpdate = true;
     }
 
-    const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveEmail);
-    if (isSuperAdminEmail && profile.role !== 'admin') {
-      updates.role = 'admin';
-      profile.role = 'admin';
+    if (profile.role !== expectedRole) {
+      updates.role = expectedRole;
+      profile.role = expectedRole;
+      needsUpdate = true;
+    }
+
+    if (expectedBranchId !== undefined && profile.branchId !== expectedBranchId) {
+      updates.branchId = expectedBranchId;
+      profile.branchId = expectedBranchId;
+      needsUpdate = true;
+    }
+
+    if (expectedDisplayName && (!profile.displayName || profile.displayName !== expectedDisplayName)) {
+      updates.displayName = expectedDisplayName;
+      profile.displayName = expectedDisplayName;
       needsUpdate = true;
     }
 
     if (effectiveEmail && profile.email !== effectiveEmail) {
       updates.email = effectiveEmail;
       profile.email = effectiveEmail;
-      updates.displayName = null;
-      profile.displayName = null;
-      updates.avatarSeed = null;
-      profile.avatarSeed = null;
       needsUpdate = true;
     }
 
@@ -76,15 +105,13 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
       await supabase.from('users').update(updates).eq('id', sbUser.id);
     }
   } else {
-    const isFirstAdmin = effectiveEmail === 'tomas@siroiforex.com' || effectiveEmail === 'surchanddsingh@siroiforex.com' || effectiveEmail === 'sharjuthoudam@siroiforex.com';
-    const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === effectiveEmail);
-
     profile = {
       id: sbUser.id,
       email: effectiveEmail,
-      role: isFirstAdmin ? 'admin' : 'statehead',
-      branchId: branchMatch ? branchMatch.id : null,
-      latestLocation: location || undefined
+      role: expectedRole,
+      branchId: expectedBranchId,
+      latestLocation: expectedLocation,
+      displayName: expectedDisplayName
     };
 
     const { error: insertError } = await supabase.from('users').insert([profile]);
@@ -200,9 +227,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (new Date().getDay() === 0) {
           throw new Error("Sunday is a holiday. Branch login is disabled.");
         }
-        const branchMatch = useDataStore.getState().branches.find(b => b.managerEmail === email);
+        const branchMatch = BRANCH_ACCOUNTS[email];
 
-        if (!branchMatch || branchMatch.name !== location) {
+        if (!branchMatch || (location !== 'HO' && branchMatch.branchName !== location)) {
           throw new Error("UNAUTHORIZED_LOCATION");
         }
       }

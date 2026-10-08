@@ -28,7 +28,13 @@ const AUTHORIZED_EMAILS = [
   'sharjuthoudam@siroiforex.com',
   'executive@siroiforex.com',
   
-  // Branch Managers (for Web redirect)
+  // Branch Managers (for Managers Dashboard)
+  'aroop.sharma@siroiforex.com',
+  'ajay.waikhom@siroiforex.com',
+  'nobin.nani@siroiforex.com',
+  'ramesh@siroiforex.com',
+  
+  // MIS Data Entry Accounts (for Web redirect)
   'mis.ghy@siroiforex.com',
   'mis.manipur@siroiforex.com',
   'mis.meghalaya@siroiforex.com',

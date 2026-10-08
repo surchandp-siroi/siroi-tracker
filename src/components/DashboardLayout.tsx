@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { LayoutDashboard, Package, UsersRound, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2, Copy } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
@@ -256,7 +256,11 @@ export default function DashboardLayout() {
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="System Live" />
               </div>
               <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 font-bold mt-1">
-                Admin Terminal
+                {user?.role === 'manager' 
+                  ? `${user?.latestLocation || (user?.email && BRANCH_ACCOUNTS[user.email.toLowerCase()]?.branchName) || 'Branch'} Portal` 
+                  : user?.role === 'admin' 
+                  ? 'Admin Terminal' 
+                  : 'State Terminal'}
               </p>
             </div>
           </div>
@@ -417,7 +421,11 @@ export default function DashboardLayout() {
                   {displayName}
                 </p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate uppercase tracking-wider">
-                  {user?.role === 'admin' ? 'Super Admin' : 'State Head'}
+                  {user?.role === 'admin' 
+                    ? 'Super Admin' 
+                    : user?.role === 'manager' 
+                    ? `${user?.latestLocation || (user?.email && BRANCH_ACCOUNTS[user.email.toLowerCase()]?.branchName) || 'Branch'} Manager` 
+                    : 'State Head'}
                 </p>
               </div>
               <div className="flex items-center gap-0.5">

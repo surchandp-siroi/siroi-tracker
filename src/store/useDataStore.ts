@@ -125,10 +125,10 @@ const staticChannels: Channel[] = [
 ].map((name, i) => ({ id: `ch-${i}`, name, business: 0 }));
 
 const staticBranches: Branch[] = [
-  { id: 'b1', name: 'Guwahati', managerName: 'Aroop Sharma', managerEmail: 'mis.ghy@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 1500000 },
-  { id: 'b2', name: 'Manipur', managerName: 'Ajay Waikhom', managerEmail: 'mis.manipur@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 900000 },
-  { id: 'b3', name: 'Itanagar', managerName: 'Nobin Nani', managerEmail: 'mis.itanagar@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 600000 },
-  { id: 'b4', name: 'Nagaland & Mizoram', managerName: 'Ramesh Singh', managerEmail: 'mis.mizonaga@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 150000 },
+  { id: 'b1', name: 'Guwahati', managerName: 'Aroop Sharma', managerEmail: 'aroop.sharma@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 1500000 },
+  { id: 'b2', name: 'Manipur', managerName: 'Ajay Waikhom', managerEmail: 'ajay.waikhom@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 900000 },
+  { id: 'b3', name: 'Itanagar', managerName: 'Nobin Nani', managerEmail: 'nobin.nani@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 600000 },
+  { id: 'b4', name: 'Nagaland & Mizoram', managerName: 'Ramesh Singh', managerEmail: 'ramesh@siroiforex.com', dailyProjection: 0, dailyAchievement: 0, monthlyTarget: 150000 },
 ];
 
 const staticProducts: Omit<Product, 'business'>[] = [
@@ -263,7 +263,7 @@ export const useDataStore = create<DataState>((set) => ({
         return;
     }
 
-    if (role !== 'admin' && role !== 'statehead') {
+    if (role !== 'admin' && role !== 'statehead' && role !== 'manager') {
         set({ isLoading: false });
         return;
     }
@@ -276,7 +276,7 @@ export const useDataStore = create<DataState>((set) => ({
 
       while (hasMore) {
           let pageQuery = supabase.from('entries').select('*').range(page * pageSize, (page + 1) * pageSize - 1);
-          if (role === 'statehead' && branchId) {
+          if ((role === 'statehead' || role === 'manager') && branchId) {
               pageQuery = pageQuery.eq('branchId', branchId);
           }
           
@@ -335,7 +335,14 @@ export const useDataStore = create<DataState>((set) => ({
 
       // Fetch approved consultants
       try {
-          const { data: consultantData } = await supabase.from('consultants').select('*').eq('status', 'approved');
+          let consultantQuery = supabase.from('consultants').select('*').eq('status', 'approved');
+          if ((role === 'statehead' || role === 'manager') && branchId) {
+              const bName = staticBranches.find(b => b.id === branchId)?.name;
+              if (bName) {
+                  consultantQuery = consultantQuery.or(`branch.ilike.%${bName}%,state.ilike.%${bName}%`);
+              }
+          }
+          const { data: consultantData } = await consultantQuery;
           if (consultantData) {
               set({ consultants: consultantData as Consultant[] });
           }
@@ -407,7 +414,7 @@ export const useDataStore = create<DataState>((set) => ({
           async (payload) => {
              // For simplicity, re-fetch all if there's a change
              let refreshQuery = supabase.from('entries').select('*');
-             if (role === 'statehead' && branchId) {
+             if ((role === 'statehead' || role === 'manager') && branchId) {
                  refreshQuery = refreshQuery.eq('branchId', branchId);
              }
              const { data: refreshedEntries } = await refreshQuery;

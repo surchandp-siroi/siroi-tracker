@@ -1,0 +1,1 @@
+import{W as e}from"./main-zoscrN6v.js";class m extends e{async requestPhoneNumber(){throw this.unimplemented("Not implemented on web.")}async retrieveSms(){throw this.unimplemented("Not implemented on web.")}}export{m as AndroidSmsRetrieverWeb};
