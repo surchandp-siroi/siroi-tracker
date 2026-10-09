@@ -282,7 +282,7 @@ export default function DashboardLayout() {
             </p>
             <nav className="space-y-1">
               {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
-                const isSuperAdmin = user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com' || user?.email?.toLowerCase() === 'sharjuthoudam@siroiforex.com';
+                const isSuperAdmin = user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com' || user?.email?.toLowerCase() === 'sharjuthoudam@siroiforex.com' || user?.email?.toLowerCase() === 'executive@siroiforex.com';
                 if (adminOnly && user?.role !== 'admin' && !isSuperAdmin) return null;
                 
                 return (

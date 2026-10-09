@@ -168,7 +168,7 @@ function OrganigramChart() {
 
   const { user } = useAuthStore();
   const { branches } = useDataStore();
-  const isAdmin = user?.role === 'admin' || user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com';
+  const isAdmin = user?.role === 'admin' || user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com' || user?.email === 'executive@siroiforex.com';
   
   const { setCenter } = useReactFlow();
 

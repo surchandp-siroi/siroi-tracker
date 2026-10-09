@@ -57,7 +57,7 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
 
   let profile: UserProfile;
 
-  const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(effectiveEmail);
+  const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com', 'executive@siroiforex.com'].includes(effectiveEmail);
   const matchedBranchAccount = BRANCH_ACCOUNTS[effectiveEmail];
 
   // In-memory application role
@@ -67,7 +67,7 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
 
   const expectedBranchId: string | null = isSuperAdminEmail ? null : matchedBranchAccount ? matchedBranchAccount.branchId : null;
   const expectedLocation: string | undefined = location || matchedBranchAccount?.branchName || (isSuperAdminEmail ? 'HO' : undefined);
-  const expectedDisplayName: string | null = matchedBranchAccount?.managerName || (isSuperAdminEmail ? 'Administrator' : null);
+  const expectedDisplayName: string | null = matchedBranchAccount?.managerName || userDoc?.displayName || (isSuperAdminEmail ? 'Administrator' : null);
 
   if (userDoc) {
     profile = {
@@ -236,7 +236,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const email = rawEmail.trim().toLowerCase();
 
-      const isSuperAdmin = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com'].includes(email);
+      const isSuperAdmin = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com', 'executive@siroiforex.com'].includes(email);
 
       if (!isSuperAdmin) {
         if (new Date().getDay() === 0) {
