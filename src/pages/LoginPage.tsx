@@ -88,10 +88,10 @@ export default function LoginPage() {
       
       const scaleX = currentWidth / targetWidth;
       const scaleY = currentHeight / targetHeight;
-      const fitScale = Math.min(1, Math.min(scaleX, scaleY));
+      const fitScale = Math.min(scaleX, scaleY);
       
-      // Never zoom in above 1.0 by default. Downscale smoothly down to 0.15 for high zoom levels.
-      const scale = fitScale < 1 ? Math.max(0.15, parseFloat(fitScale.toFixed(3))) : 1;
+      // Zero-distortion zoom neutralizer: perfectly cancels browser zoom from 0% to 500%
+      const scale = Math.max(0.05, Math.min(5.0, parseFloat(fitScale.toFixed(4))));
       setAdaptiveScale(scale);
     };
 
