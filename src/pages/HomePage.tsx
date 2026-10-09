@@ -107,17 +107,17 @@ export default function HomePage() {
         return;
       }
       
-      const targetWidth = 1400;
-      const targetHeight = 820;
+      const targetWidth = 1440;
+      const targetHeight = 900;
       const currentWidth = window.innerWidth;
       const currentHeight = window.innerHeight;
       
       const scaleX = currentWidth / targetWidth;
       const scaleY = currentHeight / targetHeight;
-      const fitScale = Math.min(scaleX, scaleY);
+      const fitScale = Math.min(1, Math.min(scaleX, scaleY));
       
-      // Full spectrum clamp: 0.15 (supports up to 500% zoom-in) to 3.5 (supports down to 25% zoom-out)
-      const scale = Math.max(0.15, Math.min(3.5, parseFloat(fitScale.toFixed(3))));
+      // Never zoom in above 1.0 by default. Downscale smoothly down to 0.15 for high zoom levels.
+      const scale = fitScale < 1 ? Math.max(0.15, parseFloat(fitScale.toFixed(3))) : 1;
       setAdaptiveScale(scale);
     };
 
@@ -321,7 +321,7 @@ export default function HomePage() {
       >
         
         {/* Top Left Logo (White) */}
-        <Link to="/" className="absolute top-10 left-10 z-20 flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
+        <Link to="/" className="absolute top-7 left-8 z-20 flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
             <LogoIcon className="w-8 h-8 text-white" />
             <span className="font-bold text-xl tracking-tight text-white uppercase">Siroi Forex</span>
         </Link>
@@ -332,10 +332,10 @@ export default function HomePage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"></div>
 
         {/* Floating UI Elements / Cards Area */}
-        <div className="flex-1 relative flex items-center justify-center p-10 z-10 w-full h-full mt-20">
+        <div className="flex-1 relative flex items-center justify-center p-2 z-10 w-full mt-4 mb-0">
             
             {/* Mockup Composition Wrapper */}
-            <div className="relative w-full max-w-4xl flex justify-center items-center gap-2 py-4">
+            <div className="relative w-full max-w-4xl flex justify-center items-center gap-2.5 py-1 scale-[0.85] 2xl:scale-95 origin-center">
                 
                 {/* Column 1 (Left) */}
                 <div className="flex flex-col items-end gap-4 translate-y-2">
@@ -570,7 +570,7 @@ export default function HomePage() {
         </div>
 
         {/* Bottom Text & Pagination aligned to the left */}
-        <div className="p-12 z-10 flex flex-col items-start pb-16 pl-16 w-full">
+        <div className="p-6 pl-10 pb-6 z-10 flex flex-col items-start w-full">
             <style>{`
               @keyframes slideProgress {
                 0% { width: 0%; }
@@ -579,19 +579,19 @@ export default function HomePage() {
             `}</style>
             
             {/* Fixed height container to prevent layout shifts */}
-            <div className="h-[160px] relative w-full max-w-md">
+            <div className="h-[110px] relative w-full max-w-md">
                 <div key={activeSlide} className="absolute inset-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <h2 className="text-3xl font-bold text-white mb-3 tracking-tight whitespace-pre-line">
+                    <h2 className="text-2xl font-bold text-white mb-2 tracking-tight whitespace-pre-line">
                         {contentSlides[activeSlide].title}
                     </h2>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-slate-400 text-xs leading-relaxed max-w-md">
                         {contentSlides[activeSlide].description}
                     </p>
                 </div>
             </div>
             
             {/* Pagination Dots (Interactive) */}
-            <div className="flex items-center justify-start gap-2 mt-4">
+            <div className="flex items-center justify-start gap-2 mt-3">
                 {contentSlides.map((_, index) => (
                     <div 
                         key={index}
@@ -612,7 +612,7 @@ export default function HomePage() {
         </div>
 
         {/* Disclaimer */}
-        <div className="absolute bottom-6 right-8 z-10 text-[9px] text-white/70 text-right pointer-events-none">
+        <div className="absolute bottom-4 right-8 z-10 text-[8px] text-white/50 text-right pointer-events-none">
             Figures and data shown are for illustrative design purposes only.
         </div>
       </div>

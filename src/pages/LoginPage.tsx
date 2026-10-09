@@ -88,10 +88,10 @@ export default function LoginPage() {
       
       const scaleX = currentWidth / targetWidth;
       const scaleY = currentHeight / targetHeight;
-      const fitScale = Math.min(scaleX, scaleY);
+      const fitScale = Math.min(1, Math.min(scaleX, scaleY));
       
-      // Full spectrum clamp: 0.15 (supports up to 500% zoom-in) to 3.5 (supports down to 25% zoom-out)
-      const scale = Math.max(0.15, Math.min(3.5, parseFloat(fitScale.toFixed(3))));
+      // Never zoom in above 1.0 by default. Downscale smoothly down to 0.15 for high zoom levels.
+      const scale = fitScale < 1 ? Math.max(0.15, parseFloat(fitScale.toFixed(3))) : 1;
       setAdaptiveScale(scale);
     };
 
