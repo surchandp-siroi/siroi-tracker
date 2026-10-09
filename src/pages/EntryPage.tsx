@@ -420,7 +420,7 @@ export default function DataEntryTerminal() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      navigate(Capacitor.isNativePlatform() ? '/' : '/login');
+      navigate('/');
     }
     // Auto-select first branch for admin / backdoor
     if (isBackdoor && branches.length > 0 && !adminSelectedBranch) {
@@ -1624,7 +1624,7 @@ export default function DataEntryTerminal() {
                   <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
                       Audit Logs
                   </Button>
-                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { logout(); navigate(Capacitor.isNativePlatform() ? '/' : '/login'); }}>
+                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { logout(); navigate('/'); }}>
                       <LogOut size={14} className="mr-1.5 hidden sm:block" /> Log Out
                   </Button>
               </div>

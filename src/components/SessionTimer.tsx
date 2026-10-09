@@ -59,7 +59,7 @@ export function SessionTimer() {
       if (remaining === 0) {
         window.clearInterval(intervalId);
         await logout();
-        navigate(Capacitor.isNativePlatform() ? '/' : '/login', { replace: true });
+        navigate('/', { replace: true });
       }
     }, 1000);
 

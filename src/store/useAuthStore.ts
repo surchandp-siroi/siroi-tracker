@@ -372,6 +372,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('siroi_auth_email');
+        sessionStorage.clear();
+      } catch (err) {
+        console.warn('Failed to clear sessionStorage on logout', err);
+      }
+    }
     if (Capacitor.isNativePlatform()) {
       try {
         await Preferences.remove({ key: 'native_credentials' });

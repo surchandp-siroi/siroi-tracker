@@ -229,8 +229,8 @@ export default function OnboardingPage() {
             <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
                 Your consultant application has been successfully submitted and verified. You will be notified once your profile is approved by the admin.
             </p>
-            <Button onClick={() => navigate('/login')} className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 font-semibold">
-                Return to Login
+            <Button onClick={() => navigate('/')} className="w-full bg-indigo-600 hover:bg-indigo-700 h-12 font-semibold">
+                Return to Home
             </Button>
         </div>
       </div>

@@ -265,7 +265,7 @@ export default function DashboardOverview() {
   // Secure routing (Admins & Branch Managers have Dashboard Access)
   useEffect(() => {
      if (isInitialized) {
-         if (!user) navigate('/login');
+         if (!user) navigate('/');
          else if (user.role !== 'admin' && user.role !== 'manager') navigate('/entry');
      }
   }, [user, isInitialized, navigate]);
