@@ -112,30 +112,30 @@ export function ExecutivePerformanceWidget({ dateStr, branchId, mode }: Executiv
     };
 
     return (
-        <div className="w-full mb-6 relative overflow-hidden rounded-2xl bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-sm p-6 group">
+        <div className="w-full mb-2 relative overflow-hidden rounded-xl bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xs p-3 md:p-3.5 group">
             {/* Background decorations */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:bg-indigo-500/10 transition-all duration-700"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 group-hover:bg-emerald-500/10 transition-all duration-700"></div>
             
-            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 md:gap-4">
                 
                 {/* Left section: Title and overall progress */}
-                <div className="flex-1 w-full lg:min-w-[320px]">
-                    <div className="flex items-center justify-between mb-2">
+                <div className="flex-1 w-full lg:min-w-[280px]">
+                    <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                            <Award className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
-                            <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">{branchLabel} • {displayMonth} Overview</h2>
+                            <Award className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                            <h2 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">{branchLabel} • {displayMonth} Overview</h2>
                         </div>
                         {/* MTD / YTD Toggle */}
                         <div className="flex bg-slate-100 dark:bg-slate-900 rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 shadow-inner">
                             <button 
-                                className={`px-3 py-1 text-[10px] font-bold rounded-md uppercase tracking-widest transition-colors ${timeContext === 'MTD' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                                className={`px-2.5 py-0.5 text-[9px] font-bold rounded-md uppercase tracking-widest transition-colors ${timeContext === 'MTD' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                                 onClick={() => setTimeContext('MTD')}
                             >
                                 MTD
                             </button>
                             <button 
-                                className={`px-3 py-1 text-[10px] font-bold rounded-md uppercase tracking-widest transition-colors ${timeContext === 'YTD' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                                className={`px-2.5 py-0.5 text-[9px] font-bold rounded-md uppercase tracking-widest transition-colors ${timeContext === 'YTD' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                                 onClick={() => setTimeContext('YTD')}
                             >
                                 YTD
@@ -143,13 +143,13 @@ export function ExecutivePerformanceWidget({ dateStr, branchId, mode }: Executiv
                         </div>
                     </div>
                     
-                    <div className="flex items-end gap-3 mb-4">
-                        <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{percentage.toFixed(1)}%</span>
-                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1.5 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-500/20">{target > 0 ? 'Achieved vs Target' : 'Achieved vs Logged'}</span>
+                    <div className="flex items-end gap-2.5 mb-2">
+                        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight font-mono">{percentage.toFixed(1)}%</span>
+                        <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-500/20">{target > 0 ? 'Achieved vs Target' : 'Achieved vs Logged'}</span>
                     </div>
                     
                     {/* Progress Bar */}
-                    <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner">
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner">
                         <div 
                             className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${Math.min(percentage, 100)}%` }}

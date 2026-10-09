@@ -1649,41 +1649,44 @@ export default function DataEntryTerminal() {
 
   return (
       <div 
-          className="min-h-screen p-3 md:p-6 flex flex-col w-full overflow-x-hidden overflow-y-auto"
+          className="h-screen max-h-screen p-2.5 md:p-4 flex flex-col w-full overflow-hidden"
           style={adaptiveScale < 1 ? ({ 
             zoom: adaptiveScale,
             width: `${(100 / adaptiveScale)}vw`,
+            height: `${(100 / adaptiveScale)}vh`,
           } as React.CSSProperties) : undefined}
       >
-          <header className="glass px-4 py-3 md:px-6 md:py-3 flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-3 md:mb-3 rounded-xl shadow-sm shrink-0">
+          <header className="glass px-3.5 py-2 md:px-5 md:py-2 flex flex-col md:flex-row md:justify-between md:items-center gap-2 mb-2 rounded-xl shadow-xs shrink-0">
               <div>
-                  <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.5">
+                  <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.2">
                       {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
                   </h1>
-                  <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                  <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                      {branchDetails ? branchDetails.name : (user.role === 'admin' || user.role === 'statehead' ? 'Global Access' : 'Unknown Branch')} • {user.email}
                   </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                  <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 px-3.5 py-1.5 rounded-full border border-slate-200/80 dark:border-white/10 shadow-xs mr-1">
+              <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shadow-xs mr-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
-                      <span className="text-[11px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime}</span>
+                      <span className="text-[10px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime}</span>
                   </div>
-                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
+                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
                       Audit Logs
                   </Button>
-                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs h-9 px-3 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { logout(); navigate('/'); }}>
-                      <LogOut size={14} className="mr-1.5 hidden sm:block" /> Log Out
+                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { logout(); navigate('/'); }}>
+                      <LogOut size={13} className="mr-1.5 hidden sm:block" /> Log Out
                   </Button>
               </div>
           </header>
 
           {(isExecutive || isMIS) && (
-              <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
+              <div className="shrink-0 mb-2">
+                  <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
+              </div>
           )}
 
           {/* Top Command Center Bar */}
-          <div className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-3.5 md:p-4 mb-3 md:mb-3 rounded-2xl shadow-sm flex flex-col gap-4 shrink-0 transition-all">
+          <div className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2.5 md:p-3 mb-2 rounded-2xl shadow-sm flex flex-col gap-2.5 shrink-0 transition-all z-20">
               
               {/* Unified Command Center Bar */}
               <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-4">
@@ -1957,9 +1960,9 @@ export default function DataEntryTerminal() {
         </div>
 
         {/* Data Grid Section */}
-        <div className="flex-1 min-h-[380px] bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-sm flex flex-col mb-24">
+        <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden mb-16 md:mb-16">
             {/* Toolbar Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between p-3 gap-3 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between p-2.5 px-3.5 gap-2.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md shrink-0 z-10">
                <div className="flex flex-wrap items-center gap-2.5">
                    <div className="flex items-center gap-2">
                        <Layers className="w-4 h-4 text-indigo-500" />
@@ -2065,10 +2068,10 @@ export default function DataEntryTerminal() {
                 {isLoadingExisting ? (
                     <div className="flex justify-center items-center h-full min-h-[200px]"><Loader2 className="animate-spin text-slate-300" /></div>
                 ) : (
-                    <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 overflow-auto min-h-[300px]">
+                    <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 h-full overflow-auto">
                         <TableHeader className="bg-slate-50 dark:bg-slate-900 sticky top-0 z-20 box-border border-b border-slate-200 dark:border-slate-800 shadow-xs">
                             <TableRow className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900">
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">1. Customer Name</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-3.5 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">1. Customer Name</TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">2. Category</TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">3. Product</TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">4. Login Amount (₹)</TableHead>
