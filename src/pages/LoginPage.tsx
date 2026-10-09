@@ -81,18 +81,29 @@ export default function LoginPage() {
         return;
       }
       
-      const targetWidth = 1280;
-      const targetHeight = 800;
-      const currentWidth = window.innerWidth;
-      const currentHeight = window.innerHeight;
-      
-      const scaleX = currentWidth / targetWidth;
-      const scaleY = currentHeight / targetHeight;
-      const fitScale = Math.min(scaleX, scaleY);
-      
-      // Zero-distortion zoom neutralizer: perfectly cancels browser zoom from 0% to 500%
-      const scale = Math.max(0.05, Math.min(5.0, parseFloat(fitScale.toFixed(4))));
-      setAdaptiveScale(scale);
+      // 1. Calculate browser zoom ratio from outerWidth vs innerWidth
+      let zoomFactor = 1;
+      if (window.outerWidth && window.innerWidth) {
+        const ratio = window.outerWidth / window.innerWidth;
+        if (ratio >= 0.97 && ratio <= 1.03) {
+          zoomFactor = 1;
+        } else {
+          zoomFactor = ratio;
+        }
+      }
+
+      // 2. Exact inverse scale (1 / zoomFactor) to keep visual scale 1.00x on screen
+      let scale = zoomFactor !== 1 ? 1 / zoomFactor : 1;
+
+      // 3. If on a very short height viewport (< 750px), adjust scale slightly to prevent vertical cutoff
+      const effectiveHeight = window.innerHeight * zoomFactor;
+      if (effectiveHeight < 750) {
+        const heightFit = effectiveHeight / 750;
+        scale = Math.min(scale, scale * heightFit);
+      }
+
+      const finalScale = parseFloat(scale.toFixed(4));
+      setAdaptiveScale(Math.max(0.05, Math.min(5.0, finalScale)));
     };
 
     updateScale();
