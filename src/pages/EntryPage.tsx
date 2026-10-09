@@ -310,9 +310,12 @@ export default function DataEntryTerminal() {
 
       // 2. Status Filter
       if (statusFilter !== 'ALL') {
+        const itemStatus = (item.fileStatus || '') as string;
         if (statusFilter === 'Disbursed') {
-          if (item.fileStatus !== 'Disbursed' && item.fileStatus !== 'Issued' && item.fileStatus !== 'POLICY ISSUED') return false;
-        } else if (item.fileStatus !== statusFilter) {
+          if (itemStatus !== 'Disbursed' && itemStatus !== 'Issued' && itemStatus !== 'POLICY ISSUED' && itemStatus !== 'Sold') return false;
+        } else if (statusFilter === 'Sold') {
+          if (itemStatus !== 'Sold' && !(item.category === 'Forex' && (itemStatus === 'Disbursed' || itemStatus === 'Sold'))) return false;
+        } else if (itemStatus !== statusFilter) {
           return false;
         }
       }
@@ -910,14 +913,19 @@ export default function DataEntryTerminal() {
               arr[index].product = ''; // reset
               if (val === 'Insurance') {
                   arr[index].fileStatus = '';
-              } else {
-                  if (['Issued', 'POLICY ISSUED', 'Not Issued'].includes(arr[index].fileStatus || '')) {
-                      arr[index].fileStatus = '';
-                  }
-              }
-              if (val === 'Forex') {
+              } else if (val === 'Forex') {
+                  arr[index].fileStatus = 'Sold';
                   arr[index].fileLogin = 'Online';
                   arr[index].channel = 'SIROI';
+                  arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                  arr[index].disbursedDate = arr[index].date || (dateSelectionType === 'range' ? endDateStr : dateStr);
+                  arr[index].emiDate = '';
+                  arr[index].sanctionedAmount = 0;
+                  arr[index].repaymentBank = '';
+              } else {
+                  if (['Issued', 'POLICY ISSUED', 'Not Issued', 'Sold'].includes(arr[index].fileStatus || '')) {
+                      arr[index].fileStatus = '';
+                  }
               }
           }
           
@@ -941,6 +949,20 @@ export default function DataEntryTerminal() {
               }
               if (key === 'amount' && (arr[index].fileStatus === 'Issued' || arr[index].fileStatus === 'POLICY ISSUED')) {
                   arr[index].disbursedAmount = Number(val) || 0;
+              }
+          }
+
+          // Automatically sync achievement for Forex (Login Amount on Login Date = Sold Achievement)
+          if (arr[index].category === 'Forex') {
+              if (key === 'amount') {
+                  arr[index].disbursedAmount = Number(val) || 0;
+              }
+              if (key === 'date') {
+                  arr[index].disbursedDate = val;
+              }
+              if (key === 'fileStatus' && (val === 'Sold' || val === 'Disbursed')) {
+                  arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                  arr[index].disbursedDate = arr[index].date || (dateSelectionType === 'range' ? endDateStr : dateStr);
               }
           }
           
@@ -1548,6 +1570,7 @@ export default function DataEntryTerminal() {
   
   const getFileStatusColor = (status: string) => {
       switch (status) {
+          case 'Sold': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 font-semibold';
           case 'Login': return 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/30';
           case 'Processing': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
           case 'Underwriting': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
@@ -1563,9 +1586,12 @@ export default function DataEntryTerminal() {
 
   
     const isFieldMissing = (item: any, field: string) => {
+        if (item.category === 'Forex') {
+            if (['emiDate', 'disbursedDate', 'disbursedAmount', 'sanctionedAmount', 'repaymentBank'].includes(field)) return false;
+        }
         if (field === 'emiDate' && item.fileStatus === 'Disbursed' && (item.category === 'Loan' || (!item.category && item.product)) && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-')) return true;
-        if (field === 'disbursedDate' && item.fileStatus === 'Disbursed' && (!item.disbursedDate || !item.disbursedDate.trim())) return true;
-        if (field === 'disbursedAmount' && item.fileStatus === 'Disbursed' && (item.disbursedAmount === undefined || item.disbursedAmount === null || Number(item.disbursedAmount) <= 0)) return true;
+        if (field === 'disbursedDate' && item.fileStatus === 'Disbursed' && item.category !== 'Forex' && (!item.disbursedDate || !item.disbursedDate.trim())) return true;
+        if (field === 'disbursedAmount' && item.fileStatus === 'Disbursed' && item.category !== 'Forex' && (item.disbursedAmount === undefined || item.disbursedAmount === null || Number(item.disbursedAmount) <= 0)) return true;
         if (!item.isManual) return false;
         if (field === 'staffName' && !item.staffName) return true;
         if (field === 'category' && !item.category) return true;
@@ -1593,7 +1619,11 @@ export default function DataEntryTerminal() {
 
       if (matchesCategory) {
           metricLogin += (Number(item.amount) || 0);
-          metricDisbursed += (Number(item.disbursedAmount) || 0);
+          if (cat === 'Forex') {
+              metricDisbursed += (Number(item.amount) || Number(item.disbursedAmount) || 0);
+          } else {
+              metricDisbursed += (Number(item.disbursedAmount) || 0);
+          }
           
           if (cat === 'Insurance') {
               if (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') insuranceIssued += (Number(item.amount) || 0);
@@ -1935,6 +1965,7 @@ export default function DataEntryTerminal() {
                       {[
                         { id: 'ALL', label: 'All' },
                         { id: 'Login', label: 'Login' },
+                        { id: 'Sold', label: 'Sold' },
                         { id: 'Sanctioned', label: 'Sanctioned' },
                         { id: 'Disbursed', label: 'Disbursed' },
                         { id: 'Customer Reject', label: 'Cust Reject' },
@@ -1942,7 +1973,12 @@ export default function DataEntryTerminal() {
                       ].map((chip) => {
                          const count = chip.id === 'ALL' 
                            ? categoryScopedItems.length 
-                           : categoryScopedItems.filter(i => chip.id === 'Disbursed' ? (i.fileStatus === 'Disbursed' || i.fileStatus === 'Issued' || i.fileStatus === 'POLICY ISSUED') : i.fileStatus === chip.id).length;
+                           : categoryScopedItems.filter(i => {
+                               const fs = (i.fileStatus || '') as string;
+                               if (chip.id === 'Disbursed') return (fs === 'Disbursed' || fs === 'Issued' || fs === 'POLICY ISSUED');
+                               if (chip.id === 'Sold') return (fs === 'Sold' || (i.category === 'Forex' && (fs === 'Disbursed' || fs === 'Sold')));
+                               return fs === chip.id;
+                             }).length;
                          if (count === 0 && chip.id !== 'ALL' && statusFilter !== chip.id) return null;
                          
                          const isActive = statusFilter === chip.id;
@@ -1997,6 +2033,7 @@ export default function DataEntryTerminal() {
                       >
                          <option value="ALL">All Status</option>
                          <option value="Login">Login</option>
+                         <option value="Sold">Sold</option>
                          <option value="Sanctioned">Sanctioned</option>
                          <option value="Disbursed">Disbursed</option>
                          <option value="Customer Reject">Customer Reject</option>
@@ -2062,15 +2099,18 @@ export default function DataEntryTerminal() {
                                 filteredItemsWithIndex.map(({ item, originalIndex }) => {
                                 const isLoan = item.category === 'Loan' || (!item.category && item.product);
                                 const isInsurance = item.category === 'Insurance';
-                                const hasDisbursedAmount = Number(item.disbursedAmount) > 0;
-                                const hasDisbursedDate = Boolean(item.disbursedDate && item.disbursedDate.trim() !== '');
+                                const isForex = item.category === 'Forex';
+                                const hasDisbursedAmount = Number(item.disbursedAmount) > 0 || (isForex && Number(item.amount) > 0);
+                                const hasDisbursedDate = Boolean(item.disbursedDate && item.disbursedDate.trim() !== '') || (isForex && Boolean(item.date));
                                 const hasEmiDate = Boolean(item.emiDate && item.emiDate.trim() !== '' && item.emiDate !== '-');
 
                                 const isFullyCompletedDisbursement = isLoan
                                     ? (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate && hasEmiDate)
                                     : isInsurance
                                         ? ((item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') && hasDisbursedDate)
-                                        : (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate);
+                                        : isForex
+                                            ? ((item.fileStatus === 'Sold' || item.fileStatus === 'Disbursed' || item.fileStatus === 'Login') && (Number(item.amount) > 0 || hasDisbursedAmount))
+                                            : (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate);
 
                                 const isRowFrozen = isFullyCompletedDisbursement && !item._isSessionEditing;
                                 const isFieldDisabled = (!canModify && !item.isManual) || isRowFrozen;
@@ -2317,11 +2357,18 @@ export default function DataEntryTerminal() {
                                         <select 
                                             disabled={isFieldDisabled}
                                             className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'} ${isFieldMissing(item, 'fileStatus') ? 'border-red-500/50 focus:border-red-500 bg-red-500/5' : ''}`}
-                                            value={item.fileStatus || ''}
+                                            value={item.fileStatus || (item.category === 'Forex' ? 'Sold' : '')}
                                             onChange={(e) => handleUpdateItem(originalIndex, 'fileStatus', e.target.value)}
                                         >
                                             <option value="" className="bg-slate-800 text-white">Select...</option>
-                                            {item.category === 'Insurance' ? (
+                                            {item.category === 'Forex' ? (
+                                                <>
+                                                    <option value="Sold" className="bg-slate-800 text-blue-400 font-semibold">Sold</option>
+                                                    <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
+                                                    <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
+                                                    <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                                </>
+                                            ) : item.category === 'Insurance' ? (
                                                 <>
                                                     <option value="Issued" className="bg-slate-800 text-green-400">Issued</option>
                                                     <option value="POLICY ISSUED" className="bg-slate-800 text-green-400">POLICY ISSUED</option>
@@ -2353,9 +2400,10 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
-                                            disabled={isFieldDisabled}
+                                            disabled={isFieldDisabled || isForex}
+                                            placeholder={isForex ? "N/A" : "₹"}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.sanctionedAmount === 0 ? '' : item.sanctionedAmount}
+                                            value={isForex ? '' : (item.sanctionedAmount === 0 ? '' : item.sanctionedAmount)}
                                             onValueChange={(values) => handleUpdateItem(originalIndex, 'sanctionedAmount', values.floatValue || 0)}
                                             thousandSeparator=","
                                             thousandsGroupStyle="lakh"
@@ -2366,9 +2414,10 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <NumericFormat 
                                             customInput={Input}
-                                            disabled={isFieldDisabled}
+                                            disabled={isFieldDisabled || isForex}
+                                            placeholder={isForex ? "Auto (Login Amt)" : "₹"}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.disbursedAmount === 0 ? '' : item.disbursedAmount}
+                                            value={isForex ? (item.amount || '') : (item.disbursedAmount === 0 ? '' : item.disbursedAmount)}
                                             onValueChange={(values) => handleUpdateItem(originalIndex, 'disbursedAmount', values.floatValue || 0)}
                                             thousandSeparator=","
                                             thousandsGroupStyle="lakh"
@@ -2378,9 +2427,9 @@ export default function DataEntryTerminal() {
                                     {/* 20. Disbursed Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
-                                            disabled={isFieldDisabled}
+                                            disabled={isFieldDisabled || isForex}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.disbursedDate || ''}
+                                            value={isForex ? (item.date || (dateSelectionType === 'range' ? endDateStr : dateStr)) : (item.disbursedDate || '')}
                                             onChange={(val: string) => handleUpdateItem(originalIndex, 'disbursedDate', val)}
                                         />
                                     </TableCell>
@@ -2388,9 +2437,9 @@ export default function DataEntryTerminal() {
                                     {/* 21. EMI Date */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <InlineDatePicker 
-                                            disabled={isFieldDisabled}
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'emiDate') ? 'border-red-500/50 focus:border-red-500 border ring-1 ring-red-500/50' : 'dark:border-white/10'}`}
-                                            value={item.emiDate || ''}
+                                            disabled={isFieldDisabled || isForex}
+                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${!isForex && isFieldMissing(item, 'emiDate') ? 'border-red-500/50 focus:border-red-500 border ring-1 ring-red-500/50' : 'dark:border-white/10'}`}
+                                            value={isForex ? '' : (item.emiDate || '')}
                                             onChange={(val: string) => handleUpdateItem(originalIndex, 'emiDate', val)}
                                         />
                                     </TableCell>
@@ -2398,13 +2447,13 @@ export default function DataEntryTerminal() {
                                     {/* 22. Repayment Bank */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={isFieldDisabled}
+                                            disabled={isFieldDisabled || isForex}
                                             type="text"
                                             list="repayment-banks"
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.repaymentBank || ''}
+                                            value={isForex ? '' : (item.repaymentBank || '')}
                                             onChange={(e) => handleUpdateItem(originalIndex, 'repaymentBank', e.target.value)}
-                                            placeholder="Enter or select..."
+                                            placeholder={isForex ? "N/A" : "Enter or select..."}
                                         />
                                         <datalist id="repayment-banks">
                                             <option value="State Bank of India (SBI)" />
@@ -2524,9 +2573,15 @@ export default function DataEntryTerminal() {
                                     {/* Actions & Quick Shortcuts */}
                                     <TableCell className="py-2 px-3 align-middle text-right">
                                         {isRowFrozen ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold select-none">
-                                                <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Disbursed
-                                            </span>
+                                            isForex ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[11px] font-bold select-none shadow-xs">
+                                                    <Lock className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Sold
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold select-none shadow-xs">
+                                                    <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Disbursed
+                                                </span>
+                                            )
                                         ) : (
                                             <div className="flex items-center justify-end gap-1.5">
                                                 {isLoan && item.fileStatus === 'Disbursed' && !hasEmiDate && (
@@ -2535,7 +2590,23 @@ export default function DataEntryTerminal() {
                                                     </span>
                                                 )}
 
-                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
+                                                {canModify && isForex && item.fileStatus !== 'Sold' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
+                                                    <button
+                                                        type="button"
+                                                        title="Quick Sold: Mark as Sold and record"
+                                                        onClick={() => {
+                                                            handleUpdateItem(originalIndex, 'fileStatus', 'Sold');
+                                                            handleUpdateItem(originalIndex, 'disbursedAmount', Number(item.amount) || 0);
+                                                            handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
+                                                            handleUpdateItem(originalIndex, '_isSessionEditing', true);
+                                                        }}
+                                                        className="px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
+                                                    >
+                                                        <Check className="w-2.5 h-2.5" /> Sold
+                                                    </button>
+                                                )}
+
+                                                {canModify && !isForex && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
                                                     <button
                                                         type="button"
                                                         title="Quick Disburse: Mark as Disbursed and fill date"
@@ -2555,7 +2626,7 @@ export default function DataEntryTerminal() {
                                                     </button>
                                                 )}
 
-                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
+                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && item.fileStatus !== 'Sold' && !isFullyCompletedDisbursement && (
                                                     <button
                                                         type="button"
                                                         title="Mark as Customer Reject"
@@ -2907,14 +2978,19 @@ export default function DataEntryTerminal() {
                                         arr[index].product = '';
                                         if (val === 'Insurance') {
                                             arr[index].fileStatus = '';
-                                        } else {
-                                            if (['Issued', 'POLICY ISSUED', 'Not Issued'].includes(arr[index].fileStatus || '')) {
-                                                arr[index].fileStatus = '';
-                                            }
-                                        }
-                                        if (val === 'Forex') {
+                                        } else if (val === 'Forex') {
+                                            arr[index].fileStatus = 'Sold';
                                             arr[index].fileLogin = 'Online';
                                             arr[index].channel = 'SIROI';
+                                            arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                                            arr[index].disbursedDate = arr[index].date || dateStr;
+                                            arr[index].emiDate = '';
+                                            arr[index].sanctionedAmount = 0;
+                                            arr[index].repaymentBank = '';
+                                        } else {
+                                            if (['Issued', 'POLICY ISSUED', 'Not Issued', 'Sold'].includes(arr[index].fileStatus || '')) {
+                                                arr[index].fileStatus = '';
+                                            }
                                         }
                                     }
                                     
@@ -2937,6 +3013,19 @@ export default function DataEntryTerminal() {
                                         }
                                         if (key === 'amount' && arr[index].fileStatus === 'Issued') {
                                             arr[index].disbursedAmount = Number(val) || 0;
+                                        }
+                                    }
+
+                                    if (arr[index].category === 'Forex') {
+                                        if (key === 'amount') {
+                                            arr[index].disbursedAmount = Number(val) || 0;
+                                        }
+                                        if (key === 'date') {
+                                            arr[index].disbursedDate = val;
+                                        }
+                                        if (key === 'fileStatus' && (val === 'Sold' || val === 'Disbursed')) {
+                                            arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                                            arr[index].disbursedDate = arr[index].date || dateStr;
                                         }
                                     }
                                     
@@ -3087,10 +3176,12 @@ export default function DataEntryTerminal() {
                                     {/* 18. File Status */}
                                     <TableCell className="p-2">
                                         <AppSelect 
-                                            value={item.fileStatus || ''} 
+                                            value={item.fileStatus || (item.category === 'Forex' ? 'Sold' : '')} 
                                             onChange={val => handleUpdate('fileStatus', val)} 
                                             options={item.category === 'Insurance' 
                                                 ? ['Issued', 'Not Issued'].map(c => ({id: c, name: c}))
+                                                : item.category === 'Forex'
+                                                ? ['Sold', 'Login', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
                                                 : item.category === 'Loan'
                                                 ? ['Login', 'Underwriting', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
                                                 : ['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
@@ -3103,37 +3194,39 @@ export default function DataEntryTerminal() {
                                     {/* 19. Sanctioned (₹) */}
                                     <TableCell className="p-2">
                                         <NumericFormat
-                                            value={item.sanctionedAmount === 0 ? '' : item.sanctionedAmount}
+                                            disabled={item.category === 'Forex'}
+                                            value={item.category === 'Forex' ? '' : (item.sanctionedAmount === 0 ? '' : item.sanctionedAmount)}
                                             thousandSeparator=","
                                             thousandsGroupStyle="lakh"
                                             onValueChange={(vals) => handleUpdate('sanctionedAmount', vals.floatValue || 0)}
                                             customInput={Input}
-                                            placeholder="₹"
-                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
+                                            placeholder={item.category === 'Forex' ? "N/A" : "₹"}
+                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50"
                                         />
                                     </TableCell>
                                     
                                     {/* 20. Disbursed (₹) */}
                                     <TableCell className="p-2">
                                         <NumericFormat
-                                            value={item.disbursedAmount === 0 ? '' : item.disbursedAmount}
+                                            disabled={item.category === 'Forex'}
+                                            value={item.category === 'Forex' ? (item.amount || '') : (item.disbursedAmount === 0 ? '' : item.disbursedAmount)}
                                             thousandSeparator=","
                                             thousandsGroupStyle="lakh"
                                             onValueChange={(vals) => handleUpdate('disbursedAmount', vals.floatValue || 0)}
                                             customInput={Input}
-                                            placeholder="₹"
-                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
+                                            placeholder={item.category === 'Forex' ? "Auto (Login Amt)" : "₹"}
+                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50"
                                         />
                                     </TableCell>
                                     
                                     {/* 21. Disbursed Dt */}
-                                    <TableCell className="p-2"><InlineDatePicker value={item.disbursedDate || ''} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><InlineDatePicker disabled={item.category === 'Forex'} value={item.category === 'Forex' ? (item.date || dateStr) : (item.disbursedDate || '')} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
                                     
                                     {/* 22. EMI Date */}
-                                    <TableCell className="p-2"><InlineDatePicker value={item.emiDate || ''} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><InlineDatePicker disabled={item.category === 'Forex'} value={item.category === 'Forex' ? '' : (item.emiDate || '')} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
                                     
                                     {/* 23. Repayment Bank */}
-                                    <TableCell className="p-2"><Input value={item.repaymentBank || ''} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder="Bank..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input disabled={item.category === 'Forex'} value={item.category === 'Forex' ? '' : (item.repaymentBank || '')} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder={item.category === 'Forex' ? "N/A" : "Bank..."} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
                                     
                                     {/* 24. Manager Name */}
                                     <TableCell className="p-2">

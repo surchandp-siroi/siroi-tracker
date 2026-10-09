@@ -47,7 +47,7 @@ export interface EntryItem {
     emailId?: string;
     customerAddress?: string;
     firmName?: string;
-    fileStatus?: 'Login' | 'Processing' | 'Underwriting' | 'Sanctioned' | 'Disbursed' | 'Rejected' | 'Customer Reject' | 'Issued' | 'POLICY ISSUED' | 'Not Issued' | '';
+    fileStatus?: 'Sold' | 'Login' | 'Processing' | 'Underwriting' | 'Sanctioned' | 'Disbursed' | 'Rejected' | 'Customer Reject' | 'Issued' | 'POLICY ISSUED' | 'Not Issued' | '';
     sanctionedAmount?: number;
     disbursedAmount?: number;
     disbursedDate?: string;
