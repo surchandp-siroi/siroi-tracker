@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus, ArrowRight, Lock } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus, ArrowRight, Lock, Clock } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -366,7 +366,8 @@ export default function DataEntryTerminal() {
   const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
   const isGridBlocked = (entryMode === 'daily' && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor) || (isSunday && !isBackdoor);
 
-  const allowEdit = !hasExistingEntry || daysSinceCreation <= 60;
+  const hasPendingEmi = items.some(item => (item.category === 'Loan' || (!item.category && item.product)) && item.fileStatus === 'Disbursed' && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-'));
+  const allowEdit = !hasExistingEntry || daysSinceCreation <= 60 || hasPendingEmi;
   const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
   const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
@@ -1562,6 +1563,9 @@ export default function DataEntryTerminal() {
 
   
     const isFieldMissing = (item: any, field: string) => {
+        if (field === 'emiDate' && item.fileStatus === 'Disbursed' && (item.category === 'Loan' || (!item.category && item.product)) && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-')) return true;
+        if (field === 'disbursedDate' && item.fileStatus === 'Disbursed' && (!item.disbursedDate || !item.disbursedDate.trim())) return true;
+        if (field === 'disbursedAmount' && item.fileStatus === 'Disbursed' && (item.disbursedAmount === undefined || item.disbursedAmount === null || Number(item.disbursedAmount) <= 0)) return true;
         if (!item.isManual) return false;
         if (field === 'staffName' && !item.staffName) return true;
         if (field === 'category' && !item.category) return true;
@@ -1570,9 +1574,6 @@ export default function DataEntryTerminal() {
         if (field === 'customerName' && !item.customerName) return true;
         if (field === 'amount' && (item.amount === undefined || item.amount === null)) return true;
         if (field === 'fileStatus' && !item.fileStatus) return true;
-        if (field === 'emiDate' && item.fileStatus === 'Disbursed' && (item.category === 'Loan' || (!item.category && item.product)) && !item.emiDate?.trim()) return true;
-        if (field === 'disbursedDate' && item.fileStatus === 'Disbursed' && !item.disbursedDate?.trim()) return true;
-        if (field === 'disbursedAmount' && item.fileStatus === 'Disbursed' && (item.disbursedAmount === undefined || item.disbursedAmount === null || Number(item.disbursedAmount) <= 0)) return true;
         return false;
     };
 
@@ -2063,7 +2064,7 @@ export default function DataEntryTerminal() {
                                 const isInsurance = item.category === 'Insurance';
                                 const hasDisbursedAmount = Number(item.disbursedAmount) > 0;
                                 const hasDisbursedDate = Boolean(item.disbursedDate && item.disbursedDate.trim() !== '');
-                                const hasEmiDate = Boolean(item.emiDate && item.emiDate.trim() !== '');
+                                const hasEmiDate = Boolean(item.emiDate && item.emiDate.trim() !== '' && item.emiDate !== '-');
 
                                 const isFullyCompletedDisbursement = isLoan
                                     ? (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate && hasEmiDate)
@@ -2515,7 +2516,13 @@ export default function DataEntryTerminal() {
                                             </span>
                                         ) : (
                                             <div className="flex items-center justify-end gap-1.5">
-                                                {canModify && item.category !== 'Insurance' && !isFullyCompletedDisbursement && (
+                                                {isLoan && item.fileStatus === 'Disbursed' && !hasEmiDate && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="EMI Date is pending. Select EMI Date to complete disbursement.">
+                                                        <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> EMI Pending
+                                                    </span>
+                                                )}
+
+                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
                                                     <button
                                                         type="button"
                                                         title="Quick Disburse: Mark as Disbursed and fill date"
@@ -2535,7 +2542,7 @@ export default function DataEntryTerminal() {
                                                     </button>
                                                 )}
 
-                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && !isFullyCompletedDisbursement && (
+                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
                                                     <button
                                                         type="button"
                                                         title="Mark as Customer Reject"

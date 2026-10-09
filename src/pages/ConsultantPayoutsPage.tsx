@@ -72,6 +72,16 @@ export default function ConsultantPayoutsPage() {
     // Only include rows where a consultant is mentioned
     items = items.filter(item => item.consultantName?.trim() || item.consultantEmail?.trim());
 
+    // Exclude loan items that are missing an EMI date (payout settlement requires completed EMI date)
+    items = items.filter(item => {
+      const isLoan = item.category === 'Loan' || (!item.category && item.product);
+      if (isLoan) {
+        const hasEmiDate = Boolean(item.emiDate && item.emiDate.trim() !== '' && item.emiDate !== '-');
+        return hasEmiDate;
+      }
+      return true;
+    });
+
     if (filterMonth) {
       items = items.filter(item => {
         const dateToCheck = item.disbursedDate || item._entryDate;
