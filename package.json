@@ -1,6 +1,6 @@
 {
   "name": "siroi-tracker",
-  "version": "1.2.41",
+  "version": "1.2.42",
   "private": true,
   "type": "module",
   "scripts": {

@@ -96,7 +96,7 @@ export default function HomePage() {
 
   const isNative = Capacitor.isNativePlatform();
 
-  // Adaptive Viewport Auto-Scaling (Ensures exact 100% desktop presentation even at 200% browser zoom or on small screens)
+  // Adaptive Viewport Auto-Scaling (Universal Chrome & Mozilla zoom compensation from 25% to 500%)
   const [adaptiveScale, setAdaptiveScale] = useState<number>(1);
 
   useEffect(() => {
@@ -116,11 +116,9 @@ export default function HomePage() {
       const scaleY = currentHeight / targetHeight;
       const fitScale = Math.min(scaleX, scaleY);
       
-      if (fitScale < 1) {
-        setAdaptiveScale(Math.max(0.40, parseFloat(fitScale.toFixed(3))));
-      } else {
-        setAdaptiveScale(1);
-      }
+      // Full spectrum clamp: 0.15 (supports up to 500% zoom-in) to 3.5 (supports down to 25% zoom-out)
+      const scale = Math.max(0.15, Math.min(3.5, parseFloat(fitScale.toFixed(3))));
+      setAdaptiveScale(scale);
     };
 
     updateScale();
@@ -306,14 +304,11 @@ export default function HomePage() {
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
         paddingLeft: 'max(1rem, env(safe-area-inset-left))',
         paddingRight: 'max(1rem, env(safe-area-inset-right))',
-        ...(adaptiveScale < 1 ? ({
-          zoom: adaptiveScale,
-          width: `${(100 / adaptiveScale)}vw`,
-          height: `${(100 / adaptiveScale)}vh`,
-        } as React.CSSProperties) : {
-          width: '100vw',
-          height: '100vh',
-        })
+        zoom: adaptiveScale,
+        width: `${(100 / adaptiveScale)}vw`,
+        height: `${(100 / adaptiveScale)}vh`,
+        minHeight: `${(100 / adaptiveScale)}vh`,
+        maxHeight: `${(100 / adaptiveScale)}vh`,
       }}
     >
       

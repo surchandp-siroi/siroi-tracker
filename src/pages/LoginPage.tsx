@@ -90,11 +90,9 @@ export default function LoginPage() {
       const scaleY = currentHeight / targetHeight;
       const fitScale = Math.min(scaleX, scaleY);
       
-      if (fitScale < 1) {
-        setAdaptiveScale(Math.max(0.40, parseFloat(fitScale.toFixed(3))));
-      } else {
-        setAdaptiveScale(1);
-      }
+      // Full spectrum clamp: 0.15 (supports up to 500% zoom-in) to 3.5 (supports down to 25% zoom-out)
+      const scale = Math.max(0.15, Math.min(3.5, parseFloat(fitScale.toFixed(3))));
+      setAdaptiveScale(scale);
     };
 
     updateScale();
@@ -267,11 +265,13 @@ export default function LoginPage() {
   return (
     <div 
       className="min-h-screen w-full relative flex items-center justify-center p-4 sm:p-8 overflow-hidden"
-      style={adaptiveScale < 1 ? ({
+      style={{
         zoom: adaptiveScale,
         width: `${(100 / adaptiveScale)}vw`,
         height: `${(100 / adaptiveScale)}vh`,
-      } as React.CSSProperties) : undefined}
+        minHeight: `${(100 / adaptiveScale)}vh`,
+        maxHeight: `${(100 / adaptiveScale)}vh`,
+      }}
     >
       {/* Background Video */}
       <div className="absolute inset-0 z-0 bg-[#030816] overflow-hidden">
