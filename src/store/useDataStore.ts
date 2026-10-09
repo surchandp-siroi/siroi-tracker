@@ -339,7 +339,17 @@ export const useDataStore = create<DataState>((set) => ({
           if ((role === 'statehead' || role === 'manager') && branchId) {
               const bName = staticBranches.find(b => b.id === branchId)?.name;
               if (bName) {
-                  consultantQuery = consultantQuery.or(`branch.ilike.%${bName}%,state.ilike.%${bName}%`);
+                  if (bName.includes('&')) {
+                      const parts = bName.split('&').map(p => p.trim());
+                      const orClauses = [
+                          `associated_branch.ilike.%${bName}%`,
+                          ...parts.map(p => `associated_branch.ilike.%${p}%`),
+                          ...parts.map(p => `state.ilike.%${p}%`)
+                      ];
+                      consultantQuery = consultantQuery.or(orClauses.join(','));
+                  } else {
+                      consultantQuery = consultantQuery.or(`associated_branch.ilike.%${bName}%,state.ilike.%${bName}%`);
+                  }
               }
           }
           const { data: consultantData } = await consultantQuery;

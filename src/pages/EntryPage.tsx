@@ -2477,8 +2477,21 @@ export default function DataEntryTerminal() {
                                             }}
                                         >
                                             <option value="" className="bg-slate-800 text-slate-400">Select...</option>
+                                            {item.consultantName && !consultants.some(c => c.name === item.consultantName) && (
+                                                <option value={item.consultantName} className="bg-slate-800 text-white">{item.consultantName}</option>
+                                            )}
                                             {consultants
-                                                .filter(c => !c.associated_branch || c.associated_branch === activeBranchName)
+                                                .filter(c => {
+                                                    if (!c.associated_branch) return true;
+                                                    const cb = c.associated_branch.toLowerCase().trim();
+                                                    const ab = activeBranchName.toLowerCase().trim();
+                                                    if (cb === ab || cb.includes(ab) || ab.includes(cb)) return true;
+                                                    if (ab.includes('&')) {
+                                                        const parts = ab.split('&').map(p => p.trim());
+                                                        return parts.some(p => cb.includes(p) || (c.state && c.state.toLowerCase().includes(p)));
+                                                    }
+                                                    return false;
+                                                })
                                                 .map(c => (
                                                 <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
                                             ))}
