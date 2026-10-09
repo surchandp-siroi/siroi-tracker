@@ -96,6 +96,38 @@ export default function HomePage() {
 
   const isNative = Capacitor.isNativePlatform();
 
+  // Adaptive Viewport Auto-Scaling (Ensures exact 100% desktop presentation even at 200% browser zoom or on small screens)
+  const [adaptiveScale, setAdaptiveScale] = useState<number>(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (typeof window === 'undefined') return;
+      if (isNative) {
+        setAdaptiveScale(1);
+        return;
+      }
+      
+      const targetWidth = 1400;
+      const targetHeight = 820;
+      const currentWidth = window.innerWidth;
+      const currentHeight = window.innerHeight;
+      
+      const scaleX = currentWidth / targetWidth;
+      const scaleY = currentHeight / targetHeight;
+      const fitScale = Math.min(scaleX, scaleY);
+      
+      if (fitScale < 1) {
+        setAdaptiveScale(Math.max(0.40, parseFloat(fitScale.toFixed(3))));
+      } else {
+        setAdaptiveScale(1);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [isNative]);
+
   useEffect(() => {
     if (isNative && 'OTPCredential' in window && otpSent) {
       const ac = new AbortController();
@@ -273,13 +305,21 @@ export default function HomePage() {
         paddingTop: 'max(1rem, env(safe-area-inset-top))',
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
         paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-        paddingRight: 'max(1rem, env(safe-area-inset-right))'
+        paddingRight: 'max(1rem, env(safe-area-inset-right))',
+        ...(adaptiveScale < 1 ? ({
+          zoom: adaptiveScale,
+          width: `${(100 / adaptiveScale)}vw`,
+          height: `${(100 / adaptiveScale)}vh`,
+        } as React.CSSProperties) : {
+          width: '100vw',
+          height: '100vh',
+        })
       }}
     >
       
       {/* Left Section - Dark Grid & Glassmorphism Cards */}
       <div 
-        className="hidden lg:flex w-[55%] relative flex-col justify-between overflow-hidden bg-slate-950 border border-slate-800 shadow-xl"
+        className={`${isNative ? 'hidden' : 'flex'} w-[55%] relative flex-col justify-between overflow-hidden bg-slate-950 border border-slate-800 shadow-xl shrink-0`}
         style={{
           borderRadius: 'max(24px, env(safe-area-inset-bottom))'
         }}
@@ -584,21 +624,23 @@ export default function HomePage() {
 
       {/* Right Section - Login Form */}
       <div 
-        className="flex-1 flex flex-col bg-white dark:bg-slate-950 p-6 sm:p-12 relative shadow-xl border border-slate-200 dark:border-slate-800 overflow-y-auto"
+        className="flex-1 flex flex-col bg-white dark:bg-slate-950 p-6 sm:p-12 relative shadow-xl border border-slate-200 dark:border-slate-800 overflow-y-auto shrink-0"
         style={{
           borderRadius: 'max(24px, env(safe-area-inset-bottom))'
         }}
       >
         
-        {/* Top Left Logo (For Mobile/Smaller Screens where left pane is hidden) */}
-        <div className="flex lg:hidden items-center gap-2 shrink-0 mb-4">
-            <LogoIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white uppercase">Siroi Forex</span>
-        </div>
+        {/* Top Left Logo (For Mobile Devices) */}
+        {isNative && (
+          <div className="flex items-center gap-2 shrink-0 mb-4">
+              <LogoIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white uppercase">Siroi Forex</span>
+          </div>
+        )}
 
         <div className="w-full max-w-[380px] mx-auto my-auto flex flex-col justify-center min-h-[70vh] animate-in fade-in slide-in-from-right-8 duration-700">
           
-          <div className="mb-10 text-center lg:text-left">
+          <div className={`mb-10 ${isNative ? 'text-center' : 'text-left'}`}>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">
               Secure Gateway
             </h1>

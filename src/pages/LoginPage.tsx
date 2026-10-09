@@ -69,6 +69,39 @@ export default function LoginPage() {
 
 
   const isMobile = Capacitor.isNativePlatform();
+
+  // Adaptive Viewport Auto-Scaling (Ensures exact 100% presentation even at 200% browser zoom or on small screens)
+  const [adaptiveScale, setAdaptiveScale] = useState<number>(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (typeof window === 'undefined') return;
+      if (isMobile) {
+        setAdaptiveScale(1);
+        return;
+      }
+      
+      const targetWidth = 1280;
+      const targetHeight = 800;
+      const currentWidth = window.innerWidth;
+      const currentHeight = window.innerHeight;
+      
+      const scaleX = currentWidth / targetWidth;
+      const scaleY = currentHeight / targetHeight;
+      const fitScale = Math.min(scaleX, scaleY);
+      
+      if (fitScale < 1) {
+        setAdaptiveScale(Math.max(0.40, parseFloat(fitScale.toFixed(3))));
+      } else {
+        setAdaptiveScale(1);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [isMobile]);
+
   const emailLower = email.trim().toLowerCase();
   
   // Allow partial matching (at least 4 characters) for SMS users to prevent "device restriction" confusion
@@ -232,7 +265,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center p-4 sm:p-8 overflow-hidden">
+    <div 
+      className="min-h-screen w-full relative flex items-center justify-center p-4 sm:p-8 overflow-hidden"
+      style={adaptiveScale < 1 ? ({
+        zoom: adaptiveScale,
+        width: `${(100 / adaptiveScale)}vw`,
+        height: `${(100 / adaptiveScale)}vh`,
+      } as React.CSSProperties) : undefined}
+    >
       {/* Background Video */}
       <div className="absolute inset-0 z-0 bg-[#030816] overflow-hidden">
         <video 
@@ -252,7 +292,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-6xl min-h-[720px] p-6 sm:p-10 rounded-[2.5rem] bg-indigo-900/20 backdrop-blur-xl border border-indigo-300/10 shadow-2xl flex flex-col lg:flex-row items-stretch justify-center gap-8">
         
         {/* Left Rectangle (Floating Content) */}
-        <div className="hidden lg:flex flex-col justify-center space-y-10 w-full lg:w-[55%] bg-indigo-950/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 shadow-xl relative overflow-hidden min-h-[600px]">
+        <div className={`${isMobile ? 'hidden' : 'flex'} flex-col justify-center space-y-10 w-full lg:w-[55%] bg-indigo-950/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 shadow-xl relative overflow-hidden min-h-[600px]`}>
             {/* Subtle glows inside the left card */}
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />

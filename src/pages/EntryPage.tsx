@@ -251,22 +251,28 @@ export default function DataEntryTerminal() {
   // Admin Context
   const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
   
-  // Adaptive Viewport Auto-Scaling (Instantly fits dashboard on laptops with 125%/150% scaling or height < 900px)
+  // Adaptive Viewport Auto-Scaling (Instantly fits dashboard on laptops with 125%/150%/200% scaling or height < 900px)
   const [adaptiveScale, setAdaptiveScale] = useState<number>(1);
 
   useEffect(() => {
     const updateScale = () => {
-      if (typeof window === 'undefined' || window.innerWidth < 1024) {
+      if (typeof window === 'undefined') return;
+      if (Capacitor.isNativePlatform()) {
         setAdaptiveScale(1);
         return;
       }
       
+      const idealWidth = 1440;
       const idealHeight = 900;
+      const currentWidth = window.innerWidth;
       const currentHeight = window.innerHeight;
       
-      if (currentHeight < idealHeight) {
-        const scale = Math.min(1, Math.max(0.76, parseFloat((currentHeight / idealHeight).toFixed(3))));
-        setAdaptiveScale(scale);
+      const scaleX = currentWidth / idealWidth;
+      const scaleY = currentHeight / idealHeight;
+      const fitScale = Math.min(scaleX, scaleY);
+      
+      if (fitScale < 1) {
+        setAdaptiveScale(Math.max(0.45, parseFloat(fitScale.toFixed(3))));
       } else {
         setAdaptiveScale(1);
       }
@@ -1635,7 +1641,10 @@ export default function DataEntryTerminal() {
   return (
       <div 
           className="min-h-screen p-3 md:p-6 flex flex-col w-full overflow-x-hidden overflow-y-auto"
-          style={adaptiveScale < 1 ? ({ zoom: adaptiveScale } as React.CSSProperties) : undefined}
+          style={adaptiveScale < 1 ? ({ 
+            zoom: adaptiveScale,
+            width: `${(100 / adaptiveScale)}vw`,
+          } as React.CSSProperties) : undefined}
       >
           <header className="glass px-4 py-3 md:px-6 md:py-3 flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-3 md:mb-3 rounded-xl shadow-sm shrink-0">
               <div>
