@@ -51,10 +51,10 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
           district,
           phone_number: phoneNumber,
           email_id: emailId,
-          income_type: incomeType,
-          yearly_income_range: yearlyIncomeRange,
-          birthday,
-          anniversary
+          income_type: incomeType || null,
+          yearly_income_range: yearlyIncomeRange || null,
+          birthday: birthday || null,
+          anniversary: anniversary || null
         })
         .eq('id', customer.id);
 

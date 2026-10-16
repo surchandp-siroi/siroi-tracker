@@ -133,10 +133,10 @@ export default function CustomerDataEntryPage() {
                     district: district,
                     phone_number: phoneNumber,
                     email_id: emailId,
-                    income_type: incomeType,
-                    yearly_income_range: yearlyIncomeRange,
-                    birthday: birthday,
-                    anniversary: anniversary,
+                    income_type: incomeType || null,
+                    yearly_income_range: yearlyIncomeRange || null,
+                    birthday: birthday || null,
+                    anniversary: anniversary || null,
                     entry_person_name: entryPersonName,
                     entry_location: entryLocation
                 }]);
