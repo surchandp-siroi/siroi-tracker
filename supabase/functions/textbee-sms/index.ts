@@ -79,10 +79,10 @@ serve(async (req) => {
     // If WhatsApp is chosen
     if (selectedChannel === 'whatsapp') {
       console.log(`Routing OTP for ${phone} via WhatsApp Cloud API (Meta)...`);
-      const metaToken = Deno.env.get('WHATSAPP_CLOUD_API_TOKEN') || 'EAAPs7xmoCBUBS6HCoNdNQ56zjSeeAGWgFNZBkwk2sAnzv7b8pOCfPfQoT4PEzyk9EYHHns7Os6ZAZARrosgq9ZA6WeCTIPnqZALYyN05DOp2h5CRC53EQcLB4lKuZAiCZBtb6A3pM7uuNeyrrF22QkA7yUj7UAULrDLmAoJZCVVVYHfrYoXBKXxrDZApJrSqpNQZDZD';
+      const metaToken = Deno.env.get('WHATSAPP_CLOUD_API_TOKEN') || 'EAAPs7xmoCBUBSZBXNHGQHkbkg13oCzvsPdZCgY0cCBRpSOweSQjXQLLAFVPCvbaTz39ypGmcOqJaZCoYAu9gZAZC0TY3GZA47ejATXSBJ3UIWqXZBGCUZC4BR5vEmn5oTJRLMmMP9OJWsQ42Q2UMEBJ9L1cjWJmrgiYnC32o2PygUXXCrjj4hA2DIEumgpzR2QZDZD';
       const metaPhoneId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') || '1334176636447319';
 
-      const metaRes = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
+      const metaRes = await fetch(`https://graph.facebook.com/v22.0/${metaPhoneId}/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${metaToken}`,
