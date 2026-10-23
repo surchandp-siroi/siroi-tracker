@@ -82,6 +82,29 @@ serve(async (req) => {
       const metaToken = Deno.env.get('WHATSAPP_CLOUD_API_TOKEN') || 'EAAPs7xmoCBUBSZBXNHGQHkbkg13oCzvsPdZCgY0cCBRpSOweSQjXQLLAFVPCvbaTz39ypGmcOqJaZCoYAu9gZAZC0TY3GZA47ejATXSBJ3UIWqXZBGCUZC4BR5vEmn5oTJRLMmMP9OJWsQ42Q2UMEBJ9L1cjWJmrgiYnC32o2PygUXXCrjj4hA2DIEumgpzR2QZDZD';
       const metaPhoneId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') || '1334176636447319';
 
+      // 1. Try sending instant Session Text (fastest delivery if customer conversation window is active)
+      try {
+        const directRes = await fetch(`https://graph.facebook.com/v22.0/${metaPhoneId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${metaToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: rawNumber,
+            type: 'text',
+            text: { body: `*${sms.otp}* is your Siroi verification code. Valid for 10 minutes. Do not share this code.` }
+          })
+        });
+        const directData = await directRes.json();
+        console.log(`Direct text attempt status: ${directRes.status}`, JSON.stringify(directData));
+      } catch (e) {
+        console.warn("Direct session text failed (window may be closed):", e);
+      }
+
+      // 2. Send official Authentication Template (works 24/7 across all users)
       const metaRes = await fetch(`https://graph.facebook.com/v22.0/${metaPhoneId}/messages`, {
         method: 'POST',
         headers: {
@@ -116,15 +139,17 @@ serve(async (req) => {
         })
       });
 
+      const metaData = await metaRes.json();
+      console.log(`Meta template dispatch status: ${metaRes.status}`, JSON.stringify(metaData));
+
       if (metaRes.ok) {
         console.log(`Successfully dispatched WhatsApp OTP via Meta Cloud API to ${phone}`);
-        return new Response(JSON.stringify({ success: true, channel: 'whatsapp' }), {
+        return new Response(JSON.stringify({ success: true, channel: 'whatsapp', message_id: metaData?.messages?.[0]?.id }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } else {
-        const errText = await metaRes.text();
-        console.error("Meta WhatsApp Cloud API failed, falling back to SMS:", errText);
+        console.error("Meta WhatsApp Cloud API failed, falling back to SMS:", JSON.stringify(metaData));
       }
     }
 
