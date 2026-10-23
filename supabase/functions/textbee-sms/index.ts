@@ -78,31 +78,53 @@ serve(async (req) => {
 
     // If WhatsApp is chosen
     if (selectedChannel === 'whatsapp') {
-      console.log(`Routing OTP for ${phone} via WhatsApp (Evolution API)...`);
-      const evoDomain = Deno.env.get('EVOLUTION_API_URL') || 'https://evolution-api-production-a510.up.railway.app';
-      const evoKey = Deno.env.get('EVOLUTION_API_KEY') || 'SiroiSecret@2026';
-      const evoInstance = Deno.env.get('EVOLUTION_INSTANCE_NAME') || 'siroi-otp';
+      console.log(`Routing OTP for ${phone} via WhatsApp Cloud API (Meta)...`);
+      const metaToken = Deno.env.get('WHATSAPP_CLOUD_API_TOKEN') || 'EAAPs7xmoCBUBS6HCoNdNQ56zjSeeAGWgFNZBkwk2sAnzv7b8pOCfPfQoT4PEzyk9EYHHns7Os6ZAZARrosgq9ZA6WeCTIPnqZALYyN05DOp2h5CRC53EQcLB4lKuZAiCZBtb6A3pM7uuNeyrrF22QkA7yUj7UAULrDLmAoJZCVVVYHfrYoXBKXxrDZApJrSqpNQZDZD';
+      const metaPhoneId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') || '1334176636447319';
 
-      const evoRes = await fetch(`${evoDomain}/message/sendText/${evoInstance}`, {
+      const metaRes = await fetch(`https://graph.facebook.com/v21.0/${metaPhoneId}/messages`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'apikey': evoKey
+          'Authorization': `Bearer ${metaToken}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          number: rawNumber,
-          text: `✨ *Siroi Financial Consultancy* 📊\n\n🔐 Your login passkey is: *${sms.otp}*\n\n⏳ _Valid for 10 minutes._\n🛡️ _For your security, please do not share this OTP with anyone._`
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: rawNumber,
+          type: 'template',
+          template: {
+            name: 'siroi_auth_otp',
+            language: { code: 'en_US' },
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: sms.otp }
+                ]
+              },
+              {
+                type: 'button',
+                sub_type: 'url',
+                index: '0',
+                parameters: [
+                  { type: 'text', text: sms.otp }
+                ]
+              }
+            ]
+          }
         })
       });
 
-      if (evoRes.ok) {
-        console.log(`Successfully dispatched WhatsApp OTP via Evolution API to ${phone}`);
+      if (metaRes.ok) {
+        console.log(`Successfully dispatched WhatsApp OTP via Meta Cloud API to ${phone}`);
         return new Response(JSON.stringify({ success: true, channel: 'whatsapp' }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } else {
-        console.error("Evolution API failed, falling back to SMS:", await evoRes.text());
+        const errText = await metaRes.text();
+        console.error("Meta WhatsApp Cloud API failed, falling back to SMS:", errText);
       }
     }
 
