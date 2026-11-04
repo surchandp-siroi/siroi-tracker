@@ -121,7 +121,7 @@ const staticChannels: Channel[] = [
   'PIRAMAL CAPITAL', 'POONAWALA', 'TATA CAPITAL', 'YES BANK', 'INDIFI',
   'Credit SAISON', 'SLICE', 'ICICI Lombard', 'Niva Bupa', 'Tata AIG',
   'Manipal Cigna', 'Star Health', 'Care Health', 'SBI', 'Magma',
-  'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank'
+  'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank', 'BANK OF INDIA'
 ].map((name, i) => ({ id: `ch-${i}`, name, business: 0 }));
 
 const staticBranches: Branch[] = [

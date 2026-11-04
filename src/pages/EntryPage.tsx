@@ -382,10 +382,35 @@ export default function DataEntryTerminal() {
   const isPast11AM = currentJsDate.getHours() >= 11;
   const isTimeLocked = isPastMay1 && isPast11AM;
   const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
-  const isGridBlocked = (entryMode === 'daily' && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor) || (isSunday && !isBackdoor);
+
+  // 74-hour Consultant Details Backfill Window (Timer starts Nov 5th, 2026 06:00 AM IST -> Auto-locks Nov 8th, 2026 08:00 AM IST)
+  const CONSULTANT_UNLOCK_START_MS = new Date('2026-11-05T06:00:00+05:30').getTime();
+  const CONSULTANT_UNLOCK_END_MS = CONSULTANT_UNLOCK_START_MS + 74 * 60 * 60 * 1000;
+  const nowTimestamp = currentJsDate.getTime();
+  const isConsultantUnlockWindowActive = nowTimestamp < CONSULTANT_UNLOCK_END_MS;
+  const consultantUnlockCountdown = (() => {
+      if (!isConsultantUnlockWindowActive) return '';
+      const remainingMs = nowTimestamp < CONSULTANT_UNLOCK_START_MS
+          ? 74 * 60 * 60 * 1000
+          : Math.max(0, CONSULTANT_UNLOCK_END_MS - nowTimestamp);
+      const hrs = Math.floor(remainingMs / (1000 * 60 * 60));
+      const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+      return nowTimestamp < CONSULTANT_UNLOCK_START_MS
+          ? '74h from Nov 5, 6:00 AM'
+          : `${hrs}h ${mins}m left`;
+  })();
+
+  const isItemMissingConsultantSinceAug2026 = (item: any) =>
+      Boolean(((item._entryDate || (dateSelectionType === 'range' ? item.date || startDateStr : dateStr)) >= '2026-08-01') || (item.date && item.date >= '2026-08-01') || (item.disbursedDate && item.disbursedDate >= '2026-08-01')) &&
+      !(item.consultantName && item.consultantName.trim() !== '' && item.consultantName !== '-' && item.consultantEmail && item.consultantEmail.trim() !== '' && item.consultantEmail !== '-');
 
   const hasPendingEmi = items.some(item => (item.category === 'Loan' || (!item.category && item.product)) && item.fileStatus === 'Disbursed' && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-'));
-  const allowEdit = !hasExistingEntry || daysSinceCreation <= 60 || hasPendingEmi;
+  const hasPendingConsultant = isConsultantUnlockWindowActive && items.some(item => isItemMissingConsultantSinceAug2026(item) || Boolean((item as any)._isSessionEditing));
+  const hasPendingBackfill = hasPendingEmi || hasPendingConsultant;
+  const isBypassedForPendingBackfill = hasExistingEntry && hasPendingBackfill;
+
+  const isGridBlocked = !isBypassedForPendingBackfill && ((entryMode === 'daily' && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor) || (isSunday && !isBackdoor));
+  const allowEdit = !hasExistingEntry || daysSinceCreation <= 60 || hasPendingBackfill;
   const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
   const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
@@ -767,7 +792,7 @@ export default function DataEntryTerminal() {
             - "relationshipManagerName": string
             - "fileLogin": string (e.g. WBO, EXPRESS LINK, ILENS) or empty
             - "trackingNumber": string or empty
-            - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC, ICICI Lombard, Niva Bupa, Tata AIG, Manipal Cigna, Star Health, Care Health, SBI, Magma, Galaxy Health, SIROI, Bank of Baroda, Punjab & Sind Bank if Insurance.
+            - "channel": Must be one of: ${channels.map((c: any) => c.name).join(', ')}. Or Bajaj Allianz, Aditya Birla, LIC, ICICI Lombard, Niva Bupa, Tata AIG, Manipal Cigna, Star Health, Care Health, SBI, Magma, Galaxy Health, SIROI, Bank of Baroda, Punjab & Sind Bank, BANK OF INDIA if Insurance.
             - "branchLocation": Map to Branch name exactly as: ${branches.map((b: any) => b.name).join(', ')}. Use the specific branch for the row.
             - "customerDOB": string
             - "phoneNumber": string
@@ -921,7 +946,7 @@ export default function DataEntryTerminal() {
   const handleUpdateItem = (index: number, key: string, val: any) => {
       setItems(prevItems => {
           const arr = [...prevItems];
-          arr[index] = { ...arr[index], [key]: val };
+          arr[index] = { ...arr[index], [key]: val, _isSessionEditing: true } as any;
           
           // Auto-update product if category changes
           if (key === 'category') {
@@ -947,7 +972,7 @@ export default function DataEntryTerminal() {
           if (key === 'product') {
               if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
                   arr[index].fileLogin = 'lead force';
-                  if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank') {
+                  if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank' && arr[index].channel !== 'BANK OF INDIA') {
                       arr[index].channel = '';
                   }
               }
@@ -1044,7 +1069,7 @@ export default function DataEntryTerminal() {
   };
 
   const handleSubmit = async () => {
-      if (isSunday && !isBackdoor) {
+      if (isSunday && !isBackdoor && !isBypassedForPendingBackfill) {
           setError("Tracking submission is restricted on Sundays. Enjoy your holiday!");
           return;
       }
@@ -1196,12 +1221,12 @@ export default function DataEntryTerminal() {
               
               setCurrentEntryId(savedId);
           } else {
-              // Range Mode: Group items by (item.date || startDateStr)
+              // Range Mode: Group items by their original entryDate (_entryDate), falling back to item.date or startDateStr
               const dateGroups: Record<string, EntryItem[]> = {};
               items.forEach(item => {
-                  const d = item.date || startDateStr;
-                  if (!dateGroups[d]) dateGroups[d] = [];
-                  dateGroups[d].push(item);
+                  const targetDateKey = (item as any)._entryDate || item.date || startDateStr;
+                  if (!dateGroups[targetDateKey]) dateGroups[targetDateKey] = [];
+                  dateGroups[targetDateKey].push(item);
               });
 
               // Fetch existing entries in this date range
@@ -1980,6 +2005,12 @@ export default function DataEntryTerminal() {
                            Locked & Processed
                        </span>
                    )}
+                   {hasExistingEntry && hasPendingConsultant && (
+                       <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/30 flex items-center gap-1" title="Entries since Aug 1, 2026 without Consultant details are unlocked for 74 hours starting Nov 5, 2026 06:00 AM">
+                           <Clock className="w-3 h-3" />
+                           Connector Unlocked ({consultantUnlockCountdown})
+                       </span>
+                   )}
 
                    {/* Quick Status Filter Chips */}
                    <div className="hidden sm:flex items-center gap-1 ml-2 pl-3 border-l border-slate-200 dark:border-slate-800">
@@ -2133,7 +2164,8 @@ export default function DataEntryTerminal() {
                                             ? ((item.fileStatus === 'Sold' || item.fileStatus === 'Disbursed' || item.fileStatus === 'Login') && (Number(item.amount) > 0 || hasDisbursedAmount))
                                             : (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate);
 
-                                const isRowFrozen = isFullyCompletedDisbursement && !item._isSessionEditing;
+                                const isUnlockedForMissingConsultant = isConsultantUnlockWindowActive && isItemMissingConsultantSinceAug2026(item);
+                                const isRowFrozen = isFullyCompletedDisbursement && !item._isSessionEditing && !isUnlockedForMissingConsultant;
                                 const isFieldDisabled = (!canModify && !item.isManual) || isRowFrozen;
 
                                 return (
@@ -2296,6 +2328,7 @@ export default function DataEntryTerminal() {
                                                     <option value="SIROI">SIROI</option>
                                                     <option value="Bank of Baroda">Bank of Baroda</option>
                                                     <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
+                                                    <option value="BANK OF INDIA">BANK OF INDIA</option>
                                                 </>
                                             ) : item.category === 'Forex' ? (
                                                 <option value="SIROI">SIROI</option>
@@ -2303,6 +2336,7 @@ export default function DataEntryTerminal() {
                                                 <>
                                                     <option value="Bank of Baroda">Bank of Baroda</option>
                                                     <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
+                                                    <option value="BANK OF INDIA">BANK OF INDIA</option>
                                                 </>
                                             ) : (
                                                 channels.map((c: any) => (
@@ -2534,7 +2568,7 @@ export default function DataEntryTerminal() {
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
                                             disabled={isFieldDisabled}
-                                            className="w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200"
+                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-200 ${isUnlockedForMissingConsultant && item.fileStatus === 'Disbursed' ? 'border-amber-400/70 focus:border-amber-500 ring-1 ring-amber-400/30' : 'border-slate-200 dark:border-white/10'}`}
                                             value={item.consultantName || ''}
                                             onChange={(e) => {
                                                 handleUpdateItem(originalIndex, 'consultantName', e.target.value);
@@ -2608,6 +2642,12 @@ export default function DataEntryTerminal() {
                                                 {isLoan && item.fileStatus === 'Disbursed' && !hasEmiDate && (
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="EMI Date is pending. Select EMI Date to complete disbursement.">
                                                         <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> EMI Pending
+                                                    </span>
+                                                )}
+
+                                                {isFullyCompletedDisbursement && isUnlockedForMissingConsultant && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="Unlocked to enter Consultant details. Auto-locks after 74 hours starting Nov 5, 2026 06:00 AM.">
+                                                        <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Connector Pending ({consultantUnlockCountdown})
                                                     </span>
                                                 )}
 
@@ -3018,7 +3058,7 @@ export default function DataEntryTerminal() {
                                     if (key === 'product') {
                                         if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
                                             arr[index].fileLogin = 'lead force';
-                                            if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank') {
+                                            if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank' && arr[index].channel !== 'BANK OF INDIA') {
                                                 arr[index].channel = '';
                                             }
                                         }
@@ -3158,9 +3198,9 @@ export default function DataEntryTerminal() {
                                             value={item.channel || ''} 
                                             onChange={val => handleUpdate('channel', val)} 
                                             options={item.category === 'Insurance' 
-                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC', 'ICICI Lombard', 'Niva Bupa', 'Tata AIG', 'Manipal Cigna', 'Star Health', 'Care Health', 'SBI', 'Magma', 'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank'].map(c => ({id: c, name: c}))
+                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC', 'ICICI Lombard', 'Niva Bupa', 'Tata AIG', 'Manipal Cigna', 'Star Health', 'Care Health', 'SBI', 'Magma', 'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank', 'BANK OF INDIA'].map(c => ({id: c, name: c}))
                                                 : item.category === 'Forex' ? [{id: 'SIROI', name: 'SIROI'}]
-                                                : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? ['Bank of Baroda', 'Punjab & Sind Bank'].map(c => ({id: c, name: c}))
+                                                : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? ['Bank of Baroda', 'Punjab & Sind Bank', 'BANK OF INDIA'].map(c => ({id: c, name: c}))
                                                 : channels.map((c: any) => ({id: c.name, name: c.name}))
                                             }
                                             placeholder="Channel"
