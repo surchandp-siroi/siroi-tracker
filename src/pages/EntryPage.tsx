@@ -401,6 +401,7 @@ export default function DataEntryTerminal() {
   })();
 
   const isItemMissingConsultantSinceAug2026 = (item: any) =>
+      (item.category === 'Loan' || (!item.category && item.product)) &&
       Boolean(((item._entryDate || (dateSelectionType === 'range' ? item.date || startDateStr : dateStr)) >= '2026-08-01') || (item.date && item.date >= '2026-08-01') || (item.disbursedDate && item.disbursedDate >= '2026-08-01')) &&
       !(item.consultantName && item.consultantName.trim() !== '' && item.consultantName !== '-' && item.consultantEmail && item.consultantEmail.trim() !== '' && item.consultantEmail !== '-');
 
@@ -951,6 +952,10 @@ export default function DataEntryTerminal() {
           // Auto-update product if category changes
           if (key === 'category') {
               arr[index].product = ''; // reset
+              if (val !== 'Loan') {
+                  arr[index].consultantName = '';
+                  arr[index].consultantEmail = '';
+              }
               if (val === 'Insurance') {
                   arr[index].fileStatus = '';
               } else if (val === 'Forex') {
@@ -2567,9 +2572,9 @@ export default function DataEntryTerminal() {
                                     {/* 24. Consultant Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <select 
-                                            disabled={isFieldDisabled}
-                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-200 ${isUnlockedForMissingConsultant && item.fileStatus === 'Disbursed' ? 'border-amber-400/70 focus:border-amber-500 ring-1 ring-amber-400/30' : 'border-slate-200 dark:border-white/10'}`}
-                                            value={item.consultantName || ''}
+                                            disabled={isFieldDisabled || !isLoan}
+                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-200 ${isLoan && isUnlockedForMissingConsultant && item.fileStatus === 'Disbursed' ? 'border-amber-400/70 focus:border-amber-500 ring-1 ring-amber-400/30' : 'border-slate-200 dark:border-white/10'}`}
+                                            value={isLoan ? (item.consultantName || '') : ''}
                                             onChange={(e) => {
                                                 handleUpdateItem(originalIndex, 'consultantName', e.target.value);
                                                 const consultant = consultants.find(c => c.name === e.target.value);
@@ -2580,11 +2585,11 @@ export default function DataEntryTerminal() {
                                                 }
                                             }}
                                         >
-                                            <option value="" className="bg-slate-800 text-slate-400">Select...</option>
-                                            {item.consultantName && !consultants.some(c => c.name === item.consultantName) && (
+                                            <option value="" className="bg-slate-800 text-slate-400">{isLoan ? 'Select...' : 'N/A'}</option>
+                                            {isLoan && item.consultantName && !consultants.some(c => c.name === item.consultantName) && (
                                                 <option value={item.consultantName} className="bg-slate-800 text-white">{item.consultantName}</option>
                                             )}
-                                            {consultants
+                                            {isLoan && consultants
                                                 .filter(c => {
                                                     if (!c.associated_branch) return true;
                                                     const cb = c.associated_branch.toLowerCase().trim();
@@ -2605,10 +2610,11 @@ export default function DataEntryTerminal() {
                                     {/* 25. Consultant Email ID */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
-                                            disabled={isFieldDisabled}
+                                            disabled={isFieldDisabled || !isLoan}
                                             type="email"
+                                            placeholder={isLoan ? '' : 'N/A'}
                                             className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.consultantEmail || ''}
+                                            value={isLoan ? (item.consultantEmail || '') : ''}
                                             onChange={(e) => handleUpdateItem(originalIndex, 'consultantEmail', e.target.value)}
                                         />
                                     </TableCell>
@@ -3037,6 +3043,10 @@ export default function DataEntryTerminal() {
                                     arr[index] = { ...arr[index], [key]: val };
                                     if (key === 'category') {
                                         arr[index].product = '';
+                                        if (val !== 'Loan') {
+                                            arr[index].consultantName = '';
+                                            arr[index].consultantEmail = '';
+                                        }
                                         if (val === 'Insurance') {
                                             arr[index].fileStatus = '';
                                         } else if (val === 'Forex') {
@@ -3316,7 +3326,8 @@ export default function DataEntryTerminal() {
                                     {/* 25. Consultant Name */}
                                     <TableCell className="p-2">
                                         <select
-                                            value={item.consultantName || ''}
+                                            disabled={item.category !== 'Loan'}
+                                            value={item.category === 'Loan' ? (item.consultantName || '') : ''}
                                             onChange={e => {
                                                 handleUpdate('consultantName', e.target.value);
                                                 const consultant = consultants.find(c => c.name === e.target.value);
@@ -3326,17 +3337,17 @@ export default function DataEntryTerminal() {
                                                     handleUpdate('consultantEmail', '');
                                                 }
                                             }}
-                                            className="w-full h-8 text-xs rounded-md px-2 bg-transparent text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700"
+                                            className="w-full h-8 text-xs rounded-md px-2 bg-transparent text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700 disabled:opacity-50"
                                         >
-                                            <option value="">— Select —</option>
-                                            {consultants.map(c => (
+                                            <option value="">{item.category === 'Loan' ? '— Select —' : 'N/A'}</option>
+                                            {item.category === 'Loan' && consultants.map(c => (
                                                 <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
                                             ))}
                                         </select>
                                     </TableCell>
                                     
                                     {/* 25. Consultant Email ID */}
-                                    <TableCell className="p-2"><Input type="email" value={item.consultantEmail || ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder="Consultant Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+                                    <TableCell className="p-2"><Input type="email" disabled={item.category !== 'Loan'} value={item.category === 'Loan' ? (item.consultantEmail || '') : ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder={item.category === 'Loan' ? "Consultant Email..." : "N/A"} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
                                     
                                     {/* 26. Rejection Remark */}
                                     <TableCell className="p-2"><Input type="text" value={item.rejectionRemark || ''} onChange={e => handleUpdate('rejectionRemark', e.target.value)} placeholder="Rejection remark..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 min-w-[200px]" /></TableCell>
