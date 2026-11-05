@@ -19,17 +19,100 @@
       "skillPath": "skills/apple-design/SKILL.md",
       "computedHash": "0d19303902efa64eace10e6b183eb29ef3220d424c1a7fd1eafc52adde216932"
     },
+    "archify": {
+      "source": "archify.si",
+      "sourceUrl": "https://archify.si",
+      "sourceType": "well-known",
+      "computedHash": "66064aedd4c18651a69914c5dbb040552bc45c54ee9a49b757fe45cc1b4cc09a",
+      "wellKnownDigest": "sha256:54ba0383833e094f3262e543ffb4e3b8426b611e5c0db024a5662b4cd5320577"
+    },
+    "audit-context-building": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/audit-context-building/skills/audit-context-building/SKILL.md",
+      "computedHash": "0d6e21c70f7bb9c0b706f5e04d7dccf68a17ebdc5a0c08803726637b3efaca62",
+      "installMode": "copy"
+    },
+    "audit-prep-assistant": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/building-secure-contracts/skills/audit-prep-assistant/SKILL.md",
+      "computedHash": "28ee6a914478d781b8b89974c25166de7be324acd9a569944aac93c4a0a3a3b5",
+      "installMode": "copy"
+    },
+    "better-accessibility": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-accessibility/SKILL.md",
+      "computedHash": "0daa40156a9ee10342c5a17c5a73d48d2477df4fc2978cad061801ed3044a0ec"
+    },
+    "better-colors": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-colors/SKILL.md",
+      "computedHash": "12eba062872b119373dca22e1f93a7087d09c0a41a5ae4991d913dc44dfe0bbd"
+    },
+    "better-interface": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-interface/SKILL.md",
+      "computedHash": "26872521353d85d7782782a4d7dfe8107b453572d776bd5f9ff336df0823201f"
+    },
+    "better-layout": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-layout/SKILL.md",
+      "computedHash": "482cd1a14d84146815650825ad8391e65683fec0e88a15cbaa11356335060ecc"
+    },
+    "better-typography": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-typography/SKILL.md",
+      "computedHash": "2bdcdec47af0939829a5a63a659968ca4fe6938ba92fc25dc1a29636425b0c53"
+    },
+    "better-ui": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-ui/SKILL.md",
+      "computedHash": "4d6e56d526c674b1f21a5acfab1599627e9d829d225e728e52b5bd9fb1005b9d"
+    },
+    "better-writing": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-writing/SKILL.md",
+      "computedHash": "ce45d0cb11dea15e38ebb87fd8ac26944aef9ea30db0a644a91506aa70b571bc"
+    },
     "brandkit": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
       "skillPath": "skills/brandkit/SKILL.md",
       "computedHash": "735007879f5110aeae1e981a53fe74a12afde70347f9773dacd50e4697a091bf"
     },
+    "break": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/break/SKILL.md",
+      "computedHash": "51da645116ad6fc569c44541954cd4038cff0a81fa207669c129a6be7547be22"
+    },
+    "build-design": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-design/SKILL.md",
+      "computedHash": "71a02f876ab545ab1e2ac96742e54f8b78ba5af57b6c35e36eb7c88fde92e098"
+    },
+    "code-maturity-assessor": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/building-secure-contracts/skills/code-maturity-assessor/SKILL.md",
+      "computedHash": "28383d3b6107c75af6fddfcec037cca73d8fbf4e4254bf050ba865b0626f9d22",
+      "installMode": "copy"
+    },
     "design-taste-frontend": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
       "skillPath": "skills/taste-skill/SKILL.md",
-      "computedHash": "899b84384f74f540ea5284d9b2e9234e050998b42eacc805410b518d4226c0b3"
+      "computedHash": "ac769e17340097d1d1e4fe8c8baf543324c81ce94d600283d70b6546ccd4d51d",
+      "installMode": "copy"
     },
     "design-taste-frontend-v1": {
       "source": "Leonxlnx/taste-skill",
@@ -37,11 +120,23 @@
       "skillPath": "skills/taste-skill-v1/SKILL.md",
       "computedHash": "0a226c13d69639553cf8a7c40aa5527b026820f8ddaf7a6b263988e32ab44a27"
     },
+    "diagram-design": {
+      "source": "cathrynlavery/diagram-design",
+      "sourceType": "github",
+      "skillPath": "skills/diagram-design/SKILL.md",
+      "computedHash": "441ef42fb3056a5b78429d0d466119bc0cc7ba9f5ebf4bd4dce4bea8da2c1630"
+    },
     "emil-design-eng": {
       "source": "emilkowalski/skill",
       "sourceType": "github",
       "skillPath": "skills/emil-design-eng/SKILL.md",
       "computedHash": "87067d79205fdedc6d682891027dd9c7335486c4b4dc2e785638941a9d2e6061"
+    },
+    "explain-interface": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/explain-interface/SKILL.md",
+      "computedHash": "a8915ded0557d1c7d78d8371724d0ac83a67e9ae48246499143eb5b69dc71491"
     },
     "find-animation-opportunities": {
       "source": "emilkowalski/skill",
@@ -49,11 +144,60 @@
       "skillPath": "skills/find-animation-opportunities/SKILL.md",
       "computedHash": "c6b1d0f6d03a11f8772b1cef4ca5cc88301ae8641ac2697c85ffa87eb458e40a"
     },
+    "fp-check": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/fp-check/skills/fp-check/SKILL.md",
+      "computedHash": "eb8657f6f2f880a0922012b1e621442f2e4f1d98c2ef76e67ed90ba0edbd5fc4",
+      "installMode": "copy"
+    },
     "full-output-enforcement": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
       "skillPath": "skills/output-skill/SKILL.md",
       "computedHash": "524f7c7950c3fde726101613f630140411c7d080e63be718687f4b38f919be81"
+    },
+    "ghost-exo": {
+      "source": "ghostsecurity/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/exo/skills/exo/SKILL.md",
+      "computedHash": "fee8bf56d0a05833972e480bba06e00bfc9e8fccf623072e05189a7ab64a496c",
+      "installMode": "copy"
+    },
+    "ghost-report": {
+      "source": "ghostsecurity/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/ghost/skills/report/SKILL.md",
+      "computedHash": "bba83bf211f745c2f4673c4f50b4e920be26b192b6dea50271e4d66ee9916102",
+      "installMode": "copy"
+    },
+    "ghost-scan-code": {
+      "source": "ghostsecurity/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/ghost/skills/scan-code/SKILL.md",
+      "computedHash": "06cbb0f7b0dde2bec4e0b60863e82cea0317e841be373b92231eb66d5a5f55a4",
+      "installMode": "copy"
+    },
+    "ghost-scan-deps": {
+      "source": "ghostsecurity/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/ghost/skills/scan-deps/SKILL.md",
+      "computedHash": "0ae48e0346cebb9013a0cc2f7132d6f213218b7ba213f2a9c4aa69da2f2dd962",
+      "installMode": "copy"
+    },
+    "ghost-scan-secrets": {
+      "source": "ghostsecurity/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/ghost/skills/scan-secrets/SKILL.md",
+      "computedHash": "9158ddc61203621906ff29417bdce065ed60ac69368068f043ac2e7a35d29da9",
+      "installMode": "copy"
+    },
+    "ghost-validate": {
+      "source": "ghostsecurity/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/ghost/skills/validate/SKILL.md",
+      "computedHash": "31d7b5aa6926fc7035146c2ae5515e58c1e9a1b2363207dea6090d05d3916429",
+      "installMode": "copy"
     },
     "gpt-taste": {
       "source": "Leonxlnx/taste-skill",
@@ -103,6 +247,12 @@
       "skillPath": "skills/brutalist-skill/SKILL.md",
       "computedHash": "e66e5a2a8b73cef79ab6546459c665e8b983645689c5f3772f7eed8b9f1e8e0e"
     },
+    "interface-review": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/interface-review/SKILL.md",
+      "computedHash": "a9c11cb2615f3f04a000c39fa355bfdcfebad3b381ee6bfa932ed19e06db2740"
+    },
     "minimalist-ui": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
@@ -114,6 +264,13 @@
       "sourceType": "github",
       "skillPath": "skills/mobbin-search/SKILL.md",
       "computedHash": "6e6e20efde97a7420404499629f0cde54589488856d7022694b53007f670ff36"
+    },
+    "owasp-security": {
+      "source": "agamm/claude-code-owasp",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/owasp-security/SKILL.md",
+      "computedHash": "87b8649a0af026c336a08f5437601f59be11d4d8e490725e7f9ea4f7be96242e",
+      "installMode": "copy"
     },
     "pick-ui-library": {
       "source": "emilkowalski/skill",
@@ -127,6 +284,13 @@
       "skillPath": "skills/prototype/SKILL.md",
       "computedHash": "b1216a31a08fb02871f5b4ace7f31d0a1e2d9c86ddca74a37ed97d975f7bcaa2"
     },
+    "pya": {
+      "source": "AgriciDaniel/pya",
+      "sourceType": "github",
+      "skillPath": "skills/pya/SKILL.md",
+      "computedHash": "72852bd27e96386edb180256b4a3437ac9a78cd50b43ff1dcb9295eb3ee364a3",
+      "installMode": "copy"
+    },
     "redesign-existing-projects": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
@@ -139,11 +303,43 @@
       "skillPath": "skills/review-animations/SKILL.md",
       "computedHash": "6f8d633d7884c1390eff7af4bfaf7a450e798f117e1d49a555e00819dc877f64"
     },
+    "security-audit": {
+      "source": "cloudflare/security-audit-skill",
+      "sourceType": "github",
+      "skillPath": "skills/security-audit/SKILL.md",
+      "computedHash": "e6b2e317de75da97e9de18d842982994803f3a67a4a6d8154a82323dc3de8528",
+      "installMode": "copy"
+    },
+    "state-machine": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/state-machine/SKILL.md",
+      "computedHash": "b7fe1be2fd47ad3cc6be546ae8591d688c4428d0eae42c42ad203b21bda6d031"
+    },
     "stitch-design-taste": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
       "skillPath": "skills/stitch-skill/SKILL.md",
       "computedHash": "c96b580192b34167efa01f460bbc669ff4315cf97f3cf6ff85ded8029aa720b8"
+    },
+    "teardown": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/teardown/SKILL.md",
+      "computedHash": "8aa3a751e1f35dc3cf810010bdcf82646f911cba31492ce456630edd1e24d433"
+    },
+    "variant": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/variant/SKILL.md",
+      "computedHash": "e924db65a7f161327c469e16ace0298186363b07c0bd7a769c827115baff5c12"
+    },
+    "vulnerability-triage-brocards": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/vulnerability-triage-brocards/skills/vulnerability-triage-brocards/SKILL.md",
+      "computedHash": "86ca0a07749bf9efea22b72e6f7ffc9797fea4b14378aee9095c9777fb8d2069",
+      "installMode": "copy"
     }
   }
 }
