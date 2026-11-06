@@ -383,20 +383,20 @@ export default function DataEntryTerminal() {
   const isTimeLocked = isPastMay1 && isPast11AM;
   const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
 
-  // 74-hour Consultant Details Backfill Window (Timer starts Nov 5th, 2026 06:00 AM IST -> Auto-locks Nov 8th, 2026 08:00 AM IST)
+  // Extended 120-hour Consultant Details Backfill Window (Timer starts Nov 5th, 2026 06:00 AM IST -> Auto-locks Nov 10th, 2026 06:00 AM IST)
   const CONSULTANT_UNLOCK_START_MS = new Date('2026-11-05T06:00:00+05:30').getTime();
-  const CONSULTANT_UNLOCK_END_MS = CONSULTANT_UNLOCK_START_MS + 74 * 60 * 60 * 1000;
+  const CONSULTANT_UNLOCK_END_MS = CONSULTANT_UNLOCK_START_MS + 120 * 60 * 60 * 1000;
   const nowTimestamp = currentJsDate.getTime();
   const isConsultantUnlockWindowActive = nowTimestamp < CONSULTANT_UNLOCK_END_MS;
   const consultantUnlockCountdown = (() => {
       if (!isConsultantUnlockWindowActive) return '';
       const remainingMs = nowTimestamp < CONSULTANT_UNLOCK_START_MS
-          ? 74 * 60 * 60 * 1000
+          ? 120 * 60 * 60 * 1000
           : Math.max(0, CONSULTANT_UNLOCK_END_MS - nowTimestamp);
       const hrs = Math.floor(remainingMs / (1000 * 60 * 60));
       const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
       return nowTimestamp < CONSULTANT_UNLOCK_START_MS
-          ? '74h from Nov 5, 6:00 AM'
+          ? '120h from Nov 5, 6:00 AM'
           : `${hrs}h ${mins}m left`;
   })();
 
@@ -1207,12 +1207,16 @@ export default function DataEntryTerminal() {
               let savedId: string | null = null;
 
               if (achievementRow) {
-                  // Update the existing achievement entry
-                  const { error: updateError } = await supabase
+                  // Update the existing achievement entry with verification
+                  const { data: updateData, error: updateError } = await supabase
                     .from('entries')
                     .update({ items: payload.items, totalAmount, recordType: 'achievement', authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
-                    .eq('id', achievementRow.id);
+                    .eq('id', achievementRow.id)
+                    .select('id');
                   if (updateError) throw new Error(updateError.message);
+                  if (!updateData || updateData.length === 0) {
+                      throw new Error("Unable to save: Database permissions prevented the update. Please check branch assignment.");
+                  }
                   savedId = achievementRow.id;
               } else {
                   // Insert new entry and capture the returned ID
@@ -1256,7 +1260,7 @@ export default function DataEntryTerminal() {
                   const existingForDate = achievementEntries.find(e => e.entryDate === d);
                   if (existingForDate) {
                       handledEntryIds.add(existingForDate.id);
-                      const { error: updErr } = await supabase
+                      const { data: updData, error: updErr } = await supabase
                           .from('entries')
                           .update({
                               items: cleanGroupItems,
@@ -1266,8 +1270,12 @@ export default function DataEntryTerminal() {
                               authorEmail: user?.email,
                               location: user?.latestLocation || null
                           })
-                          .eq('id', existingForDate.id);
+                          .eq('id', existingForDate.id)
+                          .select('id');
                       if (updErr) throw updErr;
+                      if (!updData || updData.length === 0) {
+                          throw new Error(`Unable to update records for ${d}: Database permissions prevented update.`);
+                      }
                   } else {
                       const { data: insData, error: insErr } = await supabase
                           .from('entries')
@@ -2652,7 +2660,7 @@ export default function DataEntryTerminal() {
                                                 )}
 
                                                 {isFullyCompletedDisbursement && isUnlockedForMissingConsultant && (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="Unlocked to enter Consultant details. Auto-locks after 74 hours starting Nov 5, 2026 06:00 AM.">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="Unlocked to enter Consultant details. Auto-locks after 120 hours starting Nov 5, 2026 06:00 AM.">
                                                         <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Connector Pending ({consultantUnlockCountdown})
                                                     </span>
                                                 )}
