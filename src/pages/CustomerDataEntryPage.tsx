@@ -346,6 +346,8 @@ export default function CustomerDataEntryPage() {
                                             <option value="Salary - Government">Salary - Government</option>
                                             <option value="Salary - Private">Salary - Private</option>
                                             <option value="SEP - Business">SEP - Business</option>
+                                            <option value="SEP - Government Salary">SEP - Government Salary</option>
+                                            <option value="SEP - Private Salary">SEP - Private Salary</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
