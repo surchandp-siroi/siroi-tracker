@@ -2200,33 +2200,32 @@ export default function DataEntryTerminal() {
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">4. Login Amount (₹)</TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px] border-b border-slate-200 dark:border-slate-800">5. Staff Name</TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px] border-b border-slate-200 dark:border-slate-800">6. Login Date</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">7. Projection (₹)</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px] border-b border-slate-200 dark:border-slate-800">8. Relationship Manager Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">9. Tracking Number</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">10. Channel Partner</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">11. Branch</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">12. Customer DOB</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">13. Customer Phone No.</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">14. Customer Email ID</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px] border-b border-slate-200 dark:border-slate-800">15. Customer Address</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">16. Firm Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">17. File Status</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">18. Sanctioned (₹)</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">19. Disbursed (₹)</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">20. Disbursed Dt</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">21. EMI Date</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">22. Repayment Bank</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px] border-b border-slate-200 dark:border-slate-800">23. Manager Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">24. Consultant Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px] border-b border-slate-200 dark:border-slate-800">25. Consultant Email ID</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">26. Rejection Remark</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px] border-b border-slate-200 dark:border-slate-800">7. Relationship Manager Name</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">8. Tracking Number</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">9. Channel Partner</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">10. Branch</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">11. Customer DOB</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">12. Customer Phone No.</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">13. Customer Email ID</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px] border-b border-slate-200 dark:border-slate-800">14. Customer Address</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">15. Firm Name</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">16. File Status</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">17. Sanctioned (₹)</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">18. Disbursed (₹)</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">19. Disbursed Dt</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">20. EMI Date</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">21. Repayment Bank</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px] border-b border-slate-200 dark:border-slate-800">22. Manager Name</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">23. Consultant Name</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px] border-b border-slate-200 dark:border-slate-800">24. Consultant Email ID</TableHead>
+                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">25. Rejection Remark</TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] border-b border-slate-200 dark:border-slate-800 text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredItemsWithIndex.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={27} className="p-0 border-0 h-0">
+                                    <TableCell colSpan={26} className="p-0 border-0 h-0">
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none gap-1.5" style={{ top: '50px' }}>
                                             {items.length === 0 ? (
                                                 <span>No items formulated for {dateSelectionType === 'range' ? `${startDateStr} to ${endDateStr}` : dateStr}</span>
@@ -2402,20 +2401,7 @@ export default function DataEntryTerminal() {
                                         />
                                     </TableCell>
 
-                                    {/* 7. Projection (₹) */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <NumericFormat 
-                                            customInput={Input}
-                                            disabled={isFieldDisabled}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.projectionAmt === 0 ? '' : item.projectionAmt}
-                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'projectionAmt', values.floatValue || 0)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                        />
-                                    </TableCell>
-
-                                    {/* 8. Relationship Manager Name */}
+                                    {/* 7. Relationship Manager Name */}
                                     <TableCell className="py-2 px-2 align-top">
                                         <Input 
                                             disabled={isFieldDisabled}
@@ -3144,26 +3130,25 @@ export default function DataEntryTerminal() {
                                 <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">4. Login Amount (₹) *</TableHead>
                                 <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">5. Staff Name *</TableHead>
                                 <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">6. Login Date</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. Projection (₹)</TableHead>
-                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Relationship Manager Name</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Tracking Number</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Channel Partner *</TableHead>
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Branch Location</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. Customer DOB</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Customer Phone No.</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Customer Email ID</TableHead>
-                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Customer Address</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. Firm Name</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. File Status *</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. Sanctioned (₹)</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Disbursed (₹)</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. Disbursed Dt</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. EMI Date</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Repayment Bank</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Consultant Email ID</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">26. Rejection Remark</TableHead>
+                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. Relationship Manager Name</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Tracking Number</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Channel Partner *</TableHead>
+                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Branch Location</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Customer DOB</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. Customer Phone No.</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Customer Email ID</TableHead>
+                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Customer Address</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Firm Name</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. File Status *</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. Sanctioned (₹)</TableHead>
+                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. Disbursed (₹)</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Disbursed Dt</TableHead>
+                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. EMI Date</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. Repayment Bank</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Manager Name</TableHead>
+                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Consultant</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant Email ID</TableHead>
+                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Rejection Remark</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -3369,20 +3354,7 @@ export default function DataEntryTerminal() {
                                     {/* 6. Login Date */}
                                     <TableCell className="p-2"><InlineDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
 
-                                    {/* 7. Projection (₹) */}
-                                    <TableCell className="p-2">
-                                        <NumericFormat
-                                            value={item.projectionAmt === 0 ? '' : item.projectionAmt}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                            onValueChange={(vals) => handleUpdate('projectionAmt', vals.floatValue || 0)}
-                                            customInput={Input}
-                                            placeholder="₹"
-                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700"
-                                        />
-                                    </TableCell>
-
-                                    {/* 8. RM Name */}
+                                    {/* 7. RM Name */}
                                     <TableCell className="p-2"><Input value={item.relationshipManagerName || ''} onChange={e => handleUpdate('relationshipManagerName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
                                     
 
