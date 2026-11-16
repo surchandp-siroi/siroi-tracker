@@ -141,6 +141,9 @@ const staticProducts: Omit<Product, 'business'>[] = [
   { id: 'p7', name: 'Mutual Fund/SIP', category: 'Investments' },
   { id: 'p8', name: 'Retail forex sales', category: 'Forex' },
   { id: 'p8_2', name: 'Retail forex purchase', category: 'Forex' },
+  { id: 'p8_3', name: 'Student Forex Card', category: 'Forex' },
+  { id: 'p8_4', name: 'Private Forex Card', category: 'Forex' },
+  { id: 'p8_5', name: 'Remittance', category: 'Forex' },
   { id: 'p9', name: 'GST filing', category: 'Consultancy' },
   { id: 'p10', name: 'ITR filing', category: 'Consultancy' }
 ];

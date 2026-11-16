@@ -30,6 +30,9 @@ const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: stri
     'Mutual Fund/SIP': { proj: `url(#${getPatternId('Mutual Fund/SIP')})`, ach: '#ca8a04', textDark: '#713f12' }, // Yellow
     'Retail forex sales': { proj: `url(#${getPatternId('Retail forex sales')})`, ach: '#db2777', textDark: '#831843' }, // Pink
     'Retail forex purchase': { proj: `url(#${getPatternId('Retail forex purchase')})`, ach: '#9d174d', textDark: '#4c0519' }, // Dark Pink
+    'Student Forex Card': { proj: `url(#${getPatternId('Student Forex Card')})`, ach: '#ec4899', textDark: '#831843' }, // Rose Pink
+    'Private Forex Card': { proj: `url(#${getPatternId('Private Forex Card')})`, ach: '#be185d', textDark: '#500724' }, // Deep Rose
+    'Remittance': { proj: `url(#${getPatternId('Remittance')})`, ach: '#0284c7', textDark: '#0c4a6e' }, // Sky Blue
     'GST filing': { proj: `url(#${getPatternId('GST filing')})`, ach: '#0d9488', textDark: '#134e4a' }, // Teal
     'ITR filing': { proj: `url(#${getPatternId('ITR filing')})`, ach: '#65a30d', textDark: '#3f6212' } // Lime
 };
@@ -47,6 +50,9 @@ const PRODUCT_ICONS: Record<string, any> = {
   'Mutual Fund/SIP': TrendingUp,
   'Retail forex sales': DollarSign,
   'Retail forex purchase': DollarSign,
+  'Student Forex Card': DollarSign,
+  'Private Forex Card': DollarSign,
+  'Remittance': DollarSign,
   'GST filing': FileText,
   'ITR filing': FileCheck
 };
@@ -434,6 +440,9 @@ export default function DashboardOverview() {
                   else if (pLower.includes('life insurance')) prod = 'Life Insurance';
                   else if (pLower.includes('general insurance')) prod = 'General Insurance';
                   else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
+                  else if (pLower.includes('student forex')) prod = 'Student Forex Card';
+                  else if (pLower.includes('private forex')) prod = 'Private Forex Card';
+                  else if (pLower.includes('remittance')) prod = 'Remittance';
                   else if (pLower.includes('forex')) {
                       prod = pLower.includes('purchase') ? 'Retail forex purchase' : 'Retail forex sales';
                   }
@@ -529,6 +538,9 @@ export default function DashboardOverview() {
                   else if (pLower.includes('life insurance')) prod = 'Life Insurance';
                   else if (pLower.includes('general insurance')) prod = 'General Insurance';
                   else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
+                  else if (pLower.includes('student forex')) prod = 'Student Forex Card';
+                  else if (pLower.includes('private forex')) prod = 'Private Forex Card';
+                  else if (pLower.includes('remittance')) prod = 'Remittance';
                   else if (pLower.includes('forex')) {
                       prod = pLower.includes('purchase') ? 'Retail forex purchase' : 'Retail forex sales';
                   }
@@ -791,7 +803,11 @@ export default function DashboardOverview() {
                  if (pName === 'Mortgage' || pName === 'Home Loan') mappedProduct = 'Housing Loan/LAP';
                  else if (pName === 'SIP & Mutual Fund' || pName === 'Mutual Fund / SIP') mappedProduct = 'Mutual Fund/SIP';
                  else if (item.category === 'Forex') {
-                     mappedProduct = pName.toLowerCase().includes('purchase') ? 'Retail forex purchase' : 'Retail forex sales';
+                     const pLow = pName.toLowerCase();
+                     if (pLow.includes('student')) mappedProduct = 'Student Forex Card';
+                     else if (pLow.includes('private')) mappedProduct = 'Private Forex Card';
+                     else if (pLow.includes('remittance')) mappedProduct = 'Remittance';
+                     else mappedProduct = pLow.includes('purchase') ? 'Retail forex purchase' : 'Retail forex sales';
                  }
              }
 
