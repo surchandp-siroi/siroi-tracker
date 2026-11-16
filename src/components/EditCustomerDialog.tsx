@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useDataStore } from '@/store/useDataStore';
 import { Input, Button } from '@/components/ui';
 import { DatePicker } from '@/components/ui/date-picker';
 import { X, Loader2 } from 'lucide-react';
@@ -14,12 +15,16 @@ interface EditCustomerDialogProps {
 }
 
 export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustomerDialogProps) {
+  const products = useDataStore(state => state.products);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Form State
   const [customerName, setCustomerName] = useState(formatCustomerName(customer.customer_name || '', true));
   const [customerType, setCustomerType] = useState(customer.customer_type || '');
+  const [category, setCategory] = useState(customer.category || 'Loan');
+  const [product, setProduct] = useState(customer.product || '');
+  const [amount, setAmount] = useState(customer.amount != null ? String(customer.amount) : '');
   const [aadharNumber, setAadharNumber] = useState(customer.aadhar_number || '');
   const [associationDate, setAssociationDate] = useState(customer.association_date || '');
   const [address, setAddress] = useState(customer.address || '');
@@ -34,8 +39,25 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
   const [birthday, setBirthday] = useState(customer.birthday || '');
   const [anniversary, setAnniversary] = useState(customer.anniversary || '');
 
+  const availableProducts = useMemo(() => {
+    if (!category) return [];
+    return products.filter((p: any) => p.category === category);
+  }, [products, category]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!category) {
+      setError('Please select a Category.');
+      return;
+    }
+    if (!product) {
+      setError('Please select a Product.');
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      setError('Please enter a valid positive Amount.');
+      return;
+    }
     setIsLoading(true);
     setError('');
 
@@ -45,6 +67,9 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
         .update({
           customer_name: formatCustomerName(customerName, true),
           customer_type: customerType,
+          category,
+          product,
+          amount: Number(amount) || 0,
           aadhar_number: aadharNumber,
           association_date: associationDate,
           address,
@@ -119,6 +144,82 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</label>
                 <Input value={emailId} onChange={e => setEmailId(e.target.value)} className="h-10" />
+              </div>
+            </div>
+
+            {/* Category, Product, Amount */}
+            <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
+              <div className="flex items-center justify-between border-b border-indigo-100 dark:border-indigo-900/40 pb-1.5">
+                <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200 uppercase tracking-wider">
+                  Product Requirement Details
+                </span>
+                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
+                  Auto-populates to Terminal
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span>Category</span>
+                    <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => {
+                      const newCat = e.target.value;
+                      setCategory(newCat);
+                      setProduct('');
+                      if (newCat === 'Loan') setCustomerType('Loans');
+                      else if (newCat === 'Forex') setCustomerType('Forex');
+                      else if (newCat === 'Insurance') setCustomerType('Insurance');
+                      else if (newCat === 'Consultancy') setCustomerType('Consulting');
+                      else if (newCat === 'Investments') setCustomerType('Investments');
+                    }}
+                    required
+                    className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  >
+                    <option value="">Select Category...</option>
+                    <option value="Loan">Loan</option>
+                    <option value="Insurance">Insurance</option>
+                    <option value="Forex">Forex</option>
+                    <option value="Consultancy">Consulting</option>
+                    <option value="Investments">Investments</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span>Product</span>
+                    <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                  </label>
+                  <select
+                    value={product}
+                    onChange={(e) => setProduct(e.target.value)}
+                    required
+                    disabled={!category}
+                    className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
+                  >
+                    <option value="">{category ? 'Select Product...' : 'Choose Category first'}</option>
+                    {availableProducts.map((p: any) => (
+                      <option key={p.id} value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span>Amount (₹)</span>
+                    <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    required
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="e.g. 500000"
+                    className="h-10 font-mono"
+                  />
+                </div>
               </div>
             </div>
 

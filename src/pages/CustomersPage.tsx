@@ -16,6 +16,9 @@ type CustomerData = {
   pan_number: string;
   customer_name: string;
   customer_type?: string;
+  category?: string;
+  product?: string;
+  amount?: number;
   phone_number: string;
   email_id: string;
   entry_person_name: string;
@@ -308,6 +311,20 @@ export default function CustomersPage() {
                             {customer.customer_type && (
                               <span className="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-500/20">
                                 {customer.customer_type}
+                              </span>
+                            )}
+
+                            {/* Category & Product Tag */}
+                            {(customer.category || customer.product) && (
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                {customer.category}{customer.product ? ` • ${customer.product}` : ''}
+                              </span>
+                            )}
+
+                            {/* Amount Tag */}
+                            {customer.amount != null && Number(customer.amount) > 0 && (
+                              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20">
+                                ₹ {Number(customer.amount).toLocaleString('en-IN')}
                               </span>
                             )}
                           </div>

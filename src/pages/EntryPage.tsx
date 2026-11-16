@@ -540,7 +540,7 @@ export default function DataEntryTerminal() {
       const loadCustomerDirectory = async () => {
           const { data, error: custErr } = await supabase
               .from('customer_data')
-              .select('id, customer_name, phone_number, email_id, city, company_name, entry_location, entry_person_name, pan_number, created_at')
+              .select('id, customer_name, phone_number, email_id, city, company_name, entry_location, entry_person_name, pan_number, created_at, category, product, amount')
               .order('customer_name', { ascending: true });
           if (!custErr && data && isMounted) {
               setCustomerRecords(data);
@@ -1118,6 +1118,29 @@ export default function DataEntryTerminal() {
                   arr[index].emailId = cleanEmail;
                   if (cleanCity) arr[index].customerAddress = cleanCity;
                   if (cleanCompany) arr[index].firmName = cleanCompany;
+
+                  // Auto-populate Category, Product, Amount from Customer Data Portal
+                  if (matchedCustomer.category) {
+                      arr[index].category = matchedCustomer.category;
+                      if (matchedCustomer.category !== 'Loan') {
+                          arr[index].consultantName = '';
+                          arr[index].consultantEmail = '';
+                      }
+                      if (matchedCustomer.category === 'Insurance') {
+                          arr[index].fileStatus = arr[index].fileStatus || '';
+                      } else if (matchedCustomer.category === 'Forex') {
+                          arr[index].fileStatus = arr[index].fileStatus || 'Sold';
+                          arr[index].fileLogin = arr[index].fileLogin || 'Online';
+                      } else {
+                          arr[index].fileStatus = arr[index].fileStatus || 'Login';
+                      }
+                  }
+                  if (matchedCustomer.product) {
+                      arr[index].product = matchedCustomer.product;
+                  }
+                  if (matchedCustomer.amount != null && matchedCustomer.amount !== '') {
+                      arr[index].amount = Number(matchedCustomer.amount) || 0;
+                  }
               }
           }
           
@@ -3361,6 +3384,32 @@ export default function DataEntryTerminal() {
                                             if (cleanPhone) arr[index].phoneNumber = cleanPhone;
                                             arr[index].emailId = cleanEmail;
                                             if (cleanCity) arr[index].customerAddress = cleanCity;
+                                            if (matchedCustomer.company_name && matchedCustomer.company_name !== 'N/A') {
+                                                arr[index].firmName = String(matchedCustomer.company_name).trim();
+                                            }
+
+                                            // Auto-populate Category, Product, Amount
+                                            if (matchedCustomer.category) {
+                                                arr[index].category = matchedCustomer.category;
+                                                if (matchedCustomer.category !== 'Loan') {
+                                                    arr[index].consultantName = '';
+                                                    arr[index].consultantEmail = '';
+                                                }
+                                                if (matchedCustomer.category === 'Insurance') {
+                                                    arr[index].fileStatus = arr[index].fileStatus || '';
+                                                } else if (matchedCustomer.category === 'Forex') {
+                                                    arr[index].fileStatus = arr[index].fileStatus || 'Sold';
+                                                    arr[index].fileLogin = arr[index].fileLogin || 'Online';
+                                                } else {
+                                                    arr[index].fileStatus = arr[index].fileStatus || 'Login';
+                                                }
+                                            }
+                                            if (matchedCustomer.product) {
+                                                arr[index].product = matchedCustomer.product;
+                                            }
+                                            if (matchedCustomer.amount != null && matchedCustomer.amount !== '') {
+                                                arr[index].amount = Number(matchedCustomer.amount) || 0;
+                                            }
                                         }
                                     }
                                     if (key === 'category') {

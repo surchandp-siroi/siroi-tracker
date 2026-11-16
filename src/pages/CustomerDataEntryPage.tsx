@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useDataStore } from '@/store/useDataStore';
@@ -11,6 +11,7 @@ import { formatCustomerName } from '@/utils/formatCustomerName';
 export default function CustomerDataEntryPage() {
     const navigate = useNavigate();
     const branches = useDataStore(state => state.branches);
+    const products = useDataStore(state => state.products);
     
     const [step, setStep] = useState<1 | 2>(1);
     const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
@@ -19,6 +20,9 @@ export default function CustomerDataEntryPage() {
     const [panNumber, setPanNumber] = useState('');
     const [customerName, setCustomerName] = useState('');
     const [customerType, setCustomerType] = useState('');
+    const [category, setCategory] = useState('Loan');
+    const [product, setProduct] = useState('');
+    const [amount, setAmount] = useState('');
     const [aadharNumber, setAadharNumber] = useState('');
     const [associationDate, setAssociationDate] = useState('');
     const [address, setAddress] = useState('');
@@ -38,6 +42,11 @@ export default function CustomerDataEntryPage() {
     const [employees, setEmployees] = useState<string[]>(['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive']);
     const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
     const employeeDropdownRef = React.useRef<HTMLDivElement>(null);
+
+    const availableProducts = useMemo(() => {
+        if (!category) return [];
+        return products.filter((p: any) => p.category === category);
+    }, [products, category]);
 
     // Sync initial location when branches load
     useEffect(() => {
@@ -117,6 +126,18 @@ export default function CustomerDataEntryPage() {
             setError('Please select a Customer Type.');
             return;
         }
+        if (!category) {
+            setError('Please select a Category.');
+            return;
+        }
+        if (!product) {
+            setError('Please select a Product.');
+            return;
+        }
+        if (!amount || Number(amount) <= 0) {
+            setError('Please enter a valid positive Amount.');
+            return;
+        }
         setError('');
         setIsLoading(true);
         
@@ -127,6 +148,9 @@ export default function CustomerDataEntryPage() {
                     pan_number: panNumber.toUpperCase(),
                     customer_name: formatCustomerName(customerName, true),
                     customer_type: customerType,
+                    category: category,
+                    product: product,
+                    amount: Number(amount) || 0,
                     aadhar_number: aadharNumber,
                     association_date: associationDate,
                     address: address,
@@ -153,6 +177,9 @@ export default function CustomerDataEntryPage() {
                 setPanNumber('');
                 setCustomerName('');
                 setCustomerType('');
+                setCategory('Loan');
+                setProduct('');
+                setAmount('');
                 setAadharNumber('');
                 setAssociationDate('');
                 setAddress('');
@@ -336,6 +363,84 @@ export default function CustomerDataEntryPage() {
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email ID</label>
                                         <Input type="email" value={emailId} onChange={(e) => setEmailId(e.target.value)} placeholder="customer@email.com" className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                    </div>
+                                </div>
+
+                                {/* Mandatory Product & Requirement Details (Auto-populates on Entry Page) */}
+                                <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 space-y-4 shadow-xs">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-indigo-100 dark:border-indigo-900/40 pb-2.5">
+                                        <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200 uppercase tracking-wider flex items-center gap-1.5">
+                                            <span>Product Requirement Details</span>
+                                        </span>
+                                        <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
+                                            Auto-populates to Terminal on Entry Page
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                <span>Category</span>
+                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                            </label>
+                                            <select 
+                                                value={category} 
+                                                onChange={(e) => {
+                                                    const newCat = e.target.value;
+                                                    setCategory(newCat);
+                                                    setProduct('');
+                                                    if (newCat === 'Loan') setCustomerType('Loans');
+                                                    else if (newCat === 'Forex') setCustomerType('Forex');
+                                                    else if (newCat === 'Insurance') setCustomerType('Insurance');
+                                                    else if (newCat === 'Consultancy') setCustomerType('Consulting');
+                                                    else if (newCat === 'Investments') setCustomerType('Investments');
+                                                }} 
+                                                required 
+                                                className="w-full h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer"
+                                            >
+                                                <option value="">Select Category...</option>
+                                                <option value="Loan">Loan</option>
+                                                <option value="Insurance">Insurance</option>
+                                                <option value="Forex">Forex</option>
+                                                <option value="Consultancy">Consulting</option>
+                                                <option value="Investments">Investments</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                <span>Product</span>
+                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                            </label>
+                                            <select 
+                                                value={product} 
+                                                onChange={(e) => setProduct(e.target.value)} 
+                                                required 
+                                                disabled={!category}
+                                                className="w-full h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer disabled:opacity-50"
+                                            >
+                                                <option value="">{category ? 'Select Product...' : 'Choose Category first'}</option>
+                                                {availableProducts.map((p: any) => (
+                                                    <option key={p.id} value={p.name}>{p.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                <span>Amount (₹)</span>
+                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                            </label>
+                                            <Input 
+                                                type="number" 
+                                                min="0"
+                                                step="any"
+                                                value={amount} 
+                                                onChange={(e) => setAmount(e.target.value)} 
+                                                placeholder="e.g. 500000" 
+                                                required 
+                                                className="h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl shadow-sm font-mono" 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
