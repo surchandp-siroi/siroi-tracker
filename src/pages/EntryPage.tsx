@@ -17,6 +17,7 @@ import { StaffNameResolutionDialog } from '@/components/StaffNameResolutionDialo
 import { ColumnMappingDialog, ColumnMapping } from '@/components/ColumnMappingDialog';
 import { CustomDatePicker } from '@/components/CustomDatePicker';
 import { MonthPicker } from '@/components/ui/month-picker';
+import { formatCustomerName } from '@/utils/formatCustomerName';
 
 function InlineDatePicker({ value, onChange, disabled, className, min }: any) {
     const [displayVal, setDisplayVal] = useState('');
@@ -1006,14 +1007,15 @@ export default function DataEntryTerminal() {
   const handleUpdateItem = (index: number, key: string, val: any) => {
       setItems(prevItems => {
           const arr = [...prevItems];
-          arr[index] = { ...arr[index], [key]: val, _isSessionEditing: true } as any;
+          const nextVal = key === 'customerName' ? formatCustomerName(String(val || '')) : val;
+          arr[index] = { ...arr[index], [key]: nextVal, _isSessionEditing: true } as any;
 
           // Auto-populate basic customer info when selected from Customer Data Portal dropdown
           if (key === 'customerName') {
               const scopedList = getScopedCustomers(arr[index].branchLocation);
               const matchedCustomer =
-                  scopedList.find(c => String(c.customer_name || '').trim() === String(val || '').trim()) ||
-                  customerRecords.find(c => String(c.customer_name || '').trim() === String(val || '').trim());
+                  scopedList.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim()) ||
+                  customerRecords.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim());
               if (matchedCustomer) {
                   const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
                   const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'
@@ -3160,12 +3162,13 @@ export default function DataEntryTerminal() {
                             {stagedItems.map((item, index) => {
                                 const handleUpdate = (key: string, val: any) => {
                                     const arr = [...stagedItems];
-                                    arr[index] = { ...arr[index], [key]: val };
+                                    const nextVal = key === 'customerName' ? formatCustomerName(String(val || '')) : val;
+                                    arr[index] = { ...arr[index], [key]: nextVal };
                                     if (key === 'customerName') {
                                         const scopedList = getScopedCustomers(arr[index].branchLocation);
                                         const matchedCustomer =
-                                            scopedList.find(c => String(c.customer_name || '').trim() === String(val || '').trim()) ||
-                                            customerRecords.find(c => String(c.customer_name || '').trim() === String(val || '').trim());
+                                            scopedList.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim()) ||
+                                            customerRecords.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim());
                                         if (matchedCustomer) {
                                             const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
                                             const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'

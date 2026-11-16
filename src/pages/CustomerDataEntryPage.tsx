@@ -6,6 +6,7 @@ import { Button, Input } from '@/components/ui';
 import { DatePicker } from '@/components/ui/date-picker';
 import { ArrowLeft, CheckCircle2, AlertTriangle, Search, Loader2, ChevronDown } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
+import { formatCustomerName } from '@/utils/formatCustomerName';
 
 export default function CustomerDataEntryPage() {
     const navigate = useNavigate();
@@ -124,7 +125,7 @@ export default function CustomerDataEntryPage() {
                 .from('customer_data')
                 .insert([{
                     pan_number: panNumber.toUpperCase(),
-                    customer_name: customerName,
+                    customer_name: formatCustomerName(customerName, true),
                     customer_type: customerType,
                     aadhar_number: aadharNumber,
                     association_date: associationDate,
@@ -288,7 +289,7 @@ export default function CustomerDataEntryPage() {
                                             <span>Customer Name</span>
                                             <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                         </label>
-                                        <Input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Full Name" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
+                                        <Input type="text" value={customerName} onChange={(e) => setCustomerName(formatCustomerName(e.target.value))} placeholder="Full Name" required className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center justify-between">
@@ -345,9 +346,11 @@ export default function CustomerDataEntryPage() {
                                             <option value="">Select Type...</option>
                                             <option value="Salary - Government">Salary - Government</option>
                                             <option value="Salary - Private">Salary - Private</option>
+                                            <option value="Business">Business</option>
                                             <option value="SEP - Business">SEP - Business</option>
                                             <option value="SEP - Government Salary">SEP - Government Salary</option>
                                             <option value="SEP - Private Salary">SEP - Private Salary</option>
+                                            <option value="Others">Others</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">

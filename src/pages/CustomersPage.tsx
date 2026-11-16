@@ -8,6 +8,7 @@ import {
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
 import { Edit } from 'lucide-react';
+import { formatCustomerName } from '@/utils/formatCustomerName';
 
 type CustomerData = {
   id: string;
@@ -283,9 +284,9 @@ export default function CustomersPage() {
                         <div className="min-w-0">
                           <h3 
                             className="font-bold text-slate-900 dark:text-white text-base truncate" 
-                            title={customer.customer_name}
+                            title={formatCustomerName(customer.customer_name || '', true)}
                           >
-                            {customer.customer_name || 'Unnamed Record'}
+                            {formatCustomerName(customer.customer_name || '', true) || 'Unnamed Record'}
                           </h3>
                           
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">

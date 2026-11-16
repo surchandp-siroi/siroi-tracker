@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Input, Button } from '@/components/ui';
 import { DatePicker } from '@/components/ui/date-picker';
 import { X, Loader2 } from 'lucide-react';
+import { formatCustomerName } from '@/utils/formatCustomerName';
 
 type CustomerData = any;
 
@@ -17,7 +18,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
   const [error, setError] = useState('');
 
   // Form State
-  const [customerName, setCustomerName] = useState(customer.customer_name || '');
+  const [customerName, setCustomerName] = useState(formatCustomerName(customer.customer_name || '', true));
   const [customerType, setCustomerType] = useState(customer.customer_type || '');
   const [aadharNumber, setAadharNumber] = useState(customer.aadhar_number || '');
   const [associationDate, setAssociationDate] = useState(customer.association_date || '');
@@ -42,7 +43,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
       const { error: updateError } = await supabase
         .from('customer_data')
         .update({
-          customer_name: customerName,
+          customer_name: formatCustomerName(customerName, true),
           customer_type: customerType,
           aadhar_number: aadharNumber,
           association_date: associationDate,
@@ -90,7 +91,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</label>
-                <Input required value={customerName} onChange={e => setCustomerName(e.target.value)} className="h-10" />
+                <Input required value={customerName} onChange={e => setCustomerName(formatCustomerName(e.target.value))} className="h-10" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer Type</label>
@@ -148,9 +149,11 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                     <option value="">Select Type...</option>
                     <option value="Salary - Government">Salary - Government</option>
                     <option value="Salary - Private">Salary - Private</option>
+                    <option value="Business">Business</option>
                     <option value="SEP - Business">SEP - Business</option>
                     <option value="SEP - Government Salary">SEP - Government Salary</option>
                     <option value="SEP - Private Salary">SEP - Private Salary</option>
+                    <option value="Others">Others</option>
                 </select>
               </div>
               <div className="space-y-1.5">
