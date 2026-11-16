@@ -27,6 +27,7 @@ export default function CustomerDataEntryPage() {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [emailId, setEmailId] = useState('');
     const [incomeType, setIncomeType] = useState('');
+    const [companyName, setCompanyName] = useState('');
     const [yearlyIncomeRange, setYearlyIncomeRange] = useState('');
     const [birthday, setBirthday] = useState('');
     const [anniversary, setAnniversary] = useState('');
@@ -134,6 +135,7 @@ export default function CustomerDataEntryPage() {
                     phone_number: phoneNumber,
                     email_id: emailId,
                     income_type: incomeType || null,
+                    company_name: companyName.trim() || null,
                     yearly_income_range: yearlyIncomeRange || null,
                     birthday: birthday || null,
                     anniversary: anniversary || null,
@@ -159,6 +161,7 @@ export default function CustomerDataEntryPage() {
                 setPhoneNumber('');
                 setEmailId('');
                 setIncomeType('');
+                setCompanyName('');
                 setYearlyIncomeRange('');
                 setBirthday('');
                 setAnniversary('');
@@ -340,14 +343,25 @@ export default function CustomerDataEntryPage() {
                                         <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Income Type</label>
                                         <select value={incomeType} onChange={(e) => setIncomeType(e.target.value)} className="w-full h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
                                             <option value="">Select Type...</option>
-                                            <option value="Salary">Salary</option>
-                                            <option value="Self-employed">Self-employed</option>
+                                            <option value="Salary - Government">Salary - Government</option>
+                                            <option value="Salary - Private">Salary - Private</option>
                                             <option value="SEP - Business">SEP - Business</option>
-                                            <option value="SEP - Private Salary">SEP - Private Salary</option>
-                                            <option value="SEP - Govt Salary">SEP - Govt Salary</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                                            <span>Name of Company</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">Optional</span>
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            value={companyName}
+                                            onChange={(e) => setCompanyName(e.target.value)}
+                                            placeholder="Company / Department / Firm Name"
+                                            className="h-12 bg-white/50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl shadow-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
                                         <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Yearly Income Range (INR)</label>
                                         <select value={yearlyIncomeRange} onChange={(e) => setYearlyIncomeRange(e.target.value)} className="w-full h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
                                             <option value="">Select Range...</option>

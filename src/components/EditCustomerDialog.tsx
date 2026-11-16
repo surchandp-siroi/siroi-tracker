@@ -28,6 +28,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
   const [phoneNumber, setPhoneNumber] = useState(customer.phone_number || '');
   const [emailId, setEmailId] = useState(customer.email_id || '');
   const [incomeType, setIncomeType] = useState(customer.income_type || '');
+  const [companyName, setCompanyName] = useState(customer.company_name || '');
   const [yearlyIncomeRange, setYearlyIncomeRange] = useState(customer.yearly_income_range || '');
   const [birthday, setBirthday] = useState(customer.birthday || '');
   const [anniversary, setAnniversary] = useState(customer.anniversary || '');
@@ -52,6 +53,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
           phone_number: phoneNumber,
           email_id: emailId,
           income_type: incomeType || null,
+          company_name: companyName.trim() || null,
           yearly_income_range: yearlyIncomeRange || null,
           birthday: birthday || null,
           anniversary: anniversary || null
@@ -144,14 +146,16 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Income Type</label>
                 <select value={incomeType} onChange={(e) => setIncomeType(e.target.value)} className="w-full h-10 bg-white border-slate-200 text-slate-900 rounded-lg px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm">
                     <option value="">Select Type...</option>
-                    <option value="Salary">Salary</option>
-                    <option value="Self-employed">Self-employed</option>
+                    <option value="Salary - Government">Salary - Government</option>
+                    <option value="Salary - Private">Salary - Private</option>
                     <option value="SEP - Business">SEP - Business</option>
-                    <option value="SEP - Private Salary">SEP - Private Salary</option>
-                    <option value="SEP - Govt Salary">SEP - Govt Salary</option>
                 </select>
               </div>
               <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Name of Company (Optional)</label>
+                <Input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Company / Department / Firm" className="h-10" />
+              </div>
+              <div className="space-y-1.5 md:col-span-2">
                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Yearly Income</label>
                 <select value={yearlyIncomeRange} onChange={(e) => setYearlyIncomeRange(e.target.value)} className="w-full h-10 bg-white border-slate-200 text-slate-900 rounded-lg px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-sm">
                     <option value="">Select Range...</option>

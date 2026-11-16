@@ -453,7 +453,7 @@ export default function DataEntryTerminal() {
       const loadCustomerDirectory = async () => {
           const { data, error: custErr } = await supabase
               .from('customer_data')
-              .select('id, customer_name, phone_number, email_id, city, entry_location, entry_person_name, pan_number, created_at')
+              .select('id, customer_name, phone_number, email_id, city, company_name, entry_location, entry_person_name, pan_number, created_at')
               .order('customer_name', { ascending: true });
           if (!custErr && data && isMounted) {
               setCustomerRecords(data);
@@ -1022,9 +1022,13 @@ export default function DataEntryTerminal() {
                   const cleanCity = matchedCustomer.city && matchedCustomer.city !== 'N/A'
                       ? String(matchedCustomer.city).trim()
                       : '';
+                  const cleanCompany = matchedCustomer.company_name && matchedCustomer.company_name !== 'N/A'
+                      ? String(matchedCustomer.company_name).trim()
+                      : '';
                   if (cleanPhone) arr[index].phoneNumber = cleanPhone;
                   arr[index].emailId = cleanEmail;
                   if (cleanCity) arr[index].customerAddress = cleanCity;
+                  if (cleanCompany) arr[index].firmName = cleanCompany;
               }
           }
           
