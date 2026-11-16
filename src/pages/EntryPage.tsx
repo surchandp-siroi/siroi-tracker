@@ -445,6 +445,65 @@ export default function DataEntryTerminal() {
       return Array.from(names).sort((a, b) => a.localeCompare(b));
   }, [branches, activeBranchId, activeBranchName, orgMembers]);
 
+  // Customer Directory from Customer Data Portal (active for entries >= 2026-11-16)
+  const [customerRecords, setCustomerRecords] = useState<any[]>([]);
+
+  useEffect(() => {
+      let isMounted = true;
+      const loadCustomerDirectory = async () => {
+          const { data, error: custErr } = await supabase
+              .from('customer_data')
+              .select('id, customer_name, phone_number, email_id, city, entry_location, entry_person_name, pan_number, created_at')
+              .order('customer_name', { ascending: true });
+          if (!custErr && data && isMounted) {
+              setCustomerRecords(data);
+          }
+      };
+      loadCustomerDirectory();
+
+      const channel = supabase
+          .channel('entry_customer_data_realtime')
+          .on(
+              'postgres_changes',
+              { event: '*', schema: 'public', table: 'customer_data' },
+              () => {
+                  loadCustomerDirectory();
+              }
+          )
+          .subscribe();
+
+      return () => {
+          isMounted = false;
+          supabase.removeChannel(channel);
+      };
+  }, [refreshTrigger]);
+
+  const getScopedCustomers = useCallback((branchLocationName?: string) => {
+      const targetBranch = (branchLocationName || activeBranchName || '').toLowerCase().trim();
+      const filtered = customerRecords.filter(c => {
+          if (!c.customer_name || !c.customer_name.trim()) return false;
+          if (!targetBranch || !c.entry_location) return true;
+          const loc = String(c.entry_location).toLowerCase().trim();
+          if (loc === targetBranch || loc.includes(targetBranch) || targetBranch.includes(loc)) return true;
+          if (targetBranch.includes('guwahati') && (loc === 'ho' || loc.includes('guwahati'))) return true;
+          if (targetBranch.includes('manipur') && loc.includes('imphal')) return true;
+          if (targetBranch.includes('itanagar') && loc.includes('arunachal')) return true;
+          if (targetBranch.includes('&')) {
+              const parts = targetBranch.split('&').map(p => p.trim());
+              if (parts.some(p => loc.includes(p)) || loc.includes('dimapur') || loc.includes('aizawl')) return true;
+          }
+          return false;
+      });
+      // Deduplicate by normalized name + phone while keeping alphabetical order
+      const seen = new Set<string>();
+      return filtered.filter(c => {
+          const key = `${String(c.customer_name).trim().toLowerCase()}_${String(c.phone_number || '').replace(/\D/g, '')}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+      });
+  }, [customerRecords, activeBranchName]);
+
   // Unsaved Guard
   const isDirty = !hasExistingEntry && items.length > 0;
 
@@ -948,6 +1007,26 @@ export default function DataEntryTerminal() {
       setItems(prevItems => {
           const arr = [...prevItems];
           arr[index] = { ...arr[index], [key]: val, _isSessionEditing: true } as any;
+
+          // Auto-populate basic customer info when selected from Customer Data Portal dropdown
+          if (key === 'customerName') {
+              const scopedList = getScopedCustomers(arr[index].branchLocation);
+              const matchedCustomer =
+                  scopedList.find(c => String(c.customer_name || '').trim() === String(val || '').trim()) ||
+                  customerRecords.find(c => String(c.customer_name || '').trim() === String(val || '').trim());
+              if (matchedCustomer) {
+                  const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
+                  const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'
+                      ? String(matchedCustomer.email_id).trim()
+                      : '';
+                  const cleanCity = matchedCustomer.city && matchedCustomer.city !== 'N/A'
+                      ? String(matchedCustomer.city).trim()
+                      : '';
+                  if (cleanPhone) arr[index].phoneNumber = cleanPhone;
+                  arr[index].emailId = cleanEmail;
+                  if (cleanCity) arr[index].customerAddress = cleanCity;
+              }
+          }
           
           // Auto-update product if category changes
           if (key === 'category') {
@@ -2185,13 +2264,57 @@ export default function DataEntryTerminal() {
                                 <TableRow key={originalIndex} className={`transition-colors border-b border-slate-900/5 dark:border-white/5 ${isRowFrozen ? 'bg-slate-50/50 dark:bg-slate-900/40 opacity-90' : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'}`}>
                                     {/* 1. Customer Name */}
                                     <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="text"
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                            value={item.customerName || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
-                                        />
+                                        {(() => {
+                                            const effectiveRowDate = (item as any)._entryDate || item.date || (dateSelectionType === 'range' ? endDateStr : dateStr);
+                                            const isCustomerDropdownActive = entryMode === 'daily'
+                                                ? effectiveRowDate >= '2026-11-16'
+                                                : dateStr >= '2026-11';
+                                            const scopedCustomers = isCustomerDropdownActive
+                                                ? getScopedCustomers(item.branchLocation)
+                                                : [];
+
+                                            if (isCustomerDropdownActive) {
+                                                const currentName = (item.customerName || '').trim();
+                                                const hasCurrentInList = scopedCustomers.some(
+                                                    c => String(c.customer_name || '').trim() === currentName
+                                                );
+                                                return (
+                                                    <select
+                                                        disabled={isFieldDisabled}
+                                                        value={item.customerName || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
+                                                        className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                            isFieldMissing(item, 'customerName')
+                                                                ? 'border-red-500/50 focus:border-red-500'
+                                                                : 'border-slate-200 dark:border-white/10'
+                                                        }`}
+                                                    >
+                                                        <option value="">— Select Customer —</option>
+                                                        {currentName && !hasCurrentInList && (
+                                                            <option value={item.customerName}>{item.customerName}</option>
+                                                        )}
+                                                        {scopedCustomers.map((c: any) => {
+                                                            const nameStr = String(c.customer_name || '').trim();
+                                                            return (
+                                                                <option key={c.id} value={nameStr}>
+                                                                    {nameStr}
+                                                                </option>
+                                                            );
+                                                        })}
+                                                    </select>
+                                                );
+                                            }
+
+                                            return (
+                                                <Input 
+                                                    disabled={isFieldDisabled}
+                                                    type="text"
+                                                    className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
+                                                    value={item.customerName || ''}
+                                                    onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
+                                                />
+                                            );
+                                        })()}
                                     </TableCell>
 
                                     {/* 2. Category */}
@@ -3049,6 +3172,24 @@ export default function DataEntryTerminal() {
                                 const handleUpdate = (key: string, val: any) => {
                                     const arr = [...stagedItems];
                                     arr[index] = { ...arr[index], [key]: val };
+                                    if (key === 'customerName') {
+                                        const scopedList = getScopedCustomers(arr[index].branchLocation);
+                                        const matchedCustomer =
+                                            scopedList.find(c => String(c.customer_name || '').trim() === String(val || '').trim()) ||
+                                            customerRecords.find(c => String(c.customer_name || '').trim() === String(val || '').trim());
+                                        if (matchedCustomer) {
+                                            const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
+                                            const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'
+                                                ? String(matchedCustomer.email_id).trim()
+                                                : '';
+                                            const cleanCity = matchedCustomer.city && matchedCustomer.city !== 'N/A'
+                                                ? String(matchedCustomer.city).trim()
+                                                : '';
+                                            if (cleanPhone) arr[index].phoneNumber = cleanPhone;
+                                            arr[index].emailId = cleanEmail;
+                                            if (cleanCity) arr[index].customerAddress = cleanCity;
+                                        }
+                                    }
                                     if (key === 'category') {
                                         arr[index].product = '';
                                         if (val !== 'Loan') {
@@ -3115,7 +3256,46 @@ export default function DataEntryTerminal() {
                                 return (
                                 <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                                     {/* 1. Customer Name */}
-                                    <TableCell className="p-2"><Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} /></TableCell>
+                                    <TableCell className="p-2">
+                                        {(() => {
+                                            const stagedEffectiveDate = item.date || dateStr;
+                                            const isCustomerDropdownActive = entryMode === 'daily'
+                                                ? stagedEffectiveDate >= '2026-11-16'
+                                                : dateStr >= '2026-11';
+                                            if (isCustomerDropdownActive) {
+                                                const scopedCustomers = getScopedCustomers(item.branchLocation);
+                                                const currentName = (item.customerName || '').trim();
+                                                const hasCurrentInList = scopedCustomers.some(
+                                                    c => String(c.customer_name || '').trim() === currentName
+                                                );
+                                                return (
+                                                    <select
+                                                        value={item.customerName || ''}
+                                                        onChange={e => handleUpdate('customerName', e.target.value)}
+                                                        className={`w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 ${
+                                                            !item.customerName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
+                                                        }`}
+                                                    >
+                                                        <option value="">— Select Customer —</option>
+                                                        {currentName && !hasCurrentInList && (
+                                                            <option value={item.customerName}>{item.customerName}</option>
+                                                        )}
+                                                        {scopedCustomers.map((c: any) => {
+                                                            const nameStr = String(c.customer_name || '').trim();
+                                                            return (
+                                                                <option key={c.id} value={nameStr}>
+                                                                    {nameStr}
+                                                                </option>
+                                                            );
+                                                        })}
+                                                    </select>
+                                                );
+                                            }
+                                            return (
+                                                <Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} />
+                                            );
+                                        })()}
+                                    </TableCell>
                                     
                                     {/* 2. Category */}
                                     <TableCell className="p-2">
