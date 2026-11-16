@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./web-CgVIT1F6.js","./main-CSZu6uIE.js","./main-BOJVWB8v.css"])))=>i.map(i=>d[i]);
+import{r as t,_ as r}from"./main-CSZu6uIE.js";var i;(function(e){e.Canceled="CANCELED",e.PhoneNumberHintFailed="PHONE_NUMBER_HINT_FAILED",e.RetrieveFailed="RETRIEVE_FAILED",e.Timeout="TIMEOUT",e.UserDenied="USER_DENIED"})(i||(i={}));const _=t("AndroidSmsRetriever",{web:()=>r(()=>import("./web-CgVIT1F6.js"),__vite__mapDeps([0,1,2]),import.meta.url).then(e=>new e.AndroidSmsRetrieverWeb)});export{_ as AndroidSmsRetriever,i as ErrorCode};
