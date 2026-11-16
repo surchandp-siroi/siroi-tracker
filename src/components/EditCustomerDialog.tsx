@@ -4,7 +4,8 @@ import { useDataStore } from '@/store/useDataStore';
 import { Input, Button } from '@/components/ui';
 import { DatePicker } from '@/components/ui/date-picker';
 import { X, Loader2 } from 'lucide-react';
-import { formatCustomerName } from '@/utils/formatCustomerName';
+import { NumericFormat } from 'react-number-format';
+import { formatCustomerName, mapCustomerTypeToCategory, mapCategoryToCustomerType } from '@/utils/formatCustomerName';
 
 type CustomerData = any;
 
@@ -21,8 +22,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
 
   // Form State
   const [customerName, setCustomerName] = useState(formatCustomerName(customer.customer_name || '', true));
-  const [customerType, setCustomerType] = useState(customer.customer_type || '');
-  const [category, setCategory] = useState(customer.category || 'Loan');
+  const [customerType, setCustomerType] = useState(customer.customer_type || mapCategoryToCustomerType(customer.category) || '');
   const [product, setProduct] = useState(customer.product || '');
   const [amount, setAmount] = useState(customer.amount != null ? String(customer.amount) : '');
   const [aadharNumber, setAadharNumber] = useState(customer.aadhar_number || '');
@@ -40,14 +40,15 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
   const [anniversary, setAnniversary] = useState(customer.anniversary || '');
 
   const availableProducts = useMemo(() => {
-    if (!category) return [];
-    return products.filter((p: any) => p.category === category);
-  }, [products, category]);
+    const cat = mapCustomerTypeToCategory(customerType);
+    if (!cat) return [];
+    return products.filter((p: any) => p.category === cat);
+  }, [products, customerType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!category) {
-      setError('Please select a Category.');
+    if (!customerType) {
+      setError('Please select a Customer Type.');
       return;
     }
     if (!product) {
@@ -67,7 +68,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
         .update({
           customer_name: formatCustomerName(customerName, true),
           customer_type: customerType,
-          category,
+          category: mapCustomerTypeToCategory(customerType),
           product,
           amount: Number(amount) || 0,
           aadhar_number: aadharNumber,
@@ -122,7 +123,10 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                 <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer Type</label>
                 <select 
                   value={customerType} 
-                  onChange={e => setCustomerType(e.target.value)}
+                  onChange={e => {
+                    setCustomerType(e.target.value);
+                    setProduct('');
+                  }}
                   className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                 >
                   <option value="">Select Type...</option>
@@ -147,7 +151,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
               </div>
             </div>
 
-            {/* Category, Product, Amount */}
+            {/* Product, Amount */}
             <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
               <div className="flex items-center justify-between border-b border-indigo-100 dark:border-indigo-900/40 pb-1.5">
                 <span className="text-xs font-bold text-indigo-950 dark:text-indigo-200 uppercase tracking-wider">
@@ -157,35 +161,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                   Auto-populates to Terminal
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                    <span>Category</span>
-                    <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => {
-                      const newCat = e.target.value;
-                      setCategory(newCat);
-                      setProduct('');
-                      if (newCat === 'Loan') setCustomerType('Loans');
-                      else if (newCat === 'Forex') setCustomerType('Forex');
-                      else if (newCat === 'Insurance') setCustomerType('Insurance');
-                      else if (newCat === 'Consultancy') setCustomerType('Consulting');
-                      else if (newCat === 'Investments') setCustomerType('Investments');
-                    }}
-                    required
-                    className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  >
-                    <option value="">Select Category...</option>
-                    <option value="Loan">Loan</option>
-                    <option value="Insurance">Insurance</option>
-                    <option value="Forex">Forex</option>
-                    <option value="Consultancy">Consulting</option>
-                    <option value="Investments">Investments</option>
-                  </select>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                     <span>Product</span>
@@ -195,10 +171,10 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                     value={product}
                     onChange={(e) => setProduct(e.target.value)}
                     required
-                    disabled={!category}
+                    disabled={!customerType}
                     className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50"
                   >
-                    <option value="">{category ? 'Select Product...' : 'Choose Category first'}</option>
+                    <option value="">{customerType ? 'Select Product...' : 'Select Customer Type first'}</option>
                     {availableProducts.map((p: any) => (
                       <option key={p.id} value={p.name}>{p.name}</option>
                     ))}
@@ -209,14 +185,14 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                     <span>Amount (₹)</span>
                     <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                   </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="any"
-                    required
+                  <NumericFormat
+                    customInput={Input}
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="e.g. 500000"
+                    onValueChange={(values) => setAmount(values.value || '')}
+                    thousandSeparator=","
+                    thousandsGroupStyle="lakh"
+                    placeholder="e.g. 5,00,000"
+                    required
                     className="h-10 font-mono"
                   />
                 </div>

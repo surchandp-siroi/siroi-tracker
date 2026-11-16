@@ -6,7 +6,8 @@ import { Button, Input } from '@/components/ui';
 import { DatePicker } from '@/components/ui/date-picker';
 import { ArrowLeft, CheckCircle2, AlertTriangle, Search, Loader2, ChevronDown } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
-import { formatCustomerName } from '@/utils/formatCustomerName';
+import { NumericFormat } from 'react-number-format';
+import { formatCustomerName, mapCustomerTypeToCategory } from '@/utils/formatCustomerName';
 
 export default function CustomerDataEntryPage() {
     const navigate = useNavigate();
@@ -20,7 +21,6 @@ export default function CustomerDataEntryPage() {
     const [panNumber, setPanNumber] = useState('');
     const [customerName, setCustomerName] = useState('');
     const [customerType, setCustomerType] = useState('');
-    const [category, setCategory] = useState('Loan');
     const [product, setProduct] = useState('');
     const [amount, setAmount] = useState('');
     const [aadharNumber, setAadharNumber] = useState('');
@@ -44,9 +44,10 @@ export default function CustomerDataEntryPage() {
     const employeeDropdownRef = React.useRef<HTMLDivElement>(null);
 
     const availableProducts = useMemo(() => {
-        if (!category) return [];
-        return products.filter((p: any) => p.category === category);
-    }, [products, category]);
+        const cat = mapCustomerTypeToCategory(customerType);
+        if (!cat) return [];
+        return products.filter((p: any) => p.category === cat);
+    }, [products, customerType]);
 
     // Sync initial location when branches load
     useEffect(() => {
@@ -126,10 +127,6 @@ export default function CustomerDataEntryPage() {
             setError('Please select a Customer Type.');
             return;
         }
-        if (!category) {
-            setError('Please select a Category.');
-            return;
-        }
         if (!product) {
             setError('Please select a Product.');
             return;
@@ -148,7 +145,7 @@ export default function CustomerDataEntryPage() {
                     pan_number: panNumber.toUpperCase(),
                     customer_name: formatCustomerName(customerName, true),
                     customer_type: customerType,
-                    category: category,
+                    category: mapCustomerTypeToCategory(customerType),
                     product: product,
                     amount: Number(amount) || 0,
                     aadhar_number: aadharNumber,
@@ -177,7 +174,6 @@ export default function CustomerDataEntryPage() {
                 setPanNumber('');
                 setCustomerName('');
                 setCustomerType('');
-                setCategory('Loan');
                 setProduct('');
                 setAmount('');
                 setAadharNumber('');
@@ -325,7 +321,10 @@ export default function CustomerDataEntryPage() {
                                         </label>
                                         <select 
                                             value={customerType} 
-                                            onChange={(e) => setCustomerType(e.target.value)} 
+                                            onChange={(e) => {
+                                                setCustomerType(e.target.value);
+                                                setProduct('');
+                                            }} 
                                             required 
                                             className="w-full h-12 bg-white/50 border-slate-200 text-slate-900 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer"
                                         >
@@ -376,36 +375,7 @@ export default function CustomerDataEntryPage() {
                                             Auto-populates to Terminal on Entry Page
                                         </span>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                                                <span>Category</span>
-                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
-                                            </label>
-                                            <select 
-                                                value={category} 
-                                                onChange={(e) => {
-                                                    const newCat = e.target.value;
-                                                    setCategory(newCat);
-                                                    setProduct('');
-                                                    if (newCat === 'Loan') setCustomerType('Loans');
-                                                    else if (newCat === 'Forex') setCustomerType('Forex');
-                                                    else if (newCat === 'Insurance') setCustomerType('Insurance');
-                                                    else if (newCat === 'Consultancy') setCustomerType('Consulting');
-                                                    else if (newCat === 'Investments') setCustomerType('Investments');
-                                                }} 
-                                                required 
-                                                className="w-full h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer"
-                                            >
-                                                <option value="">Select Category...</option>
-                                                <option value="Loan">Loan</option>
-                                                <option value="Insurance">Insurance</option>
-                                                <option value="Forex">Forex</option>
-                                                <option value="Consultancy">Consulting</option>
-                                                <option value="Investments">Investments</option>
-                                            </select>
-                                        </div>
-
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                                 <span>Product</span>
@@ -415,10 +385,10 @@ export default function CustomerDataEntryPage() {
                                                 value={product} 
                                                 onChange={(e) => setProduct(e.target.value)} 
                                                 required 
-                                                disabled={!category}
+                                                disabled={!customerType}
                                                 className="w-full h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl shadow-sm px-3 border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer disabled:opacity-50"
                                             >
-                                                <option value="">{category ? 'Select Product...' : 'Choose Category first'}</option>
+                                                <option value="">{customerType ? 'Select Product...' : 'Select Customer Type first'}</option>
                                                 {availableProducts.map((p: any) => (
                                                     <option key={p.id} value={p.name}>{p.name}</option>
                                                 ))}
@@ -430,13 +400,13 @@ export default function CustomerDataEntryPage() {
                                                 <span>Amount (₹)</span>
                                                 <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                             </label>
-                                            <Input 
-                                                type="number" 
-                                                min="0"
-                                                step="any"
+                                            <NumericFormat 
+                                                customInput={Input}
                                                 value={amount} 
-                                                onChange={(e) => setAmount(e.target.value)} 
-                                                placeholder="e.g. 500000" 
+                                                onValueChange={(values) => setAmount(values.value || '')} 
+                                                thousandSeparator=","
+                                                thousandsGroupStyle="lakh"
+                                                placeholder="e.g. 5,00,000" 
                                                 required 
                                                 className="h-12 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl shadow-sm font-mono" 
                                             />

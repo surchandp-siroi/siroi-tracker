@@ -17,7 +17,7 @@ import { StaffNameResolutionDialog } from '@/components/StaffNameResolutionDialo
 import { ColumnMappingDialog, ColumnMapping } from '@/components/ColumnMappingDialog';
 import { CustomDatePicker } from '@/components/CustomDatePicker';
 import { MonthPicker } from '@/components/ui/month-picker';
-import { formatCustomerName } from '@/utils/formatCustomerName';
+import { formatCustomerName, mapCustomerTypeToCategory } from '@/utils/formatCustomerName';
 
 const normalizeItem = (it: any): EntryItem => {
     if (!it) return it;
@@ -1120,15 +1120,16 @@ export default function DataEntryTerminal() {
                   if (cleanCompany) arr[index].firmName = cleanCompany;
 
                   // Auto-populate Category, Product, Amount from Customer Data Portal
-                  if (matchedCustomer.category) {
-                      arr[index].category = matchedCustomer.category;
-                      if (matchedCustomer.category !== 'Loan') {
+                  const targetCat = matchedCustomer.category || mapCustomerTypeToCategory(matchedCustomer.customer_type);
+                  if (targetCat) {
+                      arr[index].category = targetCat;
+                      if (targetCat !== 'Loan') {
                           arr[index].consultantName = '';
                           arr[index].consultantEmail = '';
                       }
-                      if (matchedCustomer.category === 'Insurance') {
+                      if (targetCat === 'Insurance') {
                           arr[index].fileStatus = arr[index].fileStatus || '';
-                      } else if (matchedCustomer.category === 'Forex') {
+                      } else if (targetCat === 'Forex') {
                           arr[index].fileStatus = arr[index].fileStatus || 'Sold';
                           arr[index].fileLogin = arr[index].fileLogin || 'Online';
                       } else {
@@ -3389,15 +3390,16 @@ export default function DataEntryTerminal() {
                                             }
 
                                             // Auto-populate Category, Product, Amount
-                                            if (matchedCustomer.category) {
-                                                arr[index].category = matchedCustomer.category;
-                                                if (matchedCustomer.category !== 'Loan') {
+                                            const targetCat = matchedCustomer.category || mapCustomerTypeToCategory(matchedCustomer.customer_type);
+                                            if (targetCat) {
+                                                arr[index].category = targetCat;
+                                                if (targetCat !== 'Loan') {
                                                     arr[index].consultantName = '';
                                                     arr[index].consultantEmail = '';
                                                 }
-                                                if (matchedCustomer.category === 'Insurance') {
+                                                if (targetCat === 'Insurance') {
                                                     arr[index].fileStatus = arr[index].fileStatus || '';
-                                                } else if (matchedCustomer.category === 'Forex') {
+                                                } else if (targetCat === 'Forex') {
                                                     arr[index].fileStatus = arr[index].fileStatus || 'Sold';
                                                     arr[index].fileLogin = arr[index].fileLogin || 'Online';
                                                 } else {

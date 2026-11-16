@@ -314,10 +314,10 @@ export default function CustomersPage() {
                               </span>
                             )}
 
-                            {/* Category & Product Tag */}
-                            {(customer.category || customer.product) && (
+                            {/* Product Tag */}
+                            {customer.product && (
                               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                {customer.category}{customer.product ? ` • ${customer.product}` : ''}
+                                {customer.product}
                               </span>
                             )}
 
