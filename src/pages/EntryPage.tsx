@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { Button, Card, CardContent, CardHeader, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui';
-import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus, ArrowRight, Lock, Clock } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Loader2, Save, LogOut, CheckCircle2, Trash2, IndianRupee, Layers, Tag, Network, AlertTriangle, X, AlertCircle, Download, Calendar, ChevronDown, Search, Filter, Check, Plus, ArrowRight, Lock, Clock, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useDataStore, EntryItem } from '@/store/useDataStore';
 import * as XLSX from 'xlsx';
 import { NumericFormat } from 'react-number-format';
@@ -18,6 +18,49 @@ import { ColumnMappingDialog, ColumnMapping } from '@/components/ColumnMappingDi
 import { CustomDatePicker } from '@/components/CustomDatePicker';
 import { MonthPicker } from '@/components/ui/month-picker';
 import { formatCustomerName } from '@/utils/formatCustomerName';
+
+const normalizeItem = (it: any): EntryItem => {
+    if (!it) return it;
+    return {
+        ...it,
+        phoneNumber: it.phoneNumber != null ? String(it.phoneNumber) : '',
+        trackingNumber: it.trackingNumber != null ? String(it.trackingNumber) : '',
+        customerName: it.customerName != null ? String(it.customerName) : '',
+        relationshipManagerName: it.relationshipManagerName != null ? String(it.relationshipManagerName) : '',
+        channel: it.channel != null ? String(it.channel) : '',
+        product: it.product != null ? String(it.product) : '',
+        staffName: it.staffName != null ? String(it.staffName) : '',
+        managerName: it.managerName != null ? String(it.managerName) : '',
+        consultantName: it.consultantName != null ? String(it.consultantName) : '',
+        emailId: it.emailId != null ? String(it.emailId) : '',
+        customerAddress: it.customerAddress != null ? String(it.customerAddress) : '',
+        firmName: it.firmName != null ? String(it.firmName) : '',
+        fileStatus: it.fileStatus != null ? String(it.fileStatus) : '',
+        rejectionRemark: it.rejectionRemark != null ? String(it.rejectionRemark) : '',
+        repaymentBank: it.repaymentBank != null ? String(it.repaymentBank) : '',
+    };
+};
+
+const LiveClock = memo(() => {
+    const [timeStr, setTimeStr] = useState(() => {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        return `${dateStr}, ${timeStr}`;
+    });
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            setTimeStr(`${dateStr}, ${timeStr}`);
+        }, 10000);
+        return () => clearInterval(timer);
+    }, []);
+
+    return <span className="text-[10px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{timeStr}</span>;
+});
 
 function InlineDatePicker({ value, onChange, disabled, className, min }: any) {
     const [displayVal, setDisplayVal] = useState('');
@@ -174,7 +217,8 @@ export default function DataEntryTerminal() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lodgeName, setLodgeName] = useState('');
   const [lodgeEmail, setLodgeEmail] = useState('');
-  const [currentTime, setCurrentTime] = useState('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
   // Staff name resolution dialog (bulk upload)
   const [pendingParsed, setPendingParsed] = useState<any[]>([]);
   const [rawHeaders, setRawHeaders] = useState<string[]>([]);
@@ -339,23 +383,23 @@ export default function DataEntryTerminal() {
       // 3. Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchName = item.customerName?.toLowerCase().includes(q);
-        const matchTrack = item.trackingNumber?.toLowerCase().includes(q);
-        const matchRM = item.relationshipManagerName?.toLowerCase().includes(q);
-        const matchChannel = item.channel?.toLowerCase().includes(q);
-        const matchProduct = item.product?.toLowerCase().includes(q);
-        const matchStaff = item.staffName?.toLowerCase().includes(q);
-        const matchManager = item.managerName?.toLowerCase().includes(q);
-        const matchConsultant = item.consultantName?.toLowerCase().includes(q);
-        const matchPhone = item.phoneNumber?.toLowerCase().includes(q);
-        const matchEmail = item.emailId?.toLowerCase().includes(q);
-        const matchAddress = item.customerAddress?.toLowerCase().includes(q);
-        const matchFirm = item.firmName?.toLowerCase().includes(q);
-        const matchStatus = item.fileStatus?.toLowerCase().includes(q);
-        const matchAmount = item.amount?.toString().includes(q);
-        const matchSanctioned = item.sanctionedAmount?.toString().includes(q);
-        const matchDisbursed = item.disbursedAmount?.toString().includes(q);
-        const matchRemark = item.rejectionRemark?.toLowerCase().includes(q);
+        const matchName = String(item.customerName ?? '').toLowerCase().includes(q);
+        const matchTrack = String(item.trackingNumber ?? '').toLowerCase().includes(q);
+        const matchRM = String(item.relationshipManagerName ?? '').toLowerCase().includes(q);
+        const matchChannel = String(item.channel ?? '').toLowerCase().includes(q);
+        const matchProduct = String(item.product ?? '').toLowerCase().includes(q);
+        const matchStaff = String(item.staffName ?? '').toLowerCase().includes(q);
+        const matchManager = String(item.managerName ?? '').toLowerCase().includes(q);
+        const matchConsultant = String(item.consultantName ?? '').toLowerCase().includes(q);
+        const matchPhone = String(item.phoneNumber ?? '').toLowerCase().includes(q);
+        const matchEmail = String(item.emailId ?? '').toLowerCase().includes(q);
+        const matchAddress = String(item.customerAddress ?? '').toLowerCase().includes(q);
+        const matchFirm = String(item.firmName ?? '').toLowerCase().includes(q);
+        const matchStatus = String(item.fileStatus ?? '').toLowerCase().includes(q);
+        const matchAmount = item.amount != null ? String(item.amount).includes(q) : false;
+        const matchSanctioned = item.sanctionedAmount != null ? String(item.sanctionedAmount).includes(q) : false;
+        const matchDisbursed = item.disbursedAmount != null ? String(item.disbursedAmount).includes(q) : false;
+        const matchRemark = String(item.rejectionRemark ?? '').toLowerCase().includes(q);
         
         return !!(matchName || matchTrack || matchRM || matchChannel || matchProduct || matchStaff || matchManager || matchConsultant || matchPhone || matchEmail || matchAddress || matchFirm || matchStatus || matchAmount || matchSanctioned || matchDisbursed || matchRemark);
       }
@@ -372,6 +416,7 @@ export default function DataEntryTerminal() {
   const daysRemaining = Math.max(0, 60 - daysSinceCreation);
 
   const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
+  const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
   const isExecutive = user?.email === 'executive@siroiforex.com';
   const isExecutiveOverride = hasExistingEntry && isExecutive;
   const isMIS = user?.email?.toLowerCase().startsWith('mis.');
@@ -414,10 +459,26 @@ export default function DataEntryTerminal() {
   const isGridBlocked = !isBypassedForPendingBackfill && ((entryMode === 'daily' && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor) || (isSunday && !isBackdoor));
   const allowEdit = !hasExistingEntry || daysSinceCreation <= 60 || hasPendingBackfill;
   const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
-  const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
 
   // Derive active branch name and scoped staff list for the Staff Name dropdown
   const activeBranchName = branches.find(b => b.id === activeBranchId)?.name ?? '';
+
+  // Reset to first page when search, filter, or date/branch change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, metricCategory, activeBranchId, dateStr, startDateStr, endDateStr, dateSelectionType, entryMode]);
+
+  const totalPages = pageSize === -1 
+    ? 1 
+    : Math.max(1, Math.ceil(filteredItemsWithIndex.length / pageSize));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedItemsWithIndex = useMemo(() => {
+    if (pageSize === -1) return filteredItemsWithIndex;
+    const start = (safeCurrentPage - 1) * pageSize;
+    return filteredItemsWithIndex.slice(start, start + pageSize);
+  }, [filteredItemsWithIndex, safeCurrentPage, pageSize]);
+
   const branchStaff = orgMembers.filter(m => {
       if (!m.branch) return false;
       const mBranch = m.branch.toLowerCase();
@@ -425,8 +486,31 @@ export default function DataEntryTerminal() {
       return mBranch.includes(aBranch) || aBranch.includes(mBranch);
   });
 
+  const branchConsultants = useMemo(() => {
+      return consultants.filter(c => {
+          if (!c.associated_branch) return true;
+          const cb = c.associated_branch.toLowerCase().trim();
+          const ab = activeBranchName.toLowerCase().trim();
+          if (cb === ab || cb.includes(ab) || ab.includes(cb)) return true;
+          if (ab.includes('&')) {
+              const parts = ab.split('&').map(p => p.trim());
+              return parts.some(p => cb.includes(p) || (c.state && c.state.toLowerCase().includes(p)));
+          }
+          return false;
+      });
+  }, [consultants, activeBranchName]);
+
+  const locationEmployeesCache = useRef<Record<string, string[]>>({});
+  useEffect(() => {
+      locationEmployeesCache.current = {};
+  }, [branches, activeBranchId, activeBranchName, orgMembers]);
+
   const getLocationEmployees = useCallback((branchLocationName?: string) => {
       const targetBranchName = (branchLocationName || activeBranchName || '').trim();
+      const cacheKey = targetBranchName.toLowerCase();
+      if (locationEmployeesCache.current[cacheKey]) {
+          return locationEmployeesCache.current[cacheKey];
+      }
       const targetBranch = branches.find(b => 
           (targetBranchName && b.name.toLowerCase() === targetBranchName.toLowerCase()) || 
           b.id === activeBranchId
@@ -443,7 +527,9 @@ export default function DataEntryTerminal() {
               names.add(m.name.trim());
           }
       });
-      return Array.from(names).sort((a, b) => a.localeCompare(b));
+      const result = Array.from(names).sort((a, b) => a.localeCompare(b));
+      locationEmployeesCache.current[cacheKey] = result;
+      return result;
   }, [branches, activeBranchId, activeBranchName, orgMembers]);
 
   // Customer Directory from Customer Data Portal (active for entries >= 2026-11-16)
@@ -479,8 +565,16 @@ export default function DataEntryTerminal() {
       };
   }, [refreshTrigger]);
 
+  const scopedCustomerCache = useRef<Record<string, any[]>>({});
+  useEffect(() => {
+      scopedCustomerCache.current = {};
+  }, [customerRecords, activeBranchName]);
+
   const getScopedCustomers = useCallback((branchLocationName?: string) => {
       const targetBranch = (branchLocationName || activeBranchName || '').toLowerCase().trim();
+      if (scopedCustomerCache.current[targetBranch]) {
+          return scopedCustomerCache.current[targetBranch];
+      }
       const filtered = customerRecords.filter(c => {
           if (!c.customer_name || !c.customer_name.trim()) return false;
           if (!targetBranch || !c.entry_location) return true;
@@ -497,30 +591,18 @@ export default function DataEntryTerminal() {
       });
       // Deduplicate by normalized name + phone while keeping alphabetical order
       const seen = new Set<string>();
-      return filtered.filter(c => {
+      const result = filtered.filter(c => {
           const key = `${String(c.customer_name).trim().toLowerCase()}_${String(c.phone_number || '').replace(/\D/g, '')}`;
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
       });
+      scopedCustomerCache.current[targetBranch] = result;
+      return result;
   }, [customerRecords, activeBranchName]);
 
   // Unsaved Guard
   const isDirty = !hasExistingEntry && items.length > 0;
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        setCurrentTime(`${dateStr}, ${timeStr}`);
-    }, 1000);
-    
-    const initialNow = new Date();
-    setCurrentTime(`${initialNow.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, ${initialNow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`);
-    
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (isInitialized && !user) {
@@ -561,12 +643,12 @@ export default function DataEntryTerminal() {
                   const data = fetchCache.current[cacheKey];
                   if (data.empty) {
                       setHasExistingEntry(false);
-                      setItems(data.items || []);
+                      setItems((data.items || []).map(normalizeItem));
                       setCurrentEntryId(null);
                       setEntryCreatedAt(null);
                   } else {
                       setHasExistingEntry(true);
-                      setItems(data.items || []);
+                      setItems((data.items || []).map(normalizeItem));
                       setCurrentEntryId(data.id || null);
                       setEntryCreatedAt(data.createdAt || null);
                   }
@@ -626,8 +708,9 @@ export default function DataEntryTerminal() {
                       
                       if (achievementData) {
                           setHasExistingEntry(true);
-                          fetchCache.current[cacheKey] = { ...achievementData, _proj: projectionData };
-                          setItems(achievementData.items || []);
+                          const normItems = (achievementData.items || []).map(normalizeItem);
+                          fetchCache.current[cacheKey] = { ...achievementData, items: normItems, _proj: projectionData };
+                          setItems(normItems);
                           setCurrentEntryId(achievementData.id);
                           setEntryCreatedAt(achievementData.createdAt || null);
                       } else {
@@ -664,12 +747,12 @@ export default function DataEntryTerminal() {
                       const aggregatedItems: EntryItem[] = [];
                       achievementEntries.forEach((entry: any) => {
                           (entry.items || []).forEach((it: any) => {
-                              aggregatedItems.push({
+                              aggregatedItems.push(normalizeItem({
                                   ...it,
                                   date: it.date || entry.entryDate,
                                   _entryId: entry.id,
                                   _entryDate: entry.entryDate,
-                              });
+                              }));
                           });
                       });
 
@@ -1002,6 +1085,10 @@ export default function DataEntryTerminal() {
           consultantEmail: '',
           rejectionRemark: ''
       }]);
+      if (pageSize !== -1) {
+          const nextTotal = filteredItemsWithIndex.length + 1;
+          setCurrentPage(Math.ceil(nextTotal / pageSize));
+      }
   };
   
   const handleUpdateItem = (index: number, key: string, val: any) => {
@@ -1791,7 +1878,7 @@ export default function DataEntryTerminal() {
               <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shadow-xs mr-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
-                      <span className="text-[10px] text-slate-700 dark:text-slate-300 font-semibold font-mono tracking-tight">{currentTime}</span>
+                      <LiveClock />
                   </div>
                   <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
                       Audit Logs
@@ -2095,6 +2182,31 @@ export default function DataEntryTerminal() {
                        <span className="px-2 py-0.5 text-[11px] font-mono font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60">
                            {filteredItemsWithIndex.length}{filteredItemsWithIndex.length !== items.length ? ` of ${items.length}` : ''}
                        </span>
+                       {totalPages > 1 && (
+                           <div className="hidden sm:flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-1 py-0.5 text-xs shadow-xs">
+                               <button
+                                   type="button"
+                                   disabled={safeCurrentPage <= 1}
+                                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                   className="p-0.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-25 disabled:pointer-events-none"
+                                   title="Previous Page"
+                               >
+                                   <ChevronLeft className="w-3.5 h-3.5" />
+                               </button>
+                               <span className="font-mono text-[10px] font-bold px-1 text-slate-600 dark:text-slate-300">
+                                   Pg {safeCurrentPage}/{totalPages}
+                               </span>
+                               <button
+                                   type="button"
+                                   disabled={safeCurrentPage >= totalPages}
+                                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                   className="p-0.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-25 disabled:pointer-events-none"
+                                   title="Next Page"
+                               >
+                                   <ChevronRight className="w-3.5 h-3.5" />
+                               </button>
+                           </div>
+                       )}
                    </div>
                    
                    {hasExistingEntry && (
@@ -2245,7 +2357,7 @@ export default function DataEntryTerminal() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredItemsWithIndex.map(({ item, originalIndex }) => {
+                                paginatedItemsWithIndex.map(({ item, originalIndex }) => {
                                 const isLoan = item.category === 'Loan' || (!item.category && item.product);
                                 const isInsurance = item.category === 'Insurance';
                                 const isForex = item.category === 'Forex';
@@ -2638,23 +2750,6 @@ export default function DataEntryTerminal() {
                                             onChange={(e) => handleUpdateItem(originalIndex, 'repaymentBank', e.target.value)}
                                             placeholder={isForex ? "N/A" : "Enter or select..."}
                                         />
-                                        <datalist id="repayment-banks">
-                                            <option value="State Bank of India (SBI)" />
-                                            <option value="Punjab National Bank (PNB)" />
-                                            <option value="Bank of Baroda (BOB)" />
-                                            <option value="Canara Bank" />
-                                            <option value="Union Bank of India" />
-                                            <option value="Bank of India (BOI)" />
-                                            <option value="Indian Bank" />
-                                            <option value="Central Bank of India" />
-                                            <option value="Indian Overseas Bank" />
-                                            <option value="UCO Bank" />
-                                            <option value="Bank of Maharashtra" />
-                                            <option value="Punjab & Sind Bank" />
-                                            <option value="HDFC Bank" />
-                                            <option value="ICICI Bank" />
-                                            <option value="Axis Bank" />
-                                        </datalist>
                                     </TableCell>
 
                                     {/* 23. Manager Name */}
@@ -2712,19 +2807,7 @@ export default function DataEntryTerminal() {
                                             {isLoan && item.consultantName && !consultants.some(c => c.name === item.consultantName) && (
                                                 <option value={item.consultantName} className="bg-slate-800 text-white">{item.consultantName}</option>
                                             )}
-                                            {isLoan && consultants
-                                                .filter(c => {
-                                                    if (!c.associated_branch) return true;
-                                                    const cb = c.associated_branch.toLowerCase().trim();
-                                                    const ab = activeBranchName.toLowerCase().trim();
-                                                    if (cb === ab || cb.includes(ab) || ab.includes(cb)) return true;
-                                                    if (ab.includes('&')) {
-                                                        const parts = ab.split('&').map(p => p.trim());
-                                                        return parts.some(p => cb.includes(p) || (c.state && c.state.toLowerCase().includes(p)));
-                                                    }
-                                                    return false;
-                                                })
-                                                .map(c => (
+                                            {isLoan && branchConsultants.map(c => (
                                                 <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
                                             ))}
                                         </select>
@@ -2849,13 +2932,111 @@ export default function DataEntryTerminal() {
                         </TableBody>
                     </Table>
                 )}
+                {/* Hoisted Repayment Banks Datalist (rendered once for performance) */}
+                <datalist id="repayment-banks">
+                    <option value="State Bank of India (SBI)" />
+                    <option value="Punjab National Bank (PNB)" />
+                    <option value="Bank of Baroda (BOB)" />
+                    <option value="Canara Bank" />
+                    <option value="Union Bank of India" />
+                    <option value="Bank of India (BOI)" />
+                    <option value="Indian Bank" />
+                    <option value="Central Bank of India" />
+                    <option value="Indian Overseas Bank" />
+                    <option value="UCO Bank" />
+                    <option value="Bank of Maharashtra" />
+                    <option value="Punjab & Sind Bank" />
+                    <option value="HDFC Bank" />
+                    <option value="ICICI Bank" />
+                    <option value="Axis Bank" />
+                </datalist>
             </div>
             
             {items.length > 0 && (
-                <div className="border-t border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-slate-900/60 px-4 py-2.5 shrink-0 flex items-center justify-between text-xs">
+                <div className="border-t border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/90 px-4 py-2.5 shrink-0 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
-                        <span>Showing {filteredItemsWithIndex.length} of {items.length} records</span>
+                        <span>
+                            Showing{' '}
+                            <strong className="text-slate-800 dark:text-slate-200 font-bold">
+                                {filteredItemsWithIndex.length === 0 ? 0 : (safeCurrentPage - 1) * (pageSize === -1 ? filteredItemsWithIndex.length : pageSize) + 1}
+                                –
+                                {pageSize === -1 ? filteredItemsWithIndex.length : Math.min(safeCurrentPage * pageSize, filteredItemsWithIndex.length)}
+                            </strong>{' '}
+                            of{' '}
+                            <strong className="text-slate-800 dark:text-slate-200 font-bold">{filteredItemsWithIndex.length}</strong> records
+                            {filteredItemsWithIndex.length !== items.length && (
+                                <span className="text-slate-400 dark:text-slate-500 font-normal"> (filtered from {items.length} total)</span>
+                            )}
+                        </span>
+
+                        <div className="flex items-center gap-1.5 ml-2 pl-3 border-l border-slate-200 dark:border-slate-800">
+                            <span className="text-[10px] uppercase font-bold text-slate-400">Rows:</span>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => {
+                                    setPageSize(Number(e.target.value));
+                                    setCurrentPage(1);
+                                }}
+                                className="h-6 text-[11px] font-semibold px-1.5 py-0 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                            >
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={200}>200</option>
+                                <option value={-1}>All ({filteredItemsWithIndex.length})</option>
+                            </select>
+                        </div>
                     </div>
+
+                    {/* Pagination Page Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                disabled={safeCurrentPage <= 1}
+                                onClick={() => setCurrentPage(1)}
+                                className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                title="First Page"
+                            >
+                                <ChevronsLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                                type="button"
+                                disabled={safeCurrentPage <= 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1 text-[11px] font-semibold transition-colors"
+                                title="Previous Page"
+                            >
+                                <ChevronLeft className="w-3.5 h-3.5" />
+                                <span>Prev</span>
+                            </button>
+
+                            <div className="px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                                {safeCurrentPage} / {totalPages}
+                            </div>
+
+                            <button
+                                type="button"
+                                disabled={safeCurrentPage >= totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1 text-[11px] font-semibold transition-colors"
+                                title="Next Page"
+                            >
+                                <span>Next</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                type="button"
+                                disabled={safeCurrentPage >= totalPages}
+                                onClick={() => setCurrentPage(totalPages)}
+                                className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                title="Last Page"
+                            >
+                                <ChevronsRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* KPI Totals */}
                     <div className="flex gap-6 items-center">
                         <div className="flex items-center gap-1.5">
                             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Login:</span>
@@ -3097,7 +3278,7 @@ export default function DataEntryTerminal() {
                 activeBranchName={activeBranchName}
                 onConfirm={(_mappings, resolvedItems) => {
                     setIsResolutionDialogOpen(false);
-                    setStagedItems(resolvedItems);
+                    setStagedItems(resolvedItems.map(normalizeItem));
                     setIsStagingModalOpen(true);
                 }}
                 onCancel={() => {
