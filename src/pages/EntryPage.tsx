@@ -187,7 +187,7 @@ export default function DataEntryTerminal() {
   const [lodgedProjectionAmount, setLodgedProjectionAmount] = useState(0);
   const [isProjectionModalOpen, setIsProjectionModalOpen] = useState(false);
   const [projectionInputs, setProjectionInputs] = useState<Record<string, number>>({
-      'Personal Loan': 0, 'Business Loan': 0, 'Housing Loan/LAP': 0, 'Life Insurance': 0, 'General Insurance': 0, 'Livlong Loan Protector': 0, 'Mutual Fund/SIP': 0, 'Retail Forex': 0, 'GST filing': 0, 'ITR filing': 0
+      'Personal Loan': 0, 'Business Loan': 0, 'Housing Loan/LAP': 0, 'MSME Working Capital': 0, 'MSME Term Loan': 0, 'Life Insurance': 0, 'General Insurance': 0, 'Livlong Loan Protector': 0, 'Mutual Fund/SIP': 0, 'Retail Forex': 0, 'GST filing': 0, 'ITR filing': 0
   });
   const [projectionReason, setProjectionReason] = useState<string>('Business as Usual');
   const [isLodgingProjection, setIsLodgingProjection] = useState(false);

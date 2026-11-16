@@ -24,6 +24,8 @@ const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: stri
     'Personal Loan': { proj: `url(#${getPatternId('Personal Loan')})`, ach: '#2563eb', textDark: '#1e3a8a' }, // Blue
     'Business Loan': { proj: `url(#${getPatternId('Business Loan')})`, ach: '#ea580c', textDark: '#7c2d12' }, // Orange
     'Housing Loan/LAP': { proj: `url(#${getPatternId('Housing Loan/LAP')})`, ach: '#16a34a', textDark: '#14532d' }, // Green
+    'MSME Working Capital': { proj: `url(#${getPatternId('MSME Working Capital')})`, ach: '#4f46e5', textDark: '#312e81' }, // Indigo
+    'MSME Term Loan': { proj: `url(#${getPatternId('MSME Term Loan')})`, ach: '#d97706', textDark: '#78350f' }, // Amber
     'Life Insurance': { proj: `url(#${getPatternId('Life Insurance')})`, ach: '#dc2626', textDark: '#7f1d1d' }, // Red
     'General Insurance': { proj: `url(#${getPatternId('General Insurance')})`, ach: '#9333ea', textDark: '#581c87' }, // Purple
     'Livlong Loan Protector': { proj: `url(#${getPatternId('Livlong Loan Protector')})`, ach: '#0891b2', textDark: '#164e63' }, // Cyan
@@ -44,6 +46,8 @@ const PRODUCT_ICONS: Record<string, any> = {
   'Personal Loan': User,
   'Business Loan': Briefcase,
   'Housing Loan/LAP': Home,
+  'MSME Working Capital': Briefcase,
+  'MSME Term Loan': Briefcase,
   'Life Insurance': HeartPulse,
   'General Insurance': Shield,
   'Livlong Loan Protector': ShieldCheck,
@@ -437,6 +441,8 @@ export default function DashboardOverview() {
                   else if (pLower.includes('mutual') || pLower.includes('sip')) prod = 'Mutual Fund/SIP';
                   else if (pLower.startsWith('personal loan') || pLower.startsWith('pl')) prod = 'Personal Loan';
                   else if (pLower.startsWith('business loan') || pLower.startsWith('bl')) prod = 'Business Loan';
+                  else if (pLower.includes('msme working')) prod = 'MSME Working Capital';
+                  else if (pLower.includes('msme term')) prod = 'MSME Term Loan';
                   else if (pLower.includes('life insurance')) prod = 'Life Insurance';
                   else if (pLower.includes('general insurance')) prod = 'General Insurance';
                   else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';
@@ -535,6 +541,8 @@ export default function DashboardOverview() {
                   else if (pLower.includes('mutual') || pLower.includes('sip')) prod = 'Mutual Fund/SIP';
                   else if (pLower.startsWith('personal loan') || pLower.startsWith('pl')) prod = 'Personal Loan';
                   else if (pLower.startsWith('business loan') || pLower.startsWith('bl')) prod = 'Business Loan';
+                  else if (pLower.includes('msme working')) prod = 'MSME Working Capital';
+                  else if (pLower.includes('msme term')) prod = 'MSME Term Loan';
                   else if (pLower.includes('life insurance')) prod = 'Life Insurance';
                   else if (pLower.includes('general insurance')) prod = 'General Insurance';
                   else if (pLower.includes('livlong')) prod = 'Livlong Loan Protector';

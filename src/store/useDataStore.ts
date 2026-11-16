@@ -135,6 +135,8 @@ const staticProducts: Omit<Product, 'business'>[] = [
   { id: 'p1', name: 'Personal Loan', category: 'Loan' },
   { id: 'p2', name: 'Business Loan', category: 'Loan' },
   { id: 'p3', name: 'Housing Loan/LAP', category: 'Loan' },
+  { id: 'p3_2', name: 'MSME Working Capital', category: 'Loan' },
+  { id: 'p3_3', name: 'MSME Term Loan', category: 'Loan' },
   { id: 'p4', name: 'Life Insurance', category: 'Insurance' },
   { id: 'p5', name: 'General Insurance', category: 'Insurance' },
   { id: 'p6', name: 'Livelong-Loan protector', category: 'Insurance' },
