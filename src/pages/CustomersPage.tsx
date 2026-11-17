@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui';
 import { 
   Search, UsersRound, Phone, MapPin, User, Calendar, Mail, 
-  Building, Copy, Check, ShieldCheck, Sparkles, Filter, RefreshCw
+  Building, Copy, Check, ShieldCheck, Sparkles, Filter, RefreshCw, Eye, X, Landmark, Briefcase, Home, Users
 } from 'lucide-react';
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
@@ -25,6 +25,7 @@ type CustomerData = {
   entry_location: string;
   association_date: string;
   city: string;
+  [key: string]: any;
 };
 
 const BRANCH_LOCATION_ALIASES: Record<string, string[]> = {
@@ -40,6 +41,7 @@ export default function CustomersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<CustomerData | null>(null);
+  const [viewingCustomer, setViewingCustomer] = useState<CustomerData | null>(null);
   
   const currentUser = useAuthStore(state => state.user);
   const isAdmin = currentUser?.role === 'admin';
@@ -330,16 +332,25 @@ export default function CustomersPage() {
                           </div>
                         </div>
 
-                        {/* Edit Control for Admin */}
-                        {isAdmin && (
+                        {/* Controls */}
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button 
-                            onClick={() => setEditingCustomer(customer)}
+                            onClick={() => setViewingCustomer(customer)}
                             className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors border border-slate-200/50 dark:border-white/5"
-                            title="Edit Customer"
+                            title="View Full Profile"
                           >
-                            <Edit className="w-3.5 h-3.5" />
+                            <Eye className="w-3.5 h-3.5" />
                           </button>
-                        )}
+                          {isAdmin && (
+                            <button 
+                              onClick={() => setEditingCustomer(customer)}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors border border-slate-200/50 dark:border-white/5"
+                              title="Edit Customer"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Contact Details with refined layout */}
@@ -414,6 +425,244 @@ export default function CustomersPage() {
             fetchCustomers();
           }}
         />
+      )}
+
+      {/* View Customer Details Modal */}
+      {viewingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
+            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/70 dark:bg-slate-800/40">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {formatCustomerName(viewingCustomer.customer_name || '', true)}
+                  </h2>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    {viewingCustomer.pan_number}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  {viewingCustomer.customer_type && (
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
+                      {viewingCustomer.customer_type}
+                    </span>
+                  )}
+                  {viewingCustomer.product && (
+                    <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                      • {viewingCustomer.product}
+                    </span>
+                  )}
+                  {viewingCustomer.amount != null && Number(viewingCustomer.amount) > 0 && (
+                    <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      • ₹ {Number(viewingCustomer.amount).toLocaleString('en-IN')}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button 
+                onClick={() => setViewingCustomer(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs">
+              
+              {/* Primary Contact */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Phone</span>
+                  <span className="font-medium text-slate-900 dark:text-white font-mono">{viewingCustomer.phone_number || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Email</span>
+                  <span className="font-medium text-slate-900 dark:text-white truncate block">{viewingCustomer.email_id || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Aadhar</span>
+                  <span className="font-medium text-slate-900 dark:text-white font-mono">{viewingCustomer.aadhar_number || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Location</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.entry_location || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Association Date</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.association_date || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Entered By</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.entry_person_name || 'N/A'}</span>
+                </div>
+              </div>
+
+              {/* Loan Extended Info (If present) */}
+              {(viewingCustomer.customer_type === 'Loans' || viewingCustomer.father_name || viewingCustomer.designation || viewingCustomer.salary_bank_name) && (
+                <>
+                  {/* Family */}
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-indigo-500" /> Family & Personal
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Father's Name</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.father_name || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Mother's Name</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.mother_name || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">DOB</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.birthday || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Marital Status</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.marital_status || 'N/A'}</span>
+                      </div>
+                      {viewingCustomer.spouse_name && (
+                        <div>
+                          <span className="text-slate-400 block text-[10px] uppercase font-semibold">Spouse Name</span>
+                          <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.spouse_name}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Education</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.education_qualification || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Workplace */}
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-indigo-500" /> Employment & Workplace
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Designation</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.designation || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Company</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.company_name || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Income Type</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.income_type || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Yearly Income</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.yearly_income_range || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Office Phone</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.office_phone || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Office Email</span>
+                        <span className="font-medium text-slate-900 dark:text-white truncate block">{viewingCustomer.official_email || 'N/A'}</span>
+                      </div>
+                      <div className="col-span-2 sm:col-span-3">
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Office Address</span>
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {[viewingCustomer.office_address, viewingCustomer.office_landmark ? `Landmark: ${viewingCustomer.office_landmark}` : ''].filter(Boolean).join(' | ') || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Residence & Tenure */}
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <Home className="w-3.5 h-3.5 text-indigo-500" /> Residential Stability
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Ownership</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.residence_type || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Years in Residence</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.years_in_current_residence || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Years in City</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.years_in_current_city || 'N/A'}</span>
+                      </div>
+                      {viewingCustomer.tenure && (
+                        <div>
+                          <span className="text-slate-400 block text-[10px] uppercase font-semibold">Loan Tenure</span>
+                          <span className="font-medium text-slate-900 dark:text-white font-mono">{viewingCustomer.tenure}</span>
+                        </div>
+                      )}
+                      <div className="col-span-2 sm:col-span-3">
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Permanent Address</span>
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {[viewingCustomer.permanent_address, viewingCustomer.permanent_address_landmark ? `Landmark: ${viewingCustomer.permanent_address_landmark}` : '', viewingCustomer.permanent_phone ? `Phone: ${viewingCustomer.permanent_phone}` : ''].filter(Boolean).join(' | ') || 'Same as current address'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Banking & References */}
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <Landmark className="w-3.5 h-3.5 text-indigo-500" /> Salary Account & References
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Salary Bank</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.salary_bank_name || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Account Number</span>
+                        <span className="font-medium text-slate-900 dark:text-white font-mono">{viewingCustomer.salary_account_number || 'N/A'}</span>
+                      </div>
+                      {viewingCustomer.ref1_name && (
+                        <div className="p-2 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400 block">Ref 1: {viewingCustomer.ref1_name}</span>
+                          <span className="text-slate-500 block">{viewingCustomer.ref1_phone} ({viewingCustomer.ref1_relation || 'Relation N/A'})</span>
+                          <span className="text-slate-500 block truncate">{viewingCustomer.ref1_address}</span>
+                        </div>
+                      )}
+                      {viewingCustomer.ref2_name && (
+                        <div className="p-2 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400 block">Ref 2: {viewingCustomer.ref2_name}</span>
+                          <span className="text-slate-500 block">{viewingCustomer.ref2_phone} ({viewingCustomer.ref2_relation || 'Relation N/A'})</span>
+                          <span className="text-slate-500 block truncate">{viewingCustomer.ref2_address}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Standard Address */}
+              <div className="space-y-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Current Address</span>
+                <span className="font-medium text-slate-900 dark:text-white block">
+                  {[viewingCustomer.address, viewingCustomer.city, viewingCustomer.district, viewingCustomer.pincode ? `PIN: ${viewingCustomer.pincode}` : ''].filter(Boolean).join(', ') || 'N/A'}
+                </span>
+                {viewingCustomer.current_address_landmark && (
+                  <span className="text-slate-500 block text-[11px]">Landmark: {viewingCustomer.current_address_landmark}</span>
+                )}
+              </div>
+
+            </div>
+
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end bg-slate-50/70 dark:bg-slate-800/40">
+              <button
+                onClick={() => setViewingCustomer(null)}
+                className="px-5 py-2 rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold hover:opacity-90"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
