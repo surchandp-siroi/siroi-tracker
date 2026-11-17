@@ -274,6 +274,7 @@ export default function CustomerDataEntryPage() {
     const [deviations, setDeviations] = useState<DeviationItem[]>([]);
     const [isDeviationDialogOpen, setIsDeviationDialogOpen] = useState<boolean>(false);
     const [isEarlySaveModalOpen, setIsEarlySaveModalOpen] = useState<boolean>(false);
+    const [eligibilitySkipReason, setEligibilitySkipReason] = useState<string>('');
     const aadhaarInputRef = useRef<HTMLInputElement>(null);
     const panInputRef = useRef<HTMLInputElement>(null);
 
@@ -1331,8 +1332,9 @@ export default function CustomerDataEntryPage() {
         }
     };
     
-    const buildCustomerPayload = (selectedAuthor?: string) => {
+    const buildCustomerPayload = (selectedAuthor?: string, skipReason?: string) => {
         const author = selectedAuthor || entryPersonName;
+        const isSkippingEligibility = isLoan && Boolean(skipReason && skipReason.trim());
         return {
             pan_number: panNumber.toUpperCase(),
             customer_name: formatCustomerName(customerName, true),
@@ -1426,19 +1428,30 @@ export default function CustomerDataEntryPage() {
             ref2_address: isLoan ? (ref2Address.trim() || null) : null,
             ref2_relation: isLoan ? (ref2Relation.trim() || null) : null,
 
-            // Loan Eligibility Engine Calculation Snapshot
-            loan_eligibility: isLoan ? {
-                monthly_salary: Number(monthlySalary) || 0,
-                employer_category: employerCategory,
-                owns_home: eligibilityResults.effectiveOwnsHome,
-                has_bureau_hl_lap: hasBureauHlLap,
-                interest_rate_annual: interestRateAnnual,
-                tenure_months: calcTenureMonths,
-                bank_multiplier: bankMultiplier,
-                absolute_max_cap: absoluteMaxCap,
-                existing_loans: existingLoans,
-                results: eligibilityResults
-            } : null,
+            // Record eligibility skip reason explicitly
+            eligibility_skip_reason: isSkippingEligibility ? skipReason!.trim() : null,
+
+            // Loan Eligibility Engine Calculation Snapshot or Skip Record
+            loan_eligibility: isLoan ? (
+                isSkippingEligibility ? {
+                    skipped: true,
+                    skip_reason: skipReason!.trim(),
+                    skipped_at: new Date().toISOString(),
+                    skipped_by: author,
+                    skipped_at_step: activeSectionIndex + 1,
+                } : {
+                    monthly_salary: Number(monthlySalary) || 0,
+                    employer_category: employerCategory,
+                    owns_home: eligibilityResults.effectiveOwnsHome,
+                    has_bureau_hl_lap: hasBureauHlLap,
+                    interest_rate_annual: interestRateAnnual,
+                    tenure_months: calcTenureMonths,
+                    bank_multiplier: bankMultiplier,
+                    absolute_max_cap: absoluteMaxCap,
+                    existing_loans: existingLoans,
+                    results: eligibilityResults
+                }
+            ) : null,
         };
     };
 
@@ -1532,10 +1545,11 @@ export default function CustomerDataEntryPage() {
         setScannedAadhaar(null);
         setScannedPan(null);
         setDeviations([]);
+        setEligibilitySkipReason('');
         setExistingRecord(null);
     };
 
-    const executeCustomerSave = async (authorName?: string) => {
+    const executeCustomerSave = async (authorName?: string, skipReason?: string) => {
         const finalAuthor = authorName || entryPersonName;
         if (!finalAuthor) {
             setIsEarlySaveModalOpen(true);
@@ -1546,7 +1560,7 @@ export default function CustomerDataEntryPage() {
         setIsLoading(true);
 
         try {
-            const customerPayload = buildCustomerPayload(finalAuthor);
+            const customerPayload = buildCustomerPayload(finalAuthor, skipReason);
 
             if (existingRecord?.id) {
                 const { error: updateError } = await supabase
@@ -1564,6 +1578,7 @@ export default function CustomerDataEntryPage() {
             }
             
             setIsEarlySaveModalOpen(false);
+            setEligibilitySkipReason('');
             setSuccess(true);
             setTimeout(() => {
                 resetFormFields();
@@ -1609,12 +1624,9 @@ export default function CustomerDataEntryPage() {
             return;
         }
 
-        if (!entryPersonName) {
-            setIsEarlySaveModalOpen(true);
-            return;
-        }
-
-        await executeCustomerSave(entryPersonName);
+        // Always show the Skip Loan Eligibility Confirmation & Remarks modal!
+        setError('');
+        setIsEarlySaveModalOpen(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -3860,16 +3872,18 @@ export default function CustomerDataEntryPage() {
                                     <div className="flex flex-wrap items-center gap-2">
                                         {/* Option to Save & Submit early after Step 4 or Step 5 for Loan customers */}
                                         {isLoan && (activeSectionIndex === 3 || activeSectionIndex === 4) && (
-                                            <Button
+                                            <button
                                                 type="button"
                                                 disabled={isLoading}
                                                 onClick={handleDirectSaveCustomer}
-                                                className="h-11 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs tracking-wide shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all active:scale-95"
-                                                title="Save and submit customer now without filling remaining steps"
+                                                className="group inline-flex items-center gap-2 h-11 px-4 sm:px-5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-emerald-600 via-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md shadow-emerald-600/25 active:scale-[0.97] transition-all duration-150 cursor-pointer select-none disabled:opacity-50"
+                                                title="Save customer profile now and record reason for skipping remaining steps"
                                             >
-                                                <Save className="w-4 h-4" />
-                                                <span>Save Customer Profile Now</span>
-                                            </Button>
+                                                <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 transition-all duration-200">
+                                                    <Save className="w-3 h-3 stroke-[2.2]" />
+                                                </span>
+                                                <span className="tracking-tight">Save New Customer Profile</span>
+                                            </button>
                                         )}
 
                                         {activeSectionIndex < sections.length - 1 ? (
@@ -3916,26 +3930,52 @@ export default function CustomerDataEntryPage() {
                     hasPanData={Boolean(scannedPan?.fullName || scannedPan?.dob || scannedPan?.idNumber)}
                 />
 
-                {/* Early Save Confirm Dialog (if Data Enterer not chosen) */}
+                {/* Skip Loan Eligibility Confirmation & Remarks Modal */}
                 {isEarlySaveModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-                        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
-                                    <Save className="w-5 h-5" />
+                        <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                            
+                            {/* Alert Header */}
+                            <div className="flex items-start gap-3.5 border-b border-slate-100 dark:border-slate-800 pb-4">
+                                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                                    <AlertCircle className="w-5 h-5 stroke-[2.2]" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Save Customer Profile</h3>
-                                    <p className="text-xs text-slate-400">Please select your staff identity to complete customer onboarding.</p>
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                                        Skip Loan Eligibility Calculation?
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                        You are saving this loan applicant at Step 4. Step 5 (Banking Details) and Step 6 (Eligibility & FOIR Engine) will be skipped. Please record your reason below.
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5 pt-2">
-                                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Your Name (Data Enterer)</label>
+                            {/* Remarks / Reason for Skipping Field */}
+                            <div className="space-y-1.5 pt-1">
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide flex items-center justify-between">
+                                    <span>Reason for Skipping Eligibility</span>
+                                    <span className="text-[10px] text-red-500 font-bold">*Mandatory Remarks</span>
+                                </label>
+                                <textarea
+                                    value={eligibilitySkipReason}
+                                    onChange={(e) => setEligibilitySkipReason(e.target.value)}
+                                    placeholder="Please specify why eligibility was not calculated (e.g. preliminary KYC onboarding only, offline banking approval underway, applicant will provide salary slips/ITR next week)..."
+                                    rows={3}
+                                    required
+                                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none font-medium placeholder:font-normal placeholder:text-slate-400 leading-relaxed"
+                                />
+                            </div>
+
+                            {/* Staff Member (Data Enterer) */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide flex items-center justify-between">
+                                    <span>Your Name (Data Enterer)</span>
+                                    <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                </label>
                                 <select
                                     value={entryPersonName}
                                     onChange={(e) => setEntryPersonName(e.target.value)}
-                                    className="w-full h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    className="w-full h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                                 >
                                     <option value="">Select your name...</option>
                                     {employees.map(name => (
@@ -3944,28 +3984,31 @@ export default function CustomerDataEntryPage() {
                                 </select>
                             </div>
 
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                            {/* Action Buttons with Theme Styling */}
+                            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                                 <Button
                                     type="button"
                                     variant="secondary"
                                     onClick={() => setIsEarlySaveModalOpen(false)}
-                                    className="h-10 px-4 rounded-xl text-xs font-semibold"
+                                    className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-semibold"
                                 >
-                                    Cancel
+                                    Cancel & Continue Form
                                 </Button>
-                                <Button
+                                <button
                                     type="button"
-                                    disabled={!entryPersonName || isLoading}
-                                    onClick={() => executeCustomerSave(entryPersonName)}
-                                    className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-500/20 flex items-center gap-1.5"
+                                    disabled={!entryPersonName || !eligibilitySkipReason.trim() || isLoading}
+                                    onClick={() => executeCustomerSave(entryPersonName, eligibilitySkipReason.trim())}
+                                    className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 h-10 px-5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-sm shadow-amber-600/25 active:scale-[0.97] transition-all cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none"
                                 >
-                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                                    {isLoading ? (
+                                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                    ) : (
                                         <>
-                                            <span>Confirm & Submit Customer</span>
-                                            <Check className="w-4 h-4" />
+                                            <span>Confirm & Save Profile</span>
+                                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                         </>
                                     )}
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>

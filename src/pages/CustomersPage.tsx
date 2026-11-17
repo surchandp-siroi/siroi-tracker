@@ -3,7 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui';
 import { 
   Search, UsersRound, Phone, MapPin, User, Calendar, Mail, 
-  Building, Copy, Check, ShieldCheck, Sparkles, Filter, RefreshCw, Eye, X, Landmark, Briefcase, Home, Users
+  Building, Copy, Check, ShieldCheck, Sparkles, Filter, RefreshCw, Eye, X, Landmark, Briefcase, Home, Users,
+  AlertCircle, Calculator
 } from 'lucide-react';
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
@@ -25,6 +26,8 @@ type CustomerData = {
   entry_location: string;
   association_date: string;
   city: string;
+  eligibility_skip_reason?: string | null;
+  loan_eligibility?: any;
   [key: string]: any;
 };
 
@@ -114,7 +117,9 @@ export default function CustomersPage() {
       (c.pan_number?.toLowerCase() || '').includes(q) ||
       (c.phone_number?.toLowerCase() || '').includes(q) ||
       (c.email_id?.toLowerCase() || '').includes(q) ||
-      (c.entry_person_name?.toLowerCase() || '').includes(q)
+      (c.entry_person_name?.toLowerCase() || '').includes(q) ||
+      (c.eligibility_skip_reason?.toLowerCase() || '').includes(q) ||
+      (c.loan_eligibility?.skip_reason?.toLowerCase() || '').includes(q)
     );
   }, [customers, searchQuery]);
 
@@ -228,7 +233,7 @@ export default function CustomersPage() {
         </div>
         <input
           type="text"
-          placeholder="Search by customer name, PAN number, phone, email, or entry person..."
+          placeholder="Search by customer name, PAN number, phone, email, entry person, or skip reason..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-11 pr-4 h-13 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-sm font-medium transition-all"
@@ -352,6 +357,46 @@ export default function CustomersPage() {
                           )}
                         </div>
                       </div>
+
+                      {/* Loan Eligibility Status & Skip Reason Callout */}
+                      {(customer.customer_type === 'Loans' || customer.customer_type === 'Loan' || customer.loan_eligibility || customer.eligibility_skip_reason) && (
+                        <div className="mt-3">
+                          {(customer.eligibility_skip_reason || customer.loan_eligibility?.skipped) ? (
+                            <div className="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 dark:border-amber-800/40 space-y-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+                                  <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                  Eligibility Skipped
+                                </span>
+                                {customer.loan_eligibility?.skipped_at_step && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-200/50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
+                                    Step {customer.loan_eligibility.skipped_at_step}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-amber-950 dark:text-amber-200/90 leading-snug font-medium italic line-clamp-2">
+                                "{customer.eligibility_skip_reason || customer.loan_eligibility?.skip_reason || 'No remarks provided'}"
+                              </p>
+                            </div>
+                          ) : customer.loan_eligibility?.results?.grossEligibleLoan ? (
+                            <div className="p-2.5 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/40 space-y-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
+                                  <Calculator className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                                  Eligible Loan
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-indigo-900 dark:text-indigo-200">
+                                  ₹{Number(customer.loan_eligibility.results.grossEligibleLoan).toLocaleString('en-IN')}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-0.5">
+                                <span>Est. EMI: ₹{Number(customer.loan_eligibility.results.estEmi || 0).toLocaleString('en-IN')}/mo</span>
+                                <span>FOIR: {customer.loan_eligibility.results.appliedFoir || 0}%</span>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
 
                       {/* Contact Details with refined layout */}
                       <div className="space-y-2 mt-4 pt-3 border-t border-slate-100 dark:border-white/5 text-xs text-slate-600 dark:text-slate-300">
@@ -638,6 +683,89 @@ export default function CustomersPage() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Loan Eligibility & FOIR Analysis (Calculated or Skipped) */}
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <Calculator className="w-3.5 h-3.5 text-indigo-500" /> Loan Eligibility & FOIR Status
+                    </span>
+
+                    {(viewingCustomer.eligibility_skip_reason || viewingCustomer.loan_eligibility?.skipped) ? (
+                      /* Eligibility Skipped Alert View */
+                      <div className="p-3.5 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/25 dark:border-amber-800/40 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                              Eligibility Calculation Skipped at Data Entry
+                            </span>
+                          </div>
+                          {viewingCustomer.loan_eligibility?.skipped_at_step && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-200/60 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
+                              Saved at Step {viewingCustomer.loan_eligibility.skipped_at_step}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-white/90 dark:bg-slate-900/90 border border-amber-200/60 dark:border-amber-800/30 space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 block">
+                            Reason Recorded by Staff:
+                          </span>
+                          <p className="text-xs text-slate-900 dark:text-slate-100 font-semibold italic leading-relaxed">
+                            "{viewingCustomer.eligibility_skip_reason || viewingCustomer.loan_eligibility?.skip_reason || 'No remarks provided'}"
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-0.5 px-0.5">
+                          <span>Staff Member: <strong className="text-slate-700 dark:text-slate-300">{viewingCustomer.loan_eligibility?.skipped_by || viewingCustomer.entry_person_name || 'Staff Member'}</strong></span>
+                          {viewingCustomer.loan_eligibility?.skipped_at && (
+                            <span>Date: {new Date(viewingCustomer.loan_eligibility.skipped_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                          )}
+                        </div>
+                      </div>
+                    ) : viewingCustomer.loan_eligibility?.results?.grossEligibleLoan ? (
+                      /* Eligibility Calculated Snapshot */
+                      <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/25 border border-indigo-200/60 dark:border-indigo-800/40 space-y-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50">
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">Max Eligible Loan</span>
+                            <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+                              ₹{Number(viewingCustomer.loan_eligibility.results.grossEligibleLoan).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50">
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">Estimated Monthly EMI</span>
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">
+                              ₹{Number(viewingCustomer.loan_eligibility.results.estEmi || 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50">
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">Applied FOIR %</span>
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                              {viewingCustomer.loan_eligibility.results.appliedFoir || 0}%
+                            </span>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50">
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">Net In-Hand (After BT)</span>
+                            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                              ₹{Number(viewingCustomer.loan_eligibility.results.netLoanInHand || viewingCustomer.loan_eligibility.results.grossEligibleLoan).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {viewingCustomer.loan_eligibility.results.totalBtReliefEmi > 0 && (
+                          <div className="text-[11px] text-indigo-900 dark:text-indigo-300 bg-white/60 dark:bg-slate-900/60 p-2 rounded-lg border border-indigo-100/80 dark:border-indigo-900/40 flex items-center justify-between">
+                            <span>Balance Transfer Relief: ₹{Number(viewingCustomer.loan_eligibility.results.totalBtReliefEmi).toLocaleString('en-IN')}/mo EMI</span>
+                            <span className="font-semibold text-emerald-600">Principal BT: ₹{Number(viewingCustomer.loan_eligibility.results.totalBtPrincipal || 0).toLocaleString('en-IN')}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/50 text-slate-500 text-xs italic">
+                        Eligibility has not been calculated for this record.
+                      </div>
+                    )}
                   </div>
                 </>
               )}
