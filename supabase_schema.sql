@@ -154,7 +154,10 @@ CREATE TABLE public.customer_data (
     ref2_phone TEXT,
     ref2_address TEXT,
     ref2_relation TEXT,
-    loan_eligibility JSONB
+    loan_eligibility JSONB,
+    aadhar_file_url TEXT,
+    pan_file_url TEXT,
+    kyc_verification_status JSONB
 );
 
 ALTER TABLE public.customer_data ENABLE ROW LEVEL SECURITY;

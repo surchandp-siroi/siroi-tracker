@@ -32,11 +32,24 @@ import {
     Wallet,
     Info,
     RefreshCw,
-    ArrowUpRight
+    ArrowUpRight,
+    Upload,
+    Eye,
+    FileCheck,
+    AlertCircle
 } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
 import { NumericFormat } from 'react-number-format';
 import { formatCustomerName, mapCustomerTypeToCategory } from '@/utils/formatCustomerName';
+import { 
+    scanIdentityDocument, 
+    ScannedIdData, 
+    DeviationItem, 
+    compareNames, 
+    compareDates, 
+    formatDisplayDate 
+} from '@/utils/ocrScanner';
+import { KycDeviationDialog } from '@/components/KycDeviationDialog';
 
 // IndusInd Bank / Retail FOIR Matrix (DBR Ratio based on Employer Cat, Owned House, Mortgage TradeLine, Income Band)
 const FOIR_MATRIX: Record<string, number> = {
@@ -161,6 +174,25 @@ export default function CustomerDataEntryPage() {
 
     const isLoan = customerType === 'Loans' || customerType === 'Loan';
     const isForex = customerType === 'Forex';
+
+    // Loan-Specific KYC Document Upload & Scanning State
+    const [aadharFile, setAadharFile] = useState<File | null>(null);
+    const [aadharFileUrl, setAadharFileUrl] = useState<string>('');
+    const [panFile, setPanFile] = useState<File | null>(null);
+    const [panFileUrl, setPanFileUrl] = useState<string>('');
+
+    const [isScanningAadhaar, setIsScanningAadhaar] = useState<boolean>(false);
+    const [isScanningPan, setIsScanningPan] = useState<boolean>(false);
+    const [scanProgressAadhaar, setScanProgressAadhaar] = useState<{ progress: number; status: string }>({ progress: 0, status: '' });
+    const [scanProgressPan, setScanProgressPan] = useState<{ progress: number; status: string }>({ progress: 0, status: '' });
+
+    const [scannedAadhaar, setScannedAadhaar] = useState<ScannedIdData | null>(null);
+    const [scannedPan, setScannedPan] = useState<ScannedIdData | null>(null);
+
+    const [deviations, setDeviations] = useState<DeviationItem[]>([]);
+    const [isDeviationDialogOpen, setIsDeviationDialogOpen] = useState<boolean>(false);
+    const aadhaarInputRef = useRef<HTMLInputElement>(null);
+    const panInputRef = useRef<HTMLInputElement>(null);
 
     // Loan-Specific Eligibility Calculator State (Step 6)
     const [monthlySalary, setMonthlySalary] = useState('');
@@ -399,6 +431,333 @@ export default function CustomerDataEntryPage() {
     };
 
     const formatInr = (val: number) => '₹' + Math.round(val || 0).toLocaleString('en-IN');
+
+    // Format Aadhaar Input with ergonomic spaces (1234 5678 9012)
+    const formatAadhaarInput = (val: string) => {
+        const raw = val.replace(/\D/g, '').slice(0, 12);
+        const parts = [];
+        for (let i = 0; i < raw.length; i += 4) {
+            parts.push(raw.slice(i, i + 4));
+        }
+        return parts.join(' ');
+    };
+
+    // KYC Document Storage Helper
+    const uploadDocToSupabase = async (file: File, type: 'aadhar' | 'pan'): Promise<string> => {
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const cleanPan = panNumber || 'UNKNOWN_PAN';
+        const fileName = `${cleanPan}_${type}_${Date.now()}.${fileExt}`;
+        const filePath = `loans/${fileName}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+            .from('customer_kyc')
+            .upload(filePath, file, { upsert: true });
+
+        if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+            throw new Error(`Failed to upload ${type === 'aadhar' ? 'Aadhaar' : 'PAN'} card: ${uploadError.message}`);
+        }
+
+        const { data: urlData } = supabase.storage
+            .from('customer_kyc')
+            .getPublicUrl(data.path);
+
+        return urlData.publicUrl;
+    };
+
+    // 3-Way Reconciliation Engine between Form, Aadhaar Scan, and PAN Scan
+    const evaluateDeviations = (
+        currentAadhaar = scannedAadhaar, 
+        currentPan = scannedPan,
+        currentName = customerName,
+        currentDob = birthday,
+        currentAadhaarNum = aadharNumber,
+        currentPanNum = panNumber
+    ): DeviationItem[] => {
+        const items: DeviationItem[] = [];
+
+        // 1. Name Check
+        if (currentAadhaar?.fullName || currentPan?.fullName || currentName) {
+            const aadhaarName = currentAadhaar?.fullName || '';
+            const panName = currentPan?.fullName || '';
+            
+            let status: 'MATCH' | 'WARNING' | 'MISMATCH' = 'MATCH';
+            let msg = 'Name matches across verified records.';
+
+            if (currentName && aadhaarName) {
+                const cmp = compareNames(currentName, aadhaarName);
+                if (!cmp.isMatch) {
+                    status = 'MISMATCH';
+                    msg = `Spelling mismatch between entered name and Aadhaar (${cmp.reason}).`;
+                } else if (cmp.isWarning) {
+                    status = 'WARNING';
+                    msg = `Aadhaar name variation: ${cmp.reason}.`;
+                }
+            }
+
+            if (currentName && panName) {
+                const cmp = compareNames(currentName, panName);
+                if (!cmp.isMatch) {
+                    status = 'MISMATCH';
+                    msg = `Spelling mismatch between entered name and PAN (${cmp.reason}).`;
+                } else if (cmp.isWarning && status !== 'MISMATCH') {
+                    status = 'WARNING';
+                    msg = `PAN name variation: ${cmp.reason}.`;
+                }
+            }
+
+            if (aadhaarName && panName) {
+                const cmp = compareNames(aadhaarName, panName);
+                if (!cmp.isMatch) {
+                    status = 'MISMATCH';
+                    msg = `Aadhaar and PAN names differ (${cmp.reason}).`;
+                } else if (cmp.isWarning && status !== 'MISMATCH') {
+                    status = 'WARNING';
+                    msg = `Aadhaar and PAN name variance: ${cmp.reason}.`;
+                }
+            }
+
+            items.push({
+                field: 'Customer Name',
+                formValue: currentName,
+                aadhaarValue: aadhaarName,
+                panValue: panName,
+                status,
+                message: msg
+            });
+        }
+
+        // 2. Date of Birth (DOB) Check
+        if (currentAadhaar?.dob || currentPan?.dob || currentDob) {
+            const aadhaarDob = currentAadhaar?.dob || '';
+            const panDob = currentPan?.dob || '';
+
+            let status: 'MATCH' | 'WARNING' | 'MISMATCH' = 'MATCH';
+            let msg = 'DOB matches across verified records.';
+
+            if (currentDob && aadhaarDob) {
+                const cmp = compareDates(currentDob, aadhaarDob);
+                if (!cmp.isMatch) {
+                    status = 'MISMATCH';
+                    msg = `Date of Birth on Aadhaar differs from form DOB (${cmp.reason}).`;
+                } else if (cmp.isWarning) {
+                    status = 'WARNING';
+                    msg = `Aadhaar DOB: ${cmp.reason}.`;
+                }
+            }
+
+            if (currentDob && panDob) {
+                const cmp = compareDates(currentDob, panDob);
+                if (!cmp.isMatch) {
+                    status = 'MISMATCH';
+                    msg = `Date of Birth on PAN differs from form DOB (${cmp.reason}).`;
+                } else if (cmp.isWarning && status !== 'MISMATCH') {
+                    status = 'WARNING';
+                    msg = `PAN DOB: ${cmp.reason}.`;
+                }
+            }
+
+            if (aadhaarDob && panDob) {
+                const cmp = compareDates(aadhaarDob, panDob);
+                if (!cmp.isMatch) {
+                    status = 'MISMATCH';
+                    msg = `Discrepancy between Aadhaar DOB and PAN DOB (${cmp.reason}).`;
+                } else if (cmp.isWarning && status !== 'MISMATCH') {
+                    status = 'WARNING';
+                    msg = `Aadhaar & PAN DOB note: ${cmp.reason}.`;
+                }
+            }
+
+            items.push({
+                field: 'Date of Birth (DOB)',
+                formValue: currentDob,
+                aadhaarValue: aadhaarDob,
+                panValue: panDob,
+                status,
+                message: msg
+            });
+        }
+
+        // 3. Aadhaar Number Check
+        if (currentAadhaar?.idNumber || currentAadhaarNum) {
+            const cleanForm = (currentAadhaarNum || '').replace(/\s+/g, '');
+            const cleanScanned = (currentAadhaar?.idNumber || '').replace(/\s+/g, '');
+
+            let status: 'MATCH' | 'WARNING' | 'MISMATCH' = 'MATCH';
+            let msg = 'Aadhaar number verified.';
+
+            if (cleanForm && cleanScanned) {
+                if (cleanForm !== cleanScanned) {
+                    status = 'MISMATCH';
+                    msg = `Entered Aadhaar (${currentAadhaarNum}) does not match scanned card (${currentAadhaar?.idNumber}).`;
+                }
+            } else if (!cleanScanned) {
+                status = 'WARNING';
+                msg = 'Aadhaar number could not be read clearly from image.';
+            }
+
+            items.push({
+                field: 'Aadhaar Number',
+                formValue: currentAadhaarNum,
+                aadhaarValue: currentAadhaar?.idNumber || '',
+                panValue: 'N/A',
+                status,
+                message: msg
+            });
+        }
+
+        // 4. PAN Number Check
+        if (currentPan?.idNumber || currentPanNum) {
+            const cleanForm = (currentPanNum || '').toUpperCase().trim();
+            const cleanScanned = (currentPan?.idNumber || '').toUpperCase().trim();
+
+            let status: 'MATCH' | 'WARNING' | 'MISMATCH' = 'MATCH';
+            let msg = 'PAN number verified.';
+
+            if (cleanForm && cleanScanned) {
+                if (cleanForm !== cleanScanned) {
+                    status = 'MISMATCH';
+                    msg = `Scanned PAN (${cleanScanned}) does not match entered PAN (${cleanForm}).`;
+                }
+            } else if (!cleanScanned) {
+                status = 'WARNING';
+                msg = 'PAN number could not be read clearly from image.';
+            }
+
+            items.push({
+                field: 'PAN Number',
+                formValue: cleanForm,
+                aadhaarValue: 'N/A',
+                panValue: cleanScanned,
+                status,
+                message: msg
+            });
+        }
+
+        return items;
+    };
+
+    // Upload & Scan Aadhaar Card
+    const handleAadhaarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setAadharFile(file);
+        setError('');
+        setIsScanningAadhaar(true);
+        setScanProgressAadhaar({ progress: 10, status: 'Uploading Aadhaar to vault...' });
+
+        try {
+            const publicUrl = await uploadDocToSupabase(file, 'aadhar');
+            setAadharFileUrl(publicUrl);
+
+            const scanned = await scanIdentityDocument(file, 'AADHAAR', (p, s) => {
+                setScanProgressAadhaar({ progress: p, status: s });
+            });
+
+            setScannedAadhaar(scanned);
+
+            // Auto-fill form fields if empty
+            if (scanned.idNumber && !aadharNumber) {
+                setAadharNumber(scanned.idNumber);
+            }
+            if (scanned.fullName && !customerName) {
+                setCustomerName(formatCustomerName(scanned.fullName, true));
+            }
+            if (scanned.dob && !birthday) {
+                setBirthday(scanned.dob);
+            }
+
+            // Run cross-check
+            const devList = evaluateDeviations(
+                scanned, 
+                scannedPan, 
+                customerName || scanned.fullName || '', 
+                birthday || scanned.dob || '',
+                aadharNumber || scanned.idNumber || '',
+                panNumber
+            );
+
+            setDeviations(devList);
+            const hasIssue = devList.some(d => d.status === 'MISMATCH' || d.status === 'WARNING');
+            if (hasIssue) {
+                setIsDeviationDialogOpen(true);
+            }
+        } catch (err: any) {
+            setError(`Aadhaar Scan Error: ${err.message || 'Failed to scan document'}`);
+        } finally {
+            setIsScanningAadhaar(false);
+        }
+    };
+
+    // Upload & Scan PAN Card
+    const handlePanFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setPanFile(file);
+        setError('');
+        setIsScanningPan(true);
+        setScanProgressPan({ progress: 10, status: 'Uploading PAN to vault...' });
+
+        try {
+            const publicUrl = await uploadDocToSupabase(file, 'pan');
+            setPanFileUrl(publicUrl);
+
+            const scanned = await scanIdentityDocument(file, 'PAN', (p, s) => {
+                setScanProgressPan({ progress: p, status: s });
+            });
+
+            setScannedPan(scanned);
+
+            // Auto-fill form fields if empty
+            if (scanned.fullName && !customerName) {
+                setCustomerName(formatCustomerName(scanned.fullName, true));
+            }
+            if (scanned.dob && !birthday) {
+                setBirthday(scanned.dob);
+            }
+
+            // Run 3-way cross-check
+            const devList = evaluateDeviations(
+                scannedAadhaar, 
+                scanned, 
+                customerName || scanned.fullName || '', 
+                birthday || scanned.dob || '',
+                aadharNumber,
+                panNumber
+            );
+
+            setDeviations(devList);
+            const hasIssue = devList.some(d => d.status === 'MISMATCH' || d.status === 'WARNING');
+            if (hasIssue) {
+                setIsDeviationDialogOpen(true);
+            }
+        } catch (err: any) {
+            setError(`PAN Scan Error: ${err.message || 'Failed to scan document'}`);
+        } finally {
+            setIsScanningPan(false);
+        }
+    };
+
+    const handleApplyCorrection = (field: string, value: string) => {
+        if (field === 'Customer Name') setCustomerName(formatCustomerName(value, true));
+        else if (field.includes('DOB') || field.includes('Birth')) setBirthday(value);
+        else if (field === 'Aadhaar Number') setAadharNumber(value);
+        else if (field === 'PAN Number') setPanNumber(value.toUpperCase());
+    };
+
+    const handleApplyAllAadhaar = () => {
+        if (scannedAadhaar?.fullName) setCustomerName(formatCustomerName(scannedAadhaar.fullName, true));
+        if (scannedAadhaar?.dob) setBirthday(scannedAadhaar.dob);
+        if (scannedAadhaar?.idNumber) setAadharNumber(scannedAadhaar.idNumber);
+        setIsDeviationDialogOpen(false);
+    };
+
+    const handleApplyAllPan = () => {
+        if (scannedPan?.fullName) setCustomerName(formatCustomerName(scannedPan.fullName, true));
+        if (scannedPan?.dob) setBirthday(scannedPan.dob);
+        if (scannedPan?.idNumber) setPanNumber(scannedPan.idNumber.toUpperCase());
+        setIsDeviationDialogOpen(false);
+    };
     
     // UI State
     const [isLoading, setIsLoading] = useState(false);
@@ -494,6 +853,21 @@ export default function CustomerDataEntryPage() {
                     if (Array.isArray(le.existing_loans)) setExistingLoans(le.existing_loans);
                 }
 
+                // Restore KYC Document details if present
+                if (data.aadhar_file_url) setAadharFileUrl(data.aadhar_file_url);
+                if (data.pan_file_url) setPanFileUrl(data.pan_file_url);
+                if (data.kyc_verification_status) {
+                    if (Array.isArray(data.kyc_verification_status.deviations)) {
+                        setDeviations(data.kyc_verification_status.deviations);
+                    }
+                    if (data.kyc_verification_status.scanned_aadhaar) {
+                        setScannedAadhaar(data.kyc_verification_status.scanned_aadhaar);
+                    }
+                    if (data.kyc_verification_status.scanned_pan) {
+                        setScannedPan(data.kyc_verification_status.scanned_pan);
+                    }
+                }
+
                 setExistingRecord(data);
             } else {
                 // New customer: reset existing record
@@ -519,6 +893,21 @@ export default function CustomerDataEntryPage() {
                 if (!product) { setError('Please select a Product.'); return false; }
                 if (!amount || Number(amount) <= 0) { setError('Please enter a valid positive Loan Amount.'); return false; }
                 if (!phoneNumber.trim()) { setError('Please enter Phone Number.'); return false; }
+
+                // Aadhaar Number & Mandatory Document Uploads for Loans
+                const cleanAadhaar = aadharNumber.replace(/\s+/g, '');
+                if (!cleanAadhaar || cleanAadhaar.length !== 12) {
+                    setError('Aadhaar Number is mandatory for Loan customers (Must be 12 digits).');
+                    return false;
+                }
+                if (!aadharFile && !aadharFileUrl) {
+                    setError('Please upload the Aadhaar Card document for identity verification.');
+                    return false;
+                }
+                if (!panFile && !panFileUrl) {
+                    setError('Please upload the PAN Card document for identity verification.');
+                    return false;
+                }
             }
             if (index === 3) {
                 if (!address.trim()) { setError('Please enter Current Street Address.'); return false; }
@@ -608,6 +997,25 @@ export default function CustomerDataEntryPage() {
             return;
         }
 
+        if (isLoan) {
+            const cleanAadhaar = aadharNumber.replace(/\s+/g, '');
+            if (!cleanAadhaar || cleanAadhaar.length !== 12) {
+                setError('Aadhaar Number is mandatory for Loan customers (Must be 12 digits).');
+                setActiveSectionIndex(0);
+                return;
+            }
+            if (!aadharFile && !aadharFileUrl) {
+                setError('Please upload the Aadhaar Card document for identity verification.');
+                setActiveSectionIndex(0);
+                return;
+            }
+            if (!panFile && !panFileUrl) {
+                setError('Please upload the PAN Card document for identity verification.');
+                setActiveSectionIndex(0);
+                return;
+            }
+        }
+
         setError('');
         setIsLoading(true);
         
@@ -634,6 +1042,17 @@ export default function CustomerDataEntryPage() {
                 anniversary: isForex ? null : (anniversary || null),
                 entry_person_name: entryPersonName,
                 entry_location: entryLocation,
+
+                // KYC Document Uploads & Verification Status
+                aadhar_file_url: isLoan ? (aadharFileUrl || null) : null,
+                pan_file_url: isLoan ? (panFileUrl || null) : null,
+                kyc_verification_status: isLoan ? {
+                    is_verified: deviations.length > 0 && !deviations.some(d => d.status === 'MISMATCH'),
+                    has_deviations: deviations.some(d => d.status === 'MISMATCH' || d.status === 'WARNING'),
+                    deviations: deviations,
+                    scanned_aadhaar: scannedAadhaar,
+                    scanned_pan: scannedPan,
+                } : null,
 
                 // Loan-specific KYC attributes
                 father_name: isLoan ? (fatherName.trim() || null) : null,
@@ -757,6 +1176,13 @@ export default function CustomerDataEntryPage() {
                 setBankMultiplier(24);
                 setAbsoluteMaxCap(2500000);
                 setExistingLoans([]);
+                setAadharFile(null);
+                setAadharFileUrl('');
+                setPanFile(null);
+                setPanFileUrl('');
+                setScannedAadhaar(null);
+                setScannedPan(null);
+                setDeviations([]);
                 setExistingRecord(null);
             }, 2500);
         } catch (err: any) {
@@ -1162,10 +1588,206 @@ export default function CustomerDataEntryPage() {
 
                                                     <div className="space-y-1.5 md:col-span-2">
                                                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                                                            <span>Aadhar Number</span>
-                                                            <span className="text-[10px] text-slate-400">Optional</span>
+                                                            <span className="flex items-center gap-1.5">
+                                                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Aadhar Number</span>
+                                                            </span>
+                                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory for Loans</span>
                                                         </label>
-                                                        <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} className="h-11 bg-white/70 dark:bg-slate-800/70" />
+                                                        <Input 
+                                                            type="text" 
+                                                            value={aadharNumber} 
+                                                            onChange={(e) => setAadharNumber(formatAadhaarInput(e.target.value))} 
+                                                            placeholder="1234 5678 9012" 
+                                                            maxLength={14} 
+                                                            required
+                                                            className="h-11 bg-white/70 dark:bg-slate-800/70 font-mono tracking-widest text-base font-semibold" 
+                                                        />
+                                                    </div>
+
+                                                    {/* DOCUMENT SCAN & VERIFICATION SUITE (For Loans) */}
+                                                    <div className="md:col-span-2 space-y-4 pt-2">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-800 gap-2">
+                                                            <div>
+                                                                <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                                                    <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                                                    KYC Document Verification Suite
+                                                                </span>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                    Upload Aadhaar and PAN cards. Automatic OCR scans for any spelling or DOB mistakes and alerts for deviations.
+                                                                </p>
+                                                            </div>
+                                                            {deviations.length > 0 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setIsDeviationDialogOpen(true)}
+                                                                    className={`text-[11px] font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all shadow-xs self-start sm:self-auto ${
+                                                                        deviations.some(d => d.status === 'MISMATCH')
+                                                                            ? 'bg-red-50 hover:bg-red-100 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800'
+                                                                            : deviations.some(d => d.status === 'WARNING')
+                                                                                ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                                                                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                                                                    }`}
+                                                                >
+                                                                    <Eye className="w-3.5 h-3.5" />
+                                                                    <span>Review Verification ({deviations.some(d => d.status === 'MISMATCH') ? 'Mismatch' : deviations.some(d => d.status === 'WARNING') ? 'Warning' : 'Matched'})</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+
+                                                        {/* 1. Aadhaar Card Upload Box */}
+                                                        <div className={`p-4 rounded-2xl border transition-all ${
+                                                            scannedAadhaar 
+                                                                ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-200/80 dark:border-indigo-800/50' 
+                                                                : 'bg-white/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/60'
+                                                        }`}>
+                                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                                                                        <FileText className="w-5 h-5" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">Aadhaar Card Document</span>
+                                                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                                        </div>
+                                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                                            {aadharFile ? aadharFile.name : (aadharFileUrl ? 'Aadhaar uploaded to vault' : 'Upload photo or PDF of Aadhaar card')}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                                    <input 
+                                                                        type="file" 
+                                                                        ref={aadhaarInputRef}
+                                                                        accept="image/*,application/pdf" 
+                                                                        onChange={handleAadhaarFileChange} 
+                                                                        className="hidden" 
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="secondary"
+                                                                        disabled={isScanningAadhaar}
+                                                                        onClick={() => aadhaarInputRef.current?.click()}
+                                                                        className="text-xs h-9 px-3.5 rounded-xl flex items-center gap-1.5 font-semibold bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 w-full sm:w-auto justify-center"
+                                                                    >
+                                                                        {isScanningAadhaar ? (
+                                                                            <>
+                                                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                                                                                <span>{scanProgressAadhaar.status || 'Scanning...'}</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                                                                                <span>{aadharFileUrl || aadharFile ? 'Re-upload Aadhaar' : 'Upload Aadhaar Card'}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Aadhaar Scan Results Summary Chips */}
+                                                            {scannedAadhaar && (
+                                                                <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned Name</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                            {scannedAadhaar.fullName || 'Not detected'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned DOB</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                            {formatDisplayDate(scannedAadhaar.dob)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned Aadhaar No</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                            {scannedAadhaar.idNumber || 'Not detected'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* 2. PAN Card Upload Box (Placed Directly Below Aadhaar Upload) */}
+                                                        <div className={`p-4 rounded-2xl border transition-all ${
+                                                            scannedPan 
+                                                                ? 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-200/80 dark:border-blue-800/50' 
+                                                                : 'bg-white/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/60'
+                                                        }`}>
+                                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                                        <CreditCard className="w-5 h-5" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">PAN Card Document</span>
+                                                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                                        </div>
+                                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                                            {panFile ? panFile.name : (panFileUrl ? 'PAN uploaded to vault' : 'Upload photo or PDF of PAN card')}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                                    <input 
+                                                                        type="file" 
+                                                                        ref={panInputRef}
+                                                                        accept="image/*,application/pdf" 
+                                                                        onChange={handlePanFileChange} 
+                                                                        className="hidden" 
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="secondary"
+                                                                        disabled={isScanningPan}
+                                                                        onClick={() => panInputRef.current?.click()}
+                                                                        className="text-xs h-9 px-3.5 rounded-xl flex items-center gap-1.5 font-semibold bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 w-full sm:w-auto justify-center"
+                                                                    >
+                                                                        {isScanningPan ? (
+                                                                            <>
+                                                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                                                                                <span>{scanProgressPan.status || 'Scanning...'}</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Upload className="w-3.5 h-3.5 text-blue-600" />
+                                                                                <span>{panFileUrl || panFile ? 'Re-upload PAN' : 'Upload PAN Card'}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* PAN Scan Results Summary Chips */}
+                                                            {scannedPan && (
+                                                                <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned Name</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                            {scannedPan.fullName || 'Not detected'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned DOB</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                            {formatDisplayDate(scannedPan.dob)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned PAN No</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                            {scannedPan.idNumber || 'Not detected'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2423,6 +3045,19 @@ export default function CustomerDataEntryPage() {
                         
                     </form>
                 )}
+
+                {/* KYC Discrepancy & Deviation Modal */}
+                <KycDeviationDialog
+                    isOpen={isDeviationDialogOpen}
+                    onClose={() => setIsDeviationDialogOpen(false)}
+                    deviations={deviations}
+                    onApplyCorrection={handleApplyCorrection}
+                    onApplyAllAadhaar={handleApplyAllAadhaar}
+                    onApplyAllPan={handleApplyAllPan}
+                    onConfirmAndProceed={() => {
+                        setIsDeviationDialogOpen(false);
+                    }}
+                />
             </LiquidGlassCard>
         </div>
     );
