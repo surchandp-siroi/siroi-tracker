@@ -218,55 +218,66 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
     else if (/\bTRANSGENDER\b/i.test(rawText)) gender = 'Transgender';
 
     // 4. Name Extraction
-    // On UIDAI cards, English name is typically located immediately above the DOB line or before father/address
+    // First attempt: Explicit label extraction (e.g. DigiLocker, e-Aadhaar, PDF downloads)
     let fullName: string | null = null;
+    const nameLabelMatch = rawText.match(/(?:^|\n)\s*(?:Name|Cardholder(?:'s)?\s*Name|Customer(?:\s*Name)?)\s*[:\-]\s*([A-Za-z. ]{3,40})/i);
+    if (nameLabelMatch) {
+        fullName = nameLabelMatch[1].replace(/[^A-Za-z\s.]/g, '').trim();
+    }
+
     const noiseKeywords = [
         'government', 'india', 'bharat', 'sarkar', 'uidai', 'unique', 'identification',
         'authority', 'enrolment', 'help', 'aadhaar', 'dob', 'male', 'female', 'yob',
         'address', 'father', 'mother', 'husband', 'card', 'mera', 'meri', 'pehchan',
-        'powered', 'by', 'nsdl', 'utiitsl', 'protean', 'issued', 'download', 'valid'
+        'powered', 'by', 'nsdl', 'utiitsl', 'protean', 'issued', 'download', 'valid',
+        'digilocker', 'digi', 'locker', 'meripehchan', 'gender', 'satyameva', 'jayate'
     ];
 
-    // Find the index of the line containing DOB
-    let dobLineIndex = -1;
-    for (let i = 0; i < lines.length; i++) {
-        if (/DOB|Date\s*of\s*Birth|Year\s*of\s*Birth/i.test(lines[i])) {
-            dobLineIndex = i;
-            break;
+    // Second attempt: On physical UIDAI cards, English name is located immediately above the DOB line
+    if (!fullName) {
+        // Find the index of the line containing DOB
+        let dobLineIndex = -1;
+        for (let i = 0; i < lines.length; i++) {
+            if (/DOB|Date\s*of\s*Birth|Year\s*of\s*Birth/i.test(lines[i])) {
+                dobLineIndex = i;
+                break;
+            }
         }
-    }
 
-    if (dobLineIndex > 0) {
-        // Look at the lines above the DOB line for a valid name
-        for (let i = dobLineIndex - 1; i >= 0; i--) {
-            const line = lines[i].trim();
-            const lower = line.toLowerCase();
-            if (/^powered(\s+by)?\b/i.test(line) || lower.includes('powered by')) continue;
-            const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
-            const isAlphaOnly = /^[A-Za-z\s.]{3,35}$/.test(line);
+        if (dobLineIndex > 0) {
+            // Look at the lines above the DOB line for a valid name
+            for (let i = dobLineIndex - 1; i >= 0; i--) {
+                const line = lines[i].trim();
+                const lower = line.toLowerCase();
+                if (/^(powered(\s+by)?|digilocker)\b/i.test(line) || lower.includes('powered by') || lower.includes('digilocker')) continue;
+                const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
+                const cleaned = line.replace(/^(name|customer\s*name)\s*[:\-]\s*/i, '').trim();
+                const isAlphaOnly = /^[A-Za-z\s.]{3,35}$/.test(cleaned);
 
-            if (!hasNoise && isAlphaOnly && line.split(/\s+/).length >= 1) {
-                const words = line.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
-                if (words.length > 0) {
-                    fullName = line.replace(/[^A-Za-z\s.]/g, '').trim();
-                    break;
+                if (!hasNoise && isAlphaOnly && cleaned.split(/\s+/).length >= 1) {
+                    const words = cleaned.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
+                    if (words.length > 0) {
+                        fullName = cleaned.replace(/[^A-Za-z\s.]/g, '').trim();
+                        break;
+                    }
                 }
             }
         }
     }
 
-    // Fallback name search if not found above DOB
+    // Third attempt: Fallback name search if not found above DOB
     if (!fullName) {
         for (const line of lines) {
             const trimmed = line.trim();
             const lower = trimmed.toLowerCase();
-            if (/^powered(\s+by)?\b/i.test(trimmed) || lower.includes('powered by')) continue;
+            if (/^(powered(\s+by)?|digilocker)\b/i.test(trimmed) || lower.includes('powered by') || lower.includes('digilocker')) continue;
             const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
-            const isAlphaOnly = /^[A-Za-z\s.]{4,30}$/.test(trimmed);
+            const cleaned = trimmed.replace(/^(name|customer\s*name)\s*[:\-]\s*/i, '').trim();
+            const isAlphaOnly = /^[A-Za-z\s.]{4,30}$/.test(cleaned);
             if (!hasNoise && isAlphaOnly) {
-                const words = trimmed.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
+                const words = cleaned.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
                 if (words.length >= 2) {
-                    fullName = trimmed;
+                    fullName = cleaned.replace(/[^A-Za-z\s.]/g, '').trim();
                     break;
                 }
             }
@@ -298,58 +309,71 @@ export function parsePanText(rawText: string): Partial<ScannedIdData> {
     // 2. Date of Birth
     let dob: string | null = null;
     let rawDob: string | null = null;
-    const dobMatch = rawText.match(/\b([0-3]?[0-9][/-][0-1]?[0-9][/-][12][90]\d{2})\b/);
+    const dobMatch = rawText.match(/(?:DOB|Date\s*of\s*Birth|D\.O\.B\.?)[\s:]*([0-3]?[0-9][/-][0-1]?[0-9][/-][12][90]\d{2})/i)
+                  || rawText.match(/\b([0-3]?[0-9][/-][0-1]?[0-9][/-][12][90]\d{2})\b/);
     if (dobMatch) {
         rawDob = dobMatch[1];
         dob = normalizeDate(dobMatch[1]);
     }
 
     // 3. Name & Father's Name Extraction
-    // On Indian PAN cards, lines follow:
-    // Header (Income Tax Department / Govt of India)
-    // <Cardholder Name>
-    // <Father's Name>
-    // <DOB>
-    // <PAN Number>
     let fullName: string | null = null;
     let fatherName: string | null = null;
 
-    const noiseKeywords = [
-        'income', 'tax', 'department', 'govt', 'government', 'india', 'bharat', 'sarkar',
-        'permanent', 'account', 'number', 'card', 'father', 'mother', 'name', 'sign',
-        'signature', 'date', 'birth', 'holder', 'seal', 'reprint', 'issued', 'download',
-        'qr', 'scan', 'utiitsl', 'nsdl', 'protean', 'directorate', 'powered', 'by',
-        'valid', 'only', 'electronic', 'incometax', 'online', 'portal'
-    ];
+    // TIER 1: Explicit Labeled Extraction (e.g. DigiLocker, e-PAN, PDFs)
+    const nameLabelMatch = rawText.match(/(?:^|\n)\s*(?:Name|Cardholder(?:'s)?\s*Name|Customer(?:\s*Name)?)\s*[:\-]\s*([A-Za-z. ]{3,40})/i);
+    if (nameLabelMatch) {
+        fullName = nameLabelMatch[1].replace(/[^A-Za-z\s.]/g, '').trim();
+    }
 
-    const candidateLines: string[] = [];
-    for (const line of lines) {
-        const cleanLine = line.trim();
-        const lower = cleanLine.toLowerCase();
+    const fatherLabelMatch = rawText.match(/(?:^|\n)\s*(?:Father(?:'s)?(?:\s*Name)?)\s*[:\-]\s*([A-Za-z. ]{3,40})/i);
+    if (fatherLabelMatch) {
+        fatherName = fatherLabelMatch[1].replace(/[^A-Za-z\s.]/g, '').trim();
+    }
 
-        // Reject watermarks and system attribution lines
-        if (/^powered(\s+by)?\b/i.test(cleanLine) || lower.includes('powered by')) {
-            continue;
-        }
+    // TIER 2: Positional & Line Analysis for Physical Laminated Cards (without "Name :" labels)
+    if (!fullName) {
+        const noiseKeywords = [
+            'income', 'tax', 'department', 'govt', 'government', 'india', 'bharat', 'sarkar',
+            'permanent', 'account', 'number', 'card', 'sign', 'signature', 'date', 'birth',
+            'holder', 'seal', 'reprint', 'issued', 'download', 'qr', 'scan', 'utiitsl',
+            'nsdl', 'protean', 'directorate', 'powered', 'by', 'valid', 'only', 'electronic',
+            'incometax', 'online', 'portal', 'digilocker', 'digi', 'locker', 'meripehchan',
+            'satyameva', 'jayate', 'gender', 'male', 'female', 'transgender'
+        ];
 
-        const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
-        const isAlpha = /^[A-Za-z\s.]{3,35}$/.test(cleanLine);
+        const candidateLines: string[] = [];
+        for (const line of lines) {
+            const cleanLine = line.trim();
+            const lower = cleanLine.toLowerCase();
 
-        if (!hasNoise && isAlpha && cleanLine.length >= 3) {
-            const words = cleanLine.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
-            // Require meaningful words (avoid single stray characters)
-            if (words.length >= 1) {
-                if (words.length === 1 && cleanLine.length < 4) continue;
-                candidateLines.push(cleanLine);
+            // Reject watermarks and system attribution lines
+            if (/^(powered(\s+by)?|digilocker|digi\s*locker)\b/i.test(cleanLine) || lower.includes('powered by') || lower.includes('digilocker')) {
+                continue;
+            }
+
+            const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
+            if (hasNoise) continue;
+
+            // Strip any leftover label prefixes if present
+            const strippedLine = cleanLine.replace(/^(name|cardholder\s*name|father'?s?\s*name)\s*[:\-]\s*/i, '').trim();
+
+            const isAlpha = /^[A-Za-z. ]{3,40}$/.test(strippedLine);
+            if (isAlpha && strippedLine.length >= 3) {
+                const words = strippedLine.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
+                if (words.length >= 1) {
+                    if (words.length === 1 && strippedLine.length < 4) continue;
+                    candidateLines.push(strippedLine.replace(/[^A-Za-z\s.]/g, '').trim());
+                }
             }
         }
-    }
 
-    if (candidateLines.length > 0) {
-        fullName = candidateLines[0];
-    }
-    if (candidateLines.length > 1) {
-        fatherName = candidateLines[1];
+        if (candidateLines.length > 0) {
+            fullName = candidateLines[0];
+        }
+        if (candidateLines.length > 1 && !fatherName) {
+            fatherName = candidateLines[1];
+        }
     }
 
     return {
