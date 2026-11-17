@@ -479,10 +479,12 @@ export default function CustomersPage() {
                   <span className="text-slate-400 block text-[10px] uppercase font-semibold">Email</span>
                   <span className="font-medium text-slate-900 dark:text-white truncate block">{viewingCustomer.email_id || 'N/A'}</span>
                 </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Aadhar</span>
-                  <span className="font-medium text-slate-900 dark:text-white font-mono">{viewingCustomer.aadhar_number || 'N/A'}</span>
-                </div>
+                {(viewingCustomer.customer_type === 'Loans' || viewingCustomer.customer_type === 'Loan' || viewingCustomer.aadhar_number) && (
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Aadhar</span>
+                    <span className="font-medium text-slate-900 dark:text-white font-mono">{viewingCustomer.aadhar_number || 'N/A'}</span>
+                  </div>
+                )}
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-semibold">Location</span>
                   <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.entry_location || 'N/A'}</span>

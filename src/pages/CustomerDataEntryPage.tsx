@@ -375,7 +375,7 @@ export default function CustomerDataEntryPage() {
                 category: mapCustomerTypeToCategory(customerType),
                 product: product,
                 amount: Number(amount) || 0,
-                aadhar_number: isForex ? null : (aadharNumber.trim() || null),
+                aadhar_number: isLoan ? (aadharNumber.trim() || null) : null,
                 association_date: associationDate || null,
                 address: address.trim() || null,
                 pincode: pincode.trim() || null,
@@ -1390,16 +1390,6 @@ export default function CustomerDataEntryPage() {
                                                           buttonClassName="h-11 bg-white/70 dark:bg-slate-800/70"
                                                         />
                                                     </div>
-
-                                                    {!isForex && (
-                                                        <div className="space-y-1.5">
-                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                                                                <span>Aadhar Number</span>
-                                                                <span className="text-[10px] text-slate-400">Optional</span>
-                                                            </label>
-                                                            <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} className="h-11 bg-white/70 dark:bg-slate-800/70" />
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
                                         )}

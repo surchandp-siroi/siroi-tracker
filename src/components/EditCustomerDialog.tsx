@@ -105,7 +105,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
           category: mapCustomerTypeToCategory(customerType),
           product,
           amount: Number(amount) || 0,
-          aadhar_number: aadharNumber || null,
+          aadhar_number: isLoan ? (aadharNumber.trim() || null) : null,
           association_date: associationDate || null,
           address,
           pincode,
@@ -325,10 +325,12 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                     <option value="Above 20L">Above 20L</option>
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Aadhar (Optional)</label>
-                  <Input value={aadharNumber} onChange={e => setAadharNumber(e.target.value)} className="h-10" />
-                </div>
+                {isLoan && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Aadhar (Optional)</label>
+                    <Input value={aadharNumber} onChange={e => setAadharNumber(e.target.value)} className="h-10" />
+                  </div>
+                )}
               </div>
             </div>
 
