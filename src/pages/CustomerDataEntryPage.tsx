@@ -480,31 +480,51 @@ export default function CustomerDataEntryPage() {
         fetchEmployees();
     }, [entryLocation]);
 
-    // Auto-fill District & State based on Pincode
+    // Auto-fill District, City & State based on Pincode
     const handlePincodeChange = async (val: string) => {
         setPincode(val);
         const clean = val.replace(/\D/g, '');
         if (clean.length === 6) {
             const details = await lookupPincode(clean);
             if (details) {
-                if (details.district) setDistrict(details.district);
-                if (details.state) setState(details.state);
-                if (details.city && !city) setCity(details.city);
+                setDistrict(details.district || '');
+                setState(details.state || '');
+                setCity(details.city || details.district || '');
+                if (isSameAsCurrentAddress) {
+                    setPermanentDistrict(details.district || '');
+                    setPermanentState(details.state || '');
+                    setPermanentCity(details.city || details.district || '');
+                }
+            }
+        } else {
+            // If 1 digit of pincode is removed (< 6 digits), clear dynamically populated fields immediately
+            setDistrict('');
+            setCity('');
+            setState('');
+            if (isSameAsCurrentAddress) {
+                setPermanentDistrict('');
+                setPermanentCity('');
+                setPermanentState('');
             }
         }
     };
 
-    // Auto-fill Permanent District & State based on Pincode
+    // Auto-fill Permanent District, City & State based on Pincode
     const handlePermanentPincodeChange = async (val: string) => {
         setPermanentPincode(val);
         const clean = val.replace(/\D/g, '');
         if (clean.length === 6) {
             const details = await lookupPincode(clean);
             if (details) {
-                if (details.district) setPermanentDistrict(details.district);
-                if (details.state) setPermanentState(details.state);
-                if (details.city && !permanentCity) setPermanentCity(details.city);
+                setPermanentDistrict(details.district || '');
+                setPermanentState(details.state || '');
+                setPermanentCity(details.city || details.district || '');
             }
+        } else {
+            // If 1 digit of pincode is removed (< 6 digits), clear dynamically populated fields immediately
+            setPermanentDistrict('');
+            setPermanentCity('');
+            setPermanentState('');
         }
     };
 
@@ -2984,34 +3004,7 @@ export default function CustomerDataEntryPage() {
                                         {activeSectionIndex === 5 && (
                                             <div className="space-y-6 animate-in fade-in duration-300">
                                                 
-                                                {/* Header Banner */}
-                                                <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-blue-500/10 border border-indigo-200/50 dark:border-indigo-800/40 flex items-start sm:items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/30 flex-shrink-0">
-                                                            <Calculator className="w-5 h-5" />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                                Retail Loan Eligibility Engine
-                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                                                                    IndusInd FOIR Matrix
-                                                                </span>
-                                                            </h3>
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                                Dynamic risk-adjusted FOIR & Multiplier model with Balance Transfer (BT) exclusion logic.
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="hidden sm:flex flex-col items-end flex-shrink-0">
-                                                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Target Rule</span>
-                                                        <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                                                            {eligibilityResults.profileKey} • {(eligibilityResults.foirPercent * 100).toFixed(0)}% FOIR
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* 2-Column Responsive Layout */}
+                                                {/* Top 2-Column Responsive Layout: Inputs & Evaluation Bento */}
                                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                                                     
                                                     {/* LEFT COLUMN: Inputs & Parameters (7 Cols) */}
@@ -3248,147 +3241,6 @@ export default function CustomerDataEntryPage() {
                                                             </div>
                                                         </div>
 
-                                                        {/* 4. Existing Loans & Obligations (The BT Rule) */}
-                                                        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                                                                    <CreditCard className="w-3.5 h-3.5 text-indigo-500" />
-                                                                    Existing Obligations & Balance Transfer (BT)
-                                                                </span>
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="secondary"
-                                                                    onClick={handleAddLoan}
-                                                                    className="h-8 px-3 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1"
-                                                                >
-                                                                    <Plus className="w-3.5 h-3.5" />
-                                                                    <span>Add Loan</span>
-                                                                </Button>
-                                                            </div>
-
-                                                            {existingLoans.length === 0 ? (
-                                                                <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-1 bg-slate-50/50 dark:bg-slate-900/30">
-                                                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No existing loans or liabilities recorded.</p>
-                                                                    <p className="text-[10px] text-slate-400">Customer has full disposable FOIR capacity (0 continuing EMIs).</p>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="space-y-2.5">
-                                                                    {existingLoans.map((loan, idx) => (
-                                                                        <div 
-                                                                            key={loan.id} 
-                                                                            className={`p-3 rounded-xl border transition-all ${
-                                                                                loan.is_balance_transfer 
-                                                                                    ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50' 
-                                                                                    : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700/60'
-                                                                            }`}
-                                                                        >
-                                                                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                                                                                <div className="sm:col-span-3">
-                                                                                    <select
-                                                                                        value={loan.loan_type || 'Personal Loan (BT Possible)'}
-                                                                                        onChange={(e) => handleUpdateLoan(loan.id, 'loan_type', e.target.value)}
-                                                                                        className="w-full h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                                                                                    >
-                                                                                        {OBLIGATION_TYPES.map(t => (
-                                                                                            <option key={t} value={t}>{t}</option>
-                                                                                        ))}
-                                                                                    </select>
-                                                                                </div>
-                                                                                <div className="sm:col-span-3">
-                                                                                    <Input
-                                                                                        type="text"
-                                                                                        value={loan.name}
-                                                                                        onChange={(e) => handleUpdateLoan(loan.id, 'name', e.target.value)}
-                                                                                        placeholder={`Financer / Name (e.g. HDFC)`}
-                                                                                        className="h-9 text-xs bg-white dark:bg-slate-800"
-                                                                                    />
-                                                                                </div>
-                                                                                <div className="sm:col-span-3">
-                                                                                    <div className="relative">
-                                                                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">₹</span>
-                                                                                        <NumericFormat
-                                                                                            customInput={Input}
-                                                                                            value={loan.emi_amount}
-                                                                                            onValueChange={(v) => handleUpdateLoan(loan.id, 'emi_amount', v.value || '')}
-                                                                                            thousandSeparator=","
-                                                                                            thousandsGroupStyle="lakh"
-                                                                                            placeholder="EMI / mo"
-                                                                                            className="h-9 pl-6 text-xs font-mono font-medium bg-white dark:bg-slate-800"
-                                                                                        />
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="sm:col-span-2">
-                                                                                    <div className="relative">
-                                                                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">₹</span>
-                                                                                        <NumericFormat
-                                                                                            customInput={Input}
-                                                                                            value={loan.outstanding_principal}
-                                                                                            onValueChange={(v) => handleUpdateLoan(loan.id, 'outstanding_principal', v.value || '')}
-                                                                                            thousandSeparator=","
-                                                                                            thousandsGroupStyle="lakh"
-                                                                                            placeholder="Principal O/S"
-                                                                                            className="h-9 pl-6 text-xs font-mono font-medium bg-white dark:bg-slate-800"
-                                                                                        />
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="sm:col-span-1 flex items-center justify-end">
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => handleRemoveLoan(loan.id)}
-                                                                                        className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                                                                                        title="Delete loan"
-                                                                                    >
-                                                                                        <Trash2 className="w-4 h-4" />
-                                                                                    </button>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {/* Balance Transfer Toggle */}
-                                                                            <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-xs">
-                                                                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                                                                    <input
-                                                                                        type="checkbox"
-                                                                                        checked={loan.is_balance_transfer}
-                                                                                        onChange={(e) => handleUpdateLoan(loan.id, 'is_balance_transfer', e.target.checked)}
-                                                                                        className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
-                                                                                    />
-                                                                                    <span className={`font-semibold ${loan.is_balance_transfer ? 'text-amber-800 dark:text-amber-300' : 'text-slate-600 dark:text-slate-400'}`}>
-                                                                                        Balance Transfer (BT)
-                                                                                    </span>
-                                                                                    {loan.loan_type?.includes('Personal Loan') && (
-                                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-medium">
-                                                                                            BT Eligible
-                                                                                        </span>
-                                                                                    )}
-                                                                                </label>
-                                                                                <span className="text-[10px] text-slate-400 font-mono">
-                                                                                    {loan.is_balance_transfer ? '✓ EMI Waived from FOIR' : 'Counts toward FOIR'}
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-
-                                                            {/* Obligations Totals */}
-                                                            {existingLoans.length > 0 && (
-                                                                <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-                                                                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
-                                                                        <span className="text-[10px] uppercase font-semibold text-slate-400 block">Continuing EMIs</span>
-                                                                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                                                                            {formatInr(eligibilityResults.continuingEmis)} / mo
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40">
-                                                                        <span className="text-[10px] uppercase font-semibold text-amber-700 dark:text-amber-400 block">Total BT Payoff</span>
-                                                                        <span className="font-mono font-bold text-amber-800 dark:text-amber-300">
-                                                                            {formatInr(eligibilityResults.totalBtPayoff)}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
                                                     </div>
 
                                                     {/* RIGHT COLUMN: Live Calculation Results Bento (5 Cols) */}
@@ -3516,34 +3368,184 @@ export default function CustomerDataEntryPage() {
                                                             </div>
                                                         </div>
 
-                                                        {/* 3. Detailed Step Breakdown Audit Accordion */}
-                                                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/70 dark:border-slate-800 text-xs space-y-2">
-                                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
-                                                                <Info className="w-3.5 h-3.5 text-slate-400" />
-                                                                Formula Breakdown & Audit Trail
-                                                            </span>
-                                                            <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                                                <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-slate-800">
-                                                                    <span>Gross Monthly Capacity ({((eligibilityResults.foirPercent || 0) * 100).toFixed(0)}%):</span>
-                                                                    <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{formatInr(eligibilityResults.totalGrossFoirEmi)}</span>
-                                                                </div>
-                                                                <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-slate-800">
-                                                                    <span>Less Continuing EMIs:</span>
-                                                                    <span className="font-mono text-red-500 font-semibold">-{formatInr(eligibilityResults.continuingEmis)}</span>
-                                                                </div>
-                                                                <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-slate-800">
-                                                                    <span>Max Allowed EMI for new loan:</span>
-                                                                    <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">{formatInr(eligibilityResults.maxAllowedEmi)}</span>
-                                                                </div>
-                                                                <div className="flex justify-between py-0.5">
-                                                                    <span>Balance Transfer Deducted:</span>
-                                                                    <span className="font-mono text-amber-600 dark:text-amber-400 font-semibold">{formatInr(eligibilityResults.totalBtPayoff)}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
                                                     </div>
 
+                                                </div>
+
+                                                {/* FULL-WIDTH CARD: Existing Obligations & Balance Transfer (BT) */}
+                                                <div className="p-5 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <CreditCard className="w-4 h-4 text-indigo-500" />
+                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                                                                Existing Obligations & Balance Transfer (BT)
+                                                            </span>
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            onClick={handleAddLoan}
+                                                            className="h-8 px-3 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                                                        >
+                                                            <Plus className="w-3.5 h-3.5" />
+                                                            <span>Add Loan / Obligation</span>
+                                                        </Button>
+                                                    </div>
+
+                                                    {existingLoans.length === 0 ? (
+                                                        <div className="p-5 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-1 bg-slate-50/50 dark:bg-slate-900/30">
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No existing loans or liabilities recorded.</p>
+                                                            <p className="text-[10px] text-slate-400">Customer has full disposable FOIR capacity (0 continuing EMIs).</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-3">
+                                                            {existingLoans.map((loan) => (
+                                                                <div 
+                                                                    key={loan.id} 
+                                                                    className={`p-3.5 rounded-xl border transition-all ${
+                                                                        loan.is_balance_transfer 
+                                                                            ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50' 
+                                                                            : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700/60'
+                                                                    }`}
+                                                                >
+                                                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                                                                        <div className="md:col-span-3">
+                                                                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Obligation Type</label>
+                                                                            <select
+                                                                                value={loan.loan_type || 'Personal Loan (BT Possible)'}
+                                                                                onChange={(e) => handleUpdateLoan(loan.id, 'loan_type', e.target.value)}
+                                                                                className="w-full h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                                                            >
+                                                                                {OBLIGATION_TYPES.map(t => (
+                                                                                    <option key={t} value={t}>{t}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                        <div className="md:col-span-3">
+                                                                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Financer / Bank</label>
+                                                                            <Input
+                                                                                type="text"
+                                                                                value={loan.name}
+                                                                                onChange={(e) => handleUpdateLoan(loan.id, 'name', e.target.value)}
+                                                                                placeholder="Financer / Name (e.g. HDFC)"
+                                                                                className="h-9 text-xs bg-white dark:bg-slate-800"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="md:col-span-3">
+                                                                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">EMI Amount</label>
+                                                                            <div className="relative">
+                                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">₹</span>
+                                                                                <NumericFormat
+                                                                                    customInput={Input}
+                                                                                    value={loan.emi_amount}
+                                                                                    onValueChange={(v) => handleUpdateLoan(loan.id, 'emi_amount', v.value || '')}
+                                                                                    thousandSeparator=","
+                                                                                    thousandsGroupStyle="lakh"
+                                                                                    placeholder="EMI / mo"
+                                                                                    className="h-9 pl-6 text-xs font-mono font-medium bg-white dark:bg-slate-800"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="md:col-span-2">
+                                                                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Principal O/S</label>
+                                                                            <div className="relative">
+                                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">₹</span>
+                                                                                <NumericFormat
+                                                                                    customInput={Input}
+                                                                                    value={loan.outstanding_principal}
+                                                                                    onValueChange={(v) => handleUpdateLoan(loan.id, 'outstanding_principal', v.value || '')}
+                                                                                    thousandSeparator=","
+                                                                                    thousandsGroupStyle="lakh"
+                                                                                    placeholder="Principal O/S"
+                                                                                    className="h-9 pl-6 text-xs font-mono font-medium bg-white dark:bg-slate-800"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="md:col-span-1 flex items-end justify-end md:justify-center pt-2 md:pt-4">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleRemoveLoan(loan.id)}
+                                                                                className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                                                                                title="Delete loan"
+                                                                            >
+                                                                                <Trash2 className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Balance Transfer Toggle */}
+                                                                    <div className="mt-2.5 pt-2.5 border-t border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-xs">
+                                                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={loan.is_balance_transfer}
+                                                                                onChange={(e) => handleUpdateLoan(loan.id, 'is_balance_transfer', e.target.checked)}
+                                                                                className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                                                                            />
+                                                                            <span className={`font-semibold ${loan.is_balance_transfer ? 'text-amber-800 dark:text-amber-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                                                Balance Transfer (BT)
+                                                                            </span>
+                                                                            {loan.loan_type?.includes('Personal Loan') && (
+                                                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-medium">
+                                                                                    BT Eligible
+                                                                                </span>
+                                                                            )}
+                                                                        </label>
+                                                                        <span className="text-[10px] text-slate-400 font-mono">
+                                                                            {loan.is_balance_transfer ? '✓ EMI Waived from FOIR' : 'Counts toward FOIR'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Obligations Totals */}
+                                                    {existingLoans.length > 0 && (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                                                            <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                                                <span className="text-xs uppercase font-semibold text-slate-400">Total Continuing EMIs</span>
+                                                                <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-sm">
+                                                                    {formatInr(eligibilityResults.continuingEmis)} / mo
+                                                                </span>
+                                                            </div>
+                                                            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 flex items-center justify-between">
+                                                                <span className="text-xs uppercase font-semibold text-amber-700 dark:text-amber-400">Total BT Payoff</span>
+                                                                <span className="font-mono font-bold text-amber-800 dark:text-amber-300 text-sm">
+                                                                    {formatInr(eligibilityResults.totalBtPayoff)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* BOTTOM AUDIT TRAIL: Formula Breakdown & Audit Trail */}
+                                                <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                                            <Info className="w-3.5 h-3.5 text-indigo-500" />
+                                                            Formula Breakdown & Audit Trail
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-mono">Real-time Calculation Audit</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                                        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                                                            <span className="text-[10px] uppercase font-semibold text-slate-400 block">Gross Monthly Capacity ({((eligibilityResults.foirPercent || 0) * 100).toFixed(0)}%)</span>
+                                                            <span className="font-mono text-slate-800 dark:text-slate-200 font-bold text-sm mt-0.5 block">{formatInr(eligibilityResults.totalGrossFoirEmi)}</span>
+                                                        </div>
+                                                        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800">
+                                                            <span className="text-[10px] uppercase font-semibold text-slate-400 block">Less Continuing EMIs</span>
+                                                            <span className="font-mono text-red-500 font-bold text-sm mt-0.5 block">-{formatInr(eligibilityResults.continuingEmis)}</span>
+                                                        </div>
+                                                        <div className="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800">
+                                                            <span className="text-[10px] uppercase font-semibold text-indigo-600 dark:text-indigo-400 block">Max Allowed EMI (New Loan)</span>
+                                                            <span className="font-mono text-indigo-700 dark:text-indigo-300 font-bold text-sm mt-0.5 block">{formatInr(eligibilityResults.maxAllowedEmi)}</span>
+                                                        </div>
+                                                        <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800">
+                                                            <span className="text-[10px] uppercase font-semibold text-amber-700 dark:text-amber-400 block">Balance Transfer Deducted</span>
+                                                            <span className="font-mono text-amber-700 dark:text-amber-300 font-bold text-sm mt-0.5 block">{formatInr(eligibilityResults.totalBtPayoff)}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
                                             </div>

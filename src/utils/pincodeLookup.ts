@@ -13,6 +13,39 @@ export interface PincodeDetails {
 // Local in-memory cache to prevent duplicate network calls
 const pincodeCache = new Map<string, PincodeDetails>();
 
+// Extract clean city/town name from India Post PostOffice entry
+function extractCityFromPostOffice(po: any): string {
+    const district = (po.District || '').trim();
+    const state = (po.State || '').trim();
+    const division = (po.Division || '')
+        .replace(/\b(Division|GPO|H\.O|Head Office|RMS|City|West|East|North|South|Central|Rural|Urban)\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const block = (po.Block || '')
+        .replace(/\b(West|East|North|South|Central|Rural|Urban)\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const cleanDistrict = district
+        .replace(/\b(West|East|North|South|Central|Rural|Urban|City)\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // 1. If division exists and is not equal to state or generic
+    if (division && division.toLowerCase() !== state.toLowerCase() && !['na', 'nil', 'null'].includes(division.toLowerCase()) && division.length >= 3) {
+        return division;
+    }
+    // 2. If block is meaningful and not NA/Nil/GMC/State
+    if (block && !['na', 'nil', 'null', 'gmc'].includes(block.toLowerCase()) && block.toLowerCase() !== state.toLowerCase() && block.length >= 3) {
+        return block;
+    }
+    // 3. Clean district if it produced a nice city name
+    if (cleanDistrict && cleanDistrict.length >= 3) {
+        return cleanDistrict;
+    }
+    return district;
+}
+
 // State prefix mapping fallback for offline/instant resolution
 function getStateByPrefix(pin: string): { state: string; defaultDistrict?: string } | null {
     if (!pin || pin.length < 2) return null;
@@ -130,9 +163,7 @@ export async function lookupPincode(pincode: string): Promise<PincodeDetails | n
                     const primary = poList[0];
                     const district = primary.District || '';
                     const state = primary.State || '';
-                    const city = primary.Block && primary.Block !== 'NA' 
-                        ? primary.Block 
-                        : (primary.Division && primary.Division !== 'NA' ? primary.Division : primary.Name || district);
+                    const city = extractCityFromPostOffice(primary);
 
                     const result: PincodeDetails = {
                         pincode: cleanPin,
