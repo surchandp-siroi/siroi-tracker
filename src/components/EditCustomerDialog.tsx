@@ -71,7 +71,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
 
   const [isLoanSectionOpen, setIsLoanSectionOpen] = useState(true);
 
-  const isLoan = customerType === 'Loans';
+  const isLoan = customerType === 'Loans' || customerType === 'Loan';
 
   const availableProducts = useMemo(() => {
     const cat = mapCustomerTypeToCategory(customerType);

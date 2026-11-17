@@ -95,7 +95,7 @@ export default function CustomerDataEntryPage() {
     const [ref2Address, setRef2Address] = useState('');
     const [ref2Relation, setRef2Relation] = useState('');
 
-    const isLoan = customerType === 'Loans';
+    const isLoan = customerType === 'Loans' || customerType === 'Loan';
 
     // Dynamic Sections based on whether Customer Type is Loan vs Standard
     const sections = useMemo(() => {
@@ -198,10 +198,60 @@ export default function CustomerDataEntryPage() {
             }
             
             if (data) {
-                setError(`This PAN number already exists in the system (entered at ${data.entry_location || 'another location'}).`);
-                setIsLoading(false);
-                return;
+                // Existing record found: auto-populate all known customer details
+                setCustomerName(data.customer_name || '');
+                const rawType = data.customer_type || (data.category === 'Loan' ? 'Loans' : data.category) || '';
+                if (rawType) setCustomerType(rawType === 'Loan' ? 'Loans' : rawType);
+                if (data.product) setProduct(data.product);
+                if (data.amount) setAmount(String(data.amount));
+                setPhoneNumber(data.phone_number || '');
+                setEmailId(data.email_id || '');
+                setAadharNumber(data.aadhar_number || '');
+                setAssociationDate(data.association_date || '');
+                setAddress(data.address || '');
+                setPincode(data.pincode || '');
+                setCity(data.city || '');
+                setDistrict(data.district || '');
+                setIncomeType(data.income_type || '');
+                setCompanyName(data.company_name || '');
+                setYearlyIncomeRange(data.yearly_income_range || '');
+                setBirthday(data.birthday || '');
+                setAnniversary(data.anniversary || '');
+                if (data.entry_person_name) setEntryPersonName(data.entry_person_name);
+
+                // Loan-specific KYC attributes
+                setFatherName(data.father_name || '');
+                setMotherName(data.mother_name || '');
+                setMaritalStatus(data.marital_status || '');
+                setSpouseName(data.spouse_name || '');
+                setEducationQualification(data.education_qualification || '');
+                setDesignation(data.designation || '');
+                setOfficialEmail(data.official_email || '');
+                setOfficePhone(data.office_phone || '');
+                setOfficeAddress(data.office_address || '');
+                setOfficeLandmark(data.office_landmark || '');
+                setResidenceType(data.residence_type || '');
+                setCurrentAddressLandmark(data.current_address_landmark || '');
+                setYearsInCurrentResidence(data.years_in_current_residence || '');
+                setYearsInCurrentCity(data.years_in_current_city || '');
+                setPermanentAddress(data.permanent_address || '');
+                setPermanentAddressLandmark(data.permanent_address_landmark || '');
+                setPermanentPhone(data.permanent_phone || '');
+                setSalaryBankName(data.salary_bank_name || '');
+                setSalaryAccountNumber(data.salary_account_number || '');
+                setTenure(data.tenure || '');
+                setRef1Name(data.ref1_name || '');
+                setRef1Phone(data.ref1_phone || '');
+                setRef1Address(data.ref1_address || '');
+                setRef1Relation(data.ref1_relation || '');
+                setRef2Name(data.ref2_name || '');
+                setRef2Phone(data.ref2_phone || '');
+                setRef2Address(data.ref2_address || '');
+                setRef2Relation(data.ref2_relation || '');
+
+                setExistingRecord(data);
             } else {
+                // New customer: reset existing record
                 setExistingRecord(null);
             }
             
@@ -296,63 +346,74 @@ export default function CustomerDataEntryPage() {
         setIsLoading(true);
         
         try {
-            const { error: insertError } = await supabase
-                .from('customer_data')
-                .insert([{
-                    pan_number: panNumber.toUpperCase(),
-                    customer_name: formatCustomerName(customerName, true),
-                    customer_type: customerType,
-                    category: mapCustomerTypeToCategory(customerType),
-                    product: product,
-                    amount: Number(amount) || 0,
-                    aadhar_number: aadharNumber.trim() || null,
-                    association_date: associationDate || null,
-                    address: address.trim() || null,
-                    pincode: pincode.trim() || null,
-                    city: city.trim() || null,
-                    district: district.trim() || null,
-                    phone_number: phoneNumber.trim(),
-                    email_id: emailId.trim() || null,
-                    income_type: incomeType || null,
-                    company_name: companyName.trim() || null,
-                    yearly_income_range: yearlyIncomeRange || null,
-                    birthday: birthday || null,
-                    anniversary: anniversary || null,
-                    entry_person_name: entryPersonName,
-                    entry_location: entryLocation,
+            const customerPayload = {
+                pan_number: panNumber.toUpperCase(),
+                customer_name: formatCustomerName(customerName, true),
+                customer_type: customerType,
+                category: mapCustomerTypeToCategory(customerType),
+                product: product,
+                amount: Number(amount) || 0,
+                aadhar_number: aadharNumber.trim() || null,
+                association_date: associationDate || null,
+                address: address.trim() || null,
+                pincode: pincode.trim() || null,
+                city: city.trim() || null,
+                district: district.trim() || null,
+                phone_number: phoneNumber.trim(),
+                email_id: emailId.trim() || null,
+                income_type: incomeType || null,
+                company_name: companyName.trim() || null,
+                yearly_income_range: yearlyIncomeRange || null,
+                birthday: birthday || null,
+                anniversary: anniversary || null,
+                entry_person_name: entryPersonName,
+                entry_location: entryLocation,
 
-                    // Loan-specific KYC attributes
-                    father_name: isLoan ? (fatherName.trim() || null) : null,
-                    mother_name: isLoan ? (motherName.trim() || null) : null,
-                    marital_status: isLoan ? (maritalStatus || null) : null,
-                    spouse_name: isLoan ? (spouseName.trim() || null) : null,
-                    education_qualification: isLoan ? (educationQualification || null) : null,
-                    designation: isLoan ? (designation.trim() || null) : null,
-                    official_email: isLoan ? (officialEmail.trim() || null) : null,
-                    office_phone: isLoan ? (officePhone.trim() || null) : null,
-                    office_address: isLoan ? (officeAddress.trim() || null) : null,
-                    office_landmark: isLoan ? (officeLandmark.trim() || null) : null,
-                    residence_type: isLoan ? (residenceType || null) : null,
-                    current_address_landmark: isLoan ? (currentAddressLandmark.trim() || null) : null,
-                    years_in_current_residence: isLoan ? (yearsInCurrentResidence.trim() || null) : null,
-                    years_in_current_city: isLoan ? (yearsInCurrentCity.trim() || null) : null,
-                    permanent_address: isLoan ? (permanentAddress.trim() || null) : null,
-                    permanent_address_landmark: isLoan ? (permanentAddressLandmark.trim() || null) : null,
-                    permanent_phone: isLoan ? (permanentPhone.trim() || null) : null,
-                    salary_bank_name: isLoan ? (salaryBankName.trim() || null) : null,
-                    salary_account_number: isLoan ? (salaryAccountNumber.trim() || null) : null,
-                    tenure: isLoan ? (tenure.trim() || null) : null,
-                    ref1_name: isLoan ? (ref1Name.trim() || null) : null,
-                    ref1_phone: isLoan ? (ref1Phone.trim() || null) : null,
-                    ref1_address: isLoan ? (ref1Address.trim() || null) : null,
-                    ref1_relation: isLoan ? (ref1Relation.trim() || null) : null,
-                    ref2_name: isLoan ? (ref2Name.trim() || null) : null,
-                    ref2_phone: isLoan ? (ref2Phone.trim() || null) : null,
-                    ref2_address: isLoan ? (ref2Address.trim() || null) : null,
-                    ref2_relation: isLoan ? (ref2Relation.trim() || null) : null,
-                }]);
-                
-            if (insertError) throw insertError;
+                // Loan-specific KYC attributes
+                father_name: isLoan ? (fatherName.trim() || null) : null,
+                mother_name: isLoan ? (motherName.trim() || null) : null,
+                marital_status: isLoan ? (maritalStatus || null) : null,
+                spouse_name: isLoan ? (spouseName.trim() || null) : null,
+                education_qualification: isLoan ? (educationQualification || null) : null,
+                designation: isLoan ? (designation.trim() || null) : null,
+                official_email: isLoan ? (officialEmail.trim() || null) : null,
+                office_phone: isLoan ? (officePhone.trim() || null) : null,
+                office_address: isLoan ? (officeAddress.trim() || null) : null,
+                office_landmark: isLoan ? (officeLandmark.trim() || null) : null,
+                residence_type: isLoan ? (residenceType || null) : null,
+                current_address_landmark: isLoan ? (currentAddressLandmark.trim() || null) : null,
+                years_in_current_residence: isLoan ? (yearsInCurrentResidence.trim() || null) : null,
+                years_in_current_city: isLoan ? (yearsInCurrentCity.trim() || null) : null,
+                permanent_address: isLoan ? (permanentAddress.trim() || null) : null,
+                permanent_address_landmark: isLoan ? (permanentAddressLandmark.trim() || null) : null,
+                permanent_phone: isLoan ? (permanentPhone.trim() || null) : null,
+                salary_bank_name: isLoan ? (salaryBankName.trim() || null) : null,
+                salary_account_number: isLoan ? (salaryAccountNumber.trim() || null) : null,
+                tenure: isLoan ? (tenure.trim() || null) : null,
+                ref1_name: isLoan ? (ref1Name.trim() || null) : null,
+                ref1_phone: isLoan ? (ref1Phone.trim() || null) : null,
+                ref1_address: isLoan ? (ref1Address.trim() || null) : null,
+                ref1_relation: isLoan ? (ref1Relation.trim() || null) : null,
+                ref2_name: isLoan ? (ref2Name.trim() || null) : null,
+                ref2_phone: isLoan ? (ref2Phone.trim() || null) : null,
+                ref2_address: isLoan ? (ref2Address.trim() || null) : null,
+                ref2_relation: isLoan ? (ref2Relation.trim() || null) : null,
+            };
+
+            if (existingRecord?.id) {
+                const { error: updateError } = await supabase
+                    .from('customer_data')
+                    .update(customerPayload)
+                    .eq('id', existingRecord.id);
+                    
+                if (updateError) throw updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('customer_data')
+                    .insert([customerPayload]);
+                    
+                if (insertError) throw insertError;
+            }
             
             setSuccess(true);
             setTimeout(() => {
@@ -571,6 +632,21 @@ export default function CustomerDataEntryPage() {
                         {step === 2 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 
+                                {/* Existing customer record indicator if found */}
+                                {existingRecord && (
+                                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-200 rounded-2xl flex items-center justify-between text-xs font-medium animate-in fade-in">
+                                        <div className="flex items-center gap-2.5">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                            <span>
+                                                Existing profile found for PAN <strong className="font-mono">{panNumber}</strong> ({existingRecord.entry_location || 'Branch'}). Details auto-populated.
+                                            </span>
+                                        </div>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-200/60 dark:bg-emerald-800/60 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                                            Auto-Filled
+                                        </span>
+                                    </div>
+                                )}
+
                                 {/* Google Modern Step Dots Indicator */}
                                 <div className="space-y-4 pt-1 pb-2">
                                     {/* Desktop & Tablet: Connected Dot Stepper */}
@@ -578,7 +654,6 @@ export default function CustomerDataEntryPage() {
                                         {sections.map((sec, idx) => {
                                             const isActive = idx === activeSectionIndex;
                                             const isDone = idx < activeSectionIndex;
-                                            const isClickable = idx < activeSectionIndex || validateCurrentSection(activeSectionIndex);
 
                                             return (
                                                 <React.Fragment key={sec.id}>
@@ -587,7 +662,12 @@ export default function CustomerDataEntryPage() {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                if (isClickable) setActiveSectionIndex(idx);
+                                                                if (idx <= activeSectionIndex) {
+                                                                    setError('');
+                                                                    setActiveSectionIndex(idx);
+                                                                } else if (validateCurrentSection(activeSectionIndex)) {
+                                                                    setActiveSectionIndex(idx);
+                                                                }
                                                             }}
                                                             className={`relative flex items-center justify-center transition-all duration-300 rounded-full select-none ${
                                                                 isActive
@@ -640,7 +720,10 @@ export default function CustomerDataEntryPage() {
                                                 key={sec.id}
                                                 type="button"
                                                 onClick={() => {
-                                                    if (idx < activeSectionIndex || validateCurrentSection(activeSectionIndex)) {
+                                                    if (idx <= activeSectionIndex) {
+                                                        setError('');
+                                                        setActiveSectionIndex(idx);
+                                                    } else if (validateCurrentSection(activeSectionIndex)) {
                                                         setActiveSectionIndex(idx);
                                                     }
                                                 }}
