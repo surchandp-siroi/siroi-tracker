@@ -20,7 +20,10 @@ import {
     Landmark, 
     Check,
     FileText,
-    ShieldCheck
+    ShieldCheck,
+    MapPin,
+    CreditCard,
+    ArrowRight
 } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
 import { NumericFormat } from 'react-number-format';
@@ -425,7 +428,11 @@ export default function CustomerDataEntryPage() {
                 shadowIntensity="lg"
                 borderRadius="2.5rem"
                 blurIntensity="lg"
-                className="relative z-10 w-full max-w-3xl p-6 sm:p-10 md:p-12 bg-white/70 dark:bg-slate-900/70 shadow-2xl border border-white/60 dark:border-white/10"
+                className={`relative z-10 w-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                    step === 1 
+                        ? 'max-w-[480px] p-8 sm:p-10' 
+                        : 'max-w-3xl p-6 sm:p-10'
+                } bg-white/75 dark:bg-slate-900/75 shadow-2xl border border-white/70 dark:border-white/10`}
             >
                 <button 
                     onClick={() => {
@@ -448,9 +455,9 @@ export default function CustomerDataEntryPage() {
                         {step === 1 ? 'Customer Identification' : isLoan ? 'Loan Application Form' : 'Customer Profile Form'}
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                        Customer Data Entry
+                        {step === 1 ? 'Customer Verification' : 'Customer Data Entry'}
                     </h1>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                         {step === 1 
                             ? 'Verify PAN to start or check existing customer profile.' 
                             : isLoan 
@@ -477,26 +484,32 @@ export default function CustomerDataEntryPage() {
                 ) : (
                     <form onSubmit={step === 1 ? handlePanLookup : handleSubmit} className="space-y-6">
                         
-                        {/* STEP 1: Location & PAN Verification */}
+                        {/* STEP 1: Location & PAN Verification (Refined, Focused Proportions) */}
                         {step === 1 && (
-                            <div className="space-y-5 animate-in fade-in duration-300">
-                                {/* Custom Styled Location Dropdown */}
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                {/* Operating Location Dropdown */}
                                 <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Active Location</label>
+                                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                        <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                                        <span>Operating Location</span>
+                                    </label>
                                     <div className="relative">
                                         <button
                                             type="button"
                                             onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-                                            className="flex items-center justify-between h-12 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
+                                            className="flex items-center justify-between h-12 w-full rounded-2xl border border-slate-200/90 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all shadow-xs hover:border-slate-300"
                                         >
-                                            <span className="font-medium">{entryLocation}</span>
-                                            <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+                                                <span className="font-semibold text-slate-800 dark:text-slate-100">{entryLocation}</span>
+                                            </div>
+                                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
                                         </button>
                                         
                                         {isLocationDropdownOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsLocationDropdownOpen(false)}></div>
-                                                <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                                                <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
                                                     {branches.map(branch => (
                                                         <button
                                                             key={branch.id}
@@ -505,9 +518,10 @@ export default function CustomerDataEntryPage() {
                                                                 setEntryLocation(branch.name);
                                                                 setIsLocationDropdownOpen(false);
                                                             }}
-                                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${entryLocation === branch.name ? 'bg-indigo-600 text-white font-medium' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${entryLocation === branch.name ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
                                                         >
-                                                            {branch.name}
+                                                            <span>{branch.name}</span>
+                                                            {entryLocation === branch.name && <Check className="w-4 h-4 text-indigo-600" />}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -516,30 +530,38 @@ export default function CustomerDataEntryPage() {
                                     </div>
                                 </div>
                                 
+                                {/* PAN Card Number with Ergonomic Proportions */}
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">PAN Card Number</label>
-                                        <span className="text-[10px] text-red-500 font-bold">*Mandatory (10 Characters)</span>
+                                        <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                            <CreditCard className="w-3.5 h-3.5 text-indigo-500" />
+                                            <span>PAN Card Number</span>
+                                        </label>
+                                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-200/50 dark:border-indigo-800">
+                                            10 Alphanumeric
+                                        </span>
                                     </div>
                                     <Input 
                                         type="text" 
                                         value={panNumber}
                                         onChange={(e) => setPanNumber(e.target.value.toUpperCase())}
-                                        placeholder="e.g. ABCDE1234F"
+                                        placeholder="ABCDE1234F"
                                         maxLength={10}
                                         required
-                                        className="h-12 bg-white/70 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 rounded-xl shadow-sm font-mono tracking-wider text-base"
+                                        className="h-14 bg-white/90 dark:bg-slate-800/90 border-slate-200/90 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl shadow-xs font-mono tracking-[0.25em] text-center text-lg font-bold uppercase focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all"
                                     />
-                                    <p className="text-[11px] text-slate-400">Verifying PAN ensures no duplicate records exist across locations.</p>
+                                    <p className="text-[11px] text-slate-400 text-center pt-0.5">
+                                        Verified across all branch databases to prevent duplicate customer records.
+                                    </p>
                                 </div>
 
                                 <Button 
                                     type="submit" 
                                     disabled={isLoading || panNumber.length < 10}
-                                    className="w-full h-12 mt-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium tracking-wide transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] flex items-center justify-center gap-2"
+                                    className="w-full h-12 mt-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold tracking-wide transition-all shadow-md shadow-indigo-500/25 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                                        <><span>Verify PAN</span><Search className="w-4 h-4" /></>
+                                        <><span>Verify Customer PAN</span><ArrowRight className="w-4 h-4" /></>
                                     )}
                                 </Button>
                             </div>
