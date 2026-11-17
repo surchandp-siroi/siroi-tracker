@@ -153,7 +153,8 @@ CREATE TABLE public.customer_data (
     ref2_name TEXT,
     ref2_phone TEXT,
     ref2_address TEXT,
-    ref2_relation TEXT
+    ref2_relation TEXT,
+    loan_eligibility JSONB
 );
 
 ALTER TABLE public.customer_data ENABLE ROW LEVEL SECURITY;

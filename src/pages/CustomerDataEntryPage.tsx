@@ -18,16 +18,80 @@ import {
     Briefcase, 
     Home, 
     Landmark, 
-    Check,
-    FileText,
-    ShieldCheck,
-    MapPin,
-    CreditCard,
-    ArrowRight
+    Check, 
+    FileText, 
+    ShieldCheck, 
+    MapPin, 
+    CreditCard, 
+    ArrowRight,
+    Calculator,
+    Plus,
+    Trash2,
+    TrendingUp,
+    Percent,
+    Wallet,
+    Info,
+    RefreshCw,
+    ArrowUpRight
 } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
 import { NumericFormat } from 'react-number-format';
 import { formatCustomerName, mapCustomerTypeToCategory } from '@/utils/formatCustomerName';
+
+// IndusInd Bank / Retail FOIR Matrix (DBR Ratio based on Employer Cat, Owned House, Mortgage TradeLine, Income Band)
+const FOIR_MATRIX: Record<string, number> = {
+    // Co Cat: A/B/G, Owned Resi: Y, LAP/HL TradeLine: Y
+    'A/B/GYY0': 0.00,
+    'A/B/GYY1': 0.55,
+    'A/B/GYY2': 0.60,
+    'A/B/GYY3': 0.70,
+    'A/B/GYY4': 0.75,
+    // Co Cat: C1000/C, Owned Resi: Y, LAP/HL TradeLine: Y
+    'C1000/CYY0': 0.00,
+    'C1000/CYY1': 0.50,
+    'C1000/CYY2': 0.50,
+    'C1000/CYY3': 0.70,
+    'C1000/CYY4': 0.70,
+
+    // Co Cat: A/B/G, Owned Resi: N, LAP/HL TradeLine: Y
+    'A/B/GNY0': 0.00,
+    'A/B/GNY1': 0.50,
+    'A/B/GNY2': 0.60,
+    'A/B/GNY3': 0.65,
+    'A/B/GNY4': 0.65,
+    // Co Cat: C1000/C, Owned Resi: N, LAP/HL TradeLine: Y
+    'C1000/CNY0': 0.00,
+    'C1000/CNY1': 0.50,
+    'C1000/CNY2': 0.50,
+    'C1000/CNY3': 0.60,
+    'C1000/CNY4': 0.60,
+
+    // Co Cat: A/B/G, Owned Resi: Y, LAP/HL TradeLine: N
+    'A/B/GYN0': 0.00,
+    'A/B/GYN1': 0.50,
+    'A/B/GYN2': 0.60,
+    'A/B/GYN3': 0.70,
+    'A/B/GYN4': 0.70,
+    // Co Cat: C1000/C, Owned Resi: Y, LAP/HL TradeLine: N
+    'C1000/CYN0': 0.00,
+    'C1000/CYN1': 0.50,
+    'C1000/CYN2': 0.50,
+    'C1000/CYN3': 0.65,
+    'C1000/CYN4': 0.65,
+
+    // Co Cat: A/B/G, Owned Resi: N, LAP/HL TradeLine: N
+    'A/B/GNN0': 0.00,
+    'A/B/GNN1': 0.50,
+    'A/B/GNN2': 0.60,
+    'A/B/GNN3': 0.60,
+    'A/B/GNN4': 0.65,
+    // Co Cat: C1000/C, Owned Resi: N, LAP/HL TradeLine: N
+    'C1000/CNN0': 0.00,
+    'C1000/CNN1': 0.50,
+    'C1000/CNN2': 0.50,
+    'C1000/CNN3': 0.60,
+    'C1000/CNN4': 0.60,
+};
 
 export default function CustomerDataEntryPage() {
     const navigate = useNavigate();
@@ -98,6 +162,136 @@ export default function CustomerDataEntryPage() {
     const isLoan = customerType === 'Loans' || customerType === 'Loan';
     const isForex = customerType === 'Forex';
 
+    // Loan-Specific Eligibility Calculator State (Step 6)
+    const [monthlySalary, setMonthlySalary] = useState('');
+    const [employerCategory, setEmployerCategory] = useState<'A/B/G' | 'C1000/C'>('A/B/G');
+    const [customOwnsHome, setCustomOwnsHome] = useState<boolean | null>(null);
+    const [hasBureauHlLap, setHasBureauHlLap] = useState<boolean>(false);
+    const [interestRateAnnual, setInterestRateAnnual] = useState<number>(11.0);
+    const [calcTenureMonths, setCalcTenureMonths] = useState<number>(36);
+    const [bankMultiplier, setBankMultiplier] = useState<number>(24);
+    const [absoluteMaxCap, setAbsoluteMaxCap] = useState<number>(2500000);
+    const [existingLoans, setExistingLoans] = useState<Array<{
+        id: string;
+        name: string;
+        emi_amount: string;
+        outstanding_principal: string;
+        is_balance_transfer: boolean;
+    }>>([]);
+
+    // Auto-sync calculator tenure from Step 1 tenure input
+    useEffect(() => {
+        if (tenure) {
+            const num = parseInt(tenure.replace(/\D/g, ''), 10);
+            if (!isNaN(num) && num > 0) {
+                if (num <= 10 && tenure.toLowerCase().includes('year')) {
+                    setCalcTenureMonths(num * 12);
+                } else if (num >= 6 && num <= 120) {
+                    setCalcTenureMonths(num);
+                }
+            }
+        }
+    }, [tenure]);
+
+    // Auto-suggest monthly salary based on yearly income bracket if blank
+    useEffect(() => {
+        if (!monthlySalary && yearlyIncomeRange) {
+            if (yearlyIncomeRange === 'Above 20L') setMonthlySalary('150000');
+            else if (yearlyIncomeRange === '10L - 20L') setMonthlySalary('100000');
+            else if (yearlyIncomeRange === '5L - 10L') setMonthlySalary('60000');
+            else if (yearlyIncomeRange === '2.5L - 5L') setMonthlySalary('35000');
+            else if (yearlyIncomeRange === 'Below 2.5L') setMonthlySalary('18000');
+        }
+    }, [yearlyIncomeRange, monthlySalary]);
+
+    // Comprehensive Retail Loan Eligibility Calculation Engine
+    const eligibilityResults = useMemo(() => {
+        const salary = Number(monthlySalary) || 0;
+        
+        let incomeBand = 0;
+        if (salary >= 80000) incomeBand = 4;
+        else if (salary >= 50000) incomeBand = 3;
+        else if (salary >= 35000) incomeBand = 2;
+        else if (salary >= 20000) incomeBand = 1;
+        else incomeBand = 0;
+
+        const effectiveOwnsHome = customOwnsHome !== null 
+            ? customOwnsHome 
+            : (residenceType === 'Owned' || residenceType === 'Parental');
+
+        const ownsChar = effectiveOwnsHome ? 'Y' : 'N';
+        const mortChar = hasBureauHlLap ? 'Y' : 'N';
+        const profileKey = `${employerCategory}${ownsChar}${mortChar}${incomeBand}`;
+        const foirPercent = FOIR_MATRIX[profileKey] ?? 0.60;
+
+        // Obligations breakdown (The BT Rule)
+        const continuingEmis = existingLoans
+            .filter(l => !l.is_balance_transfer)
+            .reduce((sum, l) => sum + (Number(l.emi_amount) || 0), 0);
+
+        const totalBtPayoff = existingLoans
+            .filter(l => l.is_balance_transfer)
+            .reduce((sum, l) => sum + (Number(l.outstanding_principal) || 0), 0);
+
+        // FOIR Capacity (Gross Monthly Capacity minus continuing obligations)
+        const totalGrossFoirEmi = Math.round(salary * foirPercent);
+        const maxAllowedEmi = Math.max(0, totalGrossFoirEmi - continuingEmis);
+
+        // Present Value (PV) Loan Formula based on interest rate and tenure
+        const annualRate = (interestRateAnnual || 11.0) / 100;
+        const monthlyRate = annualRate / 12;
+        const nMonths = calcTenureMonths > 0 ? calcTenureMonths : 36;
+
+        let maxLoanFoir = 0;
+        if (monthlyRate > 0 && maxAllowedEmi > 0 && nMonths > 0) {
+            maxLoanFoir = Math.round(maxAllowedEmi * (1 - Math.pow(1 + monthlyRate, -nMonths)) / monthlyRate);
+        }
+
+        // Multiplier Eligibility
+        const multiplierLoan = salary * (bankMultiplier || 24);
+        const maxLoanMultiplier = Math.min(multiplierLoan, absoluteMaxCap || 2500000);
+
+        // Final Approvals
+        const grossEligibleLoan = Math.min(maxLoanMultiplier, maxLoanFoir);
+        const netCashTopUp = grossEligibleLoan - totalBtPayoff;
+
+        // Estimated Monthly EMI on gross eligible loan
+        let estimatedEmi = 0;
+        if (grossEligibleLoan > 0 && monthlyRate > 0 && nMonths > 0) {
+            const factor = Math.pow(1 + monthlyRate, nMonths);
+            estimatedEmi = Math.round((grossEligibleLoan * monthlyRate * factor) / (factor - 1));
+        }
+
+        return {
+            salary,
+            incomeBand,
+            profileKey,
+            foirPercent,
+            effectiveOwnsHome,
+            continuingEmis,
+            totalBtPayoff,
+            totalGrossFoirEmi,
+            maxAllowedEmi,
+            maxLoanFoir,
+            maxLoanMultiplier,
+            grossEligibleLoan,
+            netCashTopUp,
+            estimatedEmi,
+            isBtDeficit: netCashTopUp < 0 && totalBtPayoff > 0
+        };
+    }, [
+        monthlySalary,
+        employerCategory,
+        customOwnsHome,
+        residenceType,
+        hasBureauHlLap,
+        interestRateAnnual,
+        calcTenureMonths,
+        bankMultiplier,
+        absoluteMaxCap,
+        existingLoans
+    ]);
+
     // Dynamic Sections based on whether Customer Type is Loan vs Forex vs Standard
     const sections = useMemo(() => {
         if (isLoan) {
@@ -107,6 +301,7 @@ export default function CustomerDataEntryPage() {
                 { id: 'employment', title: 'Work & Office', shortTitle: 'Employment', icon: Briefcase },
                 { id: 'residential', title: 'Addresses & Stay', shortTitle: 'Addresses', icon: Home },
                 { id: 'banking_refs', title: 'Banking & References', shortTitle: 'Bank & Refs', icon: ShieldCheck },
+                { id: 'eligibility', title: 'Loan Eligibility Calculator', shortTitle: 'Calculator', icon: Calculator },
             ];
         }
         if (isForex) {
@@ -175,6 +370,35 @@ export default function CustomerDataEntryPage() {
             setPermanentAddressLandmark('');
         }
     };
+
+    // Step 6: Loan Eligibility Obligations Handlers
+    const handleAddLoan = () => {
+        setExistingLoans(prev => [
+            ...prev,
+            {
+                id: Date.now().toString(),
+                name: '',
+                emi_amount: '',
+                outstanding_principal: '',
+                is_balance_transfer: false,
+            }
+        ]);
+    };
+
+    const handleUpdateLoan = (id: string, field: string, value: any) => {
+        setExistingLoans(prev => prev.map(loan => {
+            if (loan.id === id) {
+                return { ...loan, [field]: value };
+            }
+            return loan;
+        }));
+    };
+
+    const handleRemoveLoan = (id: string) => {
+        setExistingLoans(prev => prev.filter(loan => loan.id !== id));
+    };
+
+    const formatInr = (val: number) => '₹' + Math.round(val || 0).toLocaleString('en-IN');
     
     // UI State
     const [isLoading, setIsLoading] = useState(false);
@@ -256,6 +480,20 @@ export default function CustomerDataEntryPage() {
                 setRef2Address(data.ref2_address || '');
                 setRef2Relation(data.ref2_relation || '');
 
+                // Restore Step 6 Loan Eligibility snapshot if present
+                if (data.loan_eligibility) {
+                    const le = data.loan_eligibility;
+                    if (le.monthly_salary) setMonthlySalary(String(le.monthly_salary));
+                    if (le.employer_category) setEmployerCategory(le.employer_category);
+                    if (typeof le.owns_home === 'boolean') setCustomOwnsHome(le.owns_home);
+                    if (typeof le.has_bureau_hl_lap === 'boolean') setHasBureauHlLap(le.has_bureau_hl_lap);
+                    if (le.interest_rate_annual) setInterestRateAnnual(le.interest_rate_annual);
+                    if (le.tenure_months) setCalcTenureMonths(le.tenure_months);
+                    if (le.bank_multiplier) setBankMultiplier(le.bank_multiplier);
+                    if (le.absolute_max_cap) setAbsoluteMaxCap(le.absolute_max_cap);
+                    if (Array.isArray(le.existing_loans)) setExistingLoans(le.existing_loans);
+                }
+
                 setExistingRecord(data);
             } else {
                 // New customer: reset existing record
@@ -290,6 +528,12 @@ export default function CustomerDataEntryPage() {
             }
             if (index === 4) {
                 if (!entryPersonName) { setError('Please select Your Name (Data Enterer).'); return false; }
+            }
+            if (index === 5) {
+                if (!monthlySalary || Number(monthlySalary) <= 0) {
+                    setError('Please enter a valid positive Net Monthly Salary (₹).');
+                    return false;
+                }
             }
         } else if (isForex) {
             if (index === 0) {
@@ -420,6 +664,20 @@ export default function CustomerDataEntryPage() {
                 ref2_phone: isLoan ? (ref2Phone.trim() || null) : null,
                 ref2_address: isLoan ? (ref2Address.trim() || null) : null,
                 ref2_relation: isLoan ? (ref2Relation.trim() || null) : null,
+
+                // Loan Eligibility Engine Calculation Snapshot
+                loan_eligibility: isLoan ? {
+                    monthly_salary: Number(monthlySalary) || 0,
+                    employer_category: employerCategory,
+                    owns_home: eligibilityResults.effectiveOwnsHome,
+                    has_bureau_hl_lap: hasBureauHlLap,
+                    interest_rate_annual: interestRateAnnual,
+                    tenure_months: calcTenureMonths,
+                    bank_multiplier: bankMultiplier,
+                    absolute_max_cap: absoluteMaxCap,
+                    existing_loans: existingLoans,
+                    results: eligibilityResults
+                } : null,
             };
 
             if (existingRecord?.id) {
@@ -490,6 +748,15 @@ export default function CustomerDataEntryPage() {
                 setRef2Phone('');
                 setRef2Address('');
                 setRef2Relation('');
+                setMonthlySalary('');
+                setEmployerCategory('A/B/G');
+                setCustomOwnsHome(null);
+                setHasBureauHlLap(false);
+                setInterestRateAnnual(11.0);
+                setCalcTenureMonths(36);
+                setBankMultiplier(24);
+                setAbsoluteMaxCap(2500000);
+                setExistingLoans([]);
                 setExistingRecord(null);
             }, 2500);
         } catch (err: any) {
@@ -514,7 +781,7 @@ export default function CustomerDataEntryPage() {
                 className={`relative z-10 w-full transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                     step === 1 
                         ? 'max-w-[480px] p-8 sm:p-10' 
-                        : 'max-w-3xl p-6 sm:p-10'
+                        : (isLoan && activeSectionIndex === 5 ? 'max-w-5xl p-6 sm:p-10' : 'max-w-3xl p-6 sm:p-10')
                 } bg-white/75 dark:bg-slate-900/75 shadow-2xl border border-white/70 dark:border-white/10`}
             >
                 <button 
@@ -1284,6 +1551,538 @@ export default function CustomerDataEntryPage() {
                                                             </>
                                                         )}
                                                     </div>
+                                                </div>
+
+                                            </div>
+                                        )}
+
+                                        {/* SECTION 6: Loan Eligibility Calculator */}
+                                        {activeSectionIndex === 5 && (
+                                            <div className="space-y-6 animate-in fade-in duration-300">
+                                                
+                                                {/* Header Banner */}
+                                                <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-blue-500/10 border border-indigo-200/50 dark:border-indigo-800/40 flex items-start sm:items-center justify-between gap-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/30 flex-shrink-0">
+                                                            <Calculator className="w-5 h-5" />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                                Retail Loan Eligibility Engine
+                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                                                    IndusInd FOIR Matrix
+                                                                </span>
+                                                            </h3>
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                Dynamic risk-adjusted FOIR & Multiplier model with Balance Transfer (BT) exclusion logic.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="hidden sm:flex flex-col items-end flex-shrink-0">
+                                                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Target Rule</span>
+                                                        <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                                                            {eligibilityResults.profileKey} • {(eligibilityResults.foirPercent * 100).toFixed(0)}% FOIR
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* 2-Column Responsive Layout */}
+                                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                                                    
+                                                    {/* LEFT COLUMN: Inputs & Parameters (7 Cols) */}
+                                                    <div className="lg:col-span-7 space-y-4">
+                                                        
+                                                        {/* 1. Monthly Salary Input */}
+                                                        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-2">
+                                                            <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center justify-between">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <Wallet className="w-3.5 h-3.5 text-indigo-500" />
+                                                                    Net Monthly In-Hand Salary
+                                                                </span>
+                                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                            </label>
+                                                            
+                                                            <div className="relative">
+                                                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-slate-400">₹</span>
+                                                                <NumericFormat 
+                                                                    customInput={Input}
+                                                                    value={monthlySalary}
+                                                                    onValueChange={(values) => setMonthlySalary(values.value || '')}
+                                                                    thousandSeparator=","
+                                                                    thousandsGroupStyle="lakh"
+                                                                    placeholder="e.g. 1,00,000"
+                                                                    required
+                                                                    className="h-12 pl-8 text-base font-bold text-slate-900 dark:text-white bg-white/90 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 font-mono"
+                                                                />
+                                                            </div>
+                                                            
+                                                            {/* Quick Income Presets */}
+                                                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                                <span className="text-[10px] text-slate-400 font-medium">Quick presets:</span>
+                                                                {[35000, 50000, 75000, 100000, 150000].map(amt => (
+                                                                    <button
+                                                                        key={amt}
+                                                                        type="button"
+                                                                        onClick={() => setMonthlySalary(String(amt))}
+                                                                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-all ${
+                                                                            Number(monthlySalary) === amt 
+                                                                                ? 'bg-indigo-600 text-white' 
+                                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-700'
+                                                                        }`}
+                                                                    >
+                                                                        {amt >= 100000 ? `${amt / 100000}L` : `${amt / 1000}k`}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 2. Profile Classification Matrix Drivers */}
+                                                        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
+                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                                                <Briefcase className="w-3.5 h-3.5 text-indigo-500" />
+                                                                Risk & Profile Classification
+                                                            </span>
+
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                {/* Employer Category */}
+                                                                <div className="space-y-1.5">
+                                                                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                                                        Employer Category
+                                                                    </label>
+                                                                    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setEmployerCategory('A/B/G')}
+                                                                            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                                                                                employerCategory === 'A/B/G'
+                                                                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700'
+                                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                            }`}
+                                                                        >
+                                                                            Tier A / B / Govt
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setEmployerCategory('C1000/C')}
+                                                                            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                                                                                employerCategory === 'C1000/C'
+                                                                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700'
+                                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                            }`}
+                                                                        >
+                                                                            Tier C / 1000 Co.
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* House Ownership */}
+                                                                <div className="space-y-1.5">
+                                                                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center justify-between">
+                                                                        <span>Residence Ownership</span>
+                                                                        <span className="text-[9px] text-slate-400 lowercase font-normal">(from step 4)</span>
+                                                                    </label>
+                                                                    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setCustomOwnsHome(true)}
+                                                                            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                                                                                eligibilityResults.effectiveOwnsHome
+                                                                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700'
+                                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                            }`}
+                                                                        >
+                                                                            Owned / Parental
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setCustomOwnsHome(false)}
+                                                                            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                                                                                !eligibilityResults.effectiveOwnsHome
+                                                                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700'
+                                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                            }`}
+                                                                        >
+                                                                            Rented / Others
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Bureau HL / LAP */}
+                                                                <div className="space-y-1.5 sm:col-span-2">
+                                                                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                                                        Active Home Loan or LAP TradeLine on Bureau?
+                                                                    </label>
+                                                                    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setHasBureauHlLap(false)}
+                                                                            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                                                                                !hasBureauHlLap
+                                                                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700'
+                                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                            }`}
+                                                                        >
+                                                                            No Mortgage (HL/LAP: No)
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setHasBureauHlLap(true)}
+                                                                            className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                                                                                hasBureauHlLap
+                                                                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-700'
+                                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                            }`}
+                                                                        >
+                                                                            Has HL / LAP (TradeLine: Yes)
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 3. Bank Loan & Multiplier Parameters */}
+                                                        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
+                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                                                <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
+                                                                Loan Terms & Multiplier Parameters
+                                                            </span>
+
+                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-semibold text-slate-500 uppercase">Rate (% p.a.)</label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        step="0.1"
+                                                                        value={interestRateAnnual}
+                                                                        onChange={(e) => setInterestRateAnnual(parseFloat(e.target.value) || 0)}
+                                                                        className="h-10 text-xs font-mono font-bold bg-white dark:bg-slate-900"
+                                                                    />
+                                                                </div>
+
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-semibold text-slate-500 uppercase">Tenure (Mos)</label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={calcTenureMonths}
+                                                                        onChange={(e) => setCalcTenureMonths(parseInt(e.target.value, 10) || 0)}
+                                                                        className="h-10 text-xs font-mono font-bold bg-white dark:bg-slate-900"
+                                                                    />
+                                                                </div>
+
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-semibold text-slate-500 uppercase">Multiplier</label>
+                                                                    <select
+                                                                        value={bankMultiplier}
+                                                                        onChange={(e) => setBankMultiplier(parseInt(e.target.value, 10) || 24)}
+                                                                        className="w-full h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-2 text-xs font-bold font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                                                    >
+                                                                        <option value={20}>20x</option>
+                                                                        <option value={24}>24x (Std)</option>
+                                                                        <option value={30}>30x</option>
+                                                                        <option value={36}>36x</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-semibold text-slate-500 uppercase">Max Cap (₹)</label>
+                                                                    <NumericFormat
+                                                                        customInput={Input}
+                                                                        value={absoluteMaxCap}
+                                                                        onValueChange={(v) => setAbsoluteMaxCap(Number(v.value) || 0)}
+                                                                        thousandSeparator=","
+                                                                        thousandsGroupStyle="lakh"
+                                                                        className="h-10 text-xs font-mono font-bold bg-white dark:bg-slate-900"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 4. Existing Loans & Obligations (The BT Rule) */}
+                                                        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <div>
+                                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                                                        <CreditCard className="w-3.5 h-3.5 text-indigo-500" />
+                                                                        Existing Obligations & Balance Transfer (BT)
+                                                                    </span>
+                                                                    <p className="text-[11px] text-slate-400 mt-0.5">
+                                                                        If Balance Transfer is checked, EMI is excluded from monthly burden. Principal is paid off at disbursement.
+                                                                    </p>
+                                                                </div>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="secondary"
+                                                                    onClick={handleAddLoan}
+                                                                    className="h-8 px-3 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1"
+                                                                >
+                                                                    <Plus className="w-3.5 h-3.5" />
+                                                                    <span>Add Loan</span>
+                                                                </Button>
+                                                            </div>
+
+                                                            {existingLoans.length === 0 ? (
+                                                                <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-1 bg-slate-50/50 dark:bg-slate-900/30">
+                                                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">No existing loans or liabilities recorded.</p>
+                                                                    <p className="text-[10px] text-slate-400">Customer has full disposable FOIR capacity (0 continuing EMIs).</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="space-y-2.5">
+                                                                    {existingLoans.map((loan, idx) => (
+                                                                        <div 
+                                                                            key={loan.id} 
+                                                                            className={`p-3 rounded-xl border transition-all ${
+                                                                                loan.is_balance_transfer 
+                                                                                    ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50' 
+                                                                                    : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700/60'
+                                                                            }`}
+                                                                        >
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                                                                                <div className="sm:col-span-4">
+                                                                                    <Input
+                                                                                        type="text"
+                                                                                        value={loan.name}
+                                                                                        onChange={(e) => handleUpdateLoan(loan.id, 'name', e.target.value)}
+                                                                                        placeholder={`Loan ${idx + 1} (e.g. HDFC PL)`}
+                                                                                        className="h-9 text-xs bg-white dark:bg-slate-800"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="sm:col-span-3">
+                                                                                    <div className="relative">
+                                                                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">₹</span>
+                                                                                        <NumericFormat
+                                                                                            customInput={Input}
+                                                                                            value={loan.emi_amount}
+                                                                                            onValueChange={(v) => handleUpdateLoan(loan.id, 'emi_amount', v.value || '')}
+                                                                                            thousandSeparator=","
+                                                                                            thousandsGroupStyle="lakh"
+                                                                                            placeholder="EMI / mo"
+                                                                                            className="h-9 pl-6 text-xs font-mono font-medium bg-white dark:bg-slate-800"
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="sm:col-span-3">
+                                                                                    <div className="relative">
+                                                                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">₹</span>
+                                                                                        <NumericFormat
+                                                                                            customInput={Input}
+                                                                                            value={loan.outstanding_principal}
+                                                                                            onValueChange={(v) => handleUpdateLoan(loan.id, 'outstanding_principal', v.value || '')}
+                                                                                            thousandSeparator=","
+                                                                                            thousandsGroupStyle="lakh"
+                                                                                            placeholder="Principal O/S"
+                                                                                            className="h-9 pl-6 text-xs font-mono font-medium bg-white dark:bg-slate-800"
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="sm:col-span-2 flex items-center justify-end gap-1">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => handleRemoveLoan(loan.id)}
+                                                                                        className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                                                                                        title="Delete loan"
+                                                                                    >
+                                                                                        <Trash2 className="w-4 h-4" />
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Balance Transfer Toggle */}
+                                                                            <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-xs">
+                                                                                <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={loan.is_balance_transfer}
+                                                                                        onChange={(e) => handleUpdateLoan(loan.id, 'is_balance_transfer', e.target.checked)}
+                                                                                        className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                                                                                    />
+                                                                                    <span className={`font-semibold ${loan.is_balance_transfer ? 'text-amber-800 dark:text-amber-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                                                        Balance Transfer (BT)
+                                                                                    </span>
+                                                                                </label>
+                                                                                <span className="text-[10px] text-slate-400 font-mono">
+                                                                                    {loan.is_balance_transfer ? '✓ EMI Waived from FOIR' : 'Counts toward FOIR'}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Obligations Totals */}
+                                                            {existingLoans.length > 0 && (
+                                                                <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                                                                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-[10px] uppercase font-semibold text-slate-400 block">Continuing EMIs</span>
+                                                                        <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                                                                            {formatInr(eligibilityResults.continuingEmis)} / mo
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40">
+                                                                        <span className="text-[10px] uppercase font-semibold text-amber-700 dark:text-amber-400 block">Total BT Payoff</span>
+                                                                        <span className="font-mono font-bold text-amber-800 dark:text-amber-300">
+                                                                            {formatInr(eligibilityResults.totalBtPayoff)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                    </div>
+
+                                                    {/* RIGHT COLUMN: Live Calculation Results Bento (5 Cols) */}
+                                                    <div className="lg:col-span-5 space-y-4">
+                                                        
+                                                        {/* 1. HERO SANCTION CARD */}
+                                                        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden space-y-4">
+                                                            <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+                                                            
+                                                            <div className="flex items-center justify-between relative z-10">
+                                                                <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-200">
+                                                                    Maximum Sanction
+                                                                </span>
+                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/20">
+                                                                    MIN(FOIR, Multiplier)
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="space-y-1 relative z-10">
+                                                                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono text-white block">
+                                                                    {formatInr(eligibilityResults.grossEligibleLoan)}
+                                                                </span>
+                                                                <div className="flex items-center justify-between text-xs text-indigo-100/90 pt-1">
+                                                                    <span>Estimated Monthly EMI:</span>
+                                                                    <span className="font-mono font-bold text-white text-sm">
+                                                                        {formatInr(eligibilityResults.estimatedEmi)} / mo
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Net Cash Disbursement Section */}
+                                                            <div className="pt-3 border-t border-white/15 relative z-10 space-y-1.5">
+                                                                <div className="flex items-center justify-between text-xs">
+                                                                    <span className="text-indigo-200 font-medium">Net Cash-in-Hand (Top-Up):</span>
+                                                                    <span className="font-mono font-bold text-emerald-300 text-sm">
+                                                                        {formatInr(Math.max(0, eligibilityResults.netCashTopUp))}
+                                                                    </span>
+                                                                </div>
+                                                                {eligibilityResults.totalBtPayoff > 0 && (
+                                                                    <p className="text-[10px] text-indigo-200/70 font-mono">
+                                                                        = Sanction ({formatInr(eligibilityResults.grossEligibleLoan)}) - BT Payoff ({formatInr(eligibilityResults.totalBtPayoff)})
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* BT Deficit Alert (if BT > Max Sanction) */}
+                                                        {eligibilityResults.isBtDeficit && (
+                                                            <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-start gap-2.5 shadow-sm">
+                                                                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                                                <div>
+                                                                    <span className="font-bold block">BT Outstanding Exceeds Eligibility!</span>
+                                                                    <span className="text-[11px] text-red-600 dark:text-red-400">
+                                                                        Total BT payoff ({formatInr(eligibilityResults.totalBtPayoff)}) is greater than the gross approval ({formatInr(eligibilityResults.grossEligibleLoan)}). Net disbursement is negative.
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* 2. FOIR Capacity vs Multiplier Breakdown Bento */}
+                                                        <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
+                                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center justify-between">
+                                                                <span>Dual-Engine Evaluation</span>
+                                                                <span className="text-[10px] text-slate-400 font-mono">Whichever is Lower</span>
+                                                            </span>
+
+                                                            <div className="space-y-2.5">
+                                                                {/* FOIR Principal Card */}
+                                                                <div className={`p-3 rounded-xl border transition-all ${
+                                                                    eligibilityResults.grossEligibleLoan === eligibilityResults.maxLoanFoir 
+                                                                        ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' 
+                                                                        : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200/70 dark:border-slate-800'
+                                                                }`}>
+                                                                    <div className="flex items-center justify-between text-xs mb-1">
+                                                                        <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                                                                            <Percent className="w-3.5 h-3.5 text-indigo-500" />
+                                                                            1. FOIR Capacity (PV Loan)
+                                                                        </span>
+                                                                        {eligibilityResults.grossEligibleLoan === eligibilityResults.maxLoanFoir && (
+                                                                            <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white">Governing</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-baseline justify-between">
+                                                                        <span className="text-lg font-bold font-mono text-slate-900 dark:text-white">
+                                                                            {formatInr(eligibilityResults.maxLoanFoir)}
+                                                                        </span>
+                                                                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                                                            Allowed EMI: {formatInr(eligibilityResults.maxAllowedEmi)}/mo
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="mt-1.5 pt-1.5 border-t border-slate-200/50 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between font-mono">
+                                                                        <span>FOIR: {(eligibilityResults.foirPercent * 100).toFixed(0)}% (Key: {eligibilityResults.profileKey})</span>
+                                                                        <span>Rate: {interestRateAnnual}% • {calcTenureMonths}m</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Multiplier Principal Card */}
+                                                                <div className={`p-3 rounded-xl border transition-all ${
+                                                                    eligibilityResults.grossEligibleLoan === eligibilityResults.maxLoanMultiplier && eligibilityResults.maxLoanMultiplier < eligibilityResults.maxLoanFoir
+                                                                        ? 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' 
+                                                                        : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200/70 dark:border-slate-800'
+                                                                }`}>
+                                                                    <div className="flex items-center justify-between text-xs mb-1">
+                                                                        <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                                                                            <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
+                                                                            2. Bank Multiplier Capacity
+                                                                        </span>
+                                                                        {eligibilityResults.grossEligibleLoan === eligibilityResults.maxLoanMultiplier && eligibilityResults.maxLoanMultiplier < eligibilityResults.maxLoanFoir && (
+                                                                            <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-indigo-600 text-white">Governing</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="flex items-baseline justify-between">
+                                                                        <span className="text-lg font-bold font-mono text-slate-900 dark:text-white">
+                                                                            {formatInr(eligibilityResults.maxLoanMultiplier)}
+                                                                        </span>
+                                                                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                                                            Cap: {formatInr(absoluteMaxCap)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="mt-1.5 pt-1.5 border-t border-slate-200/50 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between font-mono">
+                                                                        <span>{bankMultiplier}x of Salary ({formatInr(eligibilityResults.salary)})</span>
+                                                                        <span>Capped at {formatInr(absoluteMaxCap)}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 3. Detailed Step Breakdown Audit Accordion */}
+                                                        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/70 dark:border-slate-800 text-xs space-y-2">
+                                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+                                                                <Info className="w-3.5 h-3.5 text-slate-400" />
+                                                                Formula Breakdown & Audit Trail
+                                                            </span>
+                                                            <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                                                <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-slate-800">
+                                                                    <span>Gross Monthly Capacity ({((eligibilityResults.foirPercent || 0) * 100).toFixed(0)}%):</span>
+                                                                    <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{formatInr(eligibilityResults.totalGrossFoirEmi)}</span>
+                                                                </div>
+                                                                <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-slate-800">
+                                                                    <span>Less Continuing EMIs:</span>
+                                                                    <span className="font-mono text-red-500 font-semibold">-{formatInr(eligibilityResults.continuingEmis)}</span>
+                                                                </div>
+                                                                <div className="flex justify-between py-0.5 border-b border-slate-200/40 dark:border-slate-800">
+                                                                    <span>Max Allowed EMI for new loan:</span>
+                                                                    <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">{formatInr(eligibilityResults.maxAllowedEmi)}</span>
+                                                                </div>
+                                                                <div className="flex justify-between py-0.5">
+                                                                    <span>Balance Transfer Deducted:</span>
+                                                                    <span className="font-mono text-amber-600 dark:text-amber-400 font-semibold">{formatInr(eligibilityResults.totalBtPayoff)}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
                                                 </div>
 
                                             </div>
