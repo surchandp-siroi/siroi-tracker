@@ -41,7 +41,11 @@ import {
     UploadCloud,
     FileSpreadsheet,
     Paperclip,
-    Save
+    Save,
+    Fingerprint,
+    Building2,
+    FileUp,
+    UserCheck
 } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
 import { NumericFormat } from 'react-number-format';
@@ -275,6 +279,26 @@ export default function CustomerDataEntryPage() {
     const [isDeviationDialogOpen, setIsDeviationDialogOpen] = useState<boolean>(false);
     const [isEarlySaveModalOpen, setIsEarlySaveModalOpen] = useState<boolean>(false);
     const [eligibilitySkipReason, setEligibilitySkipReason] = useState<string>('');
+    const [incomeCategory, setIncomeCategory] = useState<'salaried' | 'business'>('salaried');
+
+    const handleIncomeCategoryChange = (category: 'salaried' | 'business') => {
+        setIncomeCategory(category);
+        if (category === 'business') {
+            if (!incomeType || incomeType.toLowerCase().startsWith('salary')) {
+                setIncomeType('Business');
+            }
+            if (!eligibilitySkipReason.trim()) {
+                setEligibilitySkipReason('Business Income profile - Eligibility calculation logic yet to be received from team.');
+            }
+        } else {
+            if (incomeType === 'Business' || incomeType === 'SEP - Business') {
+                setIncomeType('Salary - Private');
+            }
+            if (eligibilitySkipReason.includes('Business Income')) {
+                setEligibilitySkipReason('');
+            }
+        }
+    };
     const aadhaarInputRef = useRef<HTMLInputElement>(null);
     const panInputRef = useRef<HTMLInputElement>(null);
 
@@ -1334,7 +1358,8 @@ export default function CustomerDataEntryPage() {
     
     const buildCustomerPayload = (selectedAuthor?: string, skipReason?: string) => {
         const author = selectedAuthor || entryPersonName;
-        const isSkippingEligibility = isLoan && Boolean(skipReason && skipReason.trim());
+        const isSkippingEligibility = isLoan && (Boolean(skipReason && skipReason.trim()) || incomeCategory === 'business');
+        const finalSkipReason = (skipReason || (incomeCategory === 'business' ? 'Business Income profile - Eligibility calculation logic yet to be received from team.' : '')).trim();
         return {
             pan_number: panNumber.toUpperCase(),
             customer_name: formatCustomerName(customerName, true),
@@ -1429,17 +1454,19 @@ export default function CustomerDataEntryPage() {
             ref2_relation: isLoan ? (ref2Relation.trim() || null) : null,
 
             // Record eligibility skip reason explicitly
-            eligibility_skip_reason: isSkippingEligibility ? skipReason!.trim() : null,
+            eligibility_skip_reason: isSkippingEligibility ? finalSkipReason : null,
 
             // Loan Eligibility Engine Calculation Snapshot or Skip Record
             loan_eligibility: isLoan ? (
                 isSkippingEligibility ? {
                     skipped: true,
-                    skip_reason: skipReason!.trim(),
+                    skip_reason: finalSkipReason,
                     skipped_at: new Date().toISOString(),
                     skipped_by: author,
                     skipped_at_step: activeSectionIndex + 1,
+                    income_category: incomeCategory,
                 } : {
+                    income_category: incomeCategory,
                     monthly_salary: Number(monthlySalary) || 0,
                     employer_category: employerCategory,
                     owns_home: eligibilityResults.effectiveOwnsHome,
@@ -1546,6 +1573,7 @@ export default function CustomerDataEntryPage() {
         setScannedPan(null);
         setDeviations([]);
         setEligibilitySkipReason('');
+        setIncomeCategory('salaried');
         setExistingRecord(null);
     };
 
@@ -1622,6 +1650,11 @@ export default function CustomerDataEntryPage() {
             setError('Please fill in complete Address details.');
             setActiveSectionIndex(isLoan ? 3 : 1);
             return;
+        }
+
+        // If Business Income, pre-suggest the reason if empty
+        if (incomeCategory === 'business' && !eligibilitySkipReason.trim()) {
+            setEligibilitySkipReason('Business Income profile - Eligibility calculation logic yet to be received from team.');
         }
 
         // Always show the Skip Loan Eligibility Confirmation & Remarks modal!
@@ -2399,6 +2432,73 @@ export default function CustomerDataEntryPage() {
                                         {activeSectionIndex === 3 && (
                                             <div className="space-y-4 animate-in fade-in duration-200">
                                                 
+                                                {/* Step 4 Top Segmented Toggle: Salaried Income vs Business Income */}
+                                                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-50 via-indigo-50/20 to-slate-50 dark:from-slate-800/80 dark:via-indigo-950/20 dark:to-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 shadow-xs space-y-3">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                                                        <div>
+                                                            <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                                                <Briefcase className="w-3.5 h-3.5 text-indigo-500" /> Income Assessment Stream
+                                                            </span>
+                                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                Choose profile structure for eligibility and banking workflows
+                                                            </p>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-200/60 dark:bg-slate-700/60 text-slate-700 dark:text-slate-300 self-start sm:self-auto">
+                                                            {incomeCategory === 'salaried' ? 'Salaried FOIR Engine' : 'Underwriting Pending'}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Segmented Controls */}
+                                                    <div className="grid grid-cols-2 p-1 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl border border-slate-300/60 dark:border-slate-800">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleIncomeCategoryChange('salaried')}
+                                                            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer select-none ${
+                                                                incomeCategory === 'salaried'
+                                                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm shadow-slate-300 dark:shadow-none border border-slate-200/80 dark:border-slate-700'
+                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                                            }`}
+                                                        >
+                                                            <Briefcase className="w-3.5 h-3.5" />
+                                                            <span>Salaried Income</span>
+                                                            {incomeCategory === 'salaried' && (
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse ml-0.5"></span>
+                                                            )}
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleIncomeCategoryChange('business')}
+                                                            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer select-none ${
+                                                                incomeCategory === 'business'
+                                                                    ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm shadow-slate-300 dark:shadow-none border border-amber-300/80 dark:border-amber-700/60'
+                                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                                            }`}
+                                                        >
+                                                            <Building2 className="w-3.5 h-3.5" />
+                                                            <span>Business Income</span>
+                                                            {incomeCategory === 'business' && (
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-0.5"></span>
+                                                            )}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* When Business Income is switched: Banner */}
+                                                    {incomeCategory === 'business' && (
+                                                        <div className="p-3.5 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/25 dark:border-amber-800/40 space-y-1.5 animate-in fade-in duration-200">
+                                                            <div className="flex items-center gap-2">
+                                                                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                                <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                                                                    Business Income: Logic yet to be received from team.
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 leading-relaxed font-medium pl-6">
+                                                                Underwriting parameters, GST/ITR assessment models, and business cash-flow ratios are currently being formulated by the risk policy team. You can complete the residential address below and save the customer profile directly.
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
                                                 {/* Current Residence Box */}
                                                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700/60 pb-2">
@@ -2412,7 +2512,7 @@ export default function CustomerDataEntryPage() {
                                                             title="Autofill current address & pincode from scanned Aadhaar card"
                                                         >
                                                             <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
-                                                                <Sparkles className="w-3 h-3 fill-white/20 stroke-[2.2]" />
+                                                                <Fingerprint className="w-3.5 h-3.5 stroke-[2.2]" />
                                                             </span>
                                                             <span className="tracking-tight">Pull Address from Aadhaar</span>
                                                         </button>
@@ -2536,7 +2636,7 @@ export default function CustomerDataEntryPage() {
                                                                             {isUploadingAddressProof ? (
                                                                                 <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />
                                                                             ) : (
-                                                                                <UploadCloud className="w-3 h-3 stroke-[2.2]" />
+                                                                                <FileUp className="w-3.5 h-3.5 stroke-[2.2]" />
                                                                             )}
                                                                         </span>
                                                                         <span>{isUploadingAddressProof ? 'Uploading...' : currentAddressProofUrl ? 'Re-upload Address Proof' : 'Upload Address Proof'}</span>
@@ -2584,7 +2684,7 @@ export default function CustomerDataEntryPage() {
                                                                 title="Autofill permanent address from scanned Aadhaar card"
                                                             >
                                                                 <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
-                                                                    <Sparkles className="w-3 h-3 fill-white/20 stroke-[2.2]" />
+                                                                    <Fingerprint className="w-3.5 h-3.5 stroke-[2.2]" />
                                                                 </span>
                                                                 <span className="tracking-tight">Pull Address from Aadhaar</span>
                                                             </button>
@@ -2685,6 +2785,21 @@ export default function CustomerDataEntryPage() {
                                         {activeSectionIndex === 4 && (
                                             <div className="space-y-4 animate-in fade-in duration-200">
                                                 
+                                                {/* Notice for Business Income applicants */}
+                                                {incomeCategory === 'business' && (
+                                                    <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/25 dark:border-amber-800/40 space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                                                                Business Income Selected: Logic yet to be received from team.
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 leading-relaxed font-medium pl-6">
+                                                            Salary account and salary slips are intended for salaried employees. Business banking, GST turnover statements, and ITR schedules underwriting guidelines are pending from the team.
+                                                        </p>
+                                                    </div>
+                                                )}
+
                                                 {/* Salary Account Details */}
                                                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
                                                     <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -3006,6 +3121,21 @@ export default function CustomerDataEntryPage() {
                                         {activeSectionIndex === 5 && (
                                             <div className="space-y-6 animate-in fade-in duration-300">
                                                 
+                                                {/* Notice for Business Income applicants */}
+                                                {incomeCategory === 'business' && (
+                                                    <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/25 dark:border-amber-800/40 space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                                                                Business Income Selected: Logic yet to be received from team.
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90 leading-relaxed font-medium pl-6">
+                                                            This eligibility matrix is currently calibrated for Salaried applicants. Business turnover, ITR assessment, and company multiplier formulas are pending from the credit risk team.
+                                                        </p>
+                                                    </div>
+                                                )}
+
                                                 {/* Top 2-Column Responsive Layout: Inputs & Evaluation Bento */}
                                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                                                     
@@ -3880,7 +4010,7 @@ export default function CustomerDataEntryPage() {
                                                 title="Save customer profile now and record reason for skipping remaining steps"
                                             >
                                                 <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 transition-all duration-200">
-                                                    <Save className="w-3 h-3 stroke-[2.2]" />
+                                                    <UserCheck className="w-3.5 h-3.5 stroke-[2.2]" />
                                                 </span>
                                                 <span className="tracking-tight">Save New Customer Profile</span>
                                             </button>
@@ -3942,10 +4072,12 @@ export default function CustomerDataEntryPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                        Skip Loan Eligibility Calculation?
+                                        {incomeCategory === 'business' ? 'Save Business Customer Profile?' : 'Skip Loan Eligibility Calculation?'}
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                        You are saving this loan applicant at Step 4. Step 5 (Banking Details) and Step 6 (Eligibility & FOIR Engine) will be skipped. Please record your reason below.
+                                        {incomeCategory === 'business'
+                                            ? 'Business income underwriting logic is yet to be received from the team. Step 5 & 6 are bypassed. Please record remarks to register this profile.'
+                                            : 'You are saving this loan applicant at Step 4. Step 5 (Banking Details) and Step 6 (Eligibility & FOIR Engine) will be skipped. Please record your reason below.'}
                                     </p>
                                 </div>
                             </div>
