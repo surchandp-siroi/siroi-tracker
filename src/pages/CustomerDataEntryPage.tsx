@@ -96,8 +96,9 @@ export default function CustomerDataEntryPage() {
     const [ref2Relation, setRef2Relation] = useState('');
 
     const isLoan = customerType === 'Loans' || customerType === 'Loan';
+    const isForex = customerType === 'Forex';
 
-    // Dynamic Sections based on whether Customer Type is Loan vs Standard
+    // Dynamic Sections based on whether Customer Type is Loan vs Forex vs Standard
     const sections = useMemo(() => {
         if (isLoan) {
             return [
@@ -108,12 +109,18 @@ export default function CustomerDataEntryPage() {
                 { id: 'banking_refs', title: 'Banking & References', shortTitle: 'Bank & Refs', icon: ShieldCheck },
             ];
         }
+        if (isForex) {
+            return [
+                { id: 'forex_primary', title: 'Profile & Requirements', shortTitle: 'Profile', icon: User },
+                { id: 'forex_address_staff', title: 'Address & Staff Entry', shortTitle: 'Address & Staff', icon: Home },
+            ];
+        }
         return [
             { id: 'std_primary', title: 'Profile & Requirements', shortTitle: 'Profile', icon: User },
             { id: 'std_address', title: 'Residential Address', shortTitle: 'Address', icon: Home },
             { id: 'std_income', title: 'Income & Author', shortTitle: 'Income', icon: Briefcase },
         ];
-    }, [isLoan]);
+    }, [isLoan, isForex]);
 
     // Safety guard to prevent out-of-bounds section index when switching types
     useEffect(() => {
@@ -284,6 +291,21 @@ export default function CustomerDataEntryPage() {
             if (index === 4) {
                 if (!entryPersonName) { setError('Please select Your Name (Data Enterer).'); return false; }
             }
+        } else if (isForex) {
+            if (index === 0) {
+                if (!customerName.trim()) { setError('Please enter Customer Name.'); return false; }
+                if (!customerType) { setError('Please select Customer Type.'); return false; }
+                if (!product) { setError('Please select a Product.'); return false; }
+                if (!amount || Number(amount) <= 0) { setError('Please enter a valid positive Amount.'); return false; }
+                if (!phoneNumber.trim()) { setError('Please enter Phone Number.'); return false; }
+            }
+            if (index === 1) {
+                if (!address.trim()) { setError('Please enter Street Address.'); return false; }
+                if (!pincode.trim()) { setError('Please enter Pincode.'); return false; }
+                if (!city.trim()) { setError('Please enter City.'); return false; }
+                if (!district.trim()) { setError('Please enter District.'); return false; }
+                if (!entryPersonName) { setError('Please select Your Name (Data Enterer).'); return false; }
+            }
         } else {
             if (index === 0) {
                 if (!customerName.trim()) { setError('Please enter Customer Name.'); return false; }
@@ -353,7 +375,7 @@ export default function CustomerDataEntryPage() {
                 category: mapCustomerTypeToCategory(customerType),
                 product: product,
                 amount: Number(amount) || 0,
-                aadhar_number: aadharNumber.trim() || null,
+                aadhar_number: isForex ? null : (aadharNumber.trim() || null),
                 association_date: associationDate || null,
                 address: address.trim() || null,
                 pincode: pincode.trim() || null,
@@ -361,11 +383,11 @@ export default function CustomerDataEntryPage() {
                 district: district.trim() || null,
                 phone_number: phoneNumber.trim(),
                 email_id: emailId.trim() || null,
-                income_type: incomeType || null,
-                company_name: companyName.trim() || null,
-                yearly_income_range: yearlyIncomeRange || null,
-                birthday: birthday || null,
-                anniversary: anniversary || null,
+                income_type: isForex ? null : (incomeType || null),
+                company_name: isForex ? null : (companyName.trim() || null),
+                yearly_income_range: isForex ? null : (yearlyIncomeRange || null),
+                birthday: isForex ? null : (birthday || null),
+                anniversary: isForex ? null : (anniversary || null),
                 entry_person_name: entryPersonName,
                 entry_location: entryLocation,
 
@@ -513,17 +535,19 @@ export default function CustomerDataEntryPage() {
                 
                 <div className="text-center mb-8 mt-1">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[10px] font-extrabold uppercase tracking-widest border border-indigo-200/60 dark:border-indigo-500/20 mb-2">
-                        {step === 1 ? 'Customer Identification' : isLoan ? 'Loan Application Form' : 'Customer Profile Form'}
+                        {step === 1 ? 'Customer Identification' : isLoan ? 'Loan Application Form' : isForex ? 'Forex Customer Entry' : 'Customer Profile Form'}
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                        {step === 1 ? 'Customer Verification' : 'Customer Data Entry'}
+                        {step === 1 ? 'Customer Verification' : isForex ? 'Forex Data Entry' : 'Customer Data Entry'}
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                         {step === 1 
                             ? 'Verify PAN to start or check existing customer profile.' 
                             : isLoan 
                                 ? 'Complete loan applicant credentials, KYC, and guarantor details.' 
-                                : 'Complete basic customer requirement profile.'}
+                                : isForex
+                                    ? 'Streamlined 2-step profile and address verification for forex walk-ins.'
+                                    : 'Complete basic customer requirement profile.'}
                     </p>
                 </div>
                 
@@ -1367,18 +1391,20 @@ export default function CustomerDataEntryPage() {
                                                         />
                                                     </div>
 
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                                                            <span>Aadhar Number</span>
-                                                            <span className="text-[10px] text-slate-400">Optional</span>
-                                                        </label>
-                                                        <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} className="h-11 bg-white/70 dark:bg-slate-800/70" />
-                                                    </div>
+                                                    {!isForex && (
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                                <span>Aadhar Number</span>
+                                                                <span className="text-[10px] text-slate-400">Optional</span>
+                                                            </label>
+                                                            <Input type="text" value={aadharNumber} onChange={(e) => setAadharNumber(e.target.value)} placeholder="1234 5678 9012" maxLength={14} className="h-11 bg-white/70 dark:bg-slate-800/70" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* STANDARD SECTION 2: Address */}
+                                        {/* STANDARD / FOREX SECTION 2: Address */}
                                         {activeSectionIndex === 1 && (
                                             <div className="space-y-4 animate-in fade-in duration-200">
                                                 <div className="space-y-1.5">
@@ -1412,11 +1438,61 @@ export default function CustomerDataEntryPage() {
                                                         <Input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Imphal West" required className="h-11 bg-white/70 dark:bg-slate-800/70" />
                                                     </div>
                                                 </div>
+
+                                                {/* For Forex: include Staff Signature directly in Address section */}
+                                                {isForex && (
+                                                    <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span>Your Name (Data Enterer)</span>
+                                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                        </label>
+                                                        <div className="relative" ref={employeeDropdownRef}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (!isEmployeeDropdownOpen && employeeDropdownRef.current) {
+                                                                        const rect = employeeDropdownRef.current.getBoundingClientRect();
+                                                                        const spaceBelow = window.innerHeight - rect.bottom;
+                                                                        setDropdownPosition(spaceBelow < 320 ? 'top' : 'bottom');
+                                                                    }
+                                                                    setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen);
+                                                                }}
+                                                                className="flex items-center justify-between h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm"
+                                                            >
+                                                                <span className={entryPersonName ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-400'}>
+                                                                    {entryPersonName || 'Select your name...'}
+                                                                </span>
+                                                                <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isEmployeeDropdownOpen ? 'rotate-180' : ''}`} />
+                                                            </button>
+                                                            
+                                                            {isEmployeeDropdownOpen && (
+                                                                <>
+                                                                    <div className="fixed inset-0 z-40" onClick={() => setIsEmployeeDropdownOpen(false)}></div>
+                                                                    <div className={`absolute ${dropdownPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 w-full bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50 max-h-[260px] overflow-y-auto`}>
+                                                                        {employees.map(name => (
+                                                                            <button
+                                                                                key={name}
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setEntryPersonName(name);
+                                                                                    setIsEmployeeDropdownOpen(false);
+                                                                                }}
+                                                                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${entryPersonName === name ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                                                                            >
+                                                                                {name}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
-                                        {/* STANDARD SECTION 3: Income & Author */}
-                                        {activeSectionIndex === 2 && (
+                                        {/* STANDARD SECTION 3: Income & Author (Excluded for Forex) */}
+                                        {!isForex && activeSectionIndex === 2 && (
                                             <div className="space-y-4 animate-in fade-in duration-200">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="space-y-1.5">
