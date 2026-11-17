@@ -202,6 +202,7 @@ export default function CustomerDataEntryPage() {
     const [interestRateAnnual, setInterestRateAnnual] = useState<number>(11.0);
     const [calcTenureMonths, setCalcTenureMonths] = useState<number>(36);
     const [bankMultiplier, setBankMultiplier] = useState<number>(24);
+    const [manualFoirPercent, setManualFoirPercent] = useState<string>('');
     const [absoluteMaxCap, setAbsoluteMaxCap] = useState<number>(2500000);
     const [existingLoans, setExistingLoans] = useState<Array<{
         id: string;
@@ -254,7 +255,10 @@ export default function CustomerDataEntryPage() {
         const ownsChar = effectiveOwnsHome ? 'Y' : 'N';
         const mortChar = hasBureauHlLap ? 'Y' : 'N';
         const profileKey = `${employerCategory}${ownsChar}${mortChar}${incomeBand}`;
-        const foirPercent = FOIR_MATRIX[profileKey] ?? 0.60;
+        const matrixFoir = FOIR_MATRIX[profileKey] ?? 0.60;
+        const foirPercent = manualFoirPercent !== '' 
+            ? Math.max(0.01, Math.min(1.0, (parseFloat(manualFoirPercent) || 0) / 100))
+            : matrixFoir;
 
         // Obligations breakdown (The BT Rule)
         const continuingEmis = existingLoans
@@ -298,6 +302,7 @@ export default function CustomerDataEntryPage() {
             salary,
             incomeBand,
             profileKey,
+            matrixFoir,
             foirPercent,
             effectiveOwnsHome,
             continuingEmis,
@@ -320,6 +325,7 @@ export default function CustomerDataEntryPage() {
         interestRateAnnual,
         calcTenureMonths,
         bankMultiplier,
+        manualFoirPercent,
         absoluteMaxCap,
         existingLoans
     ]);
@@ -333,7 +339,7 @@ export default function CustomerDataEntryPage() {
                 { id: 'employment', title: 'Work & Office', shortTitle: 'Employment', icon: Briefcase },
                 { id: 'residential', title: 'Addresses & Stay', shortTitle: 'Addresses', icon: Home },
                 { id: 'banking_refs', title: 'Banking & References', shortTitle: 'Bank & Refs', icon: ShieldCheck },
-                { id: 'eligibility', title: 'Loan Eligibility Calculator', shortTitle: 'Calculator', icon: Calculator },
+                { id: 'eligibility', title: 'Eligibility', shortTitle: 'Eligibility', icon: Calculator },
             ];
         }
         if (isForex) {
@@ -1455,23 +1461,6 @@ export default function CustomerDataEntryPage() {
                                             />
                                         ))}
                                     </div>
-
-                                    {/* Active Section Headline in Google Material style */}
-                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center ring-1 ring-indigo-200/60 dark:ring-indigo-800/50">
-                                                {React.createElement(sections[activeSectionIndex]?.icon || User, { className: "w-4 h-4" })}
-                                            </div>
-                                            <div>
-                                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                                                    {sections[activeSectionIndex]?.title}
-                                                </h3>
-                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                                                    Step {activeSectionIndex + 1} of {sections.length}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 {/* SECTION CONTENTS */}
@@ -2298,11 +2287,10 @@ export default function CustomerDataEntryPage() {
                                                                     </div>
                                                                 </div>
 
-                                                                {/* House Ownership */}
+                                                                {/* House */}
                                                                 <div className="space-y-1.5">
-                                                                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center justify-between">
-                                                                        <span>Residence Ownership</span>
-                                                                        <span className="text-[9px] text-slate-400 lowercase font-normal">(from step 4)</span>
+                                                                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                                                        House
                                                                     </label>
                                                                     <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800">
                                                                         <button
@@ -2314,7 +2302,7 @@ export default function CustomerDataEntryPage() {
                                                                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                                                                             }`}
                                                                         >
-                                                                            Owned / Parental
+                                                                            Owned
                                                                         </button>
                                                                         <button
                                                                             type="button"
@@ -2325,7 +2313,7 @@ export default function CustomerDataEntryPage() {
                                                                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                                                                             }`}
                                                                         >
-                                                                            Rented / Others
+                                                                            Rented
                                                                         </button>
                                                                     </div>
                                                                 </div>
@@ -2367,10 +2355,51 @@ export default function CustomerDataEntryPage() {
                                                         <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
                                                             <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                                                                 <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
-                                                                Loan Terms & Multiplier Parameters
+                                                                Bank Terms & Eligibility Controls
                                                             </span>
 
-                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                                                {/* FOIR (%) Manual Field */}
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-semibold text-slate-500 uppercase flex items-center justify-between">
+                                                                        <span>FOIR (%)</span>
+                                                                        {manualFoirPercent === '' && (
+                                                                            <span className="text-[9px] text-indigo-500 font-normal">Auto</span>
+                                                                        )}
+                                                                    </label>
+                                                                    <div className="relative">
+                                                                        <Input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            max="100"
+                                                                            step="1"
+                                                                            value={manualFoirPercent !== '' ? manualFoirPercent : Math.round(eligibilityResults.matrixFoir * 100)}
+                                                                            onChange={(e) => setManualFoirPercent(e.target.value)}
+                                                                            placeholder="e.g. 65"
+                                                                            className="h-10 text-xs font-mono font-bold bg-white dark:bg-slate-900 pr-6"
+                                                                        />
+                                                                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">%</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Multiplier Manual Field */}
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-semibold text-slate-500 uppercase">Multiplier</label>
+                                                                    <div className="relative">
+                                                                        <Input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            max="100"
+                                                                            step="1"
+                                                                            value={bankMultiplier}
+                                                                            onChange={(e) => setBankMultiplier(parseInt(e.target.value, 10) || 0)}
+                                                                            placeholder="e.g. 24"
+                                                                            className="h-10 text-xs font-mono font-bold bg-white dark:bg-slate-900 pr-6"
+                                                                        />
+                                                                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">x</span>
+                                                                    </div>
+                                                                </div>
+
                                                                 <div className="space-y-1">
                                                                     <label className="text-[10px] font-semibold text-slate-500 uppercase">Rate (% p.a.)</label>
                                                                     <Input
@@ -2392,21 +2421,7 @@ export default function CustomerDataEntryPage() {
                                                                     />
                                                                 </div>
 
-                                                                <div className="space-y-1">
-                                                                    <label className="text-[10px] font-semibold text-slate-500 uppercase">Multiplier</label>
-                                                                    <select
-                                                                        value={bankMultiplier}
-                                                                        onChange={(e) => setBankMultiplier(parseInt(e.target.value, 10) || 24)}
-                                                                        className="w-full h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-2 text-xs font-bold font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                                                                    >
-                                                                        <option value={20}>20x</option>
-                                                                        <option value={24}>24x (Std)</option>
-                                                                        <option value={30}>30x</option>
-                                                                        <option value={36}>36x</option>
-                                                                    </select>
-                                                                </div>
-
-                                                                <div className="space-y-1">
+                                                                <div className="space-y-1 col-span-2 sm:col-span-1">
                                                                     <label className="text-[10px] font-semibold text-slate-500 uppercase">Max Cap (₹)</label>
                                                                     <NumericFormat
                                                                         customInput={Input}
@@ -2423,15 +2438,10 @@ export default function CustomerDataEntryPage() {
                                                         {/* 4. Existing Loans & Obligations (The BT Rule) */}
                                                         <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shadow-sm space-y-3">
                                                             <div className="flex items-center justify-between">
-                                                                <div>
-                                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                                                                        <CreditCard className="w-3.5 h-3.5 text-indigo-500" />
-                                                                        Existing Obligations & Balance Transfer (BT)
-                                                                    </span>
-                                                                    <p className="text-[11px] text-slate-400 mt-0.5">
-                                                                        If Balance Transfer is checked, EMI is excluded from monthly burden. Principal is paid off at disbursement.
-                                                                    </p>
-                                                                </div>
+                                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                                                    <CreditCard className="w-3.5 h-3.5 text-indigo-500" />
+                                                                    Existing Obligations & Balance Transfer (BT)
+                                                                </span>
                                                                 <Button
                                                                     type="button"
                                                                     variant="secondary"
@@ -2641,7 +2651,7 @@ export default function CustomerDataEntryPage() {
                                                                         </span>
                                                                     </div>
                                                                     <div className="mt-1.5 pt-1.5 border-t border-slate-200/50 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between font-mono">
-                                                                        <span>FOIR: {(eligibilityResults.foirPercent * 100).toFixed(0)}% (Key: {eligibilityResults.profileKey})</span>
+                                                                        <span>FOIR: {(eligibilityResults.foirPercent * 100).toFixed(0)}%{manualFoirPercent !== '' ? ' (Manual)' : ` (Key: ${eligibilityResults.profileKey})`}</span>
                                                                         <span>Rate: {interestRateAnnual}% • {calcTenureMonths}m</span>
                                                                     </div>
                                                                 </div>
