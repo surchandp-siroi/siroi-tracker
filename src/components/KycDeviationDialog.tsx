@@ -193,11 +193,11 @@ export const KycDeviationDialog: React.FC<KycDeviationDialogProps> = ({
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => onApplyCorrection(item.field, item.aadhaarValue)}
-                                                                    className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900 px-2 py-0.5 rounded-lg border border-indigo-200/90 dark:border-indigo-800 shadow-2xs hover:shadow-xs active:scale-95 transition-all shrink-0"
+                                                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-700 hover:text-white bg-indigo-50 hover:bg-indigo-600 dark:bg-indigo-950/70 dark:hover:bg-indigo-600 dark:text-indigo-300 dark:hover:text-white px-2.5 py-1 rounded-lg border border-indigo-200/90 hover:border-indigo-600 dark:border-indigo-800 shadow-2xs hover:shadow-xs active:scale-95 transition-all shrink-0 cursor-pointer"
                                                                     title={`Apply Aadhaar value (${item.aadhaarValue}) to form`}
                                                                 >
                                                                     <span>Use Aadhaar</span>
-                                                                    <Check className="w-3 h-3 text-indigo-600 dark:text-indigo-400 stroke-[2.5]" />
+                                                                    <Check className="w-3 h-3 stroke-[2.5]" />
                                                                 </button>
                                                             )}
                                                         </div>
@@ -217,11 +217,11 @@ export const KycDeviationDialog: React.FC<KycDeviationDialogProps> = ({
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => onApplyCorrection(item.field, item.panValue)}
-                                                                    className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900 px-2 py-0.5 rounded-lg border border-sky-200/90 dark:border-sky-800 shadow-2xs hover:shadow-xs active:scale-95 transition-all shrink-0"
+                                                                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-sky-700 hover:text-white bg-sky-50 hover:bg-sky-600 dark:bg-sky-950/70 dark:hover:bg-sky-600 dark:text-sky-300 dark:hover:text-white px-2.5 py-1 rounded-lg border border-sky-200/90 hover:border-sky-600 dark:border-sky-800 shadow-2xs hover:shadow-xs active:scale-95 transition-all shrink-0 cursor-pointer"
                                                                     title={`Apply PAN value (${item.panValue}) to form`}
                                                                 >
                                                                     <span>Use PAN</span>
-                                                                    <Check className="w-3 h-3 text-sky-600 dark:text-sky-400 stroke-[2.5]" />
+                                                                    <Check className="w-3 h-3 stroke-[2.5]" />
                                                                 </button>
                                                             )}
                                                         </div>

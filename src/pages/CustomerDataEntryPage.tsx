@@ -2393,17 +2393,17 @@ export default function CustomerDataEntryPage() {
                                                         <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                                                             <Home className="w-3.5 h-3.5 text-indigo-500" /> Current Residential Address
                                                         </span>
-                                                        <Button
+                                                        <button
                                                             type="button"
-                                                            variant="secondary"
-                                                            size="sm"
                                                             onClick={handlePullCurrentAddressFromAadhaar}
-                                                            className="h-8 px-2.5 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800 flex items-center gap-1.5 self-start sm:self-auto"
+                                                            className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-sm shadow-indigo-500/25 hover:shadow-md hover:shadow-indigo-500/35 active:scale-[0.97] transition-all duration-150 self-start sm:self-auto cursor-pointer select-none"
                                                             title="Autofill current address & pincode from scanned Aadhaar card"
                                                         >
-                                                            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                                                            <span>Pull Address from Aadhaar</span>
-                                                        </Button>
+                                                            <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+                                                                <Sparkles className="w-3 h-3 fill-white/20 stroke-[2.2]" />
+                                                            </span>
+                                                            <span className="tracking-tight">Pull Address from Aadhaar</span>
+                                                        </button>
                                                     </div>
 
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -2514,25 +2514,21 @@ export default function CustomerDataEntryPage() {
                                                                         className="hidden"
                                                                         onChange={handleAddressProofUpload}
                                                                     />
-                                                                    <Button
+                                                                    <button
                                                                         type="button"
-                                                                        variant="secondary"
                                                                         disabled={isUploadingAddressProof}
                                                                         onClick={() => document.getElementById('current-address-proof-file')?.click()}
-                                                                        className="h-9 px-3 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                                                                        className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-semibold text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200/90 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-2xs hover:shadow-xs active:scale-[0.97] transition-all cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none"
                                                                     >
-                                                                        {isUploadingAddressProof ? (
-                                                                            <>
-                                                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                                                <span>Uploading...</span>
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <UploadCloud className="w-3.5 h-3.5" />
-                                                                                <span>{currentAddressProofUrl ? 'Re-upload Address Proof' : 'Upload Address Proof'}</span>
-                                                                            </>
-                                                                        )}
-                                                                    </Button>
+                                                                        <span className="w-5 h-5 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-100/80 dark:border-indigo-900 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                                                            {isUploadingAddressProof ? (
+                                                                                <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />
+                                                                            ) : (
+                                                                                <UploadCloud className="w-3 h-3 stroke-[2.2]" />
+                                                                            )}
+                                                                        </span>
+                                                                        <span>{isUploadingAddressProof ? 'Uploading...' : currentAddressProofUrl ? 'Re-upload Address Proof' : 'Upload Address Proof'}</span>
+                                                                    </button>
                                                                 </div>
 
                                                                 {currentAddressProofUrl && (
@@ -2568,18 +2564,18 @@ export default function CustomerDataEntryPage() {
                                                                 <span>Same as Current Address</span>
                                                             </label>
 
-                                                            <Button
+                                                            <button
                                                                 type="button"
-                                                                variant="secondary"
-                                                                size="sm"
                                                                 disabled={isSameAsCurrentAddress}
                                                                 onClick={handlePullPermanentAddressFromAadhaar}
-                                                                className="h-8 px-2.5 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800 flex items-center gap-1.5 disabled:opacity-50"
+                                                                className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-sm shadow-indigo-500/25 hover:shadow-md hover:shadow-indigo-500/35 active:scale-[0.97] transition-all duration-150 self-start sm:self-auto cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
                                                                 title="Autofill permanent address from scanned Aadhaar card"
                                                             >
-                                                                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                                                                <span>Pull from Aadhaar</span>
-                                                            </Button>
+                                                                <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
+                                                                    <Sparkles className="w-3 h-3 fill-white/20 stroke-[2.2]" />
+                                                                </span>
+                                                                <span className="tracking-tight">Pull Address from Aadhaar</span>
+                                                            </button>
                                                         </div>
                                                     </div>
 
@@ -2790,25 +2786,21 @@ export default function CustomerDataEntryPage() {
                                                                         </Button>
                                                                     </div>
                                                                     {(slip.file || slip.fileUrl) && (
-                                                                        <Button
+                                                                        <button
                                                                             type="button"
-                                                                            size="sm"
                                                                             disabled={slip.isScanning || !slip.file}
                                                                             onClick={() => handleScanSalarySlip(idx)}
-                                                                            className="w-full h-7 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center gap-1"
+                                                                            className="group w-full h-8 px-2.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/20 active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none cursor-pointer select-none"
                                                                         >
-                                                                            {slip.isScanning ? (
-                                                                                <>
-                                                                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                                                                    <span>Scanning...</span>
-                                                                                </>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <Sparkles className="w-3 h-3 text-indigo-500" />
-                                                                                    <span>Scan with OCR</span>
-                                                                                </>
-                                                                            )}
-                                                                        </Button>
+                                                                            <span className="w-4.5 h-4.5 rounded-md bg-white/20 flex items-center justify-center shrink-0">
+                                                                                {slip.isScanning ? (
+                                                                                    <Loader2 className="w-2.5 h-2.5 animate-spin text-white" />
+                                                                                ) : (
+                                                                                    <Sparkles className="w-2.5 h-2.5 fill-white/20" />
+                                                                                )}
+                                                                            </span>
+                                                                            <span>{slip.isScanning ? 'Scanning...' : 'Scan with OCR'}</span>
+                                                                        </button>
                                                                     )}
                                                                     {slip.detectedSalary && (
                                                                         <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 text-[10px] space-y-1">
@@ -2849,34 +2841,32 @@ export default function CustomerDataEntryPage() {
                                                                         className="hidden"
                                                                         onChange={handleCombinedSlipUpload}
                                                                     />
-                                                                    <Button
+                                                                    <button
                                                                         type="button"
-                                                                        variant="secondary"
                                                                         onClick={() => document.getElementById('combined-salary-statement')?.click()}
-                                                                        className="h-9 px-3 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                                                                        className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-semibold text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200/90 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-2xs hover:shadow-xs active:scale-[0.97] transition-all cursor-pointer select-none"
                                                                     >
-                                                                        <UploadCloud className="w-3.5 h-3.5" />
-                                                                        <span className="truncate">{combinedSlip.file ? combinedSlip.file.name : (combinedSlip.fileUrl ? 'Change Statement' : 'Upload Combined Statement')}</span>
-                                                                    </Button>
+                                                                        <span className="w-5 h-5 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-100/80 dark:border-indigo-900 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                                                            <UploadCloud className="w-3.5 h-3.5 stroke-[2.2]" />
+                                                                        </span>
+                                                                        <span className="truncate max-w-[180px]">{combinedSlip.file ? combinedSlip.file.name : (combinedSlip.fileUrl ? 'Change Statement' : 'Upload Combined Statement')}</span>
+                                                                    </button>
                                                                     {combinedSlip.file && (
-                                                                        <Button
+                                                                        <button
                                                                             type="button"
                                                                             disabled={combinedSlip.isScanning}
                                                                             onClick={handleScanCombinedSlip}
-                                                                            className="h-9 px-3 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5"
+                                                                            className="group inline-flex items-center gap-2 h-9 px-4 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/25 active:scale-[0.97] transition-all cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none"
                                                                         >
-                                                                            {combinedSlip.isScanning ? (
-                                                                                <>
-                                                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                                                    <span>Scanning...</span>
-                                                                                </>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <Sparkles className="w-3.5 h-3.5" />
-                                                                                    <span>Scan with OCR</span>
-                                                                                </>
-                                                                            )}
-                                                                        </Button>
+                                                                            <span className="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                                                                                {combinedSlip.isScanning ? (
+                                                                                    <Loader2 className="w-3 h-3 animate-spin text-white" />
+                                                                                ) : (
+                                                                                    <Sparkles className="w-3 h-3 fill-white/20" />
+                                                                                )}
+                                                                            </span>
+                                                                            <span>{combinedSlip.isScanning ? 'Scanning...' : 'Scan with OCR'}</span>
+                                                                        </button>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -3381,15 +3371,16 @@ export default function CustomerDataEntryPage() {
                                                                 Existing Obligations & Balance Transfer (BT)
                                                             </span>
                                                         </div>
-                                                        <Button
+                                                        <button
                                                             type="button"
-                                                            variant="secondary"
                                                             onClick={handleAddLoan}
-                                                            className="h-8 px-3 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                                                            className="group inline-flex items-center gap-2 h-8.5 px-3.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/25 hover:shadow-md hover:shadow-indigo-500/35 active:scale-[0.97] transition-all cursor-pointer select-none"
                                                         >
-                                                            <Plus className="w-3.5 h-3.5" />
+                                                            <span className="w-4.5 h-4.5 rounded-md bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                                                                <Plus className="w-3 h-3 stroke-[2.5]" />
+                                                            </span>
                                                             <span>Add Loan / Obligation</span>
-                                                        </Button>
+                                                        </button>
                                                     </div>
 
                                                     {existingLoans.length === 0 ? (
