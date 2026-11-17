@@ -413,8 +413,6 @@ export default function CustomerDataEntryPage() {
         }
     };
 
-    const progressPercentage = Math.round(((activeSectionIndex + 1) / sections.length) * 100);
-
     return (
         <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 md:p-8 relative overflow-hidden bg-slate-50 dark:bg-slate-900">
             {/* Ambient Lighting Gradients */}
@@ -547,67 +545,110 @@ export default function CustomerDataEntryPage() {
                             </div>
                         )}
                         
-                        {/* STEP 2: Multi-Section Form with Live Progress Stepper */}
+                        {/* STEP 2: Multi-Section Form with Google Modern Stepper Dots */}
                         {step === 2 && (
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 
-                                {/* Progress Header & Dynamic Stepper */}
-                                <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <div className="flex items-center gap-2 font-bold text-indigo-950 dark:text-indigo-200">
-                                            {React.createElement(sections[activeSectionIndex]?.icon || User, { className: "w-4 h-4 text-indigo-600 dark:text-indigo-400" })}
-                                            <span>
-                                                Section {activeSectionIndex + 1} of {sections.length}: <span className="font-extrabold text-indigo-600 dark:text-indigo-400">{sections[activeSectionIndex]?.title}</span>
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300">
-                                                {progressPercentage}%
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Glowing Animated Progress Track */}
-                                    <div className="h-2 w-full rounded-full bg-indigo-100/80 dark:bg-indigo-900/50 overflow-hidden relative">
-                                        <div 
-                                            className="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 rounded-full transition-all duration-500 ease-out shadow-sm"
-                                            style={{ width: `${progressPercentage}%` }}
-                                        />
-                                    </div>
-
-                                    {/* Section Navigation Tabs / Pills */}
-                                    <div className="flex items-center gap-1.5 overflow-x-auto pt-1 scrollbar-none">
+                                {/* Google Modern Step Dots Indicator */}
+                                <div className="space-y-4 pt-1 pb-2">
+                                    {/* Desktop & Tablet: Connected Dot Stepper */}
+                                    <div className="relative flex items-center justify-between max-w-xl mx-auto px-2">
                                         {sections.map((sec, idx) => {
                                             const isActive = idx === activeSectionIndex;
                                             const isDone = idx < activeSectionIndex;
+                                            const isClickable = idx < activeSectionIndex || validateCurrentSection(activeSectionIndex);
+
                                             return (
-                                                <button
-                                                    key={sec.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (idx < activeSectionIndex || validateCurrentSection(activeSectionIndex)) {
-                                                            setActiveSectionIndex(idx);
-                                                        }
-                                                    }}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                                                        isActive 
-                                                            ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-300 dark:ring-indigo-700' 
-                                                            : isDone 
-                                                                ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50' 
-                                                                : 'bg-white/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800'
-                                                    }`}
-                                                >
-                                                    {isDone ? (
-                                                        <Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                                                    ) : (
-                                                        <span className={`w-3.5 h-3.5 rounded-full text-[10px] flex items-center justify-center font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}>
-                                                            {idx + 1}
+                                                <React.Fragment key={sec.id}>
+                                                    {/* Step Dot & Label */}
+                                                    <div className="flex flex-col items-center relative z-10">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (isClickable) setActiveSectionIndex(idx);
+                                                            }}
+                                                            className={`relative flex items-center justify-center transition-all duration-300 rounded-full select-none ${
+                                                                isActive
+                                                                    ? 'w-9 h-9 bg-indigo-600 text-white font-bold text-xs ring-4 ring-indigo-500/20 dark:ring-indigo-400/25 shadow-md shadow-indigo-500/25 scale-105'
+                                                                    : isDone
+                                                                        ? 'w-8 h-8 bg-indigo-600 dark:bg-indigo-500 text-white font-bold text-xs hover:scale-105 shadow-xs cursor-pointer'
+                                                                        : 'w-8 h-8 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-semibold text-xs border border-slate-200/80 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer'
+                                                            }`}
+                                                            title={`Step ${idx + 1}: ${sec.title}`}
+                                                        >
+                                                            {isDone ? (
+                                                                <Check className="w-4 h-4 stroke-[2.5]" />
+                                                            ) : (
+                                                                <span>{idx + 1}</span>
+                                                            )}
+                                                        </button>
+                                                        
+                                                        <span className={`text-[11px] mt-2 font-medium transition-colors text-center max-w-[80px] truncate ${
+                                                            isActive 
+                                                                ? 'text-indigo-600 dark:text-indigo-400 font-bold' 
+                                                                : isDone 
+                                                                    ? 'text-slate-700 dark:text-slate-300 font-semibold' 
+                                                                    : 'text-slate-400 dark:text-slate-500'
+                                                        }`}>
+                                                            {sec.shortTitle}
                                                         </span>
+                                                    </div>
+
+                                                    {/* Hairline connecting track between dots */}
+                                                    {idx < sections.length - 1 && (
+                                                        <div className="flex-1 h-[2px] mx-2 -mt-6 transition-all duration-500 rounded-full relative overflow-hidden bg-slate-200 dark:bg-slate-800">
+                                                            <div 
+                                                                className={`h-full transition-all duration-500 ${
+                                                                    idx < activeSectionIndex 
+                                                                        ? 'w-full bg-indigo-600 dark:bg-indigo-500' 
+                                                                        : 'w-0'
+                                                                }`} 
+                                                            />
+                                                        </div>
                                                     )}
-                                                    <span>{sec.shortTitle}</span>
-                                                </button>
+                                                </React.Fragment>
                                             );
                                         })}
+                                    </div>
+
+                                    {/* Google Dynamic Capsule Dots (Pagination indicator) */}
+                                    <div className="flex items-center justify-center gap-1.5 pt-1">
+                                        {sections.map((sec, idx) => (
+                                            <button
+                                                key={sec.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (idx < activeSectionIndex || validateCurrentSection(activeSectionIndex)) {
+                                                        setActiveSectionIndex(idx);
+                                                    }
+                                                }}
+                                                className={`h-1.5 rounded-full transition-all duration-300 ${
+                                                    idx === activeSectionIndex
+                                                        ? 'w-6 bg-indigo-600 dark:bg-indigo-400'
+                                                        : idx < activeSectionIndex
+                                                            ? 'w-1.5 bg-indigo-300 dark:bg-indigo-700 hover:bg-indigo-400'
+                                                            : 'w-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300'
+                                                }`}
+                                                title={`Step ${idx + 1}: ${sec.title}`}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Active Section Headline in Google Material style */}
+                                    <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center ring-1 ring-indigo-200/60 dark:ring-indigo-800/50">
+                                                {React.createElement(sections[activeSectionIndex]?.icon || User, { className: "w-4 h-4" })}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                                    {sections[activeSectionIndex]?.title}
+                                                </h3>
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                                    Step {activeSectionIndex + 1} of {sections.length}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
