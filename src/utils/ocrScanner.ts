@@ -223,7 +223,8 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
     const noiseKeywords = [
         'government', 'india', 'bharat', 'sarkar', 'uidai', 'unique', 'identification',
         'authority', 'enrolment', 'help', 'aadhaar', 'dob', 'male', 'female', 'yob',
-        'address', 'father', 'mother', 'husband', 'card', 'mera', 'meri', 'pehchan'
+        'address', 'father', 'mother', 'husband', 'card', 'mera', 'meri', 'pehchan',
+        'powered', 'by', 'nsdl', 'utiitsl', 'protean', 'issued', 'download', 'valid'
     ];
 
     // Find the index of the line containing DOB
@@ -238,14 +239,18 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
     if (dobLineIndex > 0) {
         // Look at the lines above the DOB line for a valid name
         for (let i = dobLineIndex - 1; i >= 0; i--) {
-            const line = lines[i];
+            const line = lines[i].trim();
             const lower = line.toLowerCase();
+            if (/^powered(\s+by)?\b/i.test(line) || lower.includes('powered by')) continue;
             const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
             const isAlphaOnly = /^[A-Za-z\s.]{3,35}$/.test(line);
 
-            if (!hasNoise && isAlphaOnly && line.split(' ').length >= 1) {
-                fullName = line.replace(/[^A-Za-z\s.]/g, '').trim();
-                break;
+            if (!hasNoise && isAlphaOnly && line.split(/\s+/).length >= 1) {
+                const words = line.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
+                if (words.length > 0) {
+                    fullName = line.replace(/[^A-Za-z\s.]/g, '').trim();
+                    break;
+                }
             }
         }
     }
@@ -253,12 +258,17 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
     // Fallback name search if not found above DOB
     if (!fullName) {
         for (const line of lines) {
-            const lower = line.toLowerCase();
+            const trimmed = line.trim();
+            const lower = trimmed.toLowerCase();
+            if (/^powered(\s+by)?\b/i.test(trimmed) || lower.includes('powered by')) continue;
             const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
-            const isAlphaOnly = /^[A-Za-z\s.]{4,30}$/.test(line);
-            if (!hasNoise && isAlphaOnly && line.split(' ').length >= 2) {
-                fullName = line.trim();
-                break;
+            const isAlphaOnly = /^[A-Za-z\s.]{4,30}$/.test(trimmed);
+            if (!hasNoise && isAlphaOnly) {
+                const words = trimmed.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
+                if (words.length >= 2) {
+                    fullName = trimmed;
+                    break;
+                }
             }
         }
     }
@@ -305,17 +315,33 @@ export function parsePanText(rawText: string): Partial<ScannedIdData> {
     let fatherName: string | null = null;
 
     const noiseKeywords = [
-        'income', 'tax', 'department', 'govt', 'government', 'india', 'permanent',
-        'account', 'number', 'card', 'father', 'name', 'sign', 'signature', 'date', 'birth'
+        'income', 'tax', 'department', 'govt', 'government', 'india', 'bharat', 'sarkar',
+        'permanent', 'account', 'number', 'card', 'father', 'mother', 'name', 'sign',
+        'signature', 'date', 'birth', 'holder', 'seal', 'reprint', 'issued', 'download',
+        'qr', 'scan', 'utiitsl', 'nsdl', 'protean', 'directorate', 'powered', 'by',
+        'valid', 'only', 'electronic', 'incometax', 'online', 'portal'
     ];
 
     const candidateLines: string[] = [];
     for (const line of lines) {
-        const lower = line.toLowerCase();
+        const cleanLine = line.trim();
+        const lower = cleanLine.toLowerCase();
+
+        // Reject watermarks and system attribution lines
+        if (/^powered(\s+by)?\b/i.test(cleanLine) || lower.includes('powered by')) {
+            continue;
+        }
+
         const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
-        const isAlpha = /^[A-Z\s.]{3,35}$/i.test(line);
-        if (!hasNoise && isAlpha && line.length >= 3) {
-            candidateLines.push(line.trim());
+        const isAlpha = /^[A-Za-z\s.]{3,35}$/.test(cleanLine);
+
+        if (!hasNoise && isAlpha && cleanLine.length >= 3) {
+            const words = cleanLine.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
+            // Require meaningful words (avoid single stray characters)
+            if (words.length >= 1) {
+                if (words.length === 1 && cleanLine.length < 4) continue;
+                candidateLines.push(cleanLine);
+            }
         }
     }
 

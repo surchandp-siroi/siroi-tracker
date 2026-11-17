@@ -3057,6 +3057,8 @@ export default function CustomerDataEntryPage() {
                     onConfirmAndProceed={() => {
                         setIsDeviationDialogOpen(false);
                     }}
+                    hasAadhaarData={Boolean(scannedAadhaar?.fullName || scannedAadhaar?.dob || scannedAadhaar?.idNumber)}
+                    hasPanData={Boolean(scannedPan?.fullName || scannedPan?.dob || scannedPan?.idNumber)}
                 />
             </LiquidGlassCard>
         </div>

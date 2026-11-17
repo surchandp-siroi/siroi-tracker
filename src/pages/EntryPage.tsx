@@ -65,7 +65,7 @@ const LiveClock = memo(() => {
 function InlineDatePicker({ value, onChange, disabled, className, min }: any) {
     const [displayVal, setDisplayVal] = useState('');
     const [showPicker, setShowPicker] = useState(false);
-    
+
     useEffect(() => {
         if (!value) {
             setDisplayVal('');
@@ -95,14 +95,14 @@ function InlineDatePicker({ value, onChange, disabled, className, min }: any) {
 
     return (
         <div className="relative flex items-center w-full h-full">
-            <Input 
+            <Input
                 disabled={disabled}
                 value={displayVal}
                 onChange={handleTextChange}
                 placeholder="DD-MM-YYYY"
                 className={`pr-8 font-mono ${className || ''}`}
             />
-            <button 
+            <button
                 type="button"
                 disabled={disabled}
                 onClick={() => setShowPicker(true)}
@@ -154,7 +154,7 @@ const generateMonthlyOptions = () => {
     const end = new Date();
     let current = new Date(start);
     current.setDate(1);
-    
+
     const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
 
     while (current <= endMonth) {
@@ -172,756 +172,756 @@ const DAILY_OPTIONS = generateDailyOptions();
 const MONTHLY_OPTIONS = generateMonthlyOptions();
 
 export default function DataEntryTerminal() {
-  const { user, isInitialized, logout } = useAuthStore();
-  const navigate = useNavigate();
-  const { products, channels, branches, branchTargets, orgMembers, consultants } = useDataStore();
+    const { user, isInitialized, logout } = useAuthStore();
+    const navigate = useNavigate();
+    const { products, channels, branches, branchTargets, orgMembers, consultants } = useDataStore();
 
-  const [entryMode, setEntryMode] = useState<'daily'|'monthly'>(
-      new Date() >= new Date('2026-01-01T00:00:00Z') ? 'daily' : 'monthly'
-  );
-  const [dateStr, setDateStr] = useState<string>(() => {
-      const today = new Date().toISOString().split('T')[0];
-      return today >= '2026-01-01' ? today : '2026-01-01';
-  });
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  
-  // Date Range States
-  const [dateSelectionType, setDateSelectionType] = useState<'single' | 'range'>('single');
-  const [startDateStr, setStartDateStr] = useState<string>(() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 7);
-      return d.toISOString().split('T')[0];
-  });
-  const [endDateStr, setEndDateStr] = useState<string>(() => {
-      return new Date().toISOString().split('T')[0];
-  });
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  
-  const [items, setItems] = useState<EntryItem[]>([]);
-  const [smartPrompt, setSmartPrompt] = useState<string>('');
-  const [isParsing, setIsParsing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [transferDate, setTransferDate] = useState<string>('');
-  const [isTransferring, setIsTransferring] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [stagedItems, setStagedItems] = useState<EntryItem[]>([]);
-  const [stagedFile, setStagedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
-  const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
-  const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [lodgeName, setLodgeName] = useState('');
-  const [lodgeEmail, setLodgeEmail] = useState('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(50);
-  // Staff name resolution dialog (bulk upload)
-  const [pendingParsed, setPendingParsed] = useState<any[]>([]);
-  const [rawHeaders, setRawHeaders] = useState<string[]>([]);
-  const [rawJsonData, setRawJsonData] = useState<any[]>([]);
-  const [isMappingDialogOpen, setIsMappingDialogOpen] = useState(false);
-  const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
-  
-  // Projection states
-  const [isProjectionLodged, setIsProjectionLodged] = useState(false);
-  const [lodgedProjectionAmount, setLodgedProjectionAmount] = useState(0);
-  const [isProjectionModalOpen, setIsProjectionModalOpen] = useState(false);
-  const [projectionInputs, setProjectionInputs] = useState<Record<string, number>>({
-      'Personal Loan': 0, 'Business Loan': 0, 'Housing Loan/LAP': 0, 'MSME Working Capital': 0, 'MSME Term Loan': 0, 'Life Insurance': 0, 'General Insurance': 0, 'Livlong Loan Protector': 0, 'Mutual Fund/SIP': 0, 'Retail Forex': 0, 'GST filing': 0, 'ITR filing': 0
-  });
-  const [projectionReason, setProjectionReason] = useState<string>('Business as Usual');
-  const [isLodgingProjection, setIsLodgingProjection] = useState(false);
-  
-  const [hasExistingEntry, setHasExistingEntry] = useState(false);
-  const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
-  const [entryCreatedAt, setEntryCreatedAt] = useState<string | null>(null);
-  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
-  const [branchDetails, setBranchDetails] = useState<any>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
-  const [executiveAuditLogs, setExecutiveAuditLogs] = useState<any[]>([]);
-  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
+    const [entryMode, setEntryMode] = useState<'daily' | 'monthly'>(
+        new Date() >= new Date('2026-01-01T00:00:00Z') ? 'daily' : 'monthly'
+    );
+    const [dateStr, setDateStr] = useState<string>(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return today >= '2026-01-01' ? today : '2026-01-01';
+    });
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const fetchExecutiveAuditLogs = async () => {
-      try {
-          setLoadingAuditLogs(true);
-          const { data, error } = await supabase
-              .from('upload_audit_logs')
-              .select('*')
-              .eq('email_id', user?.email || '')
-              .order('uploaded_at', { ascending: false });
+    // Date Range States
+    const [dateSelectionType, setDateSelectionType] = useState<'single' | 'range'>('single');
+    const [startDateStr, setStartDateStr] = useState<string>(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 7);
+        return d.toISOString().split('T')[0];
+    });
+    const [endDateStr, setEndDateStr] = useState<string>(() => {
+        return new Date().toISOString().split('T')[0];
+    });
+    const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+    const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-          if (error) throw error;
-          setExecutiveAuditLogs(data || []);
-      } catch (err) {
-          console.error('Error fetching audit logs:', err);
-      } finally {
-          setLoadingAuditLogs(false);
-      }
-  };
+    const [items, setItems] = useState<EntryItem[]>([]);
+    const [smartPrompt, setSmartPrompt] = useState<string>('');
+    const [isParsing, setIsParsing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [transferDate, setTransferDate] = useState<string>('');
+    const [isTransferring, setIsTransferring] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [stagedItems, setStagedItems] = useState<EntryItem[]>([]);
+    const [stagedFile, setStagedFile] = useState<File | null>(null);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
+    const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
+    const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [lodgeName, setLodgeName] = useState('');
+    const [lodgeEmail, setLodgeEmail] = useState('');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(50);
+    // Staff name resolution dialog (bulk upload)
+    const [pendingParsed, setPendingParsed] = useState<any[]>([]);
+    const [rawHeaders, setRawHeaders] = useState<string[]>([]);
+    const [rawJsonData, setRawJsonData] = useState<any[]>([]);
+    const [isMappingDialogOpen, setIsMappingDialogOpen] = useState(false);
+    const [isResolutionDialogOpen, setIsResolutionDialogOpen] = useState(false);
 
-  const handleTransferToDaily = async () => {
-      if (!currentEntryId || !transferDate) return;
-      try {
-          setIsTransferring(true);
-          const { error } = await supabase
-              .from('entries')
-              .update({ mode: 'daily', entryDate: transferDate })
-              .eq('id', currentEntryId);
-              
-          if (error) throw error;
-          
-          setSuccess('Successfully transferred entries to Daily mode');
-          setIsTransferModalOpen(false);
-          // switch mode and date to view the transferred entries
-          setEntryMode('daily');
-          setDateStr(transferDate);
-          setRefreshTrigger(p => p + 1);
-      } catch (e: any) {
-          console.error(e);
-          setError(e.message || 'Error transferring entries');
-      } finally {
-          setIsTransferring(false);
-      }
-  };
+    // Projection states
+    const [isProjectionLodged, setIsProjectionLodged] = useState(false);
+    const [lodgedProjectionAmount, setLodgedProjectionAmount] = useState(0);
+    const [isProjectionModalOpen, setIsProjectionModalOpen] = useState(false);
+    const [projectionInputs, setProjectionInputs] = useState<Record<string, number>>({
+        'Personal Loan': 0, 'Business Loan': 0, 'Housing Loan/LAP': 0, 'MSME Working Capital': 0, 'MSME Term Loan': 0, 'Life Insurance': 0, 'General Insurance': 0, 'Livlong Loan Protector': 0, 'Mutual Fund/SIP': 0, 'Retail Forex': 0, 'GST filing': 0, 'ITR filing': 0
+    });
+    const [projectionReason, setProjectionReason] = useState<string>('Business as Usual');
+    const [isLodgingProjection, setIsLodgingProjection] = useState(false);
 
-  const [showContextModal, setShowContextModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [selectedDeleteIndices, setSelectedDeleteIndices] = useState<Set<number>>(new Set());
-  
-  // Admin Context
-  const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
-  
-  // Adaptive Viewport Auto-Scaling (Instantly fits dashboard on laptops with 125%/150%/200% scaling or height < 900px)
-  const [adaptiveScale, setAdaptiveScale] = useState<number>(1);
+    const [hasExistingEntry, setHasExistingEntry] = useState(false);
+    const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
+    const [entryCreatedAt, setEntryCreatedAt] = useState<string | null>(null);
+    const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+    const [branchDetails, setBranchDetails] = useState<any>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+    const [executiveAuditLogs, setExecutiveAuditLogs] = useState<any[]>([]);
+    const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
 
-  useEffect(() => {
-    const updateScale = () => {
-      if (typeof window === 'undefined') return;
-      if (Capacitor.isNativePlatform()) {
-        setAdaptiveScale(1);
-        return;
-      }
-      
-      // 1. Calculate browser zoom ratio from outerWidth vs innerWidth
-      let zoomFactor = 1;
-      if (window.outerWidth && window.innerWidth) {
-        const ratio = window.outerWidth / window.innerWidth;
-        if (ratio >= 0.97 && ratio <= 1.03) {
-          zoomFactor = 1;
-        } else {
-          zoomFactor = ratio;
+    const fetchExecutiveAuditLogs = async () => {
+        try {
+            setLoadingAuditLogs(true);
+            const { data, error } = await supabase
+                .from('upload_audit_logs')
+                .select('*')
+                .eq('email_id', user?.email || '')
+                .order('uploaded_at', { ascending: false });
+
+            if (error) throw error;
+            setExecutiveAuditLogs(data || []);
+        } catch (err) {
+            console.error('Error fetching audit logs:', err);
+        } finally {
+            setLoadingAuditLogs(false);
         }
-      }
-
-      // 2. Exact inverse scale (1 / zoomFactor) to keep visual scale 1.00x on screen
-      let scale = zoomFactor !== 1 ? 1 / zoomFactor : 1;
-
-      // 3. If on a very short height viewport (< 850px), adjust scale slightly to prevent vertical cutoff
-      const effectiveHeight = window.innerHeight * zoomFactor;
-      if (effectiveHeight < 850) {
-        const heightFit = effectiveHeight / 850;
-        scale = Math.min(scale, scale * heightFit);
-      }
-
-      const finalScale = parseFloat(scale.toFixed(4));
-      setAdaptiveScale(Math.max(0.05, Math.min(5.0, finalScale)));
     };
 
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
-  
-  const fetchCache = useRef<Record<string, any>>({});
-  const [fetchError, setFetchError] = useState(false);
-  
-  const [metricCategory, setMetricCategory] = useState<string>('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+    const handleTransferToDaily = async () => {
+        if (!currentEntryId || !transferDate) return;
+        try {
+            setIsTransferring(true);
+            const { error } = await supabase
+                .from('entries')
+                .update({ mode: 'daily', entryDate: transferDate })
+                .eq('id', currentEntryId);
 
-  const categoryScopedItems = useMemo(() => {
-    return metricCategory === 'All'
-      ? items
-      : items.filter(i => {
-          const cat = (i.category || 'Loan') as string;
-          if (metricCategory === 'Consulting' || metricCategory === 'Consultancy') {
-            return cat === 'Consultancy' || cat === 'Consulting';
-          }
-          return cat === metricCategory;
+            if (error) throw error;
+
+            setSuccess('Successfully transferred entries to Daily mode');
+            setIsTransferModalOpen(false);
+            // switch mode and date to view the transferred entries
+            setEntryMode('daily');
+            setDateStr(transferDate);
+            setRefreshTrigger(p => p + 1);
+        } catch (e: any) {
+            console.error(e);
+            setError(e.message || 'Error transferring entries');
+        } finally {
+            setIsTransferring(false);
+        }
+    };
+
+    const [showContextModal, setShowContextModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [selectedDeleteIndices, setSelectedDeleteIndices] = useState<Set<number>>(new Set());
+
+    // Admin Context
+    const [adminSelectedBranch, setAdminSelectedBranch] = useState<string>('');
+
+    // Adaptive Viewport Auto-Scaling (Instantly fits dashboard on laptops with 125%/150%/200% scaling or height < 900px)
+    const [adaptiveScale, setAdaptiveScale] = useState<number>(1);
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (typeof window === 'undefined') return;
+            if (Capacitor.isNativePlatform()) {
+                setAdaptiveScale(1);
+                return;
+            }
+
+            // 1. Calculate browser zoom ratio from outerWidth vs innerWidth
+            let zoomFactor = 1;
+            if (window.outerWidth && window.innerWidth) {
+                const ratio = window.outerWidth / window.innerWidth;
+                if (ratio >= 0.97 && ratio <= 1.03) {
+                    zoomFactor = 1;
+                } else {
+                    zoomFactor = ratio;
+                }
+            }
+
+            // 2. Exact inverse scale (1 / zoomFactor) to keep visual scale 1.00x on screen
+            let scale = zoomFactor !== 1 ? 1 / zoomFactor : 1;
+
+            // 3. If on a very short height viewport (< 850px), adjust scale slightly to prevent vertical cutoff
+            const effectiveHeight = window.innerHeight * zoomFactor;
+            if (effectiveHeight < 850) {
+                const heightFit = effectiveHeight / 850;
+                scale = Math.min(scale, scale * heightFit);
+            }
+
+            const finalScale = parseFloat(scale.toFixed(4));
+            setAdaptiveScale(Math.max(0.05, Math.min(5.0, finalScale)));
+        };
+
+        updateScale();
+        window.addEventListener('resize', updateScale);
+        return () => window.removeEventListener('resize', updateScale);
+    }, []);
+
+    const fetchCache = useRef<Record<string, any>>({});
+    const [fetchError, setFetchError] = useState(false);
+
+    const [metricCategory, setMetricCategory] = useState<string>('All');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+
+    const categoryScopedItems = useMemo(() => {
+        return metricCategory === 'All'
+            ? items
+            : items.filter(i => {
+                const cat = (i.category || 'Loan') as string;
+                if (metricCategory === 'Consulting' || metricCategory === 'Consultancy') {
+                    return cat === 'Consultancy' || cat === 'Consulting';
+                }
+                return cat === metricCategory;
+            });
+    }, [items, metricCategory]);
+
+    const filteredItemsWithIndex = useMemo(() => {
+        return items.map((item, originalIndex) => ({ item, originalIndex })).filter(({ item }) => {
+            // 1. Centralised Product / Category Filter
+            if (metricCategory && metricCategory !== 'All') {
+                const itemCat = (item.category || 'Loan') as string;
+                if (metricCategory === 'Consulting' || metricCategory === 'Consultancy') {
+                    if (itemCat !== 'Consultancy' && itemCat !== 'Consulting') return false;
+                } else if (itemCat !== metricCategory) {
+                    return false;
+                }
+            }
+
+            // 2. Status Filter
+            if (statusFilter !== 'ALL') {
+                const itemStatus = (item.fileStatus || '') as string;
+                if (statusFilter === 'Disbursed') {
+                    if (itemStatus !== 'Disbursed' && itemStatus !== 'Issued' && itemStatus !== 'POLICY ISSUED' && itemStatus !== 'Sold') return false;
+                } else if (statusFilter === 'Sold') {
+                    if (itemStatus !== 'Sold' && !(item.category === 'Forex' && (itemStatus === 'Disbursed' || itemStatus === 'Sold'))) return false;
+                } else if (itemStatus !== statusFilter) {
+                    return false;
+                }
+            }
+
+            // 3. Search query filter
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase().trim();
+                const matchName = String(item.customerName ?? '').toLowerCase().includes(q);
+                const matchTrack = String(item.trackingNumber ?? '').toLowerCase().includes(q);
+                const matchRM = String(item.relationshipManagerName ?? '').toLowerCase().includes(q);
+                const matchChannel = String(item.channel ?? '').toLowerCase().includes(q);
+                const matchProduct = String(item.product ?? '').toLowerCase().includes(q);
+                const matchStaff = String(item.staffName ?? '').toLowerCase().includes(q);
+                const matchManager = String(item.managerName ?? '').toLowerCase().includes(q);
+                const matchConsultant = String(item.consultantName ?? '').toLowerCase().includes(q);
+                const matchPhone = String(item.phoneNumber ?? '').toLowerCase().includes(q);
+                const matchEmail = String(item.emailId ?? '').toLowerCase().includes(q);
+                const matchAddress = String(item.customerAddress ?? '').toLowerCase().includes(q);
+                const matchFirm = String(item.firmName ?? '').toLowerCase().includes(q);
+                const matchStatus = String(item.fileStatus ?? '').toLowerCase().includes(q);
+                const matchAmount = item.amount != null ? String(item.amount).includes(q) : false;
+                const matchSanctioned = item.sanctionedAmount != null ? String(item.sanctionedAmount).includes(q) : false;
+                const matchDisbursed = item.disbursedAmount != null ? String(item.disbursedAmount).includes(q) : false;
+                const matchRemark = String(item.rejectionRemark ?? '').toLowerCase().includes(q);
+
+                return !!(matchName || matchTrack || matchRM || matchChannel || matchProduct || matchStaff || matchManager || matchConsultant || matchPhone || matchEmail || matchAddress || matchFirm || matchStatus || matchAmount || matchSanctioned || matchDisbursed || matchRemark);
+            }
+
+            return true;
         });
-  }, [items, metricCategory]);
+    }, [items, metricCategory, searchQuery, statusFilter]);
 
-  const filteredItemsWithIndex = useMemo(() => {
-    return items.map((item, originalIndex) => ({ item, originalIndex })).filter(({ item }) => {
-      // 1. Centralised Product / Category Filter
-      if (metricCategory && metricCategory !== 'All') {
-        const itemCat = (item.category || 'Loan') as string;
-        if (metricCategory === 'Consulting' || metricCategory === 'Consultancy') {
-          if (itemCat !== 'Consultancy' && itemCat !== 'Consulting') return false;
-        } else if (itemCat !== metricCategory) {
-          return false;
-        }
-      }
+    // 60-day deletion window from entry creation date
+    const daysSinceCreation = entryCreatedAt
+        ? Math.floor((Date.now() - new Date(entryCreatedAt).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+    const allowDeletion = hasExistingEntry && (user?.role === 'admin' || daysSinceCreation < 60);
+    const daysRemaining = Math.max(0, 60 - daysSinceCreation);
 
-      // 2. Status Filter
-      if (statusFilter !== 'ALL') {
-        const itemStatus = (item.fileStatus || '') as string;
-        if (statusFilter === 'Disbursed') {
-          if (itemStatus !== 'Disbursed' && itemStatus !== 'Issued' && itemStatus !== 'POLICY ISSUED' && itemStatus !== 'Sold') return false;
-        } else if (statusFilter === 'Sold') {
-          if (itemStatus !== 'Sold' && !(item.category === 'Forex' && (itemStatus === 'Disbursed' || itemStatus === 'Sold'))) return false;
-        } else if (itemStatus !== statusFilter) {
-          return false;
-        }
-      }
-      
-      // 3. Search query filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchName = String(item.customerName ?? '').toLowerCase().includes(q);
-        const matchTrack = String(item.trackingNumber ?? '').toLowerCase().includes(q);
-        const matchRM = String(item.relationshipManagerName ?? '').toLowerCase().includes(q);
-        const matchChannel = String(item.channel ?? '').toLowerCase().includes(q);
-        const matchProduct = String(item.product ?? '').toLowerCase().includes(q);
-        const matchStaff = String(item.staffName ?? '').toLowerCase().includes(q);
-        const matchManager = String(item.managerName ?? '').toLowerCase().includes(q);
-        const matchConsultant = String(item.consultantName ?? '').toLowerCase().includes(q);
-        const matchPhone = String(item.phoneNumber ?? '').toLowerCase().includes(q);
-        const matchEmail = String(item.emailId ?? '').toLowerCase().includes(q);
-        const matchAddress = String(item.customerAddress ?? '').toLowerCase().includes(q);
-        const matchFirm = String(item.firmName ?? '').toLowerCase().includes(q);
-        const matchStatus = String(item.fileStatus ?? '').toLowerCase().includes(q);
-        const matchAmount = item.amount != null ? String(item.amount).includes(q) : false;
-        const matchSanctioned = item.sanctionedAmount != null ? String(item.sanctionedAmount).includes(q) : false;
-        const matchDisbursed = item.disbursedAmount != null ? String(item.disbursedAmount).includes(q) : false;
-        const matchRemark = String(item.rejectionRemark ?? '').toLowerCase().includes(q);
-        
-        return !!(matchName || matchTrack || matchRM || matchChannel || matchProduct || matchStaff || matchManager || matchConsultant || matchPhone || matchEmail || matchAddress || matchFirm || matchStatus || matchAmount || matchSanctioned || matchDisbursed || matchRemark);
-      }
-      
-      return true;
+    const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
+    const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
+    const isExecutive = user?.email === 'executive@siroiforex.com';
+    const isExecutiveOverride = hasExistingEntry && isExecutive;
+    const isMIS = user?.email?.toLowerCase().startsWith('mis.');
+
+    // Projection logic
+    const currentJsDate = new Date();
+    const isSunday = currentJsDate.getDay() === 0;
+    const isPastMay1 = currentJsDate >= new Date('2026-05-01T00:00:00');
+    const isPast11AM = currentJsDate.getHours() >= 11;
+    const isTimeLocked = isPastMay1 && isPast11AM;
+    const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
+
+    // Extended 120-hour Consultant Details Backfill Window (Timer starts Nov 5th, 2026 06:00 AM IST -> Auto-locks Nov 10th, 2026 06:00 AM IST)
+    const CONSULTANT_UNLOCK_START_MS = new Date('2026-11-05T06:00:00+05:30').getTime();
+    const CONSULTANT_UNLOCK_END_MS = CONSULTANT_UNLOCK_START_MS + 120 * 60 * 60 * 1000;
+    const nowTimestamp = currentJsDate.getTime();
+    const isConsultantUnlockWindowActive = nowTimestamp < CONSULTANT_UNLOCK_END_MS;
+    const consultantUnlockCountdown = (() => {
+        if (!isConsultantUnlockWindowActive) return '';
+        const remainingMs = nowTimestamp < CONSULTANT_UNLOCK_START_MS
+            ? 120 * 60 * 60 * 1000
+            : Math.max(0, CONSULTANT_UNLOCK_END_MS - nowTimestamp);
+        const hrs = Math.floor(remainingMs / (1000 * 60 * 60));
+        const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+        return nowTimestamp < CONSULTANT_UNLOCK_START_MS
+            ? '120h from Nov 5, 6:00 AM'
+            : `${hrs}h ${mins}m left`;
+    })();
+
+    const isItemMissingConsultantSinceAug2026 = (item: any) =>
+        (item.category === 'Loan' || (!item.category && item.product)) &&
+        Boolean(((item._entryDate || (dateSelectionType === 'range' ? item.date || startDateStr : dateStr)) >= '2026-08-01') || (item.date && item.date >= '2026-08-01') || (item.disbursedDate && item.disbursedDate >= '2026-08-01')) &&
+        !(item.consultantName && item.consultantName.trim() !== '' && item.consultantName !== '-' && item.consultantEmail && item.consultantEmail.trim() !== '' && item.consultantEmail !== '-');
+
+    const hasPendingEmi = items.some(item => (item.category === 'Loan' || (!item.category && item.product)) && item.fileStatus === 'Disbursed' && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-'));
+    const hasPendingConsultant = isConsultantUnlockWindowActive && items.some(item => isItemMissingConsultantSinceAug2026(item) || Boolean((item as any)._isSessionEditing));
+    const hasPendingBackfill = hasPendingEmi || hasPendingConsultant;
+    const isBypassedForPendingBackfill = hasExistingEntry && hasPendingBackfill;
+
+    const isGridBlocked = !isBypassedForPendingBackfill && ((entryMode === 'daily' && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor) || (isSunday && !isBackdoor));
+    const allowEdit = !hasExistingEntry || daysSinceCreation <= 60 || hasPendingBackfill;
+    const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
+
+    // Derive active branch name and scoped staff list for the Staff Name dropdown
+    const activeBranchName = branches.find(b => b.id === activeBranchId)?.name ?? '';
+
+    // Reset to first page when search, filter, or date/branch change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, statusFilter, metricCategory, activeBranchId, dateStr, startDateStr, endDateStr, dateSelectionType, entryMode]);
+
+    const totalPages = pageSize === -1
+        ? 1
+        : Math.max(1, Math.ceil(filteredItemsWithIndex.length / pageSize));
+    const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+    const paginatedItemsWithIndex = useMemo(() => {
+        if (pageSize === -1) return filteredItemsWithIndex;
+        const start = (safeCurrentPage - 1) * pageSize;
+        return filteredItemsWithIndex.slice(start, start + pageSize);
+    }, [filteredItemsWithIndex, safeCurrentPage, pageSize]);
+
+    const branchStaff = orgMembers.filter(m => {
+        if (!m.branch) return false;
+        const mBranch = m.branch.toLowerCase();
+        const aBranch = activeBranchName.toLowerCase();
+        return mBranch.includes(aBranch) || aBranch.includes(mBranch);
     });
-  }, [items, metricCategory, searchQuery, statusFilter]);
 
-  // 60-day deletion window from entry creation date
-  const daysSinceCreation = entryCreatedAt
-    ? Math.floor((Date.now() - new Date(entryCreatedAt).getTime()) / (1000 * 60 * 60 * 24))
-    : 0;
-  const allowDeletion = hasExistingEntry && (user?.role === 'admin' || daysSinceCreation < 60);
-  const daysRemaining = Math.max(0, 60 - daysSinceCreation);
+    const branchConsultants = useMemo(() => {
+        return consultants.filter(c => {
+            if (!c.associated_branch) return true;
+            const cb = c.associated_branch.toLowerCase().trim();
+            const ab = activeBranchName.toLowerCase().trim();
+            if (cb === ab || cb.includes(ab) || ab.includes(cb)) return true;
+            if (ab.includes('&')) {
+                const parts = ab.split('&').map(p => p.trim());
+                return parts.some(p => cb.includes(p) || (c.state && c.state.toLowerCase().includes(p)));
+            }
+            return false;
+        });
+    }, [consultants, activeBranchName]);
 
-  const isBackdoor = user?.role === 'admin' || user?.email === 'executive@siroiforex.com';
-  const activeBranchId = isBackdoor ? adminSelectedBranch : user?.branchId;
-  const isExecutive = user?.email === 'executive@siroiforex.com';
-  const isExecutiveOverride = hasExistingEntry && isExecutive;
-  const isMIS = user?.email?.toLowerCase().startsWith('mis.');
-  
-  // Projection logic
-  const currentJsDate = new Date();
-  const isSunday = currentJsDate.getDay() === 0;
-  const isPastMay1 = currentJsDate >= new Date('2026-05-01T00:00:00');
-  const isPast11AM = currentJsDate.getHours() >= 11;
-  const isTimeLocked = isPastMay1 && isPast11AM;
-  const isProjectionLocked = isSunday || isTimeLocked || isProjectionLodged;
+    const locationEmployeesCache = useRef<Record<string, string[]>>({});
+    useEffect(() => {
+        locationEmployeesCache.current = {};
+    }, [branches, activeBranchId, activeBranchName, orgMembers]);
 
-  // Extended 120-hour Consultant Details Backfill Window (Timer starts Nov 5th, 2026 06:00 AM IST -> Auto-locks Nov 10th, 2026 06:00 AM IST)
-  const CONSULTANT_UNLOCK_START_MS = new Date('2026-11-05T06:00:00+05:30').getTime();
-  const CONSULTANT_UNLOCK_END_MS = CONSULTANT_UNLOCK_START_MS + 120 * 60 * 60 * 1000;
-  const nowTimestamp = currentJsDate.getTime();
-  const isConsultantUnlockWindowActive = nowTimestamp < CONSULTANT_UNLOCK_END_MS;
-  const consultantUnlockCountdown = (() => {
-      if (!isConsultantUnlockWindowActive) return '';
-      const remainingMs = nowTimestamp < CONSULTANT_UNLOCK_START_MS
-          ? 120 * 60 * 60 * 1000
-          : Math.max(0, CONSULTANT_UNLOCK_END_MS - nowTimestamp);
-      const hrs = Math.floor(remainingMs / (1000 * 60 * 60));
-      const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-      return nowTimestamp < CONSULTANT_UNLOCK_START_MS
-          ? '120h from Nov 5, 6:00 AM'
-          : `${hrs}h ${mins}m left`;
-  })();
+    const getLocationEmployees = useCallback((branchLocationName?: string) => {
+        const targetBranchName = (branchLocationName || activeBranchName || '').trim();
+        const cacheKey = targetBranchName.toLowerCase();
+        if (locationEmployeesCache.current[cacheKey]) {
+            return locationEmployeesCache.current[cacheKey];
+        }
+        const targetBranch = branches.find(b =>
+            (targetBranchName && b.name.toLowerCase() === targetBranchName.toLowerCase()) ||
+            b.id === activeBranchId
+        );
+        const names = new Set<string>();
+        if (targetBranch?.managerName?.trim()) {
+            names.add(targetBranch.managerName.trim());
+        }
+        orgMembers.forEach(m => {
+            if (!m.branch || !m.name) return;
+            const mB = m.branch.toLowerCase();
+            const tB = targetBranchName.toLowerCase();
+            if (!tB || mB.includes(tB) || tB.includes(mB)) {
+                names.add(m.name.trim());
+            }
+        });
+        const result = Array.from(names).sort((a, b) => a.localeCompare(b));
+        locationEmployeesCache.current[cacheKey] = result;
+        return result;
+    }, [branches, activeBranchId, activeBranchName, orgMembers]);
 
-  const isItemMissingConsultantSinceAug2026 = (item: any) =>
-      (item.category === 'Loan' || (!item.category && item.product)) &&
-      Boolean(((item._entryDate || (dateSelectionType === 'range' ? item.date || startDateStr : dateStr)) >= '2026-08-01') || (item.date && item.date >= '2026-08-01') || (item.disbursedDate && item.disbursedDate >= '2026-08-01')) &&
-      !(item.consultantName && item.consultantName.trim() !== '' && item.consultantName !== '-' && item.consultantEmail && item.consultantEmail.trim() !== '' && item.consultantEmail !== '-');
+    // Customer Directory from Customer Data Portal (active for entries >= 2026-11-16)
+    const [customerRecords, setCustomerRecords] = useState<any[]>([]);
 
-  const hasPendingEmi = items.some(item => (item.category === 'Loan' || (!item.category && item.product)) && item.fileStatus === 'Disbursed' && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-'));
-  const hasPendingConsultant = isConsultantUnlockWindowActive && items.some(item => isItemMissingConsultantSinceAug2026(item) || Boolean((item as any)._isSessionEditing));
-  const hasPendingBackfill = hasPendingEmi || hasPendingConsultant;
-  const isBypassedForPendingBackfill = hasExistingEntry && hasPendingBackfill;
+    useEffect(() => {
+        let isMounted = true;
+        const loadCustomerDirectory = async () => {
+            const { data, error: custErr } = await supabase
+                .from('customer_data')
+                .select('id, customer_name, phone_number, email_id, city, company_name, entry_location, entry_person_name, pan_number, created_at, category, product, amount')
+                .order('customer_name', { ascending: true });
+            if (!custErr && data && isMounted) {
+                setCustomerRecords(data);
+            }
+        };
+        loadCustomerDirectory();
 
-  const isGridBlocked = !isBypassedForPendingBackfill && ((entryMode === 'daily' && !isProjectionLodged && user?.role !== 'admin' && !isBackdoor) || (isSunday && !isBackdoor));
-  const allowEdit = !hasExistingEntry || daysSinceCreation <= 60 || hasPendingBackfill;
-  const canModify = (allowEdit || isExecutiveOverride) && !isGridBlocked;
+        const channel = supabase
+            .channel('entry_customer_data_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'customer_data' },
+                () => {
+                    loadCustomerDirectory();
+                }
+            )
+            .subscribe();
 
-  // Derive active branch name and scoped staff list for the Staff Name dropdown
-  const activeBranchName = branches.find(b => b.id === activeBranchId)?.name ?? '';
+        return () => {
+            isMounted = false;
+            supabase.removeChannel(channel);
+        };
+    }, [refreshTrigger]);
 
-  // Reset to first page when search, filter, or date/branch change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, metricCategory, activeBranchId, dateStr, startDateStr, endDateStr, dateSelectionType, entryMode]);
+    const scopedCustomerCache = useRef<Record<string, any[]>>({});
+    useEffect(() => {
+        scopedCustomerCache.current = {};
+    }, [customerRecords, activeBranchName]);
 
-  const totalPages = pageSize === -1 
-    ? 1 
-    : Math.max(1, Math.ceil(filteredItemsWithIndex.length / pageSize));
-  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+    const getScopedCustomers = useCallback((branchLocationName?: string) => {
+        const targetBranch = (branchLocationName || activeBranchName || '').toLowerCase().trim();
+        if (scopedCustomerCache.current[targetBranch]) {
+            return scopedCustomerCache.current[targetBranch];
+        }
+        const filtered = customerRecords.filter(c => {
+            if (!c.customer_name || !c.customer_name.trim()) return false;
+            if (!targetBranch || !c.entry_location) return true;
+            const loc = String(c.entry_location).toLowerCase().trim();
+            if (loc === targetBranch || loc.includes(targetBranch) || targetBranch.includes(loc)) return true;
+            if (targetBranch.includes('guwahati') && (loc === 'ho' || loc.includes('guwahati'))) return true;
+            if (targetBranch.includes('manipur') && loc.includes('imphal')) return true;
+            if (targetBranch.includes('itanagar') && loc.includes('arunachal')) return true;
+            if (targetBranch.includes('&')) {
+                const parts = targetBranch.split('&').map(p => p.trim());
+                if (parts.some(p => loc.includes(p)) || loc.includes('dimapur') || loc.includes('aizawl')) return true;
+            }
+            return false;
+        });
+        // Deduplicate by normalized name + phone while keeping alphabetical order
+        const seen = new Set<string>();
+        const result = filtered.filter(c => {
+            const key = `${String(c.customer_name).trim().toLowerCase()}_${String(c.phone_number || '').replace(/\D/g, '')}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        scopedCustomerCache.current[targetBranch] = result;
+        return result;
+    }, [customerRecords, activeBranchName]);
 
-  const paginatedItemsWithIndex = useMemo(() => {
-    if (pageSize === -1) return filteredItemsWithIndex;
-    const start = (safeCurrentPage - 1) * pageSize;
-    return filteredItemsWithIndex.slice(start, start + pageSize);
-  }, [filteredItemsWithIndex, safeCurrentPage, pageSize]);
+    // Unsaved Guard
+    const isDirty = !hasExistingEntry && items.length > 0;
 
-  const branchStaff = orgMembers.filter(m => {
-      if (!m.branch) return false;
-      const mBranch = m.branch.toLowerCase();
-      const aBranch = activeBranchName.toLowerCase();
-      return mBranch.includes(aBranch) || aBranch.includes(mBranch);
-  });
+    useEffect(() => {
+        if (isInitialized && !user) {
+            navigate('/');
+        }
+        // Auto-select first branch for admin / backdoor
+        if (isBackdoor && branches.length > 0 && !adminSelectedBranch) {
+            const available = branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch');
+            if (available.length > 0) {
+                setAdminSelectedBranch(available[0].id);
+            }
+        }
+    }, [user, isInitialized, navigate, branches, adminSelectedBranch, isBackdoor]);
 
-  const branchConsultants = useMemo(() => {
-      return consultants.filter(c => {
-          if (!c.associated_branch) return true;
-          const cb = c.associated_branch.toLowerCase().trim();
-          const ab = activeBranchName.toLowerCase().trim();
-          if (cb === ab || cb.includes(ab) || ab.includes(cb)) return true;
-          if (ab.includes('&')) {
-              const parts = ab.split('&').map(p => p.trim());
-              return parts.some(p => cb.includes(p) || (c.state && c.state.toLowerCase().includes(p)));
-          }
-          return false;
-      });
-  }, [consultants, activeBranchName]);
+    // Derived mode
+    const isDailyMode = entryMode === 'daily';
+    const modeLabel = isDailyMode ? 'Daily Direct Tracking' : 'Monthly Batch Tracking';
 
-  const locationEmployeesCache = useRef<Record<string, string[]>>({});
-  useEffect(() => {
-      locationEmployeesCache.current = {};
-  }, [branches, activeBranchId, activeBranchName, orgMembers]);
+    useEffect(() => {
+        if (!activeBranchId) return;
 
-  const getLocationEmployees = useCallback((branchLocationName?: string) => {
-      const targetBranchName = (branchLocationName || activeBranchName || '').trim();
-      const cacheKey = targetBranchName.toLowerCase();
-      if (locationEmployeesCache.current[cacheKey]) {
-          return locationEmployeesCache.current[cacheKey];
-      }
-      const targetBranch = branches.find(b => 
-          (targetBranchName && b.name.toLowerCase() === targetBranchName.toLowerCase()) || 
-          b.id === activeBranchId
-      );
-      const names = new Set<string>();
-      if (targetBranch?.managerName?.trim()) {
-          names.add(targetBranch.managerName.trim());
-      }
-      orgMembers.forEach(m => {
-          if (!m.branch || !m.name) return;
-          const mB = m.branch.toLowerCase();
-          const tB = targetBranchName.toLowerCase();
-          if (!tB || mB.includes(tB) || tB.includes(mB)) {
-              names.add(m.name.trim());
-          }
-      });
-      const result = Array.from(names).sort((a, b) => a.localeCompare(b));
-      locationEmployeesCache.current[cacheKey] = result;
-      return result;
-  }, [branches, activeBranchId, activeBranchName, orgMembers]);
+        const cacheKey = dateSelectionType === 'single'
+            ? `${activeBranchId}_${dateStr}_${entryMode}`
+            : `${activeBranchId}_${startDateStr}_${endDateStr}_${entryMode}`;
 
-  // Customer Directory from Customer Data Portal (active for entries >= 2026-11-16)
-  const [customerRecords, setCustomerRecords] = useState<any[]>([]);
+        const fetchContext = async () => {
+            setIsLoadingExisting(true);
+            setHasExistingEntry(false);
+            setFetchError(false);
+            setItems([]); // Clear items immediately when branch changes to prevent stale UI
 
-  useEffect(() => {
-      let isMounted = true;
-      const loadCustomerDirectory = async () => {
-          const { data, error: custErr } = await supabase
-              .from('customer_data')
-              .select('id, customer_name, phone_number, email_id, city, company_name, entry_location, entry_person_name, pan_number, created_at, category, product, amount')
-              .order('customer_name', { ascending: true });
-          if (!custErr && data && isMounted) {
-              setCustomerRecords(data);
-          }
-      };
-      loadCustomerDirectory();
+            try {
+                // Get branch info
+                const b = branches.find(br => br.id === activeBranchId);
+                if (b) setBranchDetails(b);
 
-      const channel = supabase
-          .channel('entry_customer_data_realtime')
-          .on(
-              'postgres_changes',
-              { event: '*', schema: 'public', table: 'customer_data' },
-              () => {
-                  loadCustomerDirectory();
-              }
-          )
-          .subscribe();
+                if (fetchCache.current[cacheKey]) {
+                    const data = fetchCache.current[cacheKey];
+                    if (data.empty) {
+                        setHasExistingEntry(false);
+                        setItems((data.items || []).map(normalizeItem));
+                        setCurrentEntryId(null);
+                        setEntryCreatedAt(null);
+                    } else {
+                        setHasExistingEntry(true);
+                        setItems((data.items || []).map(normalizeItem));
+                        setCurrentEntryId(data.id || null);
+                        setEntryCreatedAt(data.createdAt || null);
+                    }
 
-      return () => {
-          isMounted = false;
-          supabase.removeChannel(channel);
-      };
-  }, [refreshTrigger]);
+                    if (data._proj) {
+                        setIsProjectionLodged(true);
+                        setLodgedProjectionAmount(data._proj.totalAmount || 0);
 
-  const scopedCustomerCache = useRef<Record<string, any[]>>({});
-  useEffect(() => {
-      scopedCustomerCache.current = {};
-  }, [customerRecords, activeBranchName]);
+                        const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
+                        if (data._proj.items) {
+                            data._proj.items.forEach((item: any) => {
+                                if (item.category && item.category in fetchedInputs) {
+                                    fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
+                                }
+                            });
+                        }
+                        setProjectionInputs(fetchedInputs);
+                    } else {
+                        setIsProjectionLodged(false);
+                        setLodgedProjectionAmount(0);
+                        setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
+                    }
 
-  const getScopedCustomers = useCallback((branchLocationName?: string) => {
-      const targetBranch = (branchLocationName || activeBranchName || '').toLowerCase().trim();
-      if (scopedCustomerCache.current[targetBranch]) {
-          return scopedCustomerCache.current[targetBranch];
-      }
-      const filtered = customerRecords.filter(c => {
-          if (!c.customer_name || !c.customer_name.trim()) return false;
-          if (!targetBranch || !c.entry_location) return true;
-          const loc = String(c.entry_location).toLowerCase().trim();
-          if (loc === targetBranch || loc.includes(targetBranch) || targetBranch.includes(loc)) return true;
-          if (targetBranch.includes('guwahati') && (loc === 'ho' || loc.includes('guwahati'))) return true;
-          if (targetBranch.includes('manipur') && loc.includes('imphal')) return true;
-          if (targetBranch.includes('itanagar') && loc.includes('arunachal')) return true;
-          if (targetBranch.includes('&')) {
-              const parts = targetBranch.split('&').map(p => p.trim());
-              if (parts.some(p => loc.includes(p)) || loc.includes('dimapur') || loc.includes('aizawl')) return true;
-          }
-          return false;
-      });
-      // Deduplicate by normalized name + phone while keeping alphabetical order
-      const seen = new Set<string>();
-      const result = filtered.filter(c => {
-          const key = `${String(c.customer_name).trim().toLowerCase()}_${String(c.phone_number || '').replace(/\D/g, '')}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-      });
-      scopedCustomerCache.current[targetBranch] = result;
-      return result;
-  }, [customerRecords, activeBranchName]);
+                    setIsLoadingExisting(false);
+                    return;
+                }
 
-  // Unsaved Guard
-  const isDirty = !hasExistingEntry && items.length > 0;
+                let fetchPromise;
+                if (dateSelectionType === 'single') {
+                    fetchPromise = supabase
+                        .from('entries')
+                        .select('*')
+                        .eq('branchId', activeBranchId)
+                        .eq('entryDate', dateStr)
+                        .eq('mode', entryMode);
+                } else {
+                    fetchPromise = supabase
+                        .from('entries')
+                        .select('*')
+                        .eq('branchId', activeBranchId)
+                        .gte('entryDate', startDateStr)
+                        .lte('entryDate', endDateStr)
+                        .eq('mode', entryMode)
+                        .order('entryDate', { ascending: true });
+                }
 
-  useEffect(() => {
-    if (isInitialized && !user) {
-      navigate('/');
-    }
-    // Auto-select first branch for admin / backdoor
-    if (isBackdoor && branches.length > 0 && !adminSelectedBranch) {
-       const available = branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch');
-       if (available.length > 0) {
-           setAdminSelectedBranch(available[0].id);
-       }
-    }
-  }, [user, isInitialized, navigate, branches, adminSelectedBranch, isBackdoor]);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('TIMEOUT')), 10000)
+                );
 
-  // Derived mode
-  const isDailyMode = entryMode === 'daily';
-  const modeLabel = isDailyMode ? 'Daily Direct Tracking' : 'Monthly Batch Tracking';
+                const { data: snap } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
-  useEffect(() => {
-      if (!activeBranchId) return;
-      
-      const cacheKey = dateSelectionType === 'single'
-          ? `${activeBranchId}_${dateStr}_${entryMode}`
-          : `${activeBranchId}_${startDateStr}_${endDateStr}_${entryMode}`;
-      
-      const fetchContext = async () => {
-          setIsLoadingExisting(true);
-          setHasExistingEntry(false);
-          setFetchError(false);
-          setItems([]); // Clear items immediately when branch changes to prevent stale UI
-          
-          try {
-              // Get branch info
-              const b = branches.find(br => br.id === activeBranchId);
-              if (b) setBranchDetails(b);
-              
-              if (fetchCache.current[cacheKey]) {
-                  const data = fetchCache.current[cacheKey];
-                  if (data.empty) {
-                      setHasExistingEntry(false);
-                      setItems((data.items || []).map(normalizeItem));
-                      setCurrentEntryId(null);
-                      setEntryCreatedAt(null);
-                  } else {
-                      setHasExistingEntry(true);
-                      setItems((data.items || []).map(normalizeItem));
-                      setCurrentEntryId(data.id || null);
-                      setEntryCreatedAt(data.createdAt || null);
-                  }
-                  
-                  if (data._proj) {
-                      setIsProjectionLodged(true);
-                      setLodgedProjectionAmount(data._proj.totalAmount || 0);
-                      
-                      const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
-                      if (data._proj.items) {
-                          data._proj.items.forEach((item: any) => {
-                              if (item.category && item.category in fetchedInputs) {
-                                  fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
-                              }
-                          });
-                      }
-                      setProjectionInputs(fetchedInputs);
-                  } else {
-                      setIsProjectionLodged(false);
-                      setLodgedProjectionAmount(0);
-                      setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
-                  }
-                  
-                  setIsLoadingExisting(false);
-                  return;
-              }
-              
-              let fetchPromise;
-              if (dateSelectionType === 'single') {
-                  fetchPromise = supabase
-                    .from('entries')
-                    .select('*')
-                    .eq('branchId', activeBranchId)
-                    .eq('entryDate', dateStr)
-                    .eq('mode', entryMode);
-              } else {
-                  fetchPromise = supabase
-                    .from('entries')
-                    .select('*')
-                    .eq('branchId', activeBranchId)
-                    .gte('entryDate', startDateStr)
-                    .lte('entryDate', endDateStr)
-                    .eq('mode', entryMode)
-                    .order('entryDate', { ascending: true });
-              }
-                
-              const timeoutPromise = new Promise((_, reject) => 
-                  setTimeout(() => reject(new Error('TIMEOUT')), 10000)
-              );
-              
-              const { data: snap } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-              
-              if (snap && snap.length > 0) {
-                  if (dateSelectionType === 'single') {
-                      const achievementData = snap.find((e: any) => !e.recordType || e.recordType === 'achievement');
-                      const projectionData = snap.find((e: any) => e.recordType === 'projection');
-                      
-                      if (achievementData) {
-                          setHasExistingEntry(true);
-                          const normItems = (achievementData.items || []).map(normalizeItem);
-                          fetchCache.current[cacheKey] = { ...achievementData, items: normItems, _proj: projectionData };
-                          setItems(normItems);
-                          setCurrentEntryId(achievementData.id);
-                          setEntryCreatedAt(achievementData.createdAt || null);
-                      } else {
-                          fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionData };
-                          setHasExistingEntry(false);
-                          setItems([]);
-                          setCurrentEntryId(null);
-                          setEntryCreatedAt(null);
-                      }
-                      
-                      if (projectionData) {
-                          setIsProjectionLodged(true);
-                          setLodgedProjectionAmount(projectionData.totalAmount || 0);
-                          
-                          const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
-                          if (projectionData.items) {
-                              projectionData.items.forEach((item: any) => {
-                                  if (item.category && item.category in fetchedInputs) {
-                                      fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
-                                  }
-                              });
-                          }
-                          setProjectionInputs(fetchedInputs);
-                      } else {
-                          setIsProjectionLodged(false);
-                          setLodgedProjectionAmount(0);
-                          setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
-                      }
-                  } else {
-                      // Range mode: Aggregate items across all achievement entries in the range
-                      const achievementEntries = snap.filter((e: any) => !e.recordType || e.recordType === 'achievement');
-                      const projectionEntries = snap.filter((e: any) => e.recordType === 'projection');
-                      
-                      const aggregatedItems: EntryItem[] = [];
-                      achievementEntries.forEach((entry: any) => {
-                          (entry.items || []).forEach((it: any) => {
-                              aggregatedItems.push(normalizeItem({
-                                  ...it,
-                                  date: it.date || entry.entryDate,
-                                  _entryId: entry.id,
-                                  _entryDate: entry.entryDate,
-                              }));
-                          });
-                      });
+                if (snap && snap.length > 0) {
+                    if (dateSelectionType === 'single') {
+                        const achievementData = snap.find((e: any) => !e.recordType || e.recordType === 'achievement');
+                        const projectionData = snap.find((e: any) => e.recordType === 'projection');
 
-                      if (achievementEntries.length > 0) {
-                          setHasExistingEntry(true);
-                          fetchCache.current[cacheKey] = { items: aggregatedItems, _proj: projectionEntries[0] || null, id: achievementEntries[0].id, createdAt: achievementEntries[0].createdAt };
-                          setItems(aggregatedItems);
-                          setCurrentEntryId(achievementEntries[0].id);
-                          setEntryCreatedAt(achievementEntries[0].createdAt || null);
-                      } else {
-                          fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionEntries[0] || null };
-                          setHasExistingEntry(false);
-                          setItems([]);
-                          setCurrentEntryId(null);
-                          setEntryCreatedAt(null);
-                      }
+                        if (achievementData) {
+                            setHasExistingEntry(true);
+                            const normItems = (achievementData.items || []).map(normalizeItem);
+                            fetchCache.current[cacheKey] = { ...achievementData, items: normItems, _proj: projectionData };
+                            setItems(normItems);
+                            setCurrentEntryId(achievementData.id);
+                            setEntryCreatedAt(achievementData.createdAt || null);
+                        } else {
+                            fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionData };
+                            setHasExistingEntry(false);
+                            setItems([]);
+                            setCurrentEntryId(null);
+                            setEntryCreatedAt(null);
+                        }
 
-                      if (projectionEntries.length > 0) {
-                          const totalProj = projectionEntries.reduce((sum: number, p: any) => sum + (Number(p.totalAmount) || 0), 0);
-                          setIsProjectionLodged(true);
-                          setLodgedProjectionAmount(totalProj);
-                      } else {
-                          setIsProjectionLodged(false);
-                          setLodgedProjectionAmount(0);
-                      }
-                  }
-              } else {
-                  fetchCache.current[cacheKey] = { empty: true, items: [] };
-                  setItems([]);
-                  setHasExistingEntry(false);
-                  setCurrentEntryId(null);
-                  setEntryCreatedAt(null);
-                  setIsProjectionLodged(false);
-                  setLodgedProjectionAmount(0);
-                  setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
-              }
-          } catch (err: any) {
-              console.error("Failed to load context", err);
-              if (err.message === 'TIMEOUT') {
-                  setFetchError(true);
-              }
-          } finally {
-              setIsLoadingExisting(false);
-          }
-      };
-      fetchContext();
-  }, [activeBranchId, dateStr, startDateStr, endDateStr, dateSelectionType, entryMode, branches, refreshTrigger]);
+                        if (projectionData) {
+                            setIsProjectionLodged(true);
+                            setLodgedProjectionAmount(projectionData.totalAmount || 0);
 
-  const processFile = async (file: File) => {
-      setIsParsing(true);
-      setUploadProgress(0);
-      setError('');
-      
-      try {
-          const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onprogress = (e) => {
-                  if (e.lengthComputable) {
-                      setUploadProgress(Math.round((e.loaded / e.total) * 30));
-                  }
-              };
-              reader.onload = () => resolve(reader.result as ArrayBuffer);
-              reader.onerror = () => reject(reader.error);
-              reader.readAsArrayBuffer(file);
-          });
-          
-          setUploadProgress(40);
-          await new Promise(resolve => setTimeout(resolve, 50));
+                            const fetchedInputs = { Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 };
+                            if (projectionData.items) {
+                                projectionData.items.forEach((item: any) => {
+                                    if (item.category && item.category in fetchedInputs) {
+                                        fetchedInputs[item.category as keyof typeof fetchedInputs] = item.projectionAmt || item.amount || 0;
+                                    }
+                                });
+                            }
+                            setProjectionInputs(fetchedInputs);
+                        } else {
+                            setIsProjectionLodged(false);
+                            setLodgedProjectionAmount(0);
+                            setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
+                        }
+                    } else {
+                        // Range mode: Aggregate items across all achievement entries in the range
+                        const achievementEntries = snap.filter((e: any) => !e.recordType || e.recordType === 'achievement');
+                        const projectionEntries = snap.filter((e: any) => e.recordType === 'projection');
 
-          const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
-          setUploadProgress(50);
-          await new Promise(resolve => setTimeout(resolve, 50));
-          
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const _rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: true });
-          
-          // Pre-process all dates and strings before filtering
-          const rawJson = _rawJson.map((row: any) => {
-             const newRow: any = {};
-             for (const key in row) {
-                 let val = row[key];
-                 if (val instanceof Date) {
-                     val.setHours(val.getHours() + 12); 
-                     val = val.toISOString().split('T')[0];
-                 } else if (typeof val === 'string') {
-                     const match = val.trim().match(/^(\d{1,2})[-\/.\s](\d{1,2})[-\/.\s](\d{4})$/);
-                     if (match) {
-                          const d = match[1].padStart(2, '0');
-                          const m = match[2].padStart(2, '0');
-                          const y = match[3];
-                          val = y + '-' + m + '-' + d;
-                     }
-                 }
-                 newRow[key] = val;
-             }
-             return newRow;
-          });
+                        const aggregatedItems: EntryItem[] = [];
+                        achievementEntries.forEach((entry: any) => {
+                            (entry.items || []).forEach((it: any) => {
+                                aggregatedItems.push(normalizeItem({
+                                    ...it,
+                                    date: it.date || entry.entryDate,
+                                    _entryId: entry.id,
+                                    _entryDate: entry.entryDate,
+                                }));
+                            });
+                        });
 
-          const json = rawJson.filter((row: any) => {
-              return Object.values(row).some(val => {
-                  if (val === undefined || val === null) return false;
-                  const str = String(val).trim();
-                  return str !== "" && str !== "-";
-              });
-          });
-          
-          if (json.length === 0) {
-              setError("The uploaded file appears to be empty or contains no valid data rows.");
-              setIsParsing(false);
-              return;
-          }
+                        if (achievementEntries.length > 0) {
+                            setHasExistingEntry(true);
+                            fetchCache.current[cacheKey] = { items: aggregatedItems, _proj: projectionEntries[0] || null, id: achievementEntries[0].id, createdAt: achievementEntries[0].createdAt };
+                            setItems(aggregatedItems);
+                            setCurrentEntryId(achievementEntries[0].id);
+                            setEntryCreatedAt(achievementEntries[0].createdAt || null);
+                        } else {
+                            fetchCache.current[cacheKey] = { empty: true, items: [], _proj: projectionEntries[0] || null };
+                            setHasExistingEntry(false);
+                            setItems([]);
+                            setCurrentEntryId(null);
+                            setEntryCreatedAt(null);
+                        }
 
-          // Extract headers
-          const headers = Array.from(new Set(json.flatMap((row: any) => Object.keys(row || {}))));
-          setRawHeaders(headers);
-          setRawJsonData(json);
-          setStagedFile(file);
-          setIsMappingDialogOpen(true);
-          setIsParsing(false);
-      } catch (e: any) {
-          console.error("AI Parse Error:", e);
-          setError(`Failed to read file. Error: ${e.message}`);
-          setIsParsing(false);
-      }
-  };
+                        if (projectionEntries.length > 0) {
+                            const totalProj = projectionEntries.reduce((sum: number, p: any) => sum + (Number(p.totalAmount) || 0), 0);
+                            setIsProjectionLodged(true);
+                            setLodgedProjectionAmount(totalProj);
+                        } else {
+                            setIsProjectionLodged(false);
+                            setLodgedProjectionAmount(0);
+                        }
+                    }
+                } else {
+                    fetchCache.current[cacheKey] = { empty: true, items: [] };
+                    setItems([]);
+                    setHasExistingEntry(false);
+                    setCurrentEntryId(null);
+                    setEntryCreatedAt(null);
+                    setIsProjectionLodged(false);
+                    setLodgedProjectionAmount(0);
+                    setProjectionInputs({ Loan: 0, Insurance: 0, Forex: 0, Consultancy: 0, Investments: 0 });
+                }
+            } catch (err: any) {
+                console.error("Failed to load context", err);
+                if (err.message === 'TIMEOUT') {
+                    setFetchError(true);
+                }
+            } finally {
+                setIsLoadingExisting(false);
+            }
+        };
+        fetchContext();
+    }, [activeBranchId, dateStr, startDateStr, endDateStr, dateSelectionType, entryMode, branches, refreshTrigger]);
 
-  const handleMappingConfirm = async (mapping: ColumnMapping) => {
-      setIsMappingDialogOpen(false);
-      setIsParsing(true);
-      setUploadProgress(60);
+    const processFile = async (file: File) => {
+        setIsParsing(true);
+        setUploadProgress(0);
+        setError('');
 
-      try {
-          // Transform raw data using mapping
-          const mappedJson = rawJsonData.map((row: any) => {
-              const mappedRow: any = {};
-              for (const [sysKey, excelHeader] of Object.entries(mapping)) {
-                  if (excelHeader && row[excelHeader] !== undefined) {
-                      let val = row[excelHeader];
-                      
-                      // Handle Excel serial dates natively
-                      if ((sysKey === 'date' || sysKey === 'customerDOB' || sysKey === 'disbursedDate' || sysKey === 'emiDate')) {
-                          if (typeof val === 'number') {
-                              const utc_days = Math.floor(val - 25569);
-                              const date_info = new Date(utc_days * 86400 * 1000);
-                              val = date_info.toISOString().split('T')[0];
-                          } else if (typeof val === 'string') {
-                              const str = val.trim();
-                              // Check for DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
-                              const match = str.match(/^(\d{1,2})[-\/.\s](\d{1,2})[-\/.\s](\d{4})$/);
-                              if (match) {
-                                  const d = match[1].padStart(2, '0');
-                                  const m = match[2].padStart(2, '0');
-                                  const y = match[3];
-                                  val = `${y}-${m}-${d}`; // YYYY-MM-DD
-                              }
-                          }
-                      }
-                      mappedRow[sysKey] = val;
-                  }
-              }
-              // Force projectionAmt to 0 if missing to prevent AI hallucination
-              if (mappedRow['projectionAmt'] === undefined || mappedRow['projectionAmt'] === null || mappedRow['projectionAmt'] === '') {
-                  mappedRow['projectionAmt'] = 0;
-              }
-              return mappedRow;
-          });
+        try {
+            const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        setUploadProgress(Math.round((e.loaded / e.total) * 30));
+                    }
+                };
+                reader.onload = () => resolve(reader.result as ArrayBuffer);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsArrayBuffer(file);
+            });
 
-          const prompt = `
+            setUploadProgress(40);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+            setUploadProgress(50);
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const _rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: true });
+
+            // Pre-process all dates and strings before filtering
+            const rawJson = _rawJson.map((row: any) => {
+                const newRow: any = {};
+                for (const key in row) {
+                    let val = row[key];
+                    if (val instanceof Date) {
+                        val.setHours(val.getHours() + 12);
+                        val = val.toISOString().split('T')[0];
+                    } else if (typeof val === 'string') {
+                        const match = val.trim().match(/^(\d{1,2})[-\/.\s](\d{1,2})[-\/.\s](\d{4})$/);
+                        if (match) {
+                            const d = match[1].padStart(2, '0');
+                            const m = match[2].padStart(2, '0');
+                            const y = match[3];
+                            val = y + '-' + m + '-' + d;
+                        }
+                    }
+                    newRow[key] = val;
+                }
+                return newRow;
+            });
+
+            const json = rawJson.filter((row: any) => {
+                return Object.values(row).some(val => {
+                    if (val === undefined || val === null) return false;
+                    const str = String(val).trim();
+                    return str !== "" && str !== "-";
+                });
+            });
+
+            if (json.length === 0) {
+                setError("The uploaded file appears to be empty or contains no valid data rows.");
+                setIsParsing(false);
+                return;
+            }
+
+            // Extract headers
+            const headers = Array.from(new Set(json.flatMap((row: any) => Object.keys(row || {}))));
+            setRawHeaders(headers);
+            setRawJsonData(json);
+            setStagedFile(file);
+            setIsMappingDialogOpen(true);
+            setIsParsing(false);
+        } catch (e: any) {
+            console.error("AI Parse Error:", e);
+            setError(`Failed to read file. Error: ${e.message}`);
+            setIsParsing(false);
+        }
+    };
+
+    const handleMappingConfirm = async (mapping: ColumnMapping) => {
+        setIsMappingDialogOpen(false);
+        setIsParsing(true);
+        setUploadProgress(60);
+
+        try {
+            // Transform raw data using mapping
+            const mappedJson = rawJsonData.map((row: any) => {
+                const mappedRow: any = {};
+                for (const [sysKey, excelHeader] of Object.entries(mapping)) {
+                    if (excelHeader && row[excelHeader] !== undefined) {
+                        let val = row[excelHeader];
+
+                        // Handle Excel serial dates natively
+                        if ((sysKey === 'date' || sysKey === 'customerDOB' || sysKey === 'disbursedDate' || sysKey === 'emiDate')) {
+                            if (typeof val === 'number') {
+                                const utc_days = Math.floor(val - 25569);
+                                const date_info = new Date(utc_days * 86400 * 1000);
+                                val = date_info.toISOString().split('T')[0];
+                            } else if (typeof val === 'string') {
+                                const str = val.trim();
+                                // Check for DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+                                const match = str.match(/^(\d{1,2})[-\/.\s](\d{1,2})[-\/.\s](\d{4})$/);
+                                if (match) {
+                                    const d = match[1].padStart(2, '0');
+                                    const m = match[2].padStart(2, '0');
+                                    const y = match[3];
+                                    val = `${y}-${m}-${d}`; // YYYY-MM-DD
+                                }
+                            }
+                        }
+                        mappedRow[sysKey] = val;
+                    }
+                }
+                // Force projectionAmt to 0 if missing to prevent AI hallucination
+                if (mappedRow['projectionAmt'] === undefined || mappedRow['projectionAmt'] === null || mappedRow['projectionAmt'] === '') {
+                    mappedRow['projectionAmt'] = 0;
+                }
+                return mappedRow;
+            });
+
+            const prompt = `
             You are a strict data extraction AI. Extract financial entry data from the following JSON representing an uploaded Excel sheet.
             The user has ALREADY mapped the columns perfectly to your expected keys. Just clean the data, format the dates to YYYY-MM-DD, and map the enums correctly.
             Ignore junk rows like headers, footers, totals, or blank lines.
@@ -959,881 +959,881 @@ export default function DataEntryTerminal() {
             Mapped Spreadsheet JSON:
             ${JSON.stringify(mappedJson).substring(0, 50000)} // Limiting to ~50k chars
           `;
-          
-          let parsed: any[] = [];
-          try {
-              setUploadProgress(70);
-              const { data, error: funcError } = await supabase.functions.invoke('parse-excel', {
-                 body: { prompt }
-              });
-              
-              if (funcError) {
-                 throw new Error(funcError.message || "Failed to invoke Edge Function");
-              }
-              if (data?.error) {
-                 throw new Error(data.error);
-              }
-              
-              setUploadProgress(90);
-              
-              const text = data?.text || "[]";
-              const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
-              parsed = JSON.parse(_clean);
-          } catch (aiErr) {
-              console.warn("AI parsing failed/timed out, falling back to local mapped parsing:", aiErr);
-              parsed = mappedJson;
-          }
-          
-          setUploadProgress(100);
 
-          if (Array.isArray(parsed) && parsed.length > 0) {
-              parsed = parsed.map((p: any) => {
-                  let prod = p.product || '';
-                  if (prod) {
-                      const plMatch = prod.match(/^PL\s*(.*)$/i);
-                      if (plMatch) {
-                          prod = plMatch[1] ? `Personal Loan (${plMatch[1].trim()})` : "Personal Loan";
-                      } else {
-                          const blMatch = prod.match(/^BL\s*(.*)$/i);
-                          if (blMatch) {
-                              prod = blMatch[1] ? `Business Loan (${blMatch[1].trim()})` : "Business Loan";
-                          }
-                      }
-                  }
-                  let fsVal = p.fileStatus || '';
-                  if (fsVal && typeof fsVal === 'string') {
-                      fsVal = fsVal.trim().toLowerCase();
-                      fsVal = fsVal.charAt(0).toUpperCase() + fsVal.slice(1);
-                      if (fsVal === 'Under writing' || fsVal === 'Under-writing' || fsVal === 'Under_writing') fsVal = 'Underwriting';
-                  }
-                  return { ...p, product: prod, fileStatus: fsVal, isManual: true, projectionAmt: Number(p.projectionAmt) || 0, amount: Number(p.amount) || 0, disbursedAmount: Number(p.disbursedAmount) || 0 };
-              });
-              setPendingParsed(parsed);
-              setIsResolutionDialogOpen(true);
-          } else {
-              setError("Could not extract valid entries from the file.");
-          }
-      } catch (e: any) {
-          console.error("Parse Error:", e);
-          setError(`Failed to process file. Error: ${e.message}`);
-      } finally {
-          setIsParsing(false);
-          setTimeout(() => setUploadProgress(0), 1000);
-      }
-  };
+            let parsed: any[] = [];
+            try {
+                setUploadProgress(70);
+                const { data, error: funcError } = await supabase.functions.invoke('parse-excel', {
+                    body: { prompt }
+                });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      await processFile(file);
-      e.target.value = ''; // Reset file input
-  };
+                if (funcError) {
+                    throw new Error(funcError.message || "Failed to invoke Edge Function");
+                }
+                if (data?.error) {
+                    throw new Error(data.error);
+                }
 
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (canModify && !isParsing) setIsDragging(true);
-  };
+                setUploadProgress(90);
 
-  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-  };
+                const text = data?.text || "[]";
+                const _clean = text.replace(new RegExp('```json', 'g'), '').replace(new RegExp('```', 'g'), '').trim();
+                parsed = JSON.parse(_clean);
+            } catch (aiErr) {
+                console.warn("AI parsing failed/timed out, falling back to local mapped parsing:", aiErr);
+                parsed = mappedJson;
+            }
 
-  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-      
-      if (!canModify || isParsing) return;
+            setUploadProgress(100);
 
-      const file = e.dataTransfer.files?.[0];
-      if (!file) return;
-      
-      await processFile(file);
-  };
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                parsed = parsed.map((p: any) => {
+                    let prod = p.product || '';
+                    if (prod) {
+                        const plMatch = prod.match(/^PL\s*(.*)$/i);
+                        if (plMatch) {
+                            prod = plMatch[1] ? `Personal Loan (${plMatch[1].trim()})` : "Personal Loan";
+                        } else {
+                            const blMatch = prod.match(/^BL\s*(.*)$/i);
+                            if (blMatch) {
+                                prod = blMatch[1] ? `Business Loan (${blMatch[1].trim()})` : "Business Loan";
+                            }
+                        }
+                    }
+                    let fsVal = p.fileStatus || '';
+                    if (fsVal && typeof fsVal === 'string') {
+                        fsVal = fsVal.trim().toLowerCase();
+                        fsVal = fsVal.charAt(0).toUpperCase() + fsVal.slice(1);
+                        if (fsVal === 'Under writing' || fsVal === 'Under-writing' || fsVal === 'Under_writing') fsVal = 'Underwriting';
+                    }
+                    return { ...p, product: prod, fileStatus: fsVal, isManual: true, projectionAmt: Number(p.projectionAmt) || 0, amount: Number(p.amount) || 0, disbursedAmount: Number(p.disbursedAmount) || 0 };
+                });
+                setPendingParsed(parsed);
+                setIsResolutionDialogOpen(true);
+            } else {
+                setError("Could not extract valid entries from the file.");
+            }
+        } catch (e: any) {
+            console.error("Parse Error:", e);
+            setError(`Failed to process file. Error: ${e.message}`);
+        } finally {
+            setIsParsing(false);
+            setTimeout(() => setUploadProgress(0), 1000);
+        }
+    };
 
-  const handleAddItem = () => {
-      setItems([...items, { 
-          date: dateSelectionType === 'range' ? endDateStr : dateStr, 
-          staffName: '', 
-          customerName: '', 
-          category: (metricCategory && metricCategory !== 'All' ? (metricCategory === 'Consulting' ? 'Consultancy' : metricCategory as any) : 'Loan'), 
-          product: '', 
-          channel: '', 
-          amount: 0, 
-          status: '', 
-          isManual: true, 
-          projectionAmt: 0,
-          fileLogin: '',
-          trackingNumber: '',
-          branchLocation: branchDetails?.name || '',
-          customerDOB: '',
-          phoneNumber: '',
-          emailId: '',
-          customerAddress: '',
-          firmName: '',
-          fileStatus: '',
-          sanctionedAmount: 0,
-          disbursedAmount: 0,
-          disbursedDate: '',
-          emiDate: '',
-          repaymentBank: '',
-          managerName: '',
-          consultantName: '',
-          consultantEmail: '',
-          rejectionRemark: ''
-      }]);
-      if (pageSize !== -1) {
-          const nextTotal = filteredItemsWithIndex.length + 1;
-          setCurrentPage(Math.ceil(nextTotal / pageSize));
-      }
-  };
-  
-  const handleUpdateItem = (index: number, key: string, val: any) => {
-      setItems(prevItems => {
-          const arr = [...prevItems];
-          const nextVal = key === 'customerName' ? formatCustomerName(String(val || '')) : val;
-          arr[index] = { ...arr[index], [key]: nextVal, _isSessionEditing: true } as any;
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        await processFile(file);
+        e.target.value = ''; // Reset file input
+    };
 
-          // Auto-populate basic customer info when selected from Customer Data Portal dropdown
-          if (key === 'customerName') {
-              const scopedList = getScopedCustomers(arr[index].branchLocation);
-              const matchedCustomer =
-                  scopedList.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim()) ||
-                  customerRecords.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim());
-              if (matchedCustomer) {
-                  const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
-                  const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'
-                      ? String(matchedCustomer.email_id).trim()
-                      : '';
-                  const cleanCity = matchedCustomer.city && matchedCustomer.city !== 'N/A'
-                      ? String(matchedCustomer.city).trim()
-                      : '';
-                  const cleanCompany = matchedCustomer.company_name && matchedCustomer.company_name !== 'N/A'
-                      ? String(matchedCustomer.company_name).trim()
-                      : '';
-                  if (cleanPhone) arr[index].phoneNumber = cleanPhone;
-                  arr[index].emailId = cleanEmail;
-                  if (cleanCity) arr[index].customerAddress = cleanCity;
-                  if (cleanCompany) arr[index].firmName = cleanCompany;
+    const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (canModify && !isParsing) setIsDragging(true);
+    };
 
-                  // Auto-populate Category, Product, Amount from Customer Data Portal
-                  const targetCat = matchedCustomer.category || mapCustomerTypeToCategory(matchedCustomer.customer_type);
-                  if (targetCat) {
-                      arr[index].category = targetCat;
-                      if (targetCat !== 'Loan') {
-                          arr[index].consultantName = '';
-                          arr[index].consultantEmail = '';
-                      }
-                      if (targetCat === 'Insurance') {
-                          arr[index].fileStatus = arr[index].fileStatus || '';
-                      } else if (targetCat === 'Forex') {
-                          arr[index].fileStatus = arr[index].fileStatus || 'Sold';
-                          arr[index].fileLogin = arr[index].fileLogin || 'Online';
-                      } else {
-                          arr[index].fileStatus = arr[index].fileStatus || 'Login';
-                      }
-                  }
-                  if (matchedCustomer.product) {
-                      arr[index].product = matchedCustomer.product;
-                  }
-                  if (matchedCustomer.amount != null && matchedCustomer.amount !== '') {
-                      arr[index].amount = Number(matchedCustomer.amount) || 0;
-                  }
-              }
-          }
-          
-          // Auto-update product if category changes
-          if (key === 'category') {
-              arr[index].product = ''; // reset
-              if (val !== 'Loan') {
-                  arr[index].consultantName = '';
-                  arr[index].consultantEmail = '';
-              }
-              if (val === 'Insurance') {
-                  arr[index].fileStatus = '';
-              } else if (val === 'Forex') {
-                  arr[index].fileStatus = 'Sold';
-                  arr[index].fileLogin = 'Online';
-                  arr[index].channel = 'SIROI';
-                  arr[index].disbursedAmount = Number(arr[index].amount) || 0;
-                  arr[index].disbursedDate = arr[index].date || (dateSelectionType === 'range' ? endDateStr : dateStr);
-                  arr[index].emiDate = '';
-                  arr[index].sanctionedAmount = 0;
-                  arr[index].repaymentBank = '';
-              } else {
-                  if (['Issued', 'POLICY ISSUED', 'Not Issued', 'Sold'].includes(arr[index].fileStatus || '')) {
-                      arr[index].fileStatus = '';
-                  }
-              }
-          }
-          
-          if (key === 'product') {
-              if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
-                  arr[index].fileLogin = 'lead force';
-                  if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank' && arr[index].channel !== 'BANK OF INDIA') {
-                      arr[index].channel = '';
-                  }
-              }
-          }
-          
-          // Automatically update achievement for Insurance
-          if (arr[index].category === 'Insurance') {
-              if (key === 'fileStatus') {
-                  if (val === 'Issued' || val === 'POLICY ISSUED') {
-                      arr[index].disbursedAmount = arr[index].amount;
-                  } else if (val === 'Not Issued') {
-                      arr[index].disbursedAmount = 0;
-                  }
-              }
-              if (key === 'amount' && (arr[index].fileStatus === 'Issued' || arr[index].fileStatus === 'POLICY ISSUED')) {
-                  arr[index].disbursedAmount = Number(val) || 0;
-              }
-          }
+    const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
 
-          // Automatically sync achievement for Forex (Login Amount on Login Date = Sold Achievement)
-          if (arr[index].category === 'Forex') {
-              if (key === 'amount') {
-                  arr[index].disbursedAmount = Number(val) || 0;
-              }
-              if (key === 'date') {
-                  arr[index].disbursedDate = val;
-              }
-              if (key === 'fileStatus' && (val === 'Sold' || val === 'Disbursed')) {
-                  arr[index].disbursedAmount = Number(arr[index].amount) || 0;
-                  arr[index].disbursedDate = arr[index].date || (dateSelectionType === 'range' ? endDateStr : dateStr);
-              }
-          }
-          
-          return arr;
-      });
-  };
-  
-  const handleRemoveItem = async (index: number) => {
-      const removedItem = items[index];
-      const remaining = items.filter((_, i) => i !== index);
-      setItems(remaining);
-      // Immediately clear in-memory cache to prevent stale restoration
-      fetchCache.current = {};
+    const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
 
-      // If single mode and entry was already lodged in database, update or delete it directly
-      if (dateSelectionType === 'single' && hasExistingEntry && currentEntryId) {
-          try {
-              if (remaining.length === 0) {
-                  const { error: delErr } = await supabase
-                      .from('entries')
-                      .delete()
-                      .eq('id', currentEntryId);
-                  if (delErr) throw delErr;
-                  setHasExistingEntry(false);
-                  setCurrentEntryId(null);
-                  setEntryCreatedAt(null);
-                  setSuccess("Record removed from database.");
-              } else {
-                  const newTotal = remaining.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                  const { error: updErr } = await supabase
-                      .from('entries')
-                      .update({ items: remaining, totalAmount: newTotal })
-                      .eq('id', currentEntryId);
-                  if (updErr) throw updErr;
-                  setSuccess("Line item deleted and saved.");
-              }
-              setRefreshTrigger(p => p + 1);
-          } catch (e: any) {
-              console.error("Failed to sync item removal to DB:", e);
-              setError("Failed to sync deletion to database: " + (e.message || ''));
-          }
-      } else if (dateSelectionType === 'range' && (removedItem as any)?._entryId) {
-          // In range mode, immediately sync the specific entry that held this item
-          const targetEntryId = (removedItem as any)._entryId;
-          const targetDate = removedItem.date || (removedItem as any)._entryDate;
-          const remainingForThisDate = remaining.filter(it => (it.date || (it as any)._entryDate) === targetDate);
-          try {
-              if (remainingForThisDate.length === 0) {
-                  await supabase.from('entries').delete().eq('id', targetEntryId);
-              } else {
-                  const total = remainingForThisDate.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
-                  const cleanItems = remainingForThisDate.map(it => {
-                      const { _entryId, _entryDate, ...rest } = it as any;
-                      return rest;
-                  });
-                  await supabase.from('entries').update({ items: cleanItems, totalAmount: total }).eq('id', targetEntryId);
-              }
-              setSuccess("Line item deleted from date range.");
-              setRefreshTrigger(p => p + 1);
-          } catch (e: any) {
-              console.error("Failed to sync range item removal:", e);
-          }
-      }
-  };
+        if (!canModify || isParsing) return;
 
-  const handleSubmit = async () => {
-      if (isSunday && !isBackdoor && !isBypassedForPendingBackfill) {
-          setError("Tracking submission is restricted on Sundays. Enjoy your holiday!");
-          return;
-      }
-      if (!activeBranchId) {
-          setError("You do not have a branch assigned yet. Contact Administrator.");
-          return;
-      }
-      
-      if (entryMode === 'monthly') {
-          if (user?.role !== 'admin' && !isBackdoor) {
-              setError("Branch users cannot lodge data in Monthly mode.");
-              return;
-          } else {
-              const execName = window.prompt("WARNING: The Month tab should be a cumulative sum of the daily records.\n\nPlease enter your name to confirm and lodge this monthly data:");
-              if (!execName || !execName.trim()) {
-                  setError("Monthly entry cancelled. Name is required.");
-                  return;
-              }
-              // Record in audit log
-              supabase.from('upload_audit_logs').insert({
-                  filename: 'Manual Monthly Lodge',
-                  uploaded_by: execName.trim(),
-                  email_id: user?.email,
-                  file_url: 'N/A'
-              }).then(({error}) => { if (error) console.error("Audit log error:", error); });
-          }
-      }
-      
-      if (items.length === 0) {
-          if (hasExistingEntry && currentEntryId && dateSelectionType === 'single') {
-              const confirmDel = window.confirm("All line items have been removed. Do you want to permanently delete this record?");
-              if (confirmDel) {
-                  setIsSaving(true);
-                  try {
-                      const { error: deleteError } = await supabase
-                          .from('entries')
-                          .delete()
-                          .eq('id', currentEntryId);
-                      if (deleteError) throw new Error(deleteError.message);
-                      
-                      fetchCache.current = {};
-                      setHasExistingEntry(false);
-                      setItems([]);
-                      setCurrentEntryId(null);
-                      setEntryCreatedAt(null);
-                      setSuccess("Record permanently deleted.");
-                      setRefreshTrigger(p => p + 1);
-                  } catch (err: any) {
-                      setError(err.message || "Failed to delete record.");
-                  } finally {
-                      setIsSaving(false);
-                  }
-                  return;
-              }
-          }
-          setError("Please add at least one line item.");
-          return;
-      }
-      
-      for (let i = 0; i < items.length; i++) {
-          const item = items[i];
-          if (!item.customerName || !item.customerName.trim()) {
-              setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
-              return;
-          }
-          if (!item.category) {
-              setError(`Row ${i + 1} is missing Category. Please select one before logging.`);
-              return;
-          }
-          if (!item.product) {
-              setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
-              return;
-          }
-          if (!item.staffName || !item.staffName.trim()) {
-              setError(`Row ${i + 1} is missing Staff Name. Please fill it before logging.`);
-              return;
-          }
-          if (!item.channel) {
-              setError(`Row ${i + 1} is missing Bank Name / Channel. Please select one before logging.`);
-              return;
-          }
-          if ((item.amount || 0) < 0 || (item.disbursedAmount || 0) < 0) {
-              setError(`Row ${i + 1} requires valid amounts (>= 0).`);
-              return;
-          }
-          if (!item.fileStatus || !item.fileStatus.trim()) {
-              setError(`Row ${i + 1} is missing File Status. Please fill it before logging.`);
-              return;
-          }
-          if ((item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan') {
-              if (!item.emiDate || !item.emiDate.trim()) {
-                  setError(`Row ${i + 1} (${item.customerName || 'Customer'}) is Disbursed. EMI Date is mandatory for disbursed loans.`);
-                  return;
-              }
-          }
-      }
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
 
-      setIsSaving(true);
-      setError('');
-      setSuccess('');
-      
-      try {
-          if (dateSelectionType === 'single') {
-              const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        await processFile(file);
+    };
 
-              const payload = {
-                  branchId: activeBranchId,
-                  entryDate: dateStr,
-                  mode: entryMode,
-                  recordType: 'achievement',
-                  items: items.map(it => {
-                      const { _entryId, _entryDate, _isSessionEditing, ...rest } = it as any;
-                      return rest;
-                  }),
-                  totalAmount,
-                  authorId: user?.id,
-                  authorEmail: user?.email,
-                  location: user?.latestLocation || null,
-              };
+    const handleAddItem = () => {
+        setItems([...items, {
+            date: dateSelectionType === 'range' ? endDateStr : dateStr,
+            staffName: '',
+            customerName: '',
+            category: (metricCategory && metricCategory !== 'All' ? (metricCategory === 'Consulting' ? 'Consultancy' : metricCategory as any) : 'Loan'),
+            product: '',
+            channel: '',
+            amount: 0,
+            status: '',
+            isManual: true,
+            projectionAmt: 0,
+            fileLogin: '',
+            trackingNumber: '',
+            branchLocation: branchDetails?.name || '',
+            customerDOB: '',
+            phoneNumber: '',
+            emailId: '',
+            customerAddress: '',
+            firmName: '',
+            fileStatus: '',
+            sanctionedAmount: 0,
+            disbursedAmount: 0,
+            disbursedDate: '',
+            emiDate: '',
+            repaymentBank: '',
+            managerName: '',
+            consultantName: '',
+            consultantEmail: '',
+            rejectionRemark: ''
+        }]);
+        if (pageSize !== -1) {
+            const nextTotal = filteredItemsWithIndex.length + 1;
+            setCurrentPage(Math.ceil(nextTotal / pageSize));
+        }
+    };
 
-              // Check if an entry already exists for this branch+date+mode+recordType
-              const { data: existing } = await supabase
+    const handleUpdateItem = (index: number, key: string, val: any) => {
+        setItems(prevItems => {
+            const arr = [...prevItems];
+            const nextVal = key === 'customerName' ? formatCustomerName(String(val || '')) : val;
+            arr[index] = { ...arr[index], [key]: nextVal, _isSessionEditing: true } as any;
+
+            // Auto-populate basic customer info when selected from Customer Data Portal dropdown
+            if (key === 'customerName') {
+                const scopedList = getScopedCustomers(arr[index].branchLocation);
+                const matchedCustomer =
+                    scopedList.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim()) ||
+                    customerRecords.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim());
+                if (matchedCustomer) {
+                    const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
+                    const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'
+                        ? String(matchedCustomer.email_id).trim()
+                        : '';
+                    const cleanCity = matchedCustomer.city && matchedCustomer.city !== 'N/A'
+                        ? String(matchedCustomer.city).trim()
+                        : '';
+                    const cleanCompany = matchedCustomer.company_name && matchedCustomer.company_name !== 'N/A'
+                        ? String(matchedCustomer.company_name).trim()
+                        : '';
+                    if (cleanPhone) arr[index].phoneNumber = cleanPhone;
+                    arr[index].emailId = cleanEmail;
+                    if (cleanCity) arr[index].customerAddress = cleanCity;
+                    if (cleanCompany) arr[index].firmName = cleanCompany;
+
+                    // Auto-populate Category, Product, Amount from Customer Data Portal
+                    const targetCat = matchedCustomer.category || mapCustomerTypeToCategory(matchedCustomer.customer_type);
+                    if (targetCat) {
+                        arr[index].category = targetCat;
+                        if (targetCat !== 'Loan') {
+                            arr[index].consultantName = '';
+                            arr[index].consultantEmail = '';
+                        }
+                        if (targetCat === 'Insurance') {
+                            arr[index].fileStatus = arr[index].fileStatus || '';
+                        } else if (targetCat === 'Forex') {
+                            arr[index].fileStatus = arr[index].fileStatus || 'Sold';
+                            arr[index].fileLogin = arr[index].fileLogin || 'Online';
+                        } else {
+                            arr[index].fileStatus = arr[index].fileStatus || 'Login';
+                        }
+                    }
+                    if (matchedCustomer.product) {
+                        arr[index].product = matchedCustomer.product;
+                    }
+                    if (matchedCustomer.amount != null && matchedCustomer.amount !== '') {
+                        arr[index].amount = Number(matchedCustomer.amount) || 0;
+                    }
+                }
+            }
+
+            // Auto-update product if category changes
+            if (key === 'category') {
+                arr[index].product = ''; // reset
+                if (val !== 'Loan') {
+                    arr[index].consultantName = '';
+                    arr[index].consultantEmail = '';
+                }
+                if (val === 'Insurance') {
+                    arr[index].fileStatus = '';
+                } else if (val === 'Forex') {
+                    arr[index].fileStatus = 'Sold';
+                    arr[index].fileLogin = 'Online';
+                    arr[index].channel = 'SIROI';
+                    arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                    arr[index].disbursedDate = arr[index].date || (dateSelectionType === 'range' ? endDateStr : dateStr);
+                    arr[index].emiDate = '';
+                    arr[index].sanctionedAmount = 0;
+                    arr[index].repaymentBank = '';
+                } else {
+                    if (['Issued', 'POLICY ISSUED', 'Not Issued', 'Sold'].includes(arr[index].fileStatus || '')) {
+                        arr[index].fileStatus = '';
+                    }
+                }
+            }
+
+            if (key === 'product') {
+                if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
+                    arr[index].fileLogin = 'lead force';
+                    if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank' && arr[index].channel !== 'BANK OF INDIA') {
+                        arr[index].channel = '';
+                    }
+                }
+            }
+
+            // Automatically update achievement for Insurance
+            if (arr[index].category === 'Insurance') {
+                if (key === 'fileStatus') {
+                    if (val === 'Issued' || val === 'POLICY ISSUED') {
+                        arr[index].disbursedAmount = arr[index].amount;
+                    } else if (val === 'Not Issued') {
+                        arr[index].disbursedAmount = 0;
+                    }
+                }
+                if (key === 'amount' && (arr[index].fileStatus === 'Issued' || arr[index].fileStatus === 'POLICY ISSUED')) {
+                    arr[index].disbursedAmount = Number(val) || 0;
+                }
+            }
+
+            // Automatically sync achievement for Forex (Login Amount on Login Date = Sold Achievement)
+            if (arr[index].category === 'Forex') {
+                if (key === 'amount') {
+                    arr[index].disbursedAmount = Number(val) || 0;
+                }
+                if (key === 'date') {
+                    arr[index].disbursedDate = val;
+                }
+                if (key === 'fileStatus' && (val === 'Sold' || val === 'Disbursed')) {
+                    arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                    arr[index].disbursedDate = arr[index].date || (dateSelectionType === 'range' ? endDateStr : dateStr);
+                }
+            }
+
+            return arr;
+        });
+    };
+
+    const handleRemoveItem = async (index: number) => {
+        const removedItem = items[index];
+        const remaining = items.filter((_, i) => i !== index);
+        setItems(remaining);
+        // Immediately clear in-memory cache to prevent stale restoration
+        fetchCache.current = {};
+
+        // If single mode and entry was already lodged in database, update or delete it directly
+        if (dateSelectionType === 'single' && hasExistingEntry && currentEntryId) {
+            try {
+                if (remaining.length === 0) {
+                    const { error: delErr } = await supabase
+                        .from('entries')
+                        .delete()
+                        .eq('id', currentEntryId);
+                    if (delErr) throw delErr;
+                    setHasExistingEntry(false);
+                    setCurrentEntryId(null);
+                    setEntryCreatedAt(null);
+                    setSuccess("Record removed from database.");
+                } else {
+                    const newTotal = remaining.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                    const { error: updErr } = await supabase
+                        .from('entries')
+                        .update({ items: remaining, totalAmount: newTotal })
+                        .eq('id', currentEntryId);
+                    if (updErr) throw updErr;
+                    setSuccess("Line item deleted and saved.");
+                }
+                setRefreshTrigger(p => p + 1);
+            } catch (e: any) {
+                console.error("Failed to sync item removal to DB:", e);
+                setError("Failed to sync deletion to database: " + (e.message || ''));
+            }
+        } else if (dateSelectionType === 'range' && (removedItem as any)?._entryId) {
+            // In range mode, immediately sync the specific entry that held this item
+            const targetEntryId = (removedItem as any)._entryId;
+            const targetDate = removedItem.date || (removedItem as any)._entryDate;
+            const remainingForThisDate = remaining.filter(it => (it.date || (it as any)._entryDate) === targetDate);
+            try {
+                if (remainingForThisDate.length === 0) {
+                    await supabase.from('entries').delete().eq('id', targetEntryId);
+                } else {
+                    const total = remainingForThisDate.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+                    const cleanItems = remainingForThisDate.map(it => {
+                        const { _entryId, _entryDate, ...rest } = it as any;
+                        return rest;
+                    });
+                    await supabase.from('entries').update({ items: cleanItems, totalAmount: total }).eq('id', targetEntryId);
+                }
+                setSuccess("Line item deleted from date range.");
+                setRefreshTrigger(p => p + 1);
+            } catch (e: any) {
+                console.error("Failed to sync range item removal:", e);
+            }
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (isSunday && !isBackdoor && !isBypassedForPendingBackfill) {
+            setError("Tracking submission is restricted on Sundays. Enjoy your holiday!");
+            return;
+        }
+        if (!activeBranchId) {
+            setError("You do not have a branch assigned yet. Contact Administrator.");
+            return;
+        }
+
+        if (entryMode === 'monthly') {
+            if (user?.role !== 'admin' && !isBackdoor) {
+                setError("Branch users cannot lodge data in Monthly mode.");
+                return;
+            } else {
+                const execName = window.prompt("WARNING: The Month tab should be a cumulative sum of the daily records.\n\nPlease enter your name to confirm and lodge this monthly data:");
+                if (!execName || !execName.trim()) {
+                    setError("Monthly entry cancelled. Name is required.");
+                    return;
+                }
+                // Record in audit log
+                supabase.from('upload_audit_logs').insert({
+                    filename: 'Manual Monthly Lodge',
+                    uploaded_by: execName.trim(),
+                    email_id: user?.email,
+                    file_url: 'N/A'
+                }).then(({ error }) => { if (error) console.error("Audit log error:", error); });
+            }
+        }
+
+        if (items.length === 0) {
+            if (hasExistingEntry && currentEntryId && dateSelectionType === 'single') {
+                const confirmDel = window.confirm("All line items have been removed. Do you want to permanently delete this record?");
+                if (confirmDel) {
+                    setIsSaving(true);
+                    try {
+                        const { error: deleteError } = await supabase
+                            .from('entries')
+                            .delete()
+                            .eq('id', currentEntryId);
+                        if (deleteError) throw new Error(deleteError.message);
+
+                        fetchCache.current = {};
+                        setHasExistingEntry(false);
+                        setItems([]);
+                        setCurrentEntryId(null);
+                        setEntryCreatedAt(null);
+                        setSuccess("Record permanently deleted.");
+                        setRefreshTrigger(p => p + 1);
+                    } catch (err: any) {
+                        setError(err.message || "Failed to delete record.");
+                    } finally {
+                        setIsSaving(false);
+                    }
+                    return;
+                }
+            }
+            setError("Please add at least one line item.");
+            return;
+        }
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (!item.customerName || !item.customerName.trim()) {
+                setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
+                return;
+            }
+            if (!item.category) {
+                setError(`Row ${i + 1} is missing Category. Please select one before logging.`);
+                return;
+            }
+            if (!item.product) {
+                setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
+                return;
+            }
+            if (!item.staffName || !item.staffName.trim()) {
+                setError(`Row ${i + 1} is missing Staff Name. Please fill it before logging.`);
+                return;
+            }
+            if (!item.channel) {
+                setError(`Row ${i + 1} is missing Bank Name / Channel. Please select one before logging.`);
+                return;
+            }
+            if ((item.amount || 0) < 0 || (item.disbursedAmount || 0) < 0) {
+                setError(`Row ${i + 1} requires valid amounts (>= 0).`);
+                return;
+            }
+            if (!item.fileStatus || !item.fileStatus.trim()) {
+                setError(`Row ${i + 1} is missing File Status. Please fill it before logging.`);
+                return;
+            }
+            if ((item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan') {
+                if (!item.emiDate || !item.emiDate.trim()) {
+                    setError(`Row ${i + 1} (${item.customerName || 'Customer'}) is Disbursed. EMI Date is mandatory for disbursed loans.`);
+                    return;
+                }
+            }
+        }
+
+        setIsSaving(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            if (dateSelectionType === 'single') {
+                const totalAmount = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+                const payload = {
+                    branchId: activeBranchId,
+                    entryDate: dateStr,
+                    mode: entryMode,
+                    recordType: 'achievement',
+                    items: items.map(it => {
+                        const { _entryId, _entryDate, _isSessionEditing, ...rest } = it as any;
+                        return rest;
+                    }),
+                    totalAmount,
+                    authorId: user?.id,
+                    authorEmail: user?.email,
+                    location: user?.latestLocation || null,
+                };
+
+                // Check if an entry already exists for this branch+date+mode+recordType
+                const { data: existing } = await supabase
+                    .from('entries')
+                    .select('id, recordType')
+                    .eq('branchId', activeBranchId)
+                    .eq('entryDate', dateStr)
+                    .eq('mode', entryMode);
+
+                const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
+                let savedId: string | null = null;
+
+                if (achievementRow) {
+                    // Update the existing achievement entry with verification
+                    const { data: updateData, error: updateError } = await supabase
+                        .from('entries')
+                        .update({ items: payload.items, totalAmount, recordType: 'achievement', authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
+                        .eq('id', achievementRow.id)
+                        .select('id');
+                    if (updateError) throw new Error(updateError.message);
+                    if (!updateData || updateData.length === 0) {
+                        throw new Error("Unable to save: Database permissions prevented the update. Please check branch assignment.");
+                    }
+                    savedId = achievementRow.id;
+                } else {
+                    // Insert new entry and capture the returned ID
+                    const { data: insertData, error: insertError } = await supabase
+                        .from('entries')
+                        .insert([{ ...payload, createdAt: new Date().toISOString() }])
+                        .select('id');
+                    if (insertError) throw new Error(insertError.message);
+                    savedId = insertData?.[0]?.id || null;
+                }
+
+                setCurrentEntryId(savedId);
+            } else {
+                // Range Mode: Group items by their original entryDate (_entryDate), falling back to item.date or startDateStr
+                const dateGroups: Record<string, EntryItem[]> = {};
+                items.forEach(item => {
+                    const targetDateKey = (item as any)._entryDate || item.date || startDateStr;
+                    if (!dateGroups[targetDateKey]) dateGroups[targetDateKey] = [];
+                    dateGroups[targetDateKey].push(item);
+                });
+
+                // Fetch existing entries in this date range
+                const { data: existingEntries } = await supabase
+                    .from('entries')
+                    .select('id, entryDate, recordType')
+                    .eq('branchId', activeBranchId)
+                    .gte('entryDate', startDateStr)
+                    .lte('entryDate', endDateStr)
+                    .eq('mode', entryMode);
+
+                const achievementEntries = existingEntries?.filter(e => !e.recordType || e.recordType === 'achievement') || [];
+                const handledEntryIds = new Set<string>();
+
+                for (const [d, groupItems] of Object.entries(dateGroups)) {
+                    const groupTotal = groupItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+                    const cleanGroupItems = groupItems.map(it => {
+                        const { _entryId, _entryDate, _isSessionEditing, ...rest } = it as any;
+                        return rest;
+                    });
+
+                    const existingForDate = achievementEntries.find(e => e.entryDate === d);
+                    if (existingForDate) {
+                        handledEntryIds.add(existingForDate.id);
+                        const { data: updData, error: updErr } = await supabase
+                            .from('entries')
+                            .update({
+                                items: cleanGroupItems,
+                                totalAmount: groupTotal,
+                                recordType: 'achievement',
+                                authorId: user?.id,
+                                authorEmail: user?.email,
+                                location: user?.latestLocation || null
+                            })
+                            .eq('id', existingForDate.id)
+                            .select('id');
+                        if (updErr) throw updErr;
+                        if (!updData || updData.length === 0) {
+                            throw new Error(`Unable to update records for ${d}: Database permissions prevented update.`);
+                        }
+                    } else {
+                        const { data: insData, error: insErr } = await supabase
+                            .from('entries')
+                            .insert([{
+                                branchId: activeBranchId,
+                                entryDate: d,
+                                mode: entryMode,
+                                recordType: 'achievement',
+                                items: cleanGroupItems,
+                                totalAmount: groupTotal,
+                                authorId: user?.id,
+                                authorEmail: user?.email,
+                                location: user?.latestLocation || null,
+                                createdAt: new Date().toISOString()
+                            }])
+                            .select('id');
+                        if (insErr) throw insErr;
+                        if (insData?.[0]?.id) handledEntryIds.add(insData[0].id);
+                    }
+                }
+
+                // If an existing entry in this date range no longer has any items, remove or clear it
+                for (const ex of achievementEntries) {
+                    if (!handledEntryIds.has(ex.id)) {
+                        await supabase
+                            .from('entries')
+                            .delete()
+                            .eq('id', ex.id);
+                    }
+                }
+            }
+
+            fetchCache.current = {};
+            setSuccess("Tracking submitted successfully.");
+            setShowSuccessModal(true);
+            setHasExistingEntry(true);
+            setRefreshTrigger(p => p + 1);
+        } catch (err: any) {
+            console.error("Save error:", err);
+            setError(err.message || "Failed to submit tracking data.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleLodgeProjection = async () => {
+        if (!activeBranchId) {
+            setError("You do not have a branch assigned yet. Contact Administrator.");
+            return;
+        }
+
+        setIsLodgingProjection(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const totalProjectionAmtInput = Object.values(projectionInputs).reduce((sum, val) => sum + (val || 0), 0);
+
+            const payload = {
+                branchId: activeBranchId,
+                entryDate: dateStr,
+                mode: entryMode,
+                recordType: 'projection',
+                items: Object.entries(projectionInputs).map(([prod, amt]) => {
+                    let cat = 'Loan';
+                    if (prod.includes('Insurance') || prod.includes('Protector')) cat = 'Insurance';
+                    else if (prod.includes('Mutual Fund') || prod.includes('SIP')) cat = 'Investments';
+                    else if (prod.includes('Forex')) cat = 'Forex';
+                    else if (prod.includes('filing') || prod.includes('Consult')) cat = 'Consultancy';
+
+                    return {
+                        isManual: true,
+                        category: cat,
+                        product: prod,
+                        projectionAmt: amt || 0,
+                        amount: amt || 0,
+                        reason: projectionReason
+                    };
+                }),
+                totalAmount: totalProjectionAmtInput,
+                authorId: user?.id,
+                authorEmail: user?.email,
+                location: user?.latestLocation || null,
+            };
+
+            const { data: existing } = await supabase
                 .from('entries')
-                .select('id, recordType')
+                .select('id')
                 .eq('branchId', activeBranchId)
                 .eq('entryDate', dateStr)
-                .eq('mode', entryMode);
+                .eq('recordType', 'projection')
+                .limit(1);
 
-              const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
-              let savedId: string | null = null;
-
-              if (achievementRow) {
-                  // Update the existing achievement entry with verification
-                  const { data: updateData, error: updateError } = await supabase
+            if (existing && existing.length > 0) {
+                const { error: updateError } = await supabase
                     .from('entries')
-                    .update({ items: payload.items, totalAmount, recordType: 'achievement', authorId: user?.id, authorEmail: user?.email, location: user?.latestLocation || null })
-                    .eq('id', achievementRow.id)
-                    .select('id');
-                  if (updateError) throw new Error(updateError.message);
-                  if (!updateData || updateData.length === 0) {
-                      throw new Error("Unable to save: Database permissions prevented the update. Please check branch assignment.");
-                  }
-                  savedId = achievementRow.id;
-              } else {
-                  // Insert new entry and capture the returned ID
-                  const { data: insertData, error: insertError } = await supabase
+                    .update({ ...payload })
+                    .eq('id', existing[0].id);
+                if (updateError) throw new Error(updateError.message);
+            } else {
+                const { error: insertError } = await supabase
                     .from('entries')
-                    .insert([{ ...payload, createdAt: new Date().toISOString() }])
-                    .select('id');
-                  if (insertError) throw new Error(insertError.message);
-                  savedId = insertData?.[0]?.id || null;
-              }
-              
-              setCurrentEntryId(savedId);
-          } else {
-              // Range Mode: Group items by their original entryDate (_entryDate), falling back to item.date or startDateStr
-              const dateGroups: Record<string, EntryItem[]> = {};
-              items.forEach(item => {
-                  const targetDateKey = (item as any)._entryDate || item.date || startDateStr;
-                  if (!dateGroups[targetDateKey]) dateGroups[targetDateKey] = [];
-                  dateGroups[targetDateKey].push(item);
-              });
+                    .insert([{ ...payload, createdAt: new Date().toISOString() }]);
+                if (insertError) throw new Error(insertError.message);
+            }
 
-              // Fetch existing entries in this date range
-              const { data: existingEntries } = await supabase
-                  .from('entries')
-                  .select('id, entryDate, recordType')
-                  .eq('branchId', activeBranchId)
-                  .gte('entryDate', startDateStr)
-                  .lte('entryDate', endDateStr)
-                  .eq('mode', entryMode);
+            fetchCache.current = {};
+            setSuccess("Daily Projection lodged successfully.");
+            setIsProjectionLodged(true);
+            setLodgedProjectionAmount(totalProjectionAmtInput);
+            setIsProjectionModalOpen(false);
+            setRefreshTrigger(p => p + 1);
 
-              const achievementEntries = existingEntries?.filter(e => !e.recordType || e.recordType === 'achievement') || [];
-              const handledEntryIds = new Set<string>();
+            try {
+                // Notify the admins via Push Notifications
+                const branchNameStr = activeBranchId === 'B-01' ? 'Imphal' :
+                    activeBranchId === 'B-02' ? 'Churachandpur' :
+                        activeBranchId === 'B-03' ? 'Senapati' :
+                            activeBranchId === 'B-04' ? 'Ukhrul' : 'Branch';
 
-              for (const [d, groupItems] of Object.entries(dateGroups)) {
-                  const groupTotal = groupItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
-                  const cleanGroupItems = groupItems.map(it => {
-                      const { _entryId, _entryDate, _isSessionEditing, ...rest } = it as any;
-                      return rest;
-                  });
+                await supabase.functions.invoke('notify', {
+                    body: {
+                        action: 'projection_updated',
+                        payload: {
+                            branchName: branchNameStr,
+                            totalAmount: totalProjectionAmtInput,
+                            authorName: user?.displayName || user?.email?.split('@')[0] || 'An executive'
+                        }
+                    }
+                });
+            } catch (notifyErr) {
+                console.warn("Could not send push notification:", notifyErr);
+            }
+        } catch (err: any) {
+            console.error("Projection error:", err);
+            setError(err.message || "Failed to lodge projection.");
+        } finally {
+            setIsLodgingProjection(false);
+        }
+    };
 
-                  const existingForDate = achievementEntries.find(e => e.entryDate === d);
-                  if (existingForDate) {
-                      handledEntryIds.add(existingForDate.id);
-                      const { data: updData, error: updErr } = await supabase
-                          .from('entries')
-                          .update({
-                              items: cleanGroupItems,
-                              totalAmount: groupTotal,
-                              recordType: 'achievement',
-                              authorId: user?.id,
-                              authorEmail: user?.email,
-                              location: user?.latestLocation || null
-                          })
-                          .eq('id', existingForDate.id)
-                          .select('id');
-                      if (updErr) throw updErr;
-                      if (!updData || updData.length === 0) {
-                          throw new Error(`Unable to update records for ${d}: Database permissions prevented update.`);
-                      }
-                  } else {
-                      const { data: insData, error: insErr } = await supabase
-                          .from('entries')
-                          .insert([{
-                              branchId: activeBranchId,
-                              entryDate: d,
-                              mode: entryMode,
-                              recordType: 'achievement',
-                              items: cleanGroupItems,
-                              totalAmount: groupTotal,
-                              authorId: user?.id,
-                              authorEmail: user?.email,
-                              location: user?.latestLocation || null,
-                              createdAt: new Date().toISOString()
-                          }])
-                          .select('id');
-                      if (insErr) throw insErr;
-                      if (insData?.[0]?.id) handledEntryIds.add(insData[0].id);
-                  }
-              }
+    const handleDelete = async () => {
+        if (!currentEntryId) return;
 
-              // If an existing entry in this date range no longer has any items, remove or clear it
-              for (const ex of achievementEntries) {
-                  if (!handledEntryIds.has(ex.id)) {
-                      await supabase
-                          .from('entries')
-                          .delete()
-                          .eq('id', ex.id);
-                  }
-              }
-          }
-          
-          fetchCache.current = {};
-          setSuccess("Tracking submitted successfully.");
-          setShowSuccessModal(true);
-          setHasExistingEntry(true);
-          setRefreshTrigger(p => p + 1);
-      } catch (err: any) {
-          console.error("Save error:", err);
-          setError(err.message || "Failed to submit tracking data.");
-      } finally {
-          setIsSaving(false);
-      }
-  };
+        setIsDeleting(true);
+        setError('');
+        setSuccess('');
 
-  const handleLodgeProjection = async () => {
-      if (!activeBranchId) {
-          setError("You do not have a branch assigned yet. Contact Administrator.");
-          return;
-      }
-      
-      setIsLodgingProjection(true);
-      setError('');
-      setSuccess('');
-      
-      try {
-          const totalProjectionAmtInput = Object.values(projectionInputs).reduce((sum, val) => sum + (val || 0), 0);
-          
-          const payload = {
-              branchId: activeBranchId,
-              entryDate: dateStr,
-              mode: entryMode,
-              recordType: 'projection',
-              items: Object.entries(projectionInputs).map(([prod, amt]) => {
-                  let cat = 'Loan';
-                  if (prod.includes('Insurance') || prod.includes('Protector')) cat = 'Insurance';
-                  else if (prod.includes('Mutual Fund') || prod.includes('SIP')) cat = 'Investments';
-                  else if (prod.includes('Forex')) cat = 'Forex';
-                  else if (prod.includes('filing') || prod.includes('Consult')) cat = 'Consultancy';
-                  
-                  return {
-                      isManual: true,
-                      category: cat,
-                      product: prod,
-                      projectionAmt: amt || 0,
-                      amount: amt || 0,
-                      reason: projectionReason
-                  };
-              }),
-              totalAmount: totalProjectionAmtInput,
-              authorId: user?.id,
-              authorEmail: user?.email,
-              location: user?.latestLocation || null,
-          };
-          
-          const { data: existing } = await supabase
-            .from('entries')
-            .select('id')
-            .eq('branchId', activeBranchId)
-            .eq('entryDate', dateStr)
-            .eq('recordType', 'projection')
-            .limit(1);
+        try {
+            const selectedCount = selectedDeleteIndices.size;
+            const totalCount = items.length;
 
-          if (existing && existing.length > 0) {
-              const { error: updateError } = await supabase
-                .from('entries')
-                .update({ ...payload })
-                .eq('id', existing[0].id);
-              if (updateError) throw new Error(updateError.message);
-          } else {
-              const { error: insertError } = await supabase
-                .from('entries')
-                .insert([{ ...payload, createdAt: new Date().toISOString() }]);
-              if (insertError) throw new Error(insertError.message);
-          }
-          
-          fetchCache.current = {};
-          setSuccess("Daily Projection lodged successfully.");
-          setIsProjectionLodged(true);
-          setLodgedProjectionAmount(totalProjectionAmtInput);
-          setIsProjectionModalOpen(false);
-          setRefreshTrigger(p => p + 1);
+            if (selectedCount === 0) {
+                setError("Please select at least one line item to delete.");
+                setIsDeleting(false);
+                return;
+            }
 
-          try {
-              // Notify the admins via Push Notifications
-              const branchNameStr = activeBranchId === 'B-01' ? 'Imphal' :
-                                 activeBranchId === 'B-02' ? 'Churachandpur' :
-                                 activeBranchId === 'B-03' ? 'Senapati' :
-                                 activeBranchId === 'B-04' ? 'Ukhrul' : 'Branch';
+            // Immediately clear in-memory cache to prevent stale re-render
+            fetchCache.current = {};
 
-              await supabase.functions.invoke('notify', {
-                  body: {
-                      action: 'projection_updated',
-                      payload: {
-                          branchName: branchNameStr,
-                          totalAmount: totalProjectionAmtInput,
-                          authorName: user?.displayName || user?.email?.split('@')[0] || 'An executive'
-                      }
-                  }
-              });
-          } catch (notifyErr) {
-              console.warn("Could not send push notification:", notifyErr);
-          }
-      } catch (err: any) {
-          console.error("Projection error:", err);
-          setError(err.message || "Failed to lodge projection.");
-      } finally {
-          setIsLodgingProjection(false);
-      }
-  };
+            if (selectedCount === totalCount) {
+                // Delete entire entry
+                const { error: deleteError } = await supabase
+                    .from('entries')
+                    .delete()
+                    .eq('id', currentEntryId);
 
-  const handleDelete = async () => {
-      if (!currentEntryId) return;
-      
-      setIsDeleting(true);
-      setError('');
-      setSuccess('');
-      
-      try {
-          const selectedCount = selectedDeleteIndices.size;
-          const totalCount = items.length;
-          
-          if (selectedCount === 0) {
-              setError("Please select at least one line item to delete.");
-              setIsDeleting(false);
-              return;
-          }
+                if (deleteError) throw new Error(deleteError.message);
 
-          // Immediately clear in-memory cache to prevent stale re-render
-          fetchCache.current = {};
-          
-          if (selectedCount === totalCount) {
-              // Delete entire entry
-              const { error: deleteError } = await supabase
-                  .from('entries')
-                  .delete()
-                  .eq('id', currentEntryId);
-                  
-              if (deleteError) throw new Error(deleteError.message);
-              
-              setSuccess("Entire record permanently deleted.");
-              setHasExistingEntry(false);
-              setItems([]);
-              setCurrentEntryId(null);
-              setEntryCreatedAt(null);
-              setSmartPrompt('');
-          } else {
-              // Delete selected line items only — update the entry with remaining items
-              const remainingItems = items.filter((_, idx) => !selectedDeleteIndices.has(idx));
-              const newTotal = remainingItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-              
-              const { error: updateError } = await supabase
-                  .from('entries')
-                  .update({ items: remainingItems, totalAmount: newTotal })
-                  .eq('id', currentEntryId);
-                  
-              if (updateError) throw new Error(updateError.message);
-              
-              setSuccess(`${selectedCount} line item${selectedCount > 1 ? 's' : ''} permanently deleted. ${remainingItems.length} remaining.`);
-              setItems(remainingItems);
-          }
-          
-          setSelectedDeleteIndices(new Set());
-          setShowDeleteModal(false);
-          setRefreshTrigger(p => p + 1);
-      } catch (err: any) {
-          console.error("Delete error:", err);
-          setError(err.message || "Failed to delete record.");
-      } finally {
-          setIsDeleting(false);
-      }
-  };
+                setSuccess("Entire record permanently deleted.");
+                setHasExistingEntry(false);
+                setItems([]);
+                setCurrentEntryId(null);
+                setEntryCreatedAt(null);
+                setSmartPrompt('');
+            } else {
+                // Delete selected line items only — update the entry with remaining items
+                const remainingItems = items.filter((_, idx) => !selectedDeleteIndices.has(idx));
+                const newTotal = remainingItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-  const handleBulkSubmit = async () => {
+                const { error: updateError } = await supabase
+                    .from('entries')
+                    .update({ items: remainingItems, totalAmount: newTotal })
+                    .eq('id', currentEntryId);
+
+                if (updateError) throw new Error(updateError.message);
+
+                setSuccess(`${selectedCount} line item${selectedCount > 1 ? 's' : ''} permanently deleted. ${remainingItems.length} remaining.`);
+                setItems(remainingItems);
+            }
+
+            setSelectedDeleteIndices(new Set());
+            setShowDeleteModal(false);
+            setRefreshTrigger(p => p + 1);
+        } catch (err: any) {
+            console.error("Delete error:", err);
+            setError(err.message || "Failed to delete record.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleBulkSubmit = async () => {
         if (isSunday && !isBackdoor) {
             setError("Bulk upload is restricted on Sundays. Enjoy your holiday!");
             return;
         }
-        
+
         if (!stagedFile || stagedItems.length === 0) return;
-      if (!activeBranchId) {
-          setError("You do not have a branch assigned yet. Contact Administrator.");
-          return;
-      }
-      
-      setIsBulkSubmitting(true);
-      setError('');
-      setSuccess('');
-      
-      try {
-          const fileExt = stagedFile.name.split('.').pop();
-          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('bulk_uploads')
-              .upload(fileName, stagedFile);
-              
-          if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
-          
-          const fileUrl = uploadData.path;
-          
-          const { error: auditError } = await supabase
-              .from('upload_audit_logs')
-              .insert({
-                  filename: stagedFile.name,
-                  uploaded_by: lodgeName,
-                  email_id: lodgeEmail,
-                  file_url: fileUrl
-              });
-              
-          if (auditError) throw new Error(`Audit log failed: ${auditError.message}`);
-          
-          for (let i = 0; i < stagedItems.length; i++) {
-              const item = stagedItems[i];
-              if ((item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan') {
-                  if (!item.emiDate || !item.emiDate.trim()) {
-                      setError(`Staged Row ${i + 1} (${item.customerName || 'Customer'}) is Disbursed. EMI Date is mandatory for disbursed loans.`);
-                      return;
-                  }
-              }
-          }
-          
-          const itemsByDate = new Map<string, EntryItem[]>();
-          stagedItems.forEach(item => {
-              const d = item.date || dateStr;
-              if (!itemsByDate.has(d)) itemsByDate.set(d, []);
-              itemsByDate.get(d)!.push(item);
-          });
-          
-          for (const [rowDate, rItems] of itemsByDate.entries()) {
-              const { data: existing } = await supabase
-                .from('entries')
-                .select('id, items, recordType')
-                .eq('branchId', activeBranchId)
-                .eq('entryDate', rowDate)
-                .eq('mode', entryMode);
-                
-              const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
-              let mergedItems = rItems;
-              let existingId = undefined;
+        if (!activeBranchId) {
+            setError("You do not have a branch assigned yet. Contact Administrator.");
+            return;
+        }
 
-              if (achievementRow) {
-                  existingId = achievementRow.id;
-                  const existingItems = achievementRow.items || [];
-                  const existingPhones = new Set(existingItems.map((i: any) => i.phoneNumber).filter(Boolean));
-                  const duplicateFound = rItems.some((i: any) => i.phoneNumber && existingPhones.has(i.phoneNumber));
-                  
-                  if (duplicateFound) {
-                      if (!window.confirm(`Duplicate records found for ${rowDate}. Proceeding will overwrite existing data. Continue?`)) {
-                          continue;
-                      }
-                  }
-                  
-                  mergedItems = [...existingItems];
-                  rItems.forEach((newItem: any) => {
-                      let replaced = false;
-                      for (let i = 0; i < mergedItems.length; i++) {
-                          const existingItem = mergedItems[i];
-                          if (newItem.phoneNumber && existingItem.phoneNumber === newItem.phoneNumber) {
-                              mergedItems[i] = newItem;
-                              replaced = true;
-                              break;
-                          }
-                      }
-                      if (!replaced) {
-                          mergedItems.push(newItem);
-                      }
-                  });
-              }
-              
-              const mergedTotal = mergedItems.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
-              const payload = {
-                  branchId: activeBranchId,
-                  entryDate: rowDate,
-                  mode: entryMode,
-                  recordType: 'achievement',
-                  items: mergedItems,
-                  totalAmount: mergedTotal,
-                  authorId: user?.id,
-                  authorEmail: user?.email,
-                  location: user?.latestLocation || null,
-              };
+        setIsBulkSubmitting(true);
+        setError('');
+        setSuccess('');
 
-              if (existingId) {
-                  const { error: upsertError } = await supabase
+        try {
+            const fileExt = stagedFile.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('bulk_uploads')
+                .upload(fileName, stagedFile);
+
+            if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
+
+            const fileUrl = uploadData.path;
+
+            const { error: auditError } = await supabase
+                .from('upload_audit_logs')
+                .insert({
+                    filename: stagedFile.name,
+                    uploaded_by: lodgeName,
+                    email_id: lodgeEmail,
+                    file_url: fileUrl
+                });
+
+            if (auditError) throw new Error(`Audit log failed: ${auditError.message}`);
+
+            for (let i = 0; i < stagedItems.length; i++) {
+                const item = stagedItems[i];
+                if ((item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan') {
+                    if (!item.emiDate || !item.emiDate.trim()) {
+                        setError(`Staged Row ${i + 1} (${item.customerName || 'Customer'}) is Disbursed. EMI Date is mandatory for disbursed loans.`);
+                        return;
+                    }
+                }
+            }
+
+            const itemsByDate = new Map<string, EntryItem[]>();
+            stagedItems.forEach(item => {
+                const d = item.date || dateStr;
+                if (!itemsByDate.has(d)) itemsByDate.set(d, []);
+                itemsByDate.get(d)!.push(item);
+            });
+
+            for (const [rowDate, rItems] of itemsByDate.entries()) {
+                const { data: existing } = await supabase
                     .from('entries')
-                    .upsert({ ...payload, id: existingId }, { onConflict: 'id' });
-                  if (upsertError) throw new Error(upsertError.message);
-              } else {
-                  const { error: upsertError } = await supabase
-                    .from('entries')
-                    .upsert({ ...payload, createdAt: new Date().toISOString() });
-                  if (upsertError) throw new Error(upsertError.message);
-              }
-          }
-          
-          fetchCache.current = {}; setRefreshTrigger(prev => prev + 1);
-          setSuccess("Bulk upload successfully lodged to respective dates.");
-          setIsStagingModalOpen(false);
-          setStagedItems([]);
-          setStagedFile(null);
-          
-      } catch(e: any) {
-          console.error("Bulk submit error:", e);
-          setError(e.message || "Failed to lodge bulk upload.");
-      } finally {
-          setIsBulkSubmitting(false);
-      }
-  };
+                    .select('id, items, recordType')
+                    .eq('branchId', activeBranchId)
+                    .eq('entryDate', rowDate)
+                    .eq('mode', entryMode);
 
-  if (!isInitialized || !user) {
-      return <div className="min-h-screen flex items-center justify-center text-slate-500"><Loader2 className="animate-spin mr-2" /> Initializing Identity...</div>;
-  }
+                const achievementRow = existing?.find(e => !e.recordType || e.recordType === 'achievement');
+                let mergedItems = rItems;
+                let existingId = undefined;
 
-  const allowedProducts = (category: string) => products.filter((p: any) => p.category === category);
-  
-  const getFileStatusColor = (status: string) => {
-      switch (status) {
-          case 'Sold': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 font-semibold';
-          case 'Login': return 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/30';
-          case 'Processing': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
-          case 'Underwriting': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
-          case 'Sanctioned': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
-          case 'Disbursed': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30 font-semibold';
-          case 'Customer Reject': return 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30 font-semibold';
-          case 'Rejected': return 'bg-rose-100 dark:bg-red-500/20 text-rose-700 dark:text-red-400 border-rose-200 dark:border-red-500/30';
-          case 'Issued': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30';
-          case 'Not Issued': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
-          default: return 'bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700';
-      }
-  };
+                if (achievementRow) {
+                    existingId = achievementRow.id;
+                    const existingItems = achievementRow.items || [];
+                    const existingPhones = new Set(existingItems.map((i: any) => i.phoneNumber).filter(Boolean));
+                    const duplicateFound = rItems.some((i: any) => i.phoneNumber && existingPhones.has(i.phoneNumber));
 
-  
+                    if (duplicateFound) {
+                        if (!window.confirm(`Duplicate records found for ${rowDate}. Proceeding will overwrite existing data. Continue?`)) {
+                            continue;
+                        }
+                    }
+
+                    mergedItems = [...existingItems];
+                    rItems.forEach((newItem: any) => {
+                        let replaced = false;
+                        for (let i = 0; i < mergedItems.length; i++) {
+                            const existingItem = mergedItems[i];
+                            if (newItem.phoneNumber && existingItem.phoneNumber === newItem.phoneNumber) {
+                                mergedItems[i] = newItem;
+                                replaced = true;
+                                break;
+                            }
+                        }
+                        if (!replaced) {
+                            mergedItems.push(newItem);
+                        }
+                    });
+                }
+
+                const mergedTotal = mergedItems.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+                const payload = {
+                    branchId: activeBranchId,
+                    entryDate: rowDate,
+                    mode: entryMode,
+                    recordType: 'achievement',
+                    items: mergedItems,
+                    totalAmount: mergedTotal,
+                    authorId: user?.id,
+                    authorEmail: user?.email,
+                    location: user?.latestLocation || null,
+                };
+
+                if (existingId) {
+                    const { error: upsertError } = await supabase
+                        .from('entries')
+                        .upsert({ ...payload, id: existingId }, { onConflict: 'id' });
+                    if (upsertError) throw new Error(upsertError.message);
+                } else {
+                    const { error: upsertError } = await supabase
+                        .from('entries')
+                        .upsert({ ...payload, createdAt: new Date().toISOString() });
+                    if (upsertError) throw new Error(upsertError.message);
+                }
+            }
+
+            fetchCache.current = {}; setRefreshTrigger(prev => prev + 1);
+            setSuccess("Bulk upload successfully lodged to respective dates.");
+            setIsStagingModalOpen(false);
+            setStagedItems([]);
+            setStagedFile(null);
+
+        } catch (e: any) {
+            console.error("Bulk submit error:", e);
+            setError(e.message || "Failed to lodge bulk upload.");
+        } finally {
+            setIsBulkSubmitting(false);
+        }
+    };
+
+    if (!isInitialized || !user) {
+        return <div className="min-h-screen flex items-center justify-center text-slate-500"><Loader2 className="animate-spin mr-2" /> Initializing Identity...</div>;
+    }
+
+    const allowedProducts = (category: string) => products.filter((p: any) => p.category === category);
+
+    const getFileStatusColor = (status: string) => {
+        switch (status) {
+            case 'Sold': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 font-semibold';
+            case 'Login': return 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/30';
+            case 'Processing': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+            case 'Underwriting': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+            case 'Sanctioned': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
+            case 'Disbursed': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30 font-semibold';
+            case 'Customer Reject': return 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30 font-semibold';
+            case 'Rejected': return 'bg-rose-100 dark:bg-red-500/20 text-rose-700 dark:text-red-400 border-rose-200 dark:border-red-500/30';
+            case 'Issued': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30';
+            case 'Not Issued': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
+            default: return 'bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+        }
+    };
+
+
     const isFieldMissing = (item: any, field: string) => {
         if (item.category === 'Forex') {
             if (['emiDate', 'disbursedDate', 'disbursedAmount', 'sanctionedAmount', 'repaymentBank'].includes(field)) return false;
@@ -1852,2259 +1852,2249 @@ export default function DataEntryTerminal() {
         return false;
     };
 
-  // Calculate dynamic metrics based on the current items and selected metricCategory
-  let metricLogin = 0;
-  let metricDisbursed = 0;
-  let insuranceIssued = 0;
-  let insuranceNotIssued = 0;
+    // Calculate dynamic metrics based on the current items and selected metricCategory
+    let metricLogin = 0;
+    let metricDisbursed = 0;
+    let insuranceIssued = 0;
+    let insuranceNotIssued = 0;
 
-  items.forEach((item: any) => {
-      const cat = (item.category || 'Loan') as string;
-      const matchesCategory = metricCategory === 'All'
-          ? true
-          : (metricCategory === 'Consulting' || metricCategory === 'Consultancy')
-              ? (cat === 'Consultancy' || cat === 'Consulting')
-              : cat === metricCategory;
+    items.forEach((item: any) => {
+        const cat = (item.category || 'Loan') as string;
+        const matchesCategory = metricCategory === 'All'
+            ? true
+            : (metricCategory === 'Consulting' || metricCategory === 'Consultancy')
+                ? (cat === 'Consultancy' || cat === 'Consulting')
+                : cat === metricCategory;
 
-      if (matchesCategory) {
-          metricLogin += (Number(item.amount) || 0);
-          if (cat === 'Forex') {
-              metricDisbursed += (Number(item.amount) || Number(item.disbursedAmount) || 0);
-          } else {
-              metricDisbursed += (Number(item.disbursedAmount) || 0);
-          }
-          
-          if (cat === 'Insurance') {
-              if (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') insuranceIssued += (Number(item.amount) || 0);
-              if (item.fileStatus === 'Not Issued') insuranceNotIssued += (Number(item.amount) || 0);
-          }
-      }
-  });
+        if (matchesCategory) {
+            metricLogin += (Number(item.amount) || 0);
+            if (cat === 'Forex') {
+                metricDisbursed += (Number(item.amount) || Number(item.disbursedAmount) || 0);
+            } else {
+                metricDisbursed += (Number(item.disbursedAmount) || 0);
+            }
 
-  return (
-      <div 
-          className="h-screen max-h-screen p-2.5 md:p-4 flex flex-col w-full overflow-hidden"
-          style={adaptiveScale < 1 ? ({ 
-            zoom: adaptiveScale,
-            width: `${(100 / adaptiveScale)}vw`,
-            height: `${(100 / adaptiveScale)}vh`,
-          } as React.CSSProperties) : undefined}
-      >
-          <header className="glass px-3.5 py-2 md:px-5 md:py-2 flex flex-col md:flex-row md:justify-between md:items-center gap-2 mb-2 rounded-xl shadow-xs shrink-0">
-              <div>
-                  <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.2">
-                      {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
-                  </h1>
-                  <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                     {branchDetails ? branchDetails.name : (user.role === 'admin' || user.role === 'statehead' ? 'Global Access' : 'Unknown Branch')} • {user.email}
-                  </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shadow-xs mr-1">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
-                      <LiveClock />
-                  </div>
-                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
-                      Audit Logs
-                  </Button>
-                  <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { logout(); navigate('/'); }}>
-                      <LogOut size={13} className="mr-1.5 hidden sm:block" /> Log Out
-                  </Button>
-              </div>
-          </header>
+            if (cat === 'Insurance') {
+                if (item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') insuranceIssued += (Number(item.amount) || 0);
+                if (item.fileStatus === 'Not Issued') insuranceNotIssued += (Number(item.amount) || 0);
+            }
+        }
+    });
 
-          {(isExecutive || isMIS) && (
-              <div className="shrink-0 mb-2">
-                  <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
-              </div>
-          )}
+    return (
+        <div
+            className="h-screen max-h-screen p-2.5 md:p-4 flex flex-col w-full overflow-hidden"
+            style={adaptiveScale < 1 ? ({
+                zoom: adaptiveScale,
+                width: `${(100 / adaptiveScale)}vw`,
+                height: `${(100 / adaptiveScale)}vh`,
+            } as React.CSSProperties) : undefined}
+        >
+            <header className="glass px-3.5 py-2 md:px-5 md:py-2 flex flex-col md:flex-row md:justify-between md:items-center gap-2 mb-2 rounded-xl shadow-xs shrink-0">
+                <div>
+                    <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.2">
+                        {user.role === 'admin' ? 'Admin Access Terminal' : 'State Head Terminal'}
+                    </h1>
+                    <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                        {branchDetails ? branchDetails.name : (user.role === 'admin' || user.role === 'statehead' ? 'Global Access' : 'Unknown Branch')} • {user.email}
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shadow-xs mr-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                        <LiveClock />
+                    </div>
+                    <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
+                        Audit Logs
+                    </Button>
+                    <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { logout(); navigate('/'); }}>
+                        <LogOut size={13} className="mr-1.5 hidden sm:block" /> Log Out
+                    </Button>
+                </div>
+            </header>
 
-          {/* Top Command Center Bar */}
-          <div className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2.5 md:p-3 mb-2 rounded-2xl shadow-sm flex flex-col gap-2.5 shrink-0 transition-all z-20">
-              
-              {/* Unified Command Center Bar */}
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-4">
-                  {/* Left Section: Context */}
-                  <div className="flex flex-wrap md:flex-nowrap items-center gap-4 md:gap-5 overflow-x-auto pb-1 hide-scrollbar w-full xl:w-auto">
-                      {/* Branch Override */}
-                      {(user.role === 'admin' || isBackdoor) && (
-                      <div className="flex flex-col w-full md:w-auto">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                              Branch Context
-                              {user.role === 'admin' && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>}
-                          </label>
-                          <ThemeSelect 
-                              variant="pill"
-                              value={adminSelectedBranch || ''}
-                              onChange={(val) => {
-                                  if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
-                                  setAdminSelectedBranch(val);
-                              }}
-                              options={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => ({
-                                  value: b.id,
-                                  label: b.name,
-                                  indicatorColor: b.name === 'Guwahati' ? '#818cf8' : b.name === 'Manipur' ? '#34d399' : b.name === 'Itanagar' ? '#38bdf8' : b.name === 'Nagaland & Mizoram' ? '#fbbf24' : '#6366f1'
-                              }))}
-                          />
-                      </div>
-                      )}
+            {(isExecutive || isMIS) && (
+                <div className="shrink-0 mb-2">
+                    <ExecutivePerformanceWidget dateStr={dateStr} branchId={activeBranchId} mode={entryMode} />
+                </div>
+            )}
 
-                      {/* Divider */}
-                      {(user.role === 'admin' || isBackdoor) && <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>}
+            {/* Top Command Center Bar */}
+            <div className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2.5 md:p-3 mb-2 rounded-2xl shadow-sm flex flex-col gap-2.5 shrink-0 transition-all z-20">
 
-                      {/* Mode Toggle (only MIS/Exec/Admin) */}
-                      {(isMIS || isBackdoor || isExecutive) && (
-                      <div className="flex flex-col w-full md:w-auto">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                              Data Mode
-                          </label>
-                          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full w-full md:w-[220px]">
-                              <button 
-                                  className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
-                                  onClick={() => {
-                                      if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                      setEntryMode('monthly');
-                                      const today = new Date().toISOString().split('T')[0];
-                                      setDateStr(today >= '2026-01-01' ? today.substring(0, 7) + '-01' : '2026-01-01');
-                                  }}
-                              >
-                                  Month
-                              </button>
-                              <button 
-                                  className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
-                                  onClick={() => {
-                                      if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
-                                      setEntryMode('daily');
-                                      const today = new Date().toISOString().split('T')[0];
-                                      setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
-                                  }}
-                              >
-                                  Daily
-                              </button>
-                          </div>
-                      </div>
-                      )}
-                      
-                    {/* Divider */}
-                    <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+                {/* Unified Command Center Bar */}
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-4">
+                    {/* Left Section: Context */}
+                    <div className="flex flex-wrap md:flex-nowrap items-center gap-4 md:gap-5 overflow-x-auto pb-1 hide-scrollbar w-full xl:w-auto">
+                        {/* Branch Override */}
+                        {(user.role === 'admin' || isBackdoor) && (
+                            <div className="flex flex-col w-full md:w-auto">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                    Branch Context
+                                    {user.role === 'admin' && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>}
+                                </label>
+                                <ThemeSelect
+                                    variant="pill"
+                                    value={adminSelectedBranch || ''}
+                                    onChange={(val) => {
+                                        if (isDirty && !window.confirm("You have unsaved rows. Switching branch will discard them. Continue?")) return;
+                                        setAdminSelectedBranch(val);
+                                    }}
+                                    options={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => ({
+                                        value: b.id,
+                                        label: b.name,
+                                        indicatorColor: b.name === 'Guwahati' ? '#818cf8' : b.name === 'Manipur' ? '#34d399' : b.name === 'Itanagar' ? '#38bdf8' : b.name === 'Nagaland & Mizoram' ? '#fbbf24' : '#6366f1'
+                                    }))}
+                                />
+                            </div>
+                        )}
 
-                    {/* Date Context */}
-                    <div className="flex flex-col w-full md:w-auto">
-                        <div className="flex items-center justify-between gap-3 mb-1.5">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                Date Context
-                            </label>
-                            {entryMode === 'daily' && (
-                                <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full border border-slate-200 dark:border-white/10 w-[140px]">
+                        {/* Divider */}
+                        {(user.role === 'admin' || isBackdoor) && <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>}
+
+                        {/* Mode Toggle (only MIS/Exec/Admin) */}
+                        {(isMIS || isBackdoor || isExecutive) && (
+                            <div className="flex flex-col w-full md:w-auto">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                    Data Mode
+                                </label>
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full w-full md:w-[220px]">
                                     <button
-                                        type="button"
+                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
                                         onClick={() => {
-                                            if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
-                                            setDateSelectionType('single');
+                                            if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                            setEntryMode('monthly');
+                                            const today = new Date().toISOString().split('T')[0];
+                                            setDateStr(today >= '2026-01-01' ? today.substring(0, 7) + '-01' : '2026-01-01');
                                         }}
-                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-wider py-1 transition-all text-center ${
-                                            dateSelectionType === 'single'
-                                                ? 'bg-indigo-600 text-white shadow-xs'
-                                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                                        }`}
                                     >
-                                        Single
+                                        Month
                                     </button>
                                     <button
-                                        type="button"
+                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
                                         onClick={() => {
-                                            if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
-                                            setDateSelectionType('range');
+                                            if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
+                                            setEntryMode('daily');
+                                            const today = new Date().toISOString().split('T')[0];
+                                            setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
                                         }}
-                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-wider py-1 transition-all text-center ${
-                                            dateSelectionType === 'range'
-                                                ? 'bg-indigo-600 text-white shadow-xs'
-                                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                                        }`}
                                     >
-                                        Range
+                                        Daily
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Divider */}
+                        <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+
+                        {/* Date Context */}
+                        <div className="flex flex-col w-full md:w-auto">
+                            <div className="flex items-center justify-between gap-3 mb-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                    Date Context
+                                </label>
+                                {entryMode === 'daily' && (
+                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-full border border-slate-200 dark:border-white/10 w-[140px]">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
+                                                setDateSelectionType('single');
+                                            }}
+                                            className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-wider py-1 transition-all text-center ${dateSelectionType === 'single'
+                                                    ? 'bg-indigo-600 text-white shadow-xs'
+                                                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                                                }`}
+                                        >
+                                            Single
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (isDirty && !window.confirm("You have unsaved rows. Switching date mode will discard them. Continue?")) return;
+                                                setDateSelectionType('range');
+                                            }}
+                                            className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-wider py-1 transition-all text-center ${dateSelectionType === 'range'
+                                                    ? 'bg-indigo-600 text-white shadow-xs'
+                                                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                                                }`}
+                                        >
+                                            Range
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="w-full sm:w-[270px]">
+                                {entryMode === 'monthly' ? (
+                                    <MonthPicker
+                                        value={dateStr.substring(0, 7)}
+                                        onChange={(val) => {
+                                            if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                                            setDateStr(val + '-01');
+                                        }}
+                                        buttonClassName="h-[36px] w-full px-4 rounded-full border-slate-200 dark:border-white/10 shadow-sm"
+                                    />
+                                ) : dateSelectionType === 'single' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDatePicker(true)}
+                                        className="flex items-center justify-center gap-2.5 h-[36px] w-full px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-sm transition-all text-xs font-bold text-slate-800 dark:text-slate-100 select-none group"
+                                    >
+                                        <Calendar className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
+                                        <span>{format(new Date(dateStr), 'dd MMM yyyy')}</span>
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center justify-between gap-1.5 h-[36px] w-full px-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-sm transition-all text-xs font-bold text-slate-800 dark:text-slate-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowStartDatePicker(true)}
+                                            className="flex items-center gap-1.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                        >
+                                            <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                            <span>{format(new Date(startDateStr), 'dd MMM yyyy')}</span>
+                                        </button>
+                                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEndDatePicker(true)}
+                                            className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                        >
+                                            <span>{format(new Date(endDateStr), 'dd MMM yyyy')}</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
+
+                        {/* Product Type Filter */}
+                        <div className="flex flex-col w-full md:w-auto">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                Product Type
+                            </label>
+                            <div className="w-full sm:w-[170px] h-[36px]">
+                                <ThemeSelect
+                                    variant="pill"
+                                    value={metricCategory}
+                                    onChange={setMetricCategory}
+                                    options={[
+                                        { value: 'All', label: 'All Products' },
+                                        { value: 'Loan', label: 'Loan', indicatorColor: '#6366f1' },
+                                        { value: 'Insurance', label: 'Insurance', indicatorColor: '#10b981' },
+                                        { value: 'Forex', label: 'Forex', indicatorColor: '#0ea5e9' },
+                                        { value: 'Consultancy', label: 'Consulting', indicatorColor: '#f59e0b' },
+                                        { value: 'Investments', label: 'Investments', indicatorColor: '#8b5cf6' }
+                                    ]}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Center Section: Metrics */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 md:p-3 md:px-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner w-full xl:w-auto">
+                        {/* Target */}
+                        <div className="flex flex-col w-full md:w-auto">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                                Target ({metricCategory !== 'All' ? metricCategory : dateStr.substring(0, 7)})
+                            </label>
+                            <div className="text-sm md:text-base font-black text-slate-800 dark:text-slate-200 font-mono tracking-tight bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 inline-block w-fit">
+                                ₹{(() => {
+                                    const targetObj = branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7));
+                                    const catKey = metricCategory === 'Consulting' ? 'Consultancy' : metricCategory;
+                                    if (metricCategory !== 'All' && targetObj?.productTargets?.[catKey] !== undefined) {
+                                        return Number(targetObj.productTargets[catKey]).toLocaleString('en-IN');
+                                    }
+                                    return (targetObj?.targetAmount || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN');
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="hidden md:block w-px h-12 bg-slate-200 dark:bg-slate-800 mx-2"></div>
+                        <div className="md:hidden h-px w-full bg-slate-200 dark:bg-slate-800 my-1"></div>
+
+                        {/* Totals */}
+                        <div className="flex flex-col w-full md:min-w-[220px]">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                                Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
+                            </label>
+                            <div className="flex items-center text-xs md:text-sm font-mono font-bold tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                {metricCategory === 'Insurance' ? (
+                                    <>
+                                        <div className="flex items-center gap-1.5 mr-6 flex-1">
+                                            <span className="text-[10px] text-slate-400 font-sans tracking-wider">ISS</span>
+                                            ₹{insuranceIssued.toLocaleString('en-IN')}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 flex-1">
+                                            <span className="text-[10px] text-slate-400 font-sans tracking-wider">NOT</span>
+                                            ₹{insuranceNotIssued.toLocaleString('en-IN')}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-1.5 mr-6 flex-1">
+                                            <span className="text-[10px] text-slate-400 font-sans tracking-wider">LOG</span>
+                                            ₹{metricLogin.toLocaleString('en-IN')}
+                                        </div>
+                                        <div className="flex items-center gap-1.5 flex-1">
+                                            <span className="text-[10px] text-slate-400 font-sans tracking-wider">DISB</span>
+                                            <span className="text-emerald-600 dark:text-emerald-400">₹{metricDisbursed.toLocaleString('en-IN')}</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Section: Actions */}
+                    <div className="flex flex-row overflow-x-auto pb-2 md:pb-0 hide-scrollbar items-center gap-3 w-full xl:w-auto mt-2 xl:mt-0">
+                        {!isMIS && (
+                            <label
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                className={`flex items-center justify-center gap-2 h-[36px] px-5 text-[10px] font-bold tracking-wide uppercase rounded-full border transition-all cursor-pointer shadow-sm
+                            ${!canModify || isParsing ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 opacity-50 cursor-not-allowed' : isDragging ? 'bg-indigo-50 border-indigo-500 text-indigo-700 scale-[1.02]' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20'}`}
+                            >
+                                {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : <UploadCloud className="w-4 h-4 text-indigo-500" />}
+                                <span>{isParsing ? `Processing ${uploadProgress}%` : isDragging ? 'Drop Here' : 'Bulk Upload'}</span>
+                                <input
+                                    type="file"
+                                    accept=".xlsx, .xls, .csv"
+                                    className="hidden"
+                                    disabled={!canModify || isParsing}
+                                    onChange={handleFileUpload}
+                                />
+                            </label>
+                        )}
+
+                        <button
+                            onClick={() => setIsProjectionModalOpen(true)}
+                            className={`h-[36px] px-6 rounded-full border shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${isSunday
+                                    ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed'
+                                    : isProjectionLodged
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100'
+                                        : isTimeLocked
+                                            ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed'
+                                            : 'bg-indigo-600 hover:bg-indigo-700 border-transparent text-white shadow-[0_2px_10px_rgba(79,70,229,0.2)]'
+                                }`}
+                        >
+                            Project
+                            <span className="font-mono text-[13px] ml-1 tracking-tight">₹{(isProjectionLodged ? lodgedProjectionAmount : (branchDetails?.dailyProjection || 0)).toLocaleString('en-IN')}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Data Grid Section */}
+            <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden mb-16 md:mb-16">
+                {/* Toolbar Header */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between p-2.5 px-3.5 gap-2.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md shrink-0 z-10">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <div className="flex items-center gap-2">
+                            <Layers className="w-4 h-4 text-indigo-500" />
+                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                                Line Items
+                            </h3>
+                            <span className="px-2 py-0.5 text-[11px] font-mono font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60">
+                                {filteredItemsWithIndex.length}{filteredItemsWithIndex.length !== items.length ? ` of ${items.length}` : ''}
+                            </span>
+                            {totalPages > 1 && (
+                                <div className="hidden sm:flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-1 py-0.5 text-xs shadow-xs">
+                                    <button
+                                        type="button"
+                                        disabled={safeCurrentPage <= 1}
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        className="p-0.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-25 disabled:pointer-events-none"
+                                        title="Previous Page"
+                                    >
+                                        <ChevronLeft className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="font-mono text-[10px] font-bold px-1 text-slate-600 dark:text-slate-300">
+                                        Pg {safeCurrentPage}/{totalPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        disabled={safeCurrentPage >= totalPages}
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        className="p-0.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-25 disabled:pointer-events-none"
+                                        title="Next Page"
+                                    >
+                                        <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             )}
                         </div>
 
-                        <div className="w-full sm:w-[270px]">
-                            {entryMode === 'monthly' ? (
-                                <MonthPicker 
-                                    value={dateStr.substring(0, 7)}
-                                    onChange={(val) => {
-                                        if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-                                        setDateStr(val + '-01');
-                                    }}
-                                    buttonClassName="h-[36px] w-full px-4 rounded-full border-slate-200 dark:border-white/10 shadow-sm"
-                                />
-                            ) : dateSelectionType === 'single' ? (
+                        {hasExistingEntry && (
+                            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-500/30 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Locked & Processed
+                            </span>
+                        )}
+                        {hasExistingEntry && hasPendingConsultant && (
+                            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/30 flex items-center gap-1" title="Entries since Aug 1, 2026 without Consultant details are unlocked for 74 hours starting Nov 5, 2026 06:00 AM">
+                                <Clock className="w-3 h-3" />
+                                Connector Unlocked ({consultantUnlockCountdown})
+                            </span>
+                        )}
+
+                        {/* Quick Status Filter Chips */}
+                        <div className="hidden sm:flex items-center gap-1 ml-2 pl-3 border-l border-slate-200 dark:border-slate-800">
+                            {[
+                                { id: 'ALL', label: 'All' },
+                                { id: 'Login', label: 'Login' },
+                                { id: 'Sold', label: 'Sold' },
+                                { id: 'Sanctioned', label: 'Sanctioned' },
+                                { id: 'Disbursed', label: 'Disbursed' },
+                                { id: 'Customer Reject', label: 'Cust Reject' },
+                                { id: 'Rejected', label: 'Bank Rejected' },
+                            ].map((chip) => {
+                                const count = chip.id === 'ALL'
+                                    ? categoryScopedItems.length
+                                    : categoryScopedItems.filter(i => {
+                                        const fs = (i.fileStatus || '') as string;
+                                        if (chip.id === 'Disbursed') return (fs === 'Disbursed' || fs === 'Issued' || fs === 'POLICY ISSUED');
+                                        if (chip.id === 'Sold') return (fs === 'Sold' || (i.category === 'Forex' && (fs === 'Disbursed' || fs === 'Sold')));
+                                        return fs === chip.id;
+                                    }).length;
+                                if (count === 0 && chip.id !== 'ALL' && statusFilter !== chip.id) return null;
+
+                                const isActive = statusFilter === chip.id;
+                                return (
+                                    <button
+                                        type="button"
+                                        key={chip.id}
+                                        onClick={() => setStatusFilter(chip.id)}
+                                        className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 ${isActive
+                                                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 scale-[1.02]'
+                                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                            }`}
+                                    >
+                                        <span>{chip.label}</span>
+                                        <span className={`text-[9px] px-1 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>
+                                            {count}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Live Search Bar */}
+                    <div className="flex items-center gap-2 w-full lg:w-auto">
+                        <div className="relative flex-1 lg:w-72">
+                            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <Input
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search customer, tracking #, RM..."
+                                className="h-[34px] pl-9 pr-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-indigo-500 font-medium placeholder:text-slate-400"
+                            />
+                            {searchQuery && (
                                 <button
                                     type="button"
-                                    onClick={() => setShowDatePicker(true)}
-                                    className="flex items-center justify-center gap-2.5 h-[36px] w-full px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-sm transition-all text-xs font-bold text-slate-800 dark:text-slate-100 select-none group"
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                 >
-                                    <Calendar className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
-                                    <span>{format(new Date(dateStr), 'dd MMM yyyy')}</span>
+                                    <X className="w-3 h-3" />
                                 </button>
-                            ) : (
-                                <div className="flex items-center justify-between gap-1.5 h-[36px] w-full px-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-full hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:shadow-sm transition-all text-xs font-bold text-slate-800 dark:text-slate-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowStartDatePicker(true)}
-                                        className="flex items-center gap-1.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                                    >
-                                        <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                        <span>{format(new Date(startDateStr), 'dd MMM yyyy')}</span>
-                                    </button>
-                                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowEndDatePicker(true)}
-                                        className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                                    >
-                                        <span>{format(new Date(endDateStr), 'dd MMM yyyy')}</span>
-                                    </button>
-                                </div>
                             )}
                         </div>
-                    </div>
 
-                    {/* Divider */}
-                    <div className="hidden md:block w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
-
-                    {/* Product Type Filter */}
-                    <div className="flex flex-col w-full md:w-auto">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                            Product Type
-                        </label>
-                        <div className="w-full sm:w-[170px] h-[36px]">
-                            <ThemeSelect 
-                                variant="pill"
-                                value={metricCategory}
-                                onChange={setMetricCategory}
-                                options={[
-                                    { value: 'All', label: 'All Products' },
-                                    { value: 'Loan', label: 'Loan', indicatorColor: '#6366f1' },
-                                    { value: 'Insurance', label: 'Insurance', indicatorColor: '#10b981' },
-                                    { value: 'Forex', label: 'Forex', indicatorColor: '#0ea5e9' },
-                                    { value: 'Consultancy', label: 'Consulting', indicatorColor: '#f59e0b' },
-                                    { value: 'Investments', label: 'Investments', indicatorColor: '#8b5cf6' }
-                                ]}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Center Section: Metrics */}
-                <div className="flex flex-col md:flex-row md:items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 md:p-3 md:px-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner w-full xl:w-auto">
-                    {/* Target */}
-                    <div className="flex flex-col w-full md:w-auto">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                            Target ({metricCategory !== 'All' ? metricCategory : dateStr.substring(0, 7)})
-                        </label>
-                        <div className="text-sm md:text-base font-black text-slate-800 dark:text-slate-200 font-mono tracking-tight bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 inline-block w-fit">
-                            ₹{(() => {
-                                const targetObj = branchTargets?.find(t => t.branchId === activeBranchId && t.monthYear === dateStr.substring(0, 7));
-                                const catKey = metricCategory === 'Consulting' ? 'Consultancy' : metricCategory;
-                                if (metricCategory !== 'All' && targetObj?.productTargets?.[catKey] !== undefined) {
-                                    return Number(targetObj.productTargets[catKey]).toLocaleString('en-IN');
-                                }
-                                return (targetObj?.targetAmount || branchDetails?.monthlyTarget || 0).toLocaleString('en-IN');
-                            })()}
-                        </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="hidden md:block w-px h-12 bg-slate-200 dark:bg-slate-800 mx-2"></div>
-                    <div className="md:hidden h-px w-full bg-slate-200 dark:bg-slate-800 my-1"></div>
-
-                    {/* Totals */}
-                    <div className="flex flex-col w-full md:min-w-[220px]">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                            Totals ({entryMode === 'daily' ? 'Daily' : 'Monthly'})
-                        </label>
-                        <div className="flex items-center text-xs md:text-sm font-mono font-bold tracking-tight text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                            {metricCategory === 'Insurance' ? (
-                                <>
-                                    <div className="flex items-center gap-1.5 mr-6 flex-1">
-                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">ISS</span>
-                                        ₹{insuranceIssued.toLocaleString('en-IN')}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 flex-1">
-                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">NOT</span>
-                                        ₹{insuranceNotIssued.toLocaleString('en-IN')}
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="flex items-center gap-1.5 mr-6 flex-1">
-                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">LOG</span>
-                                        ₹{metricLogin.toLocaleString('en-IN')}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 flex-1">
-                                        <span className="text-[10px] text-slate-400 font-sans tracking-wider">DISB</span>
-                                        <span className="text-emerald-600 dark:text-emerald-400">₹{metricDisbursed.toLocaleString('en-IN')}</span>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Section: Actions */}
-                <div className="flex flex-row overflow-x-auto pb-2 md:pb-0 hide-scrollbar items-center gap-3 w-full xl:w-auto mt-2 xl:mt-0">
-                    {!isMIS && (
-                        <label 
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            className={`flex items-center justify-center gap-2 h-[36px] px-5 text-[10px] font-bold tracking-wide uppercase rounded-full border transition-all cursor-pointer shadow-sm
-                            ${!canModify || isParsing ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 opacity-50 cursor-not-allowed' : isDragging ? 'bg-indigo-50 border-indigo-500 text-indigo-700 scale-[1.02]' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/20'}`}
-                        >
-                            {isParsing ? <Loader2 className="animate-spin w-4 h-4" /> : <UploadCloud className="w-4 h-4 text-indigo-500" />}
-                            <span>{isParsing ? `Processing ${uploadProgress}%` : isDragging ? 'Drop Here' : 'Bulk Upload'}</span>
-                            <input 
-                                type="file" 
-                                accept=".xlsx, .xls, .csv" 
-                                className="hidden" 
-                                disabled={!canModify || isParsing}
-                                onChange={handleFileUpload}
-                            />
-                        </label>
-                    )}
-
-                    <button 
-                        onClick={() => setIsProjectionModalOpen(true)}
-                        className={`h-[36px] px-6 rounded-full border shadow-sm flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                            isSunday 
-                            ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed'
-                            : isProjectionLodged
-                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100'
-                                : isTimeLocked
-                                ? 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/5 text-slate-400 cursor-not-allowed'
-                                : 'bg-indigo-600 hover:bg-indigo-700 border-transparent text-white shadow-[0_2px_10px_rgba(79,70,229,0.2)]'
-                        }`}
-                    >
-                        Project
-                        <span className="font-mono text-[13px] ml-1 tracking-tight">₹{(isProjectionLodged ? lodgedProjectionAmount : (branchDetails?.dailyProjection || 0)).toLocaleString('en-IN')}</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        {/* Data Grid Section */}
-        <div className="flex-1 min-h-0 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden mb-16 md:mb-16">
-            {/* Toolbar Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between p-2.5 px-3.5 gap-2.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-md shrink-0 z-10">
-               <div className="flex flex-wrap items-center gap-2.5">
-                   <div className="flex items-center gap-2">
-                       <Layers className="w-4 h-4 text-indigo-500" />
-                       <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
-                           Line Items
-                       </h3>
-                       <span className="px-2 py-0.5 text-[11px] font-mono font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60">
-                           {filteredItemsWithIndex.length}{filteredItemsWithIndex.length !== items.length ? ` of ${items.length}` : ''}
-                       </span>
-                       {totalPages > 1 && (
-                           <div className="hidden sm:flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-1 py-0.5 text-xs shadow-xs">
-                               <button
-                                   type="button"
-                                   disabled={safeCurrentPage <= 1}
-                                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                   className="p-0.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-25 disabled:pointer-events-none"
-                                   title="Previous Page"
-                               >
-                                   <ChevronLeft className="w-3.5 h-3.5" />
-                               </button>
-                               <span className="font-mono text-[10px] font-bold px-1 text-slate-600 dark:text-slate-300">
-                                   Pg {safeCurrentPage}/{totalPages}
-                               </span>
-                               <button
-                                   type="button"
-                                   disabled={safeCurrentPage >= totalPages}
-                                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                   className="p-0.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 disabled:opacity-25 disabled:pointer-events-none"
-                                   title="Next Page"
-                               >
-                                   <ChevronRight className="w-3.5 h-3.5" />
-                               </button>
-                           </div>
-                       )}
-                   </div>
-                   
-                   {hasExistingEntry && (
-                       <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-500/30 flex items-center gap-1">
-                           <CheckCircle2 className="w-3 h-3" />
-                           Locked & Processed
-                       </span>
-                   )}
-                   {hasExistingEntry && hasPendingConsultant && (
-                       <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-md border border-amber-500/30 flex items-center gap-1" title="Entries since Aug 1, 2026 without Consultant details are unlocked for 74 hours starting Nov 5, 2026 06:00 AM">
-                           <Clock className="w-3 h-3" />
-                           Connector Unlocked ({consultantUnlockCountdown})
-                       </span>
-                   )}
-
-                   {/* Quick Status Filter Chips */}
-                   <div className="hidden sm:flex items-center gap-1 ml-2 pl-3 border-l border-slate-200 dark:border-slate-800">
-                      {[
-                        { id: 'ALL', label: 'All' },
-                        { id: 'Login', label: 'Login' },
-                        { id: 'Sold', label: 'Sold' },
-                        { id: 'Sanctioned', label: 'Sanctioned' },
-                        { id: 'Disbursed', label: 'Disbursed' },
-                        { id: 'Customer Reject', label: 'Cust Reject' },
-                        { id: 'Rejected', label: 'Bank Rejected' },
-                      ].map((chip) => {
-                         const count = chip.id === 'ALL' 
-                           ? categoryScopedItems.length 
-                           : categoryScopedItems.filter(i => {
-                               const fs = (i.fileStatus || '') as string;
-                               if (chip.id === 'Disbursed') return (fs === 'Disbursed' || fs === 'Issued' || fs === 'POLICY ISSUED');
-                               if (chip.id === 'Sold') return (fs === 'Sold' || (i.category === 'Forex' && (fs === 'Disbursed' || fs === 'Sold')));
-                               return fs === chip.id;
-                             }).length;
-                         if (count === 0 && chip.id !== 'ALL' && statusFilter !== chip.id) return null;
-                         
-                         const isActive = statusFilter === chip.id;
-                         return (
-                           <button
-                             type="button"
-                             key={chip.id}
-                             onClick={() => setStatusFilter(chip.id)}
-                             className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 ${
-                               isActive
-                                 ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 scale-[1.02]'
-                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                             }`}
-                           >
-                             <span>{chip.label}</span>
-                             <span className={`text-[9px] px-1 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'}`}>
-                               {count}
-                             </span>
-                           </button>
-                         );
-                      })}
-                   </div>
-               </div>
-
-               {/* Live Search Bar */}
-               <div className="flex items-center gap-2 w-full lg:w-auto">
-                   <div className="relative flex-1 lg:w-72">
-                       <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                       <Input
-                           value={searchQuery}
-                           onChange={(e) => setSearchQuery(e.target.value)}
-                           placeholder="Search customer, tracking #, RM..."
-                           className="h-[34px] pl-9 pr-8 text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-indigo-500 font-medium placeholder:text-slate-400"
-                       />
-                       {searchQuery && (
-                           <button
-                               type="button"
-                               onClick={() => setSearchQuery('')}
-                               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                           >
-                               <X className="w-3 h-3" />
-                           </button>
-                       )}
-                   </div>
-                   
-                   {/* Mobile Dropdown Filter */}
-                   <div className="sm:hidden">
-                      <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="h-[34px] text-xs px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 outline-none font-bold"
-                      >
-                         <option value="ALL">All Status</option>
-                         <option value="Login">Login</option>
-                         <option value="Sold">Sold</option>
-                         <option value="Sanctioned">Sanctioned</option>
-                         <option value="Disbursed">Disbursed</option>
-                         <option value="Customer Reject">Customer Reject</option>
-                         <option value="Rejected">Rejected</option>
-                      </select>
-                   </div>
-               </div>
-            </div>
-
-            <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden">
-                {isLoadingExisting ? (
-                    <div className="flex justify-center items-center h-full min-h-[200px]"><Loader2 className="animate-spin text-slate-300" /></div>
-                ) : (
-                    <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 h-full overflow-auto">
-                        <TableHeader className="bg-slate-50 dark:bg-slate-900 sticky top-0 z-20 box-border border-b border-slate-200 dark:border-slate-800 shadow-xs">
-                            <TableRow className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900">
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-3.5 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">1. Customer Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">2. Category</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">3. Product</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">4. Login Amount (₹)</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px] border-b border-slate-200 dark:border-slate-800">5. Staff Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px] border-b border-slate-200 dark:border-slate-800">6. Login Date</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px] border-b border-slate-200 dark:border-slate-800">7. Relationship Manager Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">8. Tracking Number</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">9. Channel Partner</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">10. Branch</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">11. Customer DOB</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">12. Customer Phone No.</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">13. Customer Email ID</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px] border-b border-slate-200 dark:border-slate-800">14. Customer Address</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">15. Firm Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">16. File Status</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">17. Sanctioned (₹)</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">18. Disbursed (₹)</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">19. Disbursed Dt</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">20. EMI Date</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">21. Repayment Bank</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px] border-b border-slate-200 dark:border-slate-800">22. Manager Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">23. Consultant Name</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px] border-b border-slate-200 dark:border-slate-800">24. Consultant Email ID</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">25. Rejection Remark</TableHead>
-                                <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] border-b border-slate-200 dark:border-slate-800 text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredItemsWithIndex.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={26} className="p-0 border-0 h-0">
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none gap-1.5" style={{ top: '50px' }}>
-                                            {items.length === 0 ? (
-                                                <span>No items formulated for {dateSelectionType === 'range' ? `${startDateStr} to ${endDateStr}` : dateStr}</span>
-                                            ) : (
-                                                <>
-                                                    <span className="font-semibold text-slate-600 dark:text-slate-300">No matching line items found</span>
-                                                    <span className="text-[11px] text-slate-400">Clear search query or status filter to view all {items.length} items</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                paginatedItemsWithIndex.map(({ item, originalIndex }) => {
-                                const isLoan = item.category === 'Loan' || (!item.category && item.product);
-                                const isInsurance = item.category === 'Insurance';
-                                const isForex = item.category === 'Forex';
-                                const hasDisbursedAmount = Number(item.disbursedAmount) > 0 || (isForex && Number(item.amount) > 0);
-                                const hasDisbursedDate = Boolean(item.disbursedDate && item.disbursedDate.trim() !== '') || (isForex && Boolean(item.date));
-                                const hasEmiDate = Boolean(item.emiDate && item.emiDate.trim() !== '' && item.emiDate !== '-');
-
-                                const isFullyCompletedDisbursement = isLoan
-                                    ? (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate && hasEmiDate)
-                                    : isInsurance
-                                        ? ((item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') && hasDisbursedDate)
-                                        : isForex
-                                            ? ((item.fileStatus === 'Sold' || item.fileStatus === 'Disbursed' || item.fileStatus === 'Login') && (Number(item.amount) > 0 || hasDisbursedAmount))
-                                            : (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate);
-
-                                const isUnlockedForMissingConsultant = isConsultantUnlockWindowActive && isItemMissingConsultantSinceAug2026(item);
-                                const isRowFrozen = isFullyCompletedDisbursement && !item._isSessionEditing && !isUnlockedForMissingConsultant;
-                                const isFieldDisabled = (!canModify && !item.isManual) || isRowFrozen;
-
-                                return (
-                                <TableRow key={originalIndex} className={`transition-colors border-b border-slate-900/5 dark:border-white/5 ${isRowFrozen ? 'bg-slate-50/50 dark:bg-slate-900/40 opacity-90' : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'}`}>
-                                    {/* 1. Customer Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        {(() => {
-                                            const effectiveRowDate = (item as any)._entryDate || item.date || (dateSelectionType === 'range' ? endDateStr : dateStr);
-                                            const isCustomerDropdownActive = entryMode === 'daily'
-                                                ? effectiveRowDate >= '2026-11-16'
-                                                : dateStr >= '2026-11';
-                                            const scopedCustomers = isCustomerDropdownActive
-                                                ? getScopedCustomers(item.branchLocation)
-                                                : [];
-
-                                            if (isCustomerDropdownActive) {
-                                                const currentName = (item.customerName || '').trim();
-                                                const hasCurrentInList = scopedCustomers.some(
-                                                    c => String(c.customer_name || '').trim() === currentName
-                                                );
-                                                return (
-                                                    <select
-                                                        disabled={isFieldDisabled}
-                                                        value={item.customerName || ''}
-                                                        onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
-                                                        className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
-                                                            isFieldMissing(item, 'customerName')
-                                                                ? 'border-red-500/50 focus:border-red-500'
-                                                                : 'border-slate-200 dark:border-white/10'
-                                                        }`}
-                                                    >
-                                                        <option value="">— Select Customer —</option>
-                                                        {currentName && !hasCurrentInList && (
-                                                            <option value={item.customerName}>{item.customerName}</option>
-                                                        )}
-                                                        {scopedCustomers.map((c: any) => {
-                                                            const nameStr = String(c.customer_name || '').trim();
-                                                            return (
-                                                                <option key={c.id} value={nameStr}>
-                                                                    {nameStr}
-                                                                </option>
-                                                            );
-                                                        })}
-                                                    </select>
-                                                );
-                                            }
-
-                                            return (
-                                                <Input 
-                                                    disabled={isFieldDisabled}
-                                                    type="text"
-                                                    className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                                    value={item.customerName || ''}
-                                                    onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
-                                                />
-                                            );
-                                        })()}
-                                    </TableCell>
-
-                                    {/* 2. Category */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <select 
-                                            disabled={isFieldDisabled}
-                                            className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'category') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
-                                            value={item.category || 'Loan'}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'category', e.target.value)}
-                                        >
-                                            <option value="Loan">Loan</option>
-                                            <option value="Insurance">Insurance</option>
-                                            <option value="Forex">Forex</option>
-                                            <option value="Consultancy">Consulting</option>
-                                            <option value="Investments">Investments</option>
-                                        </select>
-                                    </TableCell>
-
-                                    {/* 3. Product */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <select 
-                                            disabled={isFieldDisabled}
-                                            className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'product') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
-                                            value={item.product || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'product', e.target.value)}
-                                        >
-                                            <option value="">Select...</option>
-                                            {allowedProducts(item.category || 'Loan').map((p: any) => (
-                                                <option key={p.id} value={p.name}>{p.name}</option>
-                                            ))}
-                                        </select>
-                                    </TableCell>
-
-                                    {/* 4. Login Amount (₹) */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <NumericFormat 
-                                            customInput={Input}
-                                            disabled={isFieldDisabled}
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
-                                            value={item.amount === 0 ? '' : item.amount}
-                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'amount', values.floatValue || 0)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                        />
-                                    </TableCell>
-
-                                    {/* 5. Staff Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        {branchStaff.length > 0 ? (
-                                            <select
-                                                disabled={isFieldDisabled}
-                                                value={item.staffName || ''}
-                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
-                                                className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
-                                                    isFieldMissing(item, 'staffName')
-                                                        ? 'border-red-500/50'
-                                                        : 'border-slate-200 dark:border-white/10'
-                                                }`}
-                                            >
-                                                <option value="">— Select Staff —</option>
-                                                {branchStaff.map(m => (
-                                                    <option key={m.id} value={m.name}>{m.name}</option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <Input
-                                                disabled={isFieldDisabled}
-                                                type="text"
-                                                className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${
-                                                    isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'
-                                                }`}
-                                                value={item.staffName || ''}
-                                                onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
-                                            />
-                                        )}
-                                    </TableCell>
-
-                                    {/* 6. Login Date */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <InlineDatePicker 
-                                            disabled={isFieldDisabled}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.date || (dateSelectionType === 'range' ? endDateStr : dateStr)}
-                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'date', val)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 7. Relationship Manager Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.relationshipManagerName || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'relationshipManagerName', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 9. Tracking Number */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled || (item.category !== 'Loan' && item.category !== 'Insurance')}
-                                            type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.trackingNumber || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'trackingNumber', e.target.value)}
-                                            placeholder={item.category !== 'Loan' && item.category !== 'Insurance' ? 'N/A' : 'Tracking #'}
-                                        />
-                                    </TableCell>
-
-                                    {/* 10. Channel Partner */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <select 
-                                            disabled={isFieldDisabled}
-                                            className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'channel') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
-                                            value={item.channel || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'channel', e.target.value)}
-                                        >
-                                            <option value="">Select Channel...</option>
-                                            {item.category === 'Insurance' ? (
-                                                <>
-                                                    <option value="Bajaj Allianz">Bajaj Allianz</option>
-                                                    <option value="Aditya Birla">Aditya Birla</option>
-                                                    <option value="LIC">LIC</option>
-                                                    <option value="ICICI Lombard">ICICI Lombard</option>
-                                                    <option value="Niva Bupa">Niva Bupa</option>
-                                                    <option value="Tata AIG">Tata AIG</option>
-                                                    <option value="Manipal Cigna">Manipal Cigna</option>
-                                                    <option value="Star Health">Star Health</option>
-                                                    <option value="Care Health">Care Health</option>
-                                                    <option value="SBI">SBI</option>
-                                                    <option value="Magma">Magma</option>
-                                                    <option value="Galaxy Health">Galaxy Health</option>
-                                                    <option value="SIROI">SIROI</option>
-                                                    <option value="Bank of Baroda">Bank of Baroda</option>
-                                                    <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
-                                                    <option value="BANK OF INDIA">BANK OF INDIA</option>
-                                                </>
-                                            ) : item.category === 'Forex' ? (
-                                                <option value="SIROI">SIROI</option>
-                                            ) : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? (
-                                                <>
-                                                    <option value="Bank of Baroda">Bank of Baroda</option>
-                                                    <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
-                                                    <option value="BANK OF INDIA">BANK OF INDIA</option>
-                                                </>
-                                            ) : (
-                                                channels.map((c: any) => (
-                                                    <option key={c.id} value={c.name}>{c.name}</option>
-                                                ))
-                                            )}
-                                        </select>
-                                    </TableCell>
-
-                                    {/* 11. Branch Location */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center truncate">
-                                            {branchDetails?.name || ''}
-                                        </div>
-                                    </TableCell>
-
-                                    {/* 12. Customer DOB */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <InlineDatePicker 
-                                            disabled={isFieldDisabled}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.customerDOB || ''}
-                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'customerDOB', val)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 13. Phone Number */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.phoneNumber || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'phoneNumber', e.target.value.replace(/\D/g,''))}
-                                        />
-                                    </TableCell>
-
-                                    {/* 14. Email ID */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="email"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.emailId || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'emailId', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 15. Customer Address */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.customerAddress || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'customerAddress', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 16. Firm Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="text"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={item.firmName || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'firmName', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 17. File Status */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <select 
-                                            disabled={isFieldDisabled}
-                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'} ${isFieldMissing(item, 'fileStatus') ? 'border-red-500/50 focus:border-red-500 bg-red-500/5' : ''}`}
-                                            value={item.fileStatus || (item.category === 'Forex' ? 'Sold' : '')}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'fileStatus', e.target.value)}
-                                        >
-                                            <option value="" className="bg-slate-800 text-white">Select...</option>
-                                            {item.category === 'Forex' ? (
-                                                <>
-                                                    <option value="Sold" className="bg-slate-800 text-blue-400 font-semibold">Sold</option>
-                                                    <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
-                                                    <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
-                                                    <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
-                                                </>
-                                            ) : item.category === 'Insurance' ? (
-                                                <>
-                                                    <option value="Issued" className="bg-slate-800 text-green-400">Issued</option>
-                                                    <option value="POLICY ISSUED" className="bg-slate-800 text-green-400">POLICY ISSUED</option>
-                                                    <option value="Not Issued" className="bg-slate-800 text-yellow-400">Not Issued</option>
-                                                </>
-                                            ) : item.category === 'Loan' ? (
-                                                <>
-                                                    <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
-                                                    <option value="Underwriting" className="bg-slate-800 text-blue-400">Underwriting</option>
-                                                    <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
-                                                    <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
-                                                    <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
-                                                    <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
-                                                    <option value="Processing" className="bg-slate-800 text-blue-400">Processing</option>
-                                                    <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
-                                                    <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
-                                                    <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
-                                                    <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
-                                                </>
-                                            )}
-                                        </select>
-                                    </TableCell>
-
-                                    {/* 18. Sanctioned Amount */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <NumericFormat 
-                                            customInput={Input}
-                                            disabled={isFieldDisabled || isForex}
-                                            placeholder={isForex ? "N/A" : "₹"}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={isForex ? '' : (item.sanctionedAmount === 0 ? '' : item.sanctionedAmount)}
-                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'sanctionedAmount', values.floatValue || 0)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                        />
-                                    </TableCell>
-
-                                    {/* 19. Disbursed Amount */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <NumericFormat 
-                                            customInput={Input}
-                                            disabled={isFieldDisabled || isForex}
-                                            placeholder={isForex ? "Auto (Login Amt)" : "₹"}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={isForex ? (item.amount || '') : (item.disbursedAmount === 0 ? '' : item.disbursedAmount)}
-                                            onValueChange={(values) => handleUpdateItem(originalIndex, 'disbursedAmount', values.floatValue || 0)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                        />
-                                    </TableCell>
-
-                                    {/* 20. Disbursed Date */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <InlineDatePicker 
-                                            disabled={isFieldDisabled || isForex}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={isForex ? (item.date || (dateSelectionType === 'range' ? endDateStr : dateStr)) : (item.disbursedDate || '')}
-                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'disbursedDate', val)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 21. EMI Date */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <InlineDatePicker 
-                                            disabled={isFieldDisabled || isForex}
-                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${!isForex && isFieldMissing(item, 'emiDate') ? 'border-red-500/50 focus:border-red-500 border ring-1 ring-red-500/50' : 'dark:border-white/10'}`}
-                                            value={isForex ? '' : (item.emiDate || '')}
-                                            onChange={(val: string) => handleUpdateItem(originalIndex, 'emiDate', val)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 22. Repayment Bank */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled || isForex}
-                                            type="text"
-                                            list="repayment-banks"
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={isForex ? '' : (item.repaymentBank || '')}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'repaymentBank', e.target.value)}
-                                            placeholder={isForex ? "N/A" : "Enter or select..."}
-                                        />
-                                    </TableCell>
-
-                                    {/* 23. Manager Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        {(() => {
-                                            const managers = getLocationEmployees(item.branchLocation);
-                                            return managers.length > 0 ? (
-                                                <select
-                                                    disabled={isFieldDisabled}
-                                                    value={item.managerName || ''}
-                                                    onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
-                                                    className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${
-                                                        isFieldMissing(item, 'managerName')
-                                                            ? 'border-red-500/50'
-                                                            : 'border-slate-200 dark:border-white/10'
-                                                    }`}
-                                                >
-                                                    <option value="">— Select Manager —</option>
-                                                    {item.managerName && !managers.includes(item.managerName) && (
-                                                        <option value={item.managerName}>{item.managerName}</option>
-                                                    )}
-                                                    {managers.map(name => (
-                                                        <option key={name} value={name}>{name}</option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <Input 
-                                                    disabled={isFieldDisabled}
-                                                    type="text"
-                                                    className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                                    value={item.managerName || ''}
-                                                    onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
-                                                />
-                                            );
-                                        })()}
-                                    </TableCell>
-
-                                    {/* 24. Consultant Name */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <select 
-                                            disabled={isFieldDisabled || !isLoan}
-                                            className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-200 ${isLoan && isUnlockedForMissingConsultant && item.fileStatus === 'Disbursed' ? 'border-amber-400/70 focus:border-amber-500 ring-1 ring-amber-400/30' : 'border-slate-200 dark:border-white/10'}`}
-                                            value={isLoan ? (item.consultantName || '') : ''}
-                                            onChange={(e) => {
-                                                handleUpdateItem(originalIndex, 'consultantName', e.target.value);
-                                                const consultant = consultants.find(c => c.name === e.target.value);
-                                                if (consultant) {
-                                                    handleUpdateItem(originalIndex, 'consultantEmail', consultant.email);
-                                                } else {
-                                                    handleUpdateItem(originalIndex, 'consultantEmail', '');
-                                                }
-                                            }}
-                                        >
-                                            <option value="" className="bg-slate-800 text-slate-400">{isLoan ? 'Select...' : 'N/A'}</option>
-                                            {isLoan && item.consultantName && !consultants.some(c => c.name === item.consultantName) && (
-                                                <option value={item.consultantName} className="bg-slate-800 text-white">{item.consultantName}</option>
-                                            )}
-                                            {isLoan && branchConsultants.map(c => (
-                                                <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </TableCell>
-
-                                    {/* 25. Consultant Email ID */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled || !isLoan}
-                                            type="email"
-                                            placeholder={isLoan ? '' : 'N/A'}
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
-                                            value={isLoan ? (item.consultantEmail || '') : ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'consultantEmail', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* 26. Rejection Remark */}
-                                    <TableCell className="py-2 px-2 align-top">
-                                        <Input 
-                                            disabled={isFieldDisabled}
-                                            type="text"
-                                            placeholder="Rejection remark..."
-                                            className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[200px]"
-                                            value={item.rejectionRemark || ''}
-                                            onChange={(e) => handleUpdateItem(originalIndex, 'rejectionRemark', e.target.value)}
-                                        />
-                                    </TableCell>
-
-                                    {/* Actions & Quick Shortcuts */}
-                                    <TableCell className="py-2 px-3 align-middle text-right">
-                                        {isRowFrozen ? (
-                                            isForex ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[11px] font-bold select-none shadow-xs">
-                                                    <Lock className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Sold
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold select-none shadow-xs">
-                                                    <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Disbursed
-                                                </span>
-                                            )
-                                        ) : (
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                {isLoan && item.fileStatus === 'Disbursed' && !hasEmiDate && (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="EMI Date is pending. Select EMI Date to complete disbursement.">
-                                                        <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> EMI Pending
-                                                    </span>
-                                                )}
-
-                                                {isFullyCompletedDisbursement && isUnlockedForMissingConsultant && (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="Unlocked to enter Consultant details. Auto-locks after 120 hours starting Nov 5, 2026 06:00 AM.">
-                                                        <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Connector Pending ({consultantUnlockCountdown})
-                                                    </span>
-                                                )}
-
-                                                {canModify && isForex && item.fileStatus !== 'Sold' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
-                                                    <button
-                                                        type="button"
-                                                        title="Quick Sold: Mark as Sold and record"
-                                                        onClick={() => {
-                                                            handleUpdateItem(originalIndex, 'fileStatus', 'Sold');
-                                                            handleUpdateItem(originalIndex, 'disbursedAmount', Number(item.amount) || 0);
-                                                            handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
-                                                            handleUpdateItem(originalIndex, '_isSessionEditing', true);
-                                                        }}
-                                                        className="px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
-                                                    >
-                                                        <Check className="w-2.5 h-2.5" /> Sold
-                                                    </button>
-                                                )}
-
-                                                {canModify && !isForex && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
-                                                    <button
-                                                        type="button"
-                                                        title="Quick Disburse: Mark as Disbursed and fill date"
-                                                        onClick={() => {
-                                                            handleUpdateItem(originalIndex, 'fileStatus', 'Disbursed');
-                                                            if (!item.disbursedAmount && item.amount) {
-                                                                handleUpdateItem(originalIndex, 'disbursedAmount', item.amount);
-                                                            }
-                                                            if (!item.disbursedDate) {
-                                                                handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
-                                                            }
-                                                            handleUpdateItem(originalIndex, '_isSessionEditing', true);
-                                                        }}
-                                                        className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
-                                                    >
-                                                        <Check className="w-2.5 h-2.5" /> Disburse
-                                                    </button>
-                                                )}
-
-                                                {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && item.fileStatus !== 'Sold' && !isFullyCompletedDisbursement && (
-                                                    <button
-                                                        type="button"
-                                                        title="Mark as Customer Reject"
-                                                        onClick={() => {
-                                                            handleUpdateItem(originalIndex, 'fileStatus', 'Customer Reject');
-                                                        }}
-                                                        className="px-2 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/50 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs hover:scale-[1.02]"
-                                                    >
-                                                        Reject
-                                                    </button>
-                                                )}
-
-                                                {canModify && (
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => handleRemoveItem(originalIndex)} 
-                                                        title="Delete entry" 
-                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
-                                                    >
-                                                        <X size={15} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                                );
-                            })
-                        )}
-                        </TableBody>
-                    </Table>
-                )}
-                {/* Hoisted Repayment Banks Datalist (rendered once for performance) */}
-                <datalist id="repayment-banks">
-                    <option value="State Bank of India (SBI)" />
-                    <option value="Punjab National Bank (PNB)" />
-                    <option value="Bank of Baroda (BOB)" />
-                    <option value="Canara Bank" />
-                    <option value="Union Bank of India" />
-                    <option value="Bank of India (BOI)" />
-                    <option value="Indian Bank" />
-                    <option value="Central Bank of India" />
-                    <option value="Indian Overseas Bank" />
-                    <option value="UCO Bank" />
-                    <option value="Bank of Maharashtra" />
-                    <option value="Punjab & Sind Bank" />
-                    <option value="HDFC Bank" />
-                    <option value="ICICI Bank" />
-                    <option value="Axis Bank" />
-                </datalist>
-            </div>
-            
-            {items.length > 0 && (
-                <div className="border-t border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/90 px-4 py-2.5 shrink-0 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
-                        <span>
-                            Showing{' '}
-                            <strong className="text-slate-800 dark:text-slate-200 font-bold">
-                                {filteredItemsWithIndex.length === 0 ? 0 : (safeCurrentPage - 1) * (pageSize === -1 ? filteredItemsWithIndex.length : pageSize) + 1}
-                                –
-                                {pageSize === -1 ? filteredItemsWithIndex.length : Math.min(safeCurrentPage * pageSize, filteredItemsWithIndex.length)}
-                            </strong>{' '}
-                            of{' '}
-                            <strong className="text-slate-800 dark:text-slate-200 font-bold">{filteredItemsWithIndex.length}</strong> records
-                            {filteredItemsWithIndex.length !== items.length && (
-                                <span className="text-slate-400 dark:text-slate-500 font-normal"> (filtered from {items.length} total)</span>
-                            )}
-                        </span>
-
-                        <div className="flex items-center gap-1.5 ml-2 pl-3 border-l border-slate-200 dark:border-slate-800">
-                            <span className="text-[10px] uppercase font-bold text-slate-400">Rows:</span>
+                        {/* Mobile Dropdown Filter */}
+                        <div className="sm:hidden">
                             <select
-                                value={pageSize}
-                                onChange={(e) => {
-                                    setPageSize(Number(e.target.value));
-                                    setCurrentPage(1);
-                                }}
-                                className="h-6 text-[11px] font-semibold px-1.5 py-0 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="h-[34px] text-xs px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 outline-none font-bold"
                             >
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                                <option value={200}>200</option>
-                                <option value={-1}>All ({filteredItemsWithIndex.length})</option>
+                                <option value="ALL">All Status</option>
+                                <option value="Login">Login</option>
+                                <option value="Sold">Sold</option>
+                                <option value="Sanctioned">Sanctioned</option>
+                                <option value="Disbursed">Disbursed</option>
+                                <option value="Customer Reject">Customer Reject</option>
+                                <option value="Rejected">Rejected</option>
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    {/* Pagination Page Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center gap-1">
-                            <button
-                                type="button"
-                                disabled={safeCurrentPage <= 1}
-                                onClick={() => setCurrentPage(1)}
-                                className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                                title="First Page"
-                            >
-                                <ChevronsLeft className="w-4 h-4" />
-                            </button>
-                            <button
-                                type="button"
-                                disabled={safeCurrentPage <= 1}
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1 text-[11px] font-semibold transition-colors"
-                                title="Previous Page"
-                            >
-                                <ChevronLeft className="w-3.5 h-3.5" />
-                                <span>Prev</span>
-                            </button>
+                <div className="flex-1 min-h-0 relative flex flex-col overflow-hidden">
+                    {isLoadingExisting ? (
+                        <div className="flex justify-center items-center h-full min-h-[200px]"><Loader2 className="animate-spin text-slate-300" /></div>
+                    ) : (
+                        <Table className="min-w-max border-collapse data-grid-table" containerClassName="flex-1 h-full overflow-auto">
+                            <TableHeader className="bg-slate-50 dark:bg-slate-900 sticky top-0 z-20 box-border border-b border-slate-200 dark:border-slate-800 shadow-xs">
+                                <TableRow className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900">
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-3.5 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">1. Customer Name</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">2. Category</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">3. Product</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">4. Login Amount (₹)</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px] border-b border-slate-200 dark:border-slate-800">5. Staff Name</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[200px] border-b border-slate-200 dark:border-slate-800">6. Login Date</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[250px] border-b border-slate-200 dark:border-slate-800">7. Relationship Manager Name</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">8. Tracking Number</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">9. Channel Partner</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">10. Branch</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">11. Customer DOB</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">12. Customer Phone No.</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">13. Customer Email ID</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[280px] border-b border-slate-200 dark:border-slate-800">14. Customer Address</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">15. Firm Name</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">16. File Status</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">17. Sanctioned (₹)</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">18. Disbursed (₹)</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">19. Disbursed Dt</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[210px] border-b border-slate-200 dark:border-slate-800">20. EMI Date</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">21. Repayment Bank</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[230px] border-b border-slate-200 dark:border-slate-800">22. Manager Name</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[220px] border-b border-slate-200 dark:border-slate-800">23. Consultant Name</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[260px] border-b border-slate-200 dark:border-slate-800">24. Consultant Email ID</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[240px] border-b border-slate-200 dark:border-slate-800">25. Rejection Remark</TableHead>
+                                    <TableHead className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900 text-[11px] font-bold py-4 px-4 uppercase tracking-wider text-slate-500 dark:text-slate-400 min-w-[180px] border-b border-slate-200 dark:border-slate-800 text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredItemsWithIndex.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={26} className="p-0 border-0 h-0">
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-slate-400 text-xs font-medium z-0 pointer-events-none gap-1.5" style={{ top: '50px' }}>
+                                                {items.length === 0 ? (
+                                                    <span>No items formulated for {dateSelectionType === 'range' ? `${startDateStr} to ${endDateStr}` : dateStr}</span>
+                                                ) : (
+                                                    <>
+                                                        <span className="font-semibold text-slate-600 dark:text-slate-300">No matching line items found</span>
+                                                        <span className="text-[11px] text-slate-400">Clear search query or status filter to view all {items.length} items</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    paginatedItemsWithIndex.map(({ item, originalIndex }) => {
+                                        const isLoan = item.category === 'Loan' || (!item.category && item.product);
+                                        const isInsurance = item.category === 'Insurance';
+                                        const isForex = item.category === 'Forex';
+                                        const hasDisbursedAmount = Number(item.disbursedAmount) > 0 || (isForex && Number(item.amount) > 0);
+                                        const hasDisbursedDate = Boolean(item.disbursedDate && item.disbursedDate.trim() !== '') || (isForex && Boolean(item.date));
+                                        const hasEmiDate = Boolean(item.emiDate && item.emiDate.trim() !== '' && item.emiDate !== '-');
 
-                            <div className="px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                                {safeCurrentPage} / {totalPages}
+                                        const isFullyCompletedDisbursement = isLoan
+                                            ? (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate && hasEmiDate)
+                                            : isInsurance
+                                                ? ((item.fileStatus === 'Issued' || item.fileStatus === 'POLICY ISSUED') && hasDisbursedDate)
+                                                : isForex
+                                                    ? ((item.fileStatus === 'Sold' || item.fileStatus === 'Disbursed' || item.fileStatus === 'Login') && (Number(item.amount) > 0 || hasDisbursedAmount))
+                                                    : (item.fileStatus === 'Disbursed' && hasDisbursedAmount && hasDisbursedDate);
+
+                                        const isUnlockedForMissingConsultant = isConsultantUnlockWindowActive && isItemMissingConsultantSinceAug2026(item);
+                                        const isRowFrozen = isFullyCompletedDisbursement && !item._isSessionEditing && !isUnlockedForMissingConsultant;
+                                        const isFieldDisabled = (!canModify && !item.isManual) || isRowFrozen;
+
+                                        return (
+                                            <TableRow key={originalIndex} className={`transition-colors border-b border-slate-900/5 dark:border-white/5 ${isRowFrozen ? 'bg-slate-50/50 dark:bg-slate-900/40 opacity-90' : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'}`}>
+                                                {/* 1. Customer Name */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    {(() => {
+                                                        const effectiveRowDate = (item as any)._entryDate || item.date || (dateSelectionType === 'range' ? endDateStr : dateStr);
+                                                        const isCustomerDropdownActive = entryMode === 'daily'
+                                                            ? effectiveRowDate >= '2026-11-16'
+                                                            : dateStr >= '2026-11';
+                                                        const scopedCustomers = isCustomerDropdownActive
+                                                            ? getScopedCustomers(item.branchLocation)
+                                                            : [];
+
+                                                        if (isCustomerDropdownActive) {
+                                                            const currentName = (item.customerName || '').trim();
+                                                            const hasCurrentInList = scopedCustomers.some(
+                                                                c => String(c.customer_name || '').trim() === currentName
+                                                            );
+                                                            return (
+                                                                <select
+                                                                    disabled={isFieldDisabled}
+                                                                    value={item.customerName || ''}
+                                                                    onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
+                                                                    className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${isFieldMissing(item, 'customerName')
+                                                                            ? 'border-red-500/50 focus:border-red-500'
+                                                                            : 'border-slate-200 dark:border-white/10'
+                                                                        }`}
+                                                                >
+                                                                    <option value="">— Select Customer —</option>
+                                                                    {currentName && !hasCurrentInList && (
+                                                                        <option value={item.customerName}>{item.customerName}</option>
+                                                                    )}
+                                                                    {scopedCustomers.map((c: any) => {
+                                                                        const nameStr = String(c.customer_name || '').trim();
+                                                                        return (
+                                                                            <option key={c.id} value={nameStr}>
+                                                                                {nameStr}
+                                                                            </option>
+                                                                        );
+                                                                    })}
+                                                                </select>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <Input
+                                                                disabled={isFieldDisabled}
+                                                                type="text"
+                                                                className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'customerName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
+                                                                value={item.customerName || ''}
+                                                                onChange={(e) => handleUpdateItem(originalIndex, 'customerName', e.target.value)}
+                                                            />
+                                                        );
+                                                    })()}
+                                                </TableCell>
+
+                                                {/* 2. Category */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <select
+                                                        disabled={isFieldDisabled}
+                                                        className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'category') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
+                                                        value={item.category || 'Loan'}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'category', e.target.value)}
+                                                    >
+                                                        <option value="Loan">Loan</option>
+                                                        <option value="Insurance">Insurance</option>
+                                                        <option value="Forex">Forex</option>
+                                                        <option value="Consultancy">Consulting</option>
+                                                        <option value="Investments">Investments</option>
+                                                    </select>
+                                                </TableCell>
+
+                                                {/* 3. Product */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <select
+                                                        disabled={isFieldDisabled}
+                                                        className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'product') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
+                                                        value={item.product || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'product', e.target.value)}
+                                                    >
+                                                        <option value="">Select...</option>
+                                                        {allowedProducts(item.category || 'Loan').map((p: any) => (
+                                                            <option key={p.id} value={p.name}>{p.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </TableCell>
+
+                                                {/* 4. Login Amount (₹) */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <NumericFormat
+                                                        customInput={Input}
+                                                        disabled={isFieldDisabled}
+                                                        className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'amount') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'}`}
+                                                        value={item.amount === 0 ? '' : item.amount}
+                                                        onValueChange={(values) => handleUpdateItem(originalIndex, 'amount', values.floatValue || 0)}
+                                                        thousandSeparator=","
+                                                        thousandsGroupStyle="lakh"
+                                                    />
+                                                </TableCell>
+
+                                                {/* 5. Staff Name */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    {branchStaff.length > 0 ? (
+                                                        <select
+                                                            disabled={isFieldDisabled}
+                                                            value={item.staffName || ''}
+                                                            onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
+                                                            className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${isFieldMissing(item, 'staffName')
+                                                                    ? 'border-red-500/50'
+                                                                    : 'border-slate-200 dark:border-white/10'
+                                                                }`}
+                                                        >
+                                                            <option value="">— Select Staff —</option>
+                                                            {branchStaff.map(m => (
+                                                                <option key={m.id} value={m.name}>{m.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <Input
+                                                            disabled={isFieldDisabled}
+                                                            type="text"
+                                                            className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${isFieldMissing(item, 'staffName') ? 'border-red-500/50 focus:border-red-500 border' : 'dark:border-white/10 border-transparent'
+                                                                }`}
+                                                            value={item.staffName || ''}
+                                                            onChange={(e) => handleUpdateItem(originalIndex, 'staffName', e.target.value)}
+                                                        />
+                                                    )}
+                                                </TableCell>
+
+                                                {/* 6. Login Date */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <InlineDatePicker
+                                                        disabled={isFieldDisabled}
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.date || (dateSelectionType === 'range' ? endDateStr : dateStr)}
+                                                        onChange={(val: string) => handleUpdateItem(originalIndex, 'date', val)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 7. Relationship Manager Name */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled}
+                                                        type="text"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.relationshipManagerName || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'relationshipManagerName', e.target.value)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 9. Tracking Number */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled || (item.category !== 'Loan' && item.category !== 'Insurance')}
+                                                        type="text"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.trackingNumber || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'trackingNumber', e.target.value)}
+                                                        placeholder={item.category !== 'Loan' && item.category !== 'Insurance' ? 'N/A' : 'Tracking #'}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 10. Channel Partner */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <select
+                                                        disabled={isFieldDisabled}
+                                                        className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'channel') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
+                                                        value={item.channel || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'channel', e.target.value)}
+                                                    >
+                                                        <option value="">Select Channel...</option>
+                                                        {item.category === 'Insurance' ? (
+                                                            <>
+                                                                <option value="Bajaj Allianz">Bajaj Allianz</option>
+                                                                <option value="Aditya Birla">Aditya Birla</option>
+                                                                <option value="LIC">LIC</option>
+                                                                <option value="ICICI Lombard">ICICI Lombard</option>
+                                                                <option value="Niva Bupa">Niva Bupa</option>
+                                                                <option value="Tata AIG">Tata AIG</option>
+                                                                <option value="Manipal Cigna">Manipal Cigna</option>
+                                                                <option value="Star Health">Star Health</option>
+                                                                <option value="Care Health">Care Health</option>
+                                                                <option value="SBI">SBI</option>
+                                                                <option value="Magma">Magma</option>
+                                                                <option value="Galaxy Health">Galaxy Health</option>
+                                                                <option value="SIROI">SIROI</option>
+                                                                <option value="Bank of Baroda">Bank of Baroda</option>
+                                                                <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
+                                                                <option value="BANK OF INDIA">BANK OF INDIA</option>
+                                                            </>
+                                                        ) : item.category === 'Forex' ? (
+                                                            <option value="SIROI">SIROI</option>
+                                                        ) : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? (
+                                                            <>
+                                                                <option value="Bank of Baroda">Bank of Baroda</option>
+                                                                <option value="Punjab & Sind Bank">Punjab & Sind Bank</option>
+                                                                <option value="BANK OF INDIA">BANK OF INDIA</option>
+                                                            </>
+                                                        ) : (
+                                                            channels.map((c: any) => (
+                                                                <option key={c.id} value={c.name}>{c.name}</option>
+                                                            ))
+                                                        )}
+                                                    </select>
+                                                </TableCell>
+
+                                                {/* 11. Branch Location */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <div className="h-[34px] px-3 py-2 text-xs bg-transparent text-slate-500 dark:text-slate-400 flex items-center truncate">
+                                                        {branchDetails?.name || ''}
+                                                    </div>
+                                                </TableCell>
+
+                                                {/* 12. Customer DOB */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <InlineDatePicker
+                                                        disabled={isFieldDisabled}
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.customerDOB || ''}
+                                                        onChange={(val: string) => handleUpdateItem(originalIndex, 'customerDOB', val)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 13. Phone Number */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled}
+                                                        type="text"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.phoneNumber || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'phoneNumber', e.target.value.replace(/\D/g, ''))}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 14. Email ID */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled}
+                                                        type="email"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.emailId || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'emailId', e.target.value)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 15. Customer Address */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled}
+                                                        type="text"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.customerAddress || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'customerAddress', e.target.value)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 16. Firm Name */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled}
+                                                        type="text"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={item.firmName || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'firmName', e.target.value)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 17. File Status */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <select
+                                                        disabled={isFieldDisabled}
+                                                        className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none ${item.fileStatus ? getFileStatusColor(item.fileStatus) : 'bg-white dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-200'} ${isFieldMissing(item, 'fileStatus') ? 'border-red-500/50 focus:border-red-500 bg-red-500/5' : ''}`}
+                                                        value={item.fileStatus || (item.category === 'Forex' ? 'Sold' : '')}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'fileStatus', e.target.value)}
+                                                    >
+                                                        <option value="" className="bg-slate-800 text-white">Select...</option>
+                                                        {item.category === 'Forex' ? (
+                                                            <>
+                                                                <option value="Sold" className="bg-slate-800 text-blue-400 font-semibold">Sold</option>
+                                                                <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
+                                                                <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
+                                                                <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                                            </>
+                                                        ) : item.category === 'Insurance' ? (
+                                                            <>
+                                                                <option value="Issued" className="bg-slate-800 text-green-400">Issued</option>
+                                                                <option value="POLICY ISSUED" className="bg-slate-800 text-green-400">POLICY ISSUED</option>
+                                                                <option value="Not Issued" className="bg-slate-800 text-yellow-400">Not Issued</option>
+                                                            </>
+                                                        ) : item.category === 'Loan' ? (
+                                                            <>
+                                                                <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
+                                                                <option value="Underwriting" className="bg-slate-800 text-blue-400">Underwriting</option>
+                                                                <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
+                                                                <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
+                                                                <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
+                                                                <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
+                                                                <option value="Processing" className="bg-slate-800 text-blue-400">Processing</option>
+                                                                <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
+                                                                <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
+                                                                <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
+                                                                <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
+                                                            </>
+                                                        )}
+                                                    </select>
+                                                </TableCell>
+
+                                                {/* 18. Sanctioned Amount */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <NumericFormat
+                                                        customInput={Input}
+                                                        disabled={isFieldDisabled || isForex}
+                                                        placeholder={isForex ? "N/A" : "₹"}
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={isForex ? '' : (item.sanctionedAmount === 0 ? '' : item.sanctionedAmount)}
+                                                        onValueChange={(values) => handleUpdateItem(originalIndex, 'sanctionedAmount', values.floatValue || 0)}
+                                                        thousandSeparator=","
+                                                        thousandsGroupStyle="lakh"
+                                                    />
+                                                </TableCell>
+
+                                                {/* 19. Disbursed Amount */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <NumericFormat
+                                                        customInput={Input}
+                                                        disabled={isFieldDisabled || isForex}
+                                                        placeholder={isForex ? "Auto (Login Amt)" : "₹"}
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={isForex ? (item.amount || '') : (item.disbursedAmount === 0 ? '' : item.disbursedAmount)}
+                                                        onValueChange={(values) => handleUpdateItem(originalIndex, 'disbursedAmount', values.floatValue || 0)}
+                                                        thousandSeparator=","
+                                                        thousandsGroupStyle="lakh"
+                                                    />
+                                                </TableCell>
+
+                                                {/* 20. Disbursed Date */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <InlineDatePicker
+                                                        disabled={isFieldDisabled || isForex}
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={isForex ? (item.date || (dateSelectionType === 'range' ? endDateStr : dateStr)) : (item.disbursedDate || '')}
+                                                        onChange={(val: string) => handleUpdateItem(originalIndex, 'disbursedDate', val)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 21. EMI Date */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <InlineDatePicker
+                                                        disabled={isFieldDisabled || isForex}
+                                                        className={`h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:text-slate-100 disabled:opacity-50 ${!isForex && isFieldMissing(item, 'emiDate') ? 'border-red-500/50 focus:border-red-500 border ring-1 ring-red-500/50' : 'dark:border-white/10'}`}
+                                                        value={isForex ? '' : (item.emiDate || '')}
+                                                        onChange={(val: string) => handleUpdateItem(originalIndex, 'emiDate', val)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 22. Repayment Bank */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled || isForex}
+                                                        type="text"
+                                                        list="repayment-banks"
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={isForex ? '' : (item.repaymentBank || '')}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'repaymentBank', e.target.value)}
+                                                        placeholder={isForex ? "N/A" : "Enter or select..."}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 23. Manager Name */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    {(() => {
+                                                        const managers = getLocationEmployees(item.branchLocation);
+                                                        return managers.length > 0 ? (
+                                                            <select
+                                                                disabled={isFieldDisabled}
+                                                                value={item.managerName || ''}
+                                                                onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
+                                                                className={`h-[34px] w-full text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 disabled:opacity-50 border outline-none focus:ring-1 focus:ring-indigo-500 ${isFieldMissing(item, 'managerName')
+                                                                        ? 'border-red-500/50'
+                                                                        : 'border-slate-200 dark:border-white/10'
+                                                                    }`}
+                                                            >
+                                                                <option value="">— Select Manager —</option>
+                                                                {item.managerName && !managers.includes(item.managerName) && (
+                                                                    <option value={item.managerName}>{item.managerName}</option>
+                                                                )}
+                                                                {managers.map(name => (
+                                                                    <option key={name} value={name}>{name}</option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <Input
+                                                                disabled={isFieldDisabled}
+                                                                type="text"
+                                                                className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                                value={item.managerName || ''}
+                                                                onChange={(e) => handleUpdateItem(originalIndex, 'managerName', e.target.value)}
+                                                            />
+                                                        );
+                                                    })()}
+                                                </TableCell>
+
+                                                {/* 24. Consultant Name */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <select
+                                                        disabled={isFieldDisabled || !isLoan}
+                                                        className={`w-full h-[34px] border px-2 text-xs font-semibold rounded shadow-none disabled:opacity-50 outline-none appearance-none bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-200 ${isLoan && isUnlockedForMissingConsultant && item.fileStatus === 'Disbursed' ? 'border-amber-400/70 focus:border-amber-500 ring-1 ring-amber-400/30' : 'border-slate-200 dark:border-white/10'}`}
+                                                        value={isLoan ? (item.consultantName || '') : ''}
+                                                        onChange={(e) => {
+                                                            handleUpdateItem(originalIndex, 'consultantName', e.target.value);
+                                                            const consultant = consultants.find(c => c.name === e.target.value);
+                                                            if (consultant) {
+                                                                handleUpdateItem(originalIndex, 'consultantEmail', consultant.email);
+                                                            } else {
+                                                                handleUpdateItem(originalIndex, 'consultantEmail', '');
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="" className="bg-slate-800 text-slate-400">{isLoan ? 'Select...' : 'N/A'}</option>
+                                                        {isLoan && item.consultantName && !consultants.some(c => c.name === item.consultantName) && (
+                                                            <option value={item.consultantName} className="bg-slate-800 text-white">{item.consultantName}</option>
+                                                        )}
+                                                        {isLoan && branchConsultants.map(c => (
+                                                            <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </TableCell>
+
+                                                {/* 25. Consultant Email ID */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled || !isLoan}
+                                                        type="email"
+                                                        placeholder={isLoan ? '' : 'N/A'}
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50"
+                                                        value={isLoan ? (item.consultantEmail || '') : ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'consultantEmail', e.target.value)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 26. Rejection Remark */}
+                                                <TableCell className="py-2 px-2 align-top">
+                                                    <Input
+                                                        disabled={isFieldDisabled}
+                                                        type="text"
+                                                        placeholder="Rejection remark..."
+                                                        className="h-[34px] text-xs bg-white dark:bg-slate-900/50 dark:border-white/10 dark:text-slate-100 disabled:opacity-50 min-w-[200px]"
+                                                        value={item.rejectionRemark || ''}
+                                                        onChange={(e) => handleUpdateItem(originalIndex, 'rejectionRemark', e.target.value)}
+                                                    />
+                                                </TableCell>
+
+                                                {/* Actions & Quick Shortcuts */}
+                                                <TableCell className="py-2 px-3 align-middle text-right">
+                                                    {isRowFrozen ? (
+                                                        isForex ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[11px] font-bold select-none shadow-xs">
+                                                                <Lock className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Sold
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold select-none shadow-xs">
+                                                                <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Disbursed
+                                                            </span>
+                                                        )
+                                                    ) : (
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            {isLoan && item.fileStatus === 'Disbursed' && !hasEmiDate && (
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="EMI Date is pending. Select EMI Date to complete disbursement.">
+                                                                    <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> EMI Pending
+                                                                </span>
+                                                            )}
+
+                                                            {isFullyCompletedDisbursement && isUnlockedForMissingConsultant && (
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-xs" title="Unlocked to enter Consultant details. Auto-locks after 120 hours starting Nov 5, 2026 06:00 AM.">
+                                                                    <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" /> Connector Pending ({consultantUnlockCountdown})
+                                                                </span>
+                                                            )}
+
+                                                            {canModify && isForex && item.fileStatus !== 'Sold' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
+                                                                <button
+                                                                    type="button"
+                                                                    title="Quick Sold: Mark as Sold and record"
+                                                                    onClick={() => {
+                                                                        handleUpdateItem(originalIndex, 'fileStatus', 'Sold');
+                                                                        handleUpdateItem(originalIndex, 'disbursedAmount', Number(item.amount) || 0);
+                                                                        handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
+                                                                        handleUpdateItem(originalIndex, '_isSessionEditing', true);
+                                                                    }}
+                                                                    className="px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
+                                                                >
+                                                                    <Check className="w-2.5 h-2.5" /> Sold
+                                                                </button>
+                                                            )}
+
+                                                            {canModify && !isForex && item.category !== 'Insurance' && item.fileStatus !== 'Disbursed' && !isFullyCompletedDisbursement && (
+                                                                <button
+                                                                    type="button"
+                                                                    title="Quick Disburse: Mark as Disbursed and fill date"
+                                                                    onClick={() => {
+                                                                        handleUpdateItem(originalIndex, 'fileStatus', 'Disbursed');
+                                                                        if (!item.disbursedAmount && item.amount) {
+                                                                            handleUpdateItem(originalIndex, 'disbursedAmount', item.amount);
+                                                                        }
+                                                                        if (!item.disbursedDate) {
+                                                                            handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
+                                                                        }
+                                                                        handleUpdateItem(originalIndex, '_isSessionEditing', true);
+                                                                    }}
+                                                                    className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
+                                                                >
+                                                                    <Check className="w-2.5 h-2.5" /> Disburse
+                                                                </button>
+                                                            )}
+
+                                                            {canModify && item.category !== 'Insurance' && item.fileStatus !== 'Customer Reject' && item.fileStatus !== 'Disbursed' && item.fileStatus !== 'Sold' && !isFullyCompletedDisbursement && (
+                                                                <button
+                                                                    type="button"
+                                                                    title="Mark as Customer Reject"
+                                                                    onClick={() => {
+                                                                        handleUpdateItem(originalIndex, 'fileStatus', 'Customer Reject');
+                                                                    }}
+                                                                    className="px-2 py-1 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/50 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all shadow-xs hover:scale-[1.02]"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            )}
+
+                                                            {canModify && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveItem(originalIndex)}
+                                                                    title="Delete entry"
+                                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                                                >
+                                                                    <X size={15} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    )}
+                    {/* Hoisted Repayment Banks Datalist (rendered once for performance) */}
+                    <datalist id="repayment-banks">
+                        <option value="State Bank of India (SBI)" />
+                        <option value="Punjab National Bank (PNB)" />
+                        <option value="Bank of Baroda (BOB)" />
+                        <option value="Canara Bank" />
+                        <option value="Union Bank of India" />
+                        <option value="Bank of India (BOI)" />
+                        <option value="Indian Bank" />
+                        <option value="Central Bank of India" />
+                        <option value="Indian Overseas Bank" />
+                        <option value="UCO Bank" />
+                        <option value="Bank of Maharashtra" />
+                        <option value="Punjab & Sind Bank" />
+                        <option value="HDFC Bank" />
+                        <option value="ICICI Bank" />
+                        <option value="Axis Bank" />
+                    </datalist>
+                </div>
+
+                {items.length > 0 && (
+                    <div className="border-t border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-slate-900/90 px-4 py-2.5 shrink-0 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
+                            <span>
+                                Showing{' '}
+                                <strong className="text-slate-800 dark:text-slate-200 font-bold">
+                                    {filteredItemsWithIndex.length === 0 ? 0 : (safeCurrentPage - 1) * (pageSize === -1 ? filteredItemsWithIndex.length : pageSize) + 1}
+                                    –
+                                    {pageSize === -1 ? filteredItemsWithIndex.length : Math.min(safeCurrentPage * pageSize, filteredItemsWithIndex.length)}
+                                </strong>{' '}
+                                of{' '}
+                                <strong className="text-slate-800 dark:text-slate-200 font-bold">{filteredItemsWithIndex.length}</strong> records
+                                {filteredItemsWithIndex.length !== items.length && (
+                                    <span className="text-slate-400 dark:text-slate-500 font-normal"> (filtered from {items.length} total)</span>
+                                )}
+                            </span>
+
+                            <div className="flex items-center gap-1.5 ml-2 pl-3 border-l border-slate-200 dark:border-slate-800">
+                                <span className="text-[10px] uppercase font-bold text-slate-400">Rows:</span>
+                                <select
+                                    value={pageSize}
+                                    onChange={(e) => {
+                                        setPageSize(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="h-6 text-[11px] font-semibold px-1.5 py-0 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+                                >
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                    <option value={200}>200</option>
+                                    <option value={-1}>All ({filteredItemsWithIndex.length})</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Pagination Page Controls */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    disabled={safeCurrentPage <= 1}
+                                    onClick={() => setCurrentPage(1)}
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                    title="First Page"
+                                >
+                                    <ChevronsLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={safeCurrentPage <= 1}
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1 text-[11px] font-semibold transition-colors"
+                                    title="Previous Page"
+                                >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                    <span>Prev</span>
+                                </button>
+
+                                <div className="px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                                    {safeCurrentPage} / {totalPages}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    disabled={safeCurrentPage >= totalPages}
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1 text-[11px] font-semibold transition-colors"
+                                    title="Next Page"
+                                >
+                                    <span>Next</span>
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={safeCurrentPage >= totalPages}
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                    title="Last Page"
+                                >
+                                    <ChevronsRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* KPI Totals */}
+                        <div className="flex gap-6 items-center">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Login:</span>
+                                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                                    ₹ {filteredItemsWithIndex.reduce((s, { item }) => s + (Number(item.amount) || 0), 0).toLocaleString('en-IN')}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Disbursed:</span>
+                                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    ₹ {filteredItemsWithIndex.reduce((s, { item }) => s + (Number(item.disbursedAmount) || 0), 0).toLocaleString('en-IN')}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Sticky Bottom Control Dock */}
+            <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 z-30 pointer-events-none">
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-3 md:px-5 md:py-3 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+
+                    {/* Left Side: Context & Total Summary */}
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                        <div className="flex items-center gap-2">
+                            <div className="px-3.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/70 flex items-center gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    Total Login:
+                                </span>
+                                <span className="font-mono font-bold text-sm md:text-base text-indigo-600 dark:text-indigo-400">
+                                    ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
+                                </span>
                             </div>
 
-                            <button
-                                type="button"
-                                disabled={safeCurrentPage >= totalPages}
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                className="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1 text-[11px] font-semibold transition-colors"
-                                title="Next Page"
-                            >
-                                <span>Next</span>
-                                <ChevronRight className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                                type="button"
-                                disabled={safeCurrentPage >= totalPages}
-                                onClick={() => setCurrentPage(totalPages)}
-                                className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                                title="Last Page"
-                            >
-                                <ChevronsRight className="w-4 h-4" />
-                            </button>
+                            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden md:inline-block">
+                                ({items.length} {items.length === 1 ? 'row' : 'rows'})
+                            </span>
                         </div>
-                    )}
 
-                    {/* KPI Totals */}
-                    <div className="flex gap-6 items-center">
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Login:</span>
-                            <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                                ₹ {filteredItemsWithIndex.reduce((s, { item }) => s + (Number(item.amount) || 0), 0).toLocaleString('en-IN')}
-                            </span>
+                        {/* Messages (Error / Success) */}
+                        {error && (
+                            <div className="text-xs text-rose-600 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate max-w-[180px] md:max-w-xs">{error}</span>
+                            </div>
+                        )}
+                        {success && (
+                            <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate max-w-[180px] md:max-w-xs">{success}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Side: Cohesive Button Cluster */}
+                    <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                        {hasExistingEntry && ((allowDeletion || isExecutive)) && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
+                                    setShowDeleteModal(true);
+                                }}
+                                disabled={isDeleting}
+                                className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                            </button>
+                        )}
+
+                        {hasExistingEntry && entryMode === 'monthly' && (user?.role === 'admin' || isBackdoor) && (
+                            <button
+                                type="button"
+                                onClick={() => setIsTransferModalOpen(true)}
+                                className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/50 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
+                            >
+                                Transfer to Daily
+                            </button>
+                        )}
+
+                        {canModify && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (items.length === 0) {
+                                        setShowContextModal(true);
+                                    } else {
+                                        handleAddItem();
+                                    }
+                                }}
+                                className="h-[38px] px-4 md:px-5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
+                            >
+                                <Plus className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                                <span>Manual Row</span>
+                            </button>
+                        )}
+
+                        {canModify && (
+                            <button
+                                type="button"
+                                disabled={isSaving || items.length === 0}
+                                onClick={handleSubmit}
+                                className="h-[38px] px-6 md:px-7 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 shadow-md shadow-indigo-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
+                                <span>{hasExistingEntry ? 'Update Record' : 'Lodge Record'}</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Padding to allow scrolling past sticky footer */}
+            <div className="h-24"></div>
+
+            {/* Transfer to Daily Modal */}
+            {isTransferModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsTransferModalOpen(false)}>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Transfer to Daily</h2>
+                            <p className="text-sm text-slate-500 mt-1">Select a specific date to transfer these monthly entries into Daily mode.</p>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">Total Disbursed:</span>
-                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                ₹ {filteredItemsWithIndex.reduce((s, { item }) => s + (Number(item.disbursedAmount) || 0), 0).toLocaleString('en-IN')}
-                            </span>
+                        <div className="p-6 flex flex-col gap-5">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                                    Daily Date
+                                </label>
+                                <input
+                                    type="date"
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={transferDate}
+                                    onChange={(e) => setTransferDate(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+                            <Button variant="secondary" onClick={() => setIsTransferModalOpen(false)} className="flex-1">Cancel</Button>
+                            <Button onClick={handleTransferToDaily} disabled={!transferDate || isTransferring} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                                {isTransferring ? 'Transferring...' : 'Confirm Transfer'}
+                            </Button>
                         </div>
                     </div>
                 </div>
             )}
-        </div>
 
-        {/* Sticky Bottom Control Dock */}
-        <div className="fixed bottom-0 left-0 right-0 p-3 md:p-4 z-30 pointer-events-none">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-3 md:px-5 md:py-3 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
-                
-                {/* Left Side: Context & Total Summary */}
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-                    <div className="flex items-center gap-2">
-                        <div className="px-3.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/70 flex items-center gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Total Login:
-                            </span>
-                            <span className="font-mono font-bold text-sm md:text-base text-indigo-600 dark:text-indigo-400">
-                                ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
-                            </span>
-                        </div>
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (() => {
+                const selectedTotal = items.reduce((s, item, idx) => s + (selectedDeleteIndices.has(idx) ? (Number(item.amount) || 0) : 0), 0);
+                const selectedCount = selectedDeleteIndices.size;
+                const allSelected = selectedCount === items.length;
+                const noneSelected = selectedCount === 0;
 
-                        <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden md:inline-block">
-                            ({items.length} {items.length === 1 ? 'row' : 'rows'})
-                        </span>
-                    </div>
-
-                    {/* Messages (Error / Success) */}
-                    {error && (
-                        <div className="text-xs text-rose-600 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
-                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate max-w-[180px] md:max-w-xs">{error}</span>
-                        </div>
-                    )}
-                    {success && (
-                        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
-                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate max-w-[180px] md:max-w-xs">{success}</span>
-                        </div>
-                    )}
-                </div>
-                
-                {/* Right Side: Cohesive Button Cluster */}
-                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-                    {hasExistingEntry && ((allowDeletion || isExecutive)) && (
-                         <button 
-                            type="button"
-                            onClick={() => { 
-                              setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
-                              setShowDeleteModal(true); 
-                            }} 
-                            disabled={isDeleting}
-                            className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5"
-                         >
-                             <Trash2 className="w-3.5 h-3.5" />
-                             <span>Delete</span>
-                         </button>
-                    )}
-                    
-                    {hasExistingEntry && entryMode === 'monthly' && (user?.role === 'admin' || isBackdoor) && (
-                          <button 
-                            type="button"
-                            onClick={() => setIsTransferModalOpen(true)} 
-                            className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/50 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
-                          >
-                              Transfer to Daily
-                          </button>
-                     )}
-                    
-                    {canModify && (
-                         <button 
-                            type="button"
-                            onClick={() => { 
-                              if (items.length === 0) {
-                                  setShowContextModal(true);
-                              } else {
-                                  handleAddItem();
-                              }
-                            }} 
-                            className="h-[38px] px-4 md:px-5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
-                         >
-                             <Plus className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
-                             <span>Manual Row</span>
-                         </button>
-                    )}
-                    
-                    {canModify && (
-                        <button 
-                            type="button"
-                            disabled={isSaving || items.length === 0} 
-                            onClick={handleSubmit} 
-                            className="h-[38px] px-6 md:px-7 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 shadow-md shadow-indigo-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setShowDeleteModal(false)}>
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                        <div
+                            className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
-                            <span>{hasExistingEntry ? 'Update Record' : 'Lodge Record'}</span>
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
-
-        {/* Padding to allow scrolling past sticky footer */}
-        <div className="h-24"></div>
-
-        {/* Transfer to Daily Modal */}
-        {isTransferModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsTransferModalOpen(false)}>
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-                <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                    <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-white">Transfer to Daily</h2>
-                        <p className="text-sm text-slate-500 mt-1">Select a specific date to transfer these monthly entries into Daily mode.</p>
-                    </div>
-                    <div className="p-6 flex flex-col gap-5">
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                                Daily Date
-                            </label>
-                            <input 
-                                type="date"
-                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                                value={transferDate}
-                                onChange={(e) => setTransferDate(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                        <Button variant="secondary" onClick={() => setIsTransferModalOpen(false)} className="flex-1">Cancel</Button>
-                        <Button onClick={handleTransferToDaily} disabled={!transferDate || isTransferring} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
-                            {isTransferring ? 'Transferring...' : 'Confirm Transfer'}
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && (() => {
-          const selectedTotal = items.reduce((s, item, idx) => s + (selectedDeleteIndices.has(idx) ? (Number(item.amount) || 0) : 0), 0);
-          const selectedCount = selectedDeleteIndices.size;
-          const allSelected = selectedCount === items.length;
-          const noneSelected = selectedCount === 0;
-
-          return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setShowDeleteModal(false)}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div 
-              className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/10 bg-red-50 dark:bg-red-950/30">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
-                    <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wider">Select Items to Delete</h3>
-                  </div>
-                </div>
-                <button onClick={() => setShowDeleteModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg">
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="px-5 pt-3 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  {selectedCount} selected
-                </p>
-                <button
-                  onClick={() => {
-                    if (allSelected) setSelectedDeleteIndices(new Set());
-                    else setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
-                  }}
-                  className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider"
-                >
-                  {allSelected ? 'Deselect All' : 'Select All'}
-                </button>
-              </div>
-
-              <div className="px-5 pt-3 pb-2 flex-1 overflow-auto">
-                <div className="space-y-2">
-                  {items.map((item, idx) => {
-                    const isSelected = selectedDeleteIndices.has(idx);
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          const next = new Set(selectedDeleteIndices);
-                          if (isSelected) next.delete(idx); else next.add(idx);
-                          setSelectedDeleteIndices(next);
-                        }}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left ${isSelected ? 'bg-red-50 dark:bg-red-950/20 border-red-300' : 'bg-slate-50 border-slate-200'}`}
-                      >
-                         <span className="text-sm ml-3">₹{Number(item.amount).toLocaleString('en-IN')}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="p-5 border-t border-slate-200 flex gap-3">
-                <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="flex-1">Cancel</Button>
-                <Button variant="danger" onClick={handleDelete} disabled={isDeleting || noneSelected} className="flex-1">Delete</Button>
-              </div>
-            </div>
-          </div>
-          );
-        })()}
-
-        
-        {/* Staff Name Resolution Dialog (Bulk Upload) */}
-        
-        <ColumnMappingDialog
-            open={isMappingDialogOpen}
-            headers={rawHeaders}
-            onConfirm={handleMappingConfirm}
-            onCancel={() => { setIsMappingDialogOpen(false); setIsParsing(false); setUploadProgress(0); }}
-        />
-
-        {/* Staff Name Resolution Dialog (Bulk Upload) */}
-        {isResolutionDialogOpen && (
-            <StaffNameResolutionDialog
-                rawItems={pendingParsed}
-                orgMembers={orgMembers}
-                branches={branches}
-                activeBranchName={activeBranchName}
-                onConfirm={(_mappings, resolvedItems) => {
-                    setIsResolutionDialogOpen(false);
-                    setStagedItems(resolvedItems.map(normalizeItem));
-                    setIsStagingModalOpen(true);
-                }}
-                onCancel={() => {
-                    setIsResolutionDialogOpen(false);
-                    setPendingParsed([]);
-                    setStagedFile(null);
-                }}
-            />
-        )}
-
-        {/* Staging Modal */}
-        {isStagingModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 pointer-events-auto bg-black/80 backdrop-blur-sm">
-            <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-[95vw] h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <Layers className="text-indigo-500" /> Data Staging & Review
-                        </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            Review and correct the extracted data. Rows will be saved to their specific Login Date.
-                        </p>
-                    </div>
-                    <button onClick={() => { setIsStagingModalOpen(false); setStagedItems([]); setStagedFile(null); }} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                        <X size={20} />
-                    </button>
-                </div>
-                
-                <div className="flex-1 overflow-auto p-0">
-                    <Table>
-                        <TableHeader className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 shadow-sm backdrop-blur-md">
-                            <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
-                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">1. Customer Name *</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2. Category *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">3. Product *</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">4. Login Amount (₹) *</TableHead>
-                                <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">5. Staff Name *</TableHead>
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">6. Login Date</TableHead>
-                                <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. Relationship Manager Name</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Tracking Number</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Channel Partner *</TableHead>
-                                <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Branch Location</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Customer DOB</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. Customer Phone No.</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Customer Email ID</TableHead>
-                                <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Customer Address</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Firm Name</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. File Status *</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. Sanctioned (₹)</TableHead>
-                                <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. Disbursed (₹)</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Disbursed Dt</TableHead>
-                                <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. EMI Date</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. Repayment Bank</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Manager Name</TableHead>
-                                <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Consultant</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant Email ID</TableHead>
-                                <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Rejection Remark</TableHead>
-                                <TableHead className="w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {stagedItems.map((item, index) => {
-                                const handleUpdate = (key: string, val: any) => {
-                                    const arr = [...stagedItems];
-                                    const nextVal = key === 'customerName' ? formatCustomerName(String(val || '')) : val;
-                                    arr[index] = { ...arr[index], [key]: nextVal };
-                                    if (key === 'customerName') {
-                                        const scopedList = getScopedCustomers(arr[index].branchLocation);
-                                        const matchedCustomer =
-                                            scopedList.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim()) ||
-                                            customerRecords.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim());
-                                        if (matchedCustomer) {
-                                            const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
-                                            const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'
-                                                ? String(matchedCustomer.email_id).trim()
-                                                : '';
-                                            const cleanCity = matchedCustomer.city && matchedCustomer.city !== 'N/A'
-                                                ? String(matchedCustomer.city).trim()
-                                                : '';
-                                            if (cleanPhone) arr[index].phoneNumber = cleanPhone;
-                                            arr[index].emailId = cleanEmail;
-                                            if (cleanCity) arr[index].customerAddress = cleanCity;
-                                            if (matchedCustomer.company_name && matchedCustomer.company_name !== 'N/A') {
-                                                arr[index].firmName = String(matchedCustomer.company_name).trim();
-                                            }
-
-                                            // Auto-populate Category, Product, Amount
-                                            const targetCat = matchedCustomer.category || mapCustomerTypeToCategory(matchedCustomer.customer_type);
-                                            if (targetCat) {
-                                                arr[index].category = targetCat;
-                                                if (targetCat !== 'Loan') {
-                                                    arr[index].consultantName = '';
-                                                    arr[index].consultantEmail = '';
-                                                }
-                                                if (targetCat === 'Insurance') {
-                                                    arr[index].fileStatus = arr[index].fileStatus || '';
-                                                } else if (targetCat === 'Forex') {
-                                                    arr[index].fileStatus = arr[index].fileStatus || 'Sold';
-                                                    arr[index].fileLogin = arr[index].fileLogin || 'Online';
-                                                } else {
-                                                    arr[index].fileStatus = arr[index].fileStatus || 'Login';
-                                                }
-                                            }
-                                            if (matchedCustomer.product) {
-                                                arr[index].product = matchedCustomer.product;
-                                            }
-                                            if (matchedCustomer.amount != null && matchedCustomer.amount !== '') {
-                                                arr[index].amount = Number(matchedCustomer.amount) || 0;
-                                            }
-                                        }
-                                    }
-                                    if (key === 'category') {
-                                        arr[index].product = '';
-                                        if (val !== 'Loan') {
-                                            arr[index].consultantName = '';
-                                            arr[index].consultantEmail = '';
-                                        }
-                                        if (val === 'Insurance') {
-                                            arr[index].fileStatus = '';
-                                        } else if (val === 'Forex') {
-                                            arr[index].fileStatus = 'Sold';
-                                            arr[index].fileLogin = 'Online';
-                                            arr[index].channel = 'SIROI';
-                                            arr[index].disbursedAmount = Number(arr[index].amount) || 0;
-                                            arr[index].disbursedDate = arr[index].date || dateStr;
-                                            arr[index].emiDate = '';
-                                            arr[index].sanctionedAmount = 0;
-                                            arr[index].repaymentBank = '';
-                                        } else {
-                                            if (['Issued', 'POLICY ISSUED', 'Not Issued', 'Sold'].includes(arr[index].fileStatus || '')) {
-                                                arr[index].fileStatus = '';
-                                            }
-                                        }
-                                    }
-                                    
-                                    if (key === 'product') {
-                                        if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
-                                            arr[index].fileLogin = 'lead force';
-                                            if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank' && arr[index].channel !== 'BANK OF INDIA') {
-                                                arr[index].channel = '';
-                                            }
-                                        }
-                                    }
-                                    
-                                    if (arr[index].category === 'Insurance') {
-                                        if (key === 'fileStatus') {
-                                            if (val === 'Issued') {
-                                                arr[index].disbursedAmount = arr[index].amount;
-                                            } else if (val === 'Not Issued') {
-                                                arr[index].disbursedAmount = 0;
-                                            }
-                                        }
-                                        if (key === 'amount' && arr[index].fileStatus === 'Issued') {
-                                            arr[index].disbursedAmount = Number(val) || 0;
-                                        }
-                                    }
-
-                                    if (arr[index].category === 'Forex') {
-                                        if (key === 'amount') {
-                                            arr[index].disbursedAmount = Number(val) || 0;
-                                        }
-                                        if (key === 'date') {
-                                            arr[index].disbursedDate = val;
-                                        }
-                                        if (key === 'fileStatus' && (val === 'Sold' || val === 'Disbursed')) {
-                                            arr[index].disbursedAmount = Number(arr[index].amount) || 0;
-                                            arr[index].disbursedDate = arr[index].date || dateStr;
-                                        }
-                                    }
-                                    
-                                    setStagedItems(arr);
-                                };
-                                const handleRemove = () => setStagedItems(stagedItems.filter((_, i) => i !== index));
-                                
-                                return (
-                                <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                    {/* 1. Customer Name */}
-                                    <TableCell className="p-2">
-                                        {(() => {
-                                            const stagedEffectiveDate = item.date || dateStr;
-                                            const isCustomerDropdownActive = entryMode === 'daily'
-                                                ? stagedEffectiveDate >= '2026-11-16'
-                                                : dateStr >= '2026-11';
-                                            if (isCustomerDropdownActive) {
-                                                const scopedCustomers = getScopedCustomers(item.branchLocation);
-                                                const currentName = (item.customerName || '').trim();
-                                                const hasCurrentInList = scopedCustomers.some(
-                                                    c => String(c.customer_name || '').trim() === currentName
-                                                );
-                                                return (
-                                                    <select
-                                                        value={item.customerName || ''}
-                                                        onChange={e => handleUpdate('customerName', e.target.value)}
-                                                        className={`w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 ${
-                                                            !item.customerName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
-                                                        }`}
-                                                    >
-                                                        <option value="">— Select Customer —</option>
-                                                        {currentName && !hasCurrentInList && (
-                                                            <option value={item.customerName}>{item.customerName}</option>
-                                                        )}
-                                                        {scopedCustomers.map((c: any) => {
-                                                            const nameStr = String(c.customer_name || '').trim();
-                                                            return (
-                                                                <option key={c.id} value={nameStr}>
-                                                                    {nameStr}
-                                                                </option>
-                                                            );
-                                                        })}
-                                                    </select>
-                                                );
-                                            }
-                                            return (
-                                                <Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} />
-                                            );
-                                        })()}
-                                    </TableCell>
-                                    
-                                    {/* 2. Category */}
-                                    <TableCell className="p-2">
-                                        <AppSelect 
-                                            value={item.category || ''} 
-                                            onChange={val => handleUpdate('category', val)} 
-                                            options={['Loan', 'Insurance', 'Forex', 'Consultancy', 'Investments'].map(c => ({id: c, name: c === 'Consultancy' ? 'Consulting' : c}))}
-                                            placeholder="Category"
-                                            buttonClassName={`w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.category ? 'border border-red-500' : 'border'}`}
-                                        />
-                                    </TableCell>
-                                    
-                                    {/* 3. Product */}
-                                    <TableCell className="p-2">
-                                        <AppSelect 
-                                            value={item.product || ''} 
-                                            onChange={val => handleUpdate('product', val)} 
-                                            options={allowedProducts(item.category).map((p: any) => ({id: p.name, name: p.name}))}
-                                            placeholder="Product"
-                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.product ? 'border border-red-500' : 'border'}`}
-                                        />
-                                    </TableCell>
-                                    
-                                    {/* 4. Login Amount */}
-                                    <TableCell className="p-2">
-                                        <NumericFormat
-                                            value={item.amount === 0 ? '' : item.amount}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                            onValueChange={(vals) => handleUpdate('amount', vals.floatValue || 0)}
-                                            customInput={Input}
-                                            placeholder="₹"
-                                            className={`h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 ${!item.amount ? 'border-red-500 border' : ''}`}
-                                        />
-                                    </TableCell>
-
-                                    {/* 5. Staff Name */}
-                                    <TableCell className="p-2">
-                                        {(() => {
-                                            const rowBranchName = item.branchLocation || activeBranchName;
-                                            const rowStaff = orgMembers.filter(m => {
-                                                if (!m.branch) return false;
-                                                const mB = m.branch.toLowerCase();
-                                                const rB = rowBranchName.toLowerCase();
-                                                return mB.includes(rB) || rB.includes(mB);
-                                            });
-                                            return rowStaff.length > 0 ? (
-                                                <select
-                                                    value={item.staffName || ''}
-                                                    onChange={e => handleUpdate('staffName', e.target.value)}
-                                                    className={`w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 ${
-                                                        !item.staffName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
-                                                    }`}
-                                                >
-                                                    <option value="">— Select Staff —</option>
-                                                    {rowStaff.map(m => (
-                                                        <option key={m.id} value={m.name}>{m.name}</option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <Input
-                                                    value={item.staffName || ''}
-                                                    onChange={e => handleUpdate('staffName', e.target.value)}
-                                                    placeholder="Staff Name..."
-                                                    className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.staffName ? 'border-red-500 border' : ''}`}
-                                                />
-                                            );
-                                        })()}
-                                    </TableCell>
-
-                                    {/* 6. Login Date */}
-                                    <TableCell className="p-2"><InlineDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-
-                                    {/* 7. RM Name */}
-                                    <TableCell className="p-2"><Input value={item.relationshipManagerName || ''} onChange={e => handleUpdate('relationshipManagerName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    
-
-
-                                    {/* 10. Tracking Number */}
-                                    <TableCell className="p-2"><Input value={item.trackingNumber || ''} onChange={e => handleUpdate('trackingNumber', e.target.value)} placeholder="Track No..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    
-                                    {/* 11. Channel Partner */}
-                                    <TableCell className="p-2">
-                                        <AppSelect 
-                                            value={item.channel || ''} 
-                                            onChange={val => handleUpdate('channel', val)} 
-                                            options={item.category === 'Insurance' 
-                                                ? ['Bajaj Allianz', 'Aditya Birla', 'LIC', 'ICICI Lombard', 'Niva Bupa', 'Tata AIG', 'Manipal Cigna', 'Star Health', 'Care Health', 'SBI', 'Magma', 'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank', 'BANK OF INDIA'].map(c => ({id: c, name: c}))
-                                                : item.category === 'Forex' ? [{id: 'SIROI', name: 'SIROI'}]
-                                                : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? ['Bank of Baroda', 'Punjab & Sind Bank', 'BANK OF INDIA'].map(c => ({id: c, name: c}))
-                                                : channels.map((c: any) => ({id: c.name, name: c.name}))
-                                            }
-                                            placeholder="Channel"
-                                            buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.channel ? 'border border-red-500' : 'border'}`}
-                                        />
-                                    </TableCell>
-                                    
-                                    {/* 12. Branch Location */}
-                                    <TableCell className="p-2">
-                                        <BranchSelect 
-                                            value={item.branchLocation || ''} 
-                                            onChange={val => handleUpdate('branchLocation', val)} 
-                                            branches={branches}
-                                            valueField="name"
-                                            className="w-[120px]"
-                                        />
-                                    </TableCell>
-                                    
-                                    {/* 13. DOB */}
-                                    <TableCell className="p-2"><InlineDatePicker value={item.customerDOB || ''} onChange={(val: string) => handleUpdate('customerDOB', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    
-                                    {/* 14. Phone No. */}
-                                    <TableCell className="p-2"><Input value={item.phoneNumber || ''} onChange={e => handleUpdate('phoneNumber', e.target.value.replace(/\D/g,''))} placeholder="Phone..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    
-                                    {/* 15. Email ID */}
-                                    <TableCell className="p-2"><Input type="email" value={item.emailId || ''} onChange={e => handleUpdate('emailId', e.target.value)} placeholder="Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    
-                                    {/* 16. Address */}
-                                    <TableCell className="p-2"><Input value={item.customerAddress || ''} onChange={e => handleUpdate('customerAddress', e.target.value)} placeholder="Address..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    
-                                    {/* 17. Firm Name */}
-                                    <TableCell className="p-2"><Input value={item.firmName || ''} onChange={e => handleUpdate('firmName', e.target.value)} placeholder="Firm Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
-                                    
-                                    {/* 18. File Status */}
-                                    <TableCell className="p-2">
-                                        <AppSelect 
-                                            value={item.fileStatus || (item.category === 'Forex' ? 'Sold' : '')} 
-                                            onChange={val => handleUpdate('fileStatus', val)} 
-                                            options={item.category === 'Insurance' 
-                                                ? ['Issued', 'Not Issued'].map(c => ({id: c, name: c}))
-                                                : item.category === 'Forex'
-                                                ? ['Sold', 'Login', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
-                                                : item.category === 'Loan'
-                                                ? ['Login', 'Underwriting', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
-                                                : ['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({id: c, name: c}))
-                                            }
-                                            placeholder="Status"
-                                            buttonClassName={`w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.fileStatus ? 'border border-red-500' : 'border'}`}
-                                        />
-                                    </TableCell>
-                                    
-                                    {/* 19. Sanctioned (₹) */}
-                                    <TableCell className="p-2">
-                                        <NumericFormat
-                                            disabled={item.category === 'Forex'}
-                                            value={item.category === 'Forex' ? '' : (item.sanctionedAmount === 0 ? '' : item.sanctionedAmount)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                            onValueChange={(vals) => handleUpdate('sanctionedAmount', vals.floatValue || 0)}
-                                            customInput={Input}
-                                            placeholder={item.category === 'Forex' ? "N/A" : "₹"}
-                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50"
-                                        />
-                                    </TableCell>
-                                    
-                                    {/* 20. Disbursed (₹) */}
-                                    <TableCell className="p-2">
-                                        <NumericFormat
-                                            disabled={item.category === 'Forex'}
-                                            value={item.category === 'Forex' ? (item.amount || '') : (item.disbursedAmount === 0 ? '' : item.disbursedAmount)}
-                                            thousandSeparator=","
-                                            thousandsGroupStyle="lakh"
-                                            onValueChange={(vals) => handleUpdate('disbursedAmount', vals.floatValue || 0)}
-                                            customInput={Input}
-                                            placeholder={item.category === 'Forex' ? "Auto (Login Amt)" : "₹"}
-                                            className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50"
-                                        />
-                                    </TableCell>
-                                    
-                                    {/* 21. Disbursed Dt */}
-                                    <TableCell className="p-2"><InlineDatePicker disabled={item.category === 'Forex'} value={item.category === 'Forex' ? (item.date || dateStr) : (item.disbursedDate || '')} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
-                                    
-                                    {/* 22. EMI Date */}
-                                    <TableCell className="p-2"><InlineDatePicker disabled={item.category === 'Forex'} value={item.category === 'Forex' ? '' : (item.emiDate || '')} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
-                                    
-                                    {/* 23. Repayment Bank */}
-                                    <TableCell className="p-2"><Input disabled={item.category === 'Forex'} value={item.category === 'Forex' ? '' : (item.repaymentBank || '')} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder={item.category === 'Forex' ? "N/A" : "Bank..."} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
-                                    
-                                    {/* 24. Manager Name */}
-                                    <TableCell className="p-2">
-                                        {(() => {
-                                            const managers = getLocationEmployees(item.branchLocation);
-                                            return managers.length > 0 ? (
-                                                <select
-                                                    value={item.managerName || ''}
-                                                    onChange={e => handleUpdate('managerName', e.target.value)}
-                                                    className="w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700"
-                                                >
-                                                    <option value="">— Manager —</option>
-                                                    {item.managerName && !managers.includes(item.managerName) && (
-                                                        <option value={item.managerName}>{item.managerName}</option>
-                                                    )}
-                                                    {managers.map(name => (
-                                                        <option key={name} value={name}>{name}</option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" />
-                                            );
-                                        })()}
-                                    </TableCell>
-                                    
-                                    {/* 25. Consultant Name */}
-                                    <TableCell className="p-2">
-                                        <select
-                                            disabled={item.category !== 'Loan'}
-                                            value={item.category === 'Loan' ? (item.consultantName || '') : ''}
-                                            onChange={e => {
-                                                handleUpdate('consultantName', e.target.value);
-                                                const consultant = consultants.find(c => c.name === e.target.value);
-                                                if (consultant) {
-                                                    handleUpdate('consultantEmail', consultant.email);
-                                                } else {
-                                                    handleUpdate('consultantEmail', '');
-                                                }
-                                            }}
-                                            className="w-full h-8 text-xs rounded-md px-2 bg-transparent text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700 disabled:opacity-50"
-                                        >
-                                            <option value="">{item.category === 'Loan' ? '— Select —' : 'N/A'}</option>
-                                            {item.category === 'Loan' && consultants.map(c => (
-                                                <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </TableCell>
-                                    
-                                    {/* 25. Consultant Email ID */}
-                                    <TableCell className="p-2"><Input type="email" disabled={item.category !== 'Loan'} value={item.category === 'Loan' ? (item.consultantEmail || '') : ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder={item.category === 'Loan' ? "Consultant Email..." : "N/A"} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
-                                    
-                                    {/* 26. Rejection Remark */}
-                                    <TableCell className="p-2"><Input type="text" value={item.rejectionRemark || ''} onChange={e => handleUpdate('rejectionRemark', e.target.value)} placeholder="Rejection remark..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 min-w-[200px]" /></TableCell>
-
-                                    <TableCell className="p-2 text-right">
-                                        <button onClick={handleRemove} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
-                                    </TableCell>
-                                </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                </div>
-                
-                <div className="p-6 border-t border-slate-200 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <Input 
-                            placeholder="Your Name *" 
-                            value={lodgeName} 
-                            onChange={e => setLodgeName(e.target.value)} 
-                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs w-full md:w-48"
-                        />
-                        <Input 
-                            placeholder="Your @siroiforex.com Email *" 
-                            value={lodgeEmail} 
-                            onChange={e => setLodgeEmail(e.target.value)} 
-                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs w-full md:w-56"
-                        />
-                    </div>
-                    <div className="flex gap-3 w-full md:w-auto">
-                    {error && <div className="text-xs text-red-500 font-bold bg-white dark:bg-slate-900 border border-red-500/20 px-4 py-2 rounded shadow-sm w-full mb-3">{error}</div>}
-                    <Button variant="secondary" onClick={() => { setIsStagingModalOpen(false); setStagedItems([]); setStagedFile(null); }}>Discard</Button>
-                    <Button onClick={handleBulkSubmit} disabled={isBulkSubmitting || stagedItems.length === 0 || !lodgeName || !lodgeEmail.endsWith('@siroiforex.com')} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[160px]">
-                        {isBulkSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : <><Save className="w-4 h-4 mr-2" /> Approve & Lodge</>}
-                    </Button>
-                </div>
-            </div>
-          </div>
-          </div>
-        )}
-
-        {/* Context Modal */}
-        {showContextModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setShowContextModal(false)}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
-               <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                   <h2 className="text-xl font-bold text-slate-800 dark:text-white">Start New Entry</h2>
-                   <p className="text-sm text-slate-500 mt-1">Please confirm your session parameters before logging data.</p>
-               </div>
-               <div className="p-6 flex flex-col gap-5 bg-slate-50 dark:bg-slate-900/50">
-                   {/* Branch Selector (Admin Only) */}
-                   {user?.role === 'admin' && (
-                       <div>
-                           <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                               Branch Name
-                           </label>
-                           <select 
-                               className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                               value={adminSelectedBranch}
-                               onChange={(e) => setAdminSelectedBranch(e.target.value)}
-                           >
-                               {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
-                                   <option key={b.id} value={b.id}>{b.name}</option>
-                               ))}
-                           </select>
-                       </div>
-                   )}
-
-                   {/* Tracking Mode */}
-                   <div>
-                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                           Tracking Mode
-                       </label>
-                       <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-md">
-                           <button 
-                               className={`flex-1 text-xs font-bold py-2 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                               onClick={() => {
-                                   setEntryMode('monthly');
-                                   setDateStr('2026-04-01');
-                               }}
-                           >
-                               Monthly
-                           </button>
-                           <button 
-                               className={`flex-1 text-xs font-bold py-2 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                               onClick={() => {
-                                   setEntryMode('daily');
-                                   const today = new Date().toISOString().split('T')[0];
-                                   setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
-                               }}
-                           >
-                               Daily
-                           </button>
-                       </div>
-                   </div>
-
-                   {/* Date Context */}
-                   <div>
-                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                           Date
-                       </label>
-                       {entryMode === 'monthly' ? (
-                            <MonthPicker 
-                                value={dateStr.substring(0, 7)}
-                                onChange={(val) => setDateStr(val + '-01')}
-                                buttonClassName="w-full h-10 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                            />
-                        ) : (
-                            <InlineDatePicker 
-                                min="2026-01-01"
-                                value={dateStr}
-                                onChange={setDateStr}
-                                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 w-full"
-                            />
-                        )}
-                   </div>
-
-                   </div>
-               <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                  <Button variant="secondary" onClick={() => setShowContextModal(false)} className="flex-1">Cancel</Button>
-                  <Button onClick={() => { setShowContextModal(false); if(items.length===0) handleAddItem(); }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">Start Entry</Button>
-               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Projection Modal */}
-        {isProjectionModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsProjectionModalOpen(false)}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
-               <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                   <h2 className="text-xl font-bold text-slate-800 dark:text-white">Lodge Daily Projection</h2>
-                   <p className="text-sm text-slate-500 mt-1">Set the expected business projection for {dateStr}. This cannot be modified after 11 AM.</p>
-               </div>
-               <div className="p-6 flex flex-col gap-5 bg-slate-50 dark:bg-slate-900/50">
-                    {isProjectionLodged && (
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 rounded-lg text-emerald-800 dark:text-emerald-300 text-xs font-medium">
-                            <span className="font-bold uppercase tracking-wider block mb-1">Projection Already Set</span>
-                            The target projection for today was previously lodged as ₹{lodgedProjectionAmount.toLocaleString('en-IN')}. You can override this by entering a new amount below.
-                        </div>
-                    )}
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block border-b border-slate-200 dark:border-slate-700 pb-2">
-                            {isProjectionLodged ? 'Override Category Projections (₹)' : 'Category Projections (₹)'}
-                        </label>
-                        <div className="flex flex-col gap-3">
-                            {Object.keys(projectionInputs).map((cat) => (
-                                <div key={cat} className="flex items-center gap-3">
-                                    <span className="w-28 text-sm font-bold text-slate-700 dark:text-slate-300">{cat}</span>
-                                    <NumericFormat
-                                        value={projectionInputs[cat]}
-                                        onValueChange={(values) => setProjectionInputs(prev => ({ ...prev, [cat]: values.floatValue || 0 }))}
-                                        thousandSeparator=","
-                                        thousandsGroupStyle="lakh"
-                                        prefix="₹ "
-                                        className={`flex-1 bg-white dark:bg-slate-900 border ${isProjectionLodged ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 focus:ring-emerald-500' : 'border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-indigo-500'} p-2 text-md font-bold rounded-md focus:ring-2 outline-none transition-colors`}
-                                    />
+                            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-white/10 bg-red-50 dark:bg-red-950/30">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+                                        <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-red-900 dark:text-red-100 uppercase tracking-wider">Select Items to Delete</h3>
+                                    </div>
                                 </div>
-                            ))}
-                            <div className="flex items-center gap-3 pt-3 mt-1 border-t border-slate-200 dark:border-slate-700">
-                                <span className="w-28 text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Total</span>
-                                <div className="flex-1 p-2 text-lg font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-md border border-indigo-100 dark:border-indigo-800/50">
-                                    ₹ {Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0).toLocaleString('en-IN')}
+                                <button onClick={() => setShowDeleteModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="px-5 pt-3 flex items-center justify-between">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                    {selectedCount} selected
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        if (allSelected) setSelectedDeleteIndices(new Set());
+                                        else setSelectedDeleteIndices(new Set(items.map((_, i) => i)));
+                                    }}
+                                    className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider"
+                                >
+                                    {allSelected ? 'Deselect All' : 'Select All'}
+                                </button>
+                            </div>
+
+                            <div className="px-5 pt-3 pb-2 flex-1 overflow-auto">
+                                <div className="space-y-2">
+                                    {items.map((item, idx) => {
+                                        const isSelected = selectedDeleteIndices.has(idx);
+                                        return (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => {
+                                                    const next = new Set(selectedDeleteIndices);
+                                                    if (isSelected) next.delete(idx); else next.add(idx);
+                                                    setSelectedDeleteIndices(next);
+                                                }}
+                                                className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left ${isSelected ? 'bg-red-50 dark:bg-red-950/20 border-red-300' : 'bg-slate-50 border-slate-200'}`}
+                                            >
+                                                <span className="text-sm ml-3">₹{Number(item.amount).toLocaleString('en-IN')}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
+                            </div>
+
+                            <div className="p-5 border-t border-slate-200 flex gap-3">
+                                <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="flex-1">Cancel</Button>
+                                <Button variant="danger" onClick={handleDelete} disabled={isDeleting || noneSelected} className="flex-1">Delete</Button>
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                            Reason / Remarks
-                        </label>
-                        <select 
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                            value={projectionReason}
-                            onChange={(e) => setProjectionReason(e.target.value)}
-                        >
-                            <option value="Business as Usual">Business as Usual</option>
-                            <option value="Holiday">Holiday</option>
-                            <option value="Low Walk-ins Expected">Low Walk-ins Expected</option>
-                            <option value="High Walk-ins Expected">High Walk-ins Expected</option>
-                            <option value="Special Drive">Special Drive</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-               </div>
-               <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                  <Button variant="secondary" onClick={() => setIsProjectionModalOpen(false)} className="flex-1">Cancel</Button>
-                  <Button onClick={handleLodgeProjection} disabled={isLodgingProjection || Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0) < 0} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">
-                      {isLodgingProjection ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : 'Lodge Projection'}
-                  </Button>
-               </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Success Modal */}
-        {showSuccessModal && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
-                    <div className="p-6 text-center">
-                        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Save className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                );
+            })()}
+
+
+            {/* Staff Name Resolution Dialog (Bulk Upload) */}
+
+            <ColumnMappingDialog
+                open={isMappingDialogOpen}
+                headers={rawHeaders}
+                onConfirm={handleMappingConfirm}
+                onCancel={() => { setIsMappingDialogOpen(false); setIsParsing(false); setUploadProgress(0); }}
+            />
+
+            {/* Staff Name Resolution Dialog (Bulk Upload) */}
+            {isResolutionDialogOpen && (
+                <StaffNameResolutionDialog
+                    rawItems={pendingParsed}
+                    orgMembers={orgMembers}
+                    branches={branches}
+                    activeBranchName={activeBranchName}
+                    onConfirm={(_mappings, resolvedItems) => {
+                        setIsResolutionDialogOpen(false);
+                        setStagedItems(resolvedItems.map(normalizeItem));
+                        setIsStagingModalOpen(true);
+                    }}
+                    onCancel={() => {
+                        setIsResolutionDialogOpen(false);
+                        setPendingParsed([]);
+                        setStagedFile(null);
+                    }}
+                />
+            )}
+
+            {/* Staging Modal */}
+            {isStagingModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 pointer-events-auto bg-black/80 backdrop-blur-sm">
+                    <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-[95vw] h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Layers className="text-indigo-500" /> Data Staging & Review
+                                </h2>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Review and correct the extracted data. Rows will be saved to their specific Login Date.
+                                </p>
+                            </div>
+                            <button onClick={() => { setIsStagingModalOpen(false); setStagedItems([]); setStagedFile(null); }} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <X size={20} />
+                            </button>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                            Record Lodged Successfully
-                        </h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                            Your entries have been successfully saved to the database.
-                        </p>
-                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4 mb-6 text-left">
-                            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-1 flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4" />
-                                Important Rule
-                            </h4>
-                            <p className="text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
-                                Please remember that these entries will remain fully <strong>editable for up to 60 days</strong> from their creation date. You can always come back to modify details, add missing manual rows, or update the file status.
-                            </p>
+
+                        <div className="flex-1 overflow-auto p-0">
+                            <Table>
+                                <TableHeader className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 shadow-sm backdrop-blur-md">
+                                    <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
+                                        <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">1. Customer Name *</TableHead>
+                                        <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">2. Category *</TableHead>
+                                        <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">3. Product *</TableHead>
+                                        <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">4. Login Amount (₹) *</TableHead>
+                                        <TableHead className="min-w-[260px] font-bold text-[10px] uppercase tracking-wider text-slate-500">5. Staff Name *</TableHead>
+                                        <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">6. Login Date</TableHead>
+                                        <TableHead className="min-w-[250px] font-bold text-[10px] uppercase tracking-wider text-slate-500">7. Relationship Manager Name</TableHead>
+                                        <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">8. Tracking Number</TableHead>
+                                        <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">9. Channel Partner *</TableHead>
+                                        <TableHead className="min-w-[200px] font-bold text-[10px] uppercase tracking-wider text-slate-500">10. Branch Location</TableHead>
+                                        <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">11. Customer DOB</TableHead>
+                                        <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">12. Customer Phone No.</TableHead>
+                                        <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">13. Customer Email ID</TableHead>
+                                        <TableHead className="min-w-[280px] font-bold text-[10px] uppercase tracking-wider text-slate-500">14. Customer Address</TableHead>
+                                        <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">15. Firm Name</TableHead>
+                                        <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">16. File Status *</TableHead>
+                                        <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">17. Sanctioned (₹)</TableHead>
+                                        <TableHead className="min-w-[220px] font-bold text-[10px] uppercase tracking-wider text-slate-500">18. Disbursed (₹)</TableHead>
+                                        <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">19. Disbursed Dt</TableHead>
+                                        <TableHead className="min-w-[210px] font-bold text-[10px] uppercase tracking-wider text-slate-500">20. EMI Date</TableHead>
+                                        <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">21. Repayment Bank</TableHead>
+                                        <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">22. Manager Name</TableHead>
+                                        <TableHead className="min-w-[230px] font-bold text-[10px] uppercase tracking-wider text-slate-500">23. Consultant</TableHead>
+                                        <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">24. Consultant Email ID</TableHead>
+                                        <TableHead className="min-w-[240px] font-bold text-[10px] uppercase tracking-wider text-slate-500">25. Rejection Remark</TableHead>
+                                        <TableHead className="w-[50px]"></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {stagedItems.map((item, index) => {
+                                        const handleUpdate = (key: string, val: any) => {
+                                            const arr = [...stagedItems];
+                                            const nextVal = key === 'customerName' ? formatCustomerName(String(val || '')) : val;
+                                            arr[index] = { ...arr[index], [key]: nextVal };
+                                            if (key === 'customerName') {
+                                                const scopedList = getScopedCustomers(arr[index].branchLocation);
+                                                const matchedCustomer =
+                                                    scopedList.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim()) ||
+                                                    customerRecords.find(c => formatCustomerName(String(c.customer_name || ''), true) === String(nextVal || '').trim());
+                                                if (matchedCustomer) {
+                                                    const cleanPhone = String(matchedCustomer.phone_number || '').replace(/\D/g, '');
+                                                    const cleanEmail = matchedCustomer.email_id && matchedCustomer.email_id !== 'N/A'
+                                                        ? String(matchedCustomer.email_id).trim()
+                                                        : '';
+                                                    const cleanCity = matchedCustomer.city && matchedCustomer.city !== 'N/A'
+                                                        ? String(matchedCustomer.city).trim()
+                                                        : '';
+                                                    if (cleanPhone) arr[index].phoneNumber = cleanPhone;
+                                                    arr[index].emailId = cleanEmail;
+                                                    if (cleanCity) arr[index].customerAddress = cleanCity;
+                                                    if (matchedCustomer.company_name && matchedCustomer.company_name !== 'N/A') {
+                                                        arr[index].firmName = String(matchedCustomer.company_name).trim();
+                                                    }
+
+                                                    // Auto-populate Category, Product, Amount
+                                                    const targetCat = matchedCustomer.category || mapCustomerTypeToCategory(matchedCustomer.customer_type);
+                                                    if (targetCat) {
+                                                        arr[index].category = targetCat;
+                                                        if (targetCat !== 'Loan') {
+                                                            arr[index].consultantName = '';
+                                                            arr[index].consultantEmail = '';
+                                                        }
+                                                        if (targetCat === 'Insurance') {
+                                                            arr[index].fileStatus = arr[index].fileStatus || '';
+                                                        } else if (targetCat === 'Forex') {
+                                                            arr[index].fileStatus = arr[index].fileStatus || 'Sold';
+                                                            arr[index].fileLogin = arr[index].fileLogin || 'Online';
+                                                        } else {
+                                                            arr[index].fileStatus = arr[index].fileStatus || 'Login';
+                                                        }
+                                                    }
+                                                    if (matchedCustomer.product) {
+                                                        arr[index].product = matchedCustomer.product;
+                                                    }
+                                                    if (matchedCustomer.amount != null && matchedCustomer.amount !== '') {
+                                                        arr[index].amount = Number(matchedCustomer.amount) || 0;
+                                                    }
+                                                }
+                                            }
+                                            if (key === 'category') {
+                                                arr[index].product = '';
+                                                if (val !== 'Loan') {
+                                                    arr[index].consultantName = '';
+                                                    arr[index].consultantEmail = '';
+                                                }
+                                                if (val === 'Insurance') {
+                                                    arr[index].fileStatus = '';
+                                                } else if (val === 'Forex') {
+                                                    arr[index].fileStatus = 'Sold';
+                                                    arr[index].fileLogin = 'Online';
+                                                    arr[index].channel = 'SIROI';
+                                                    arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                                                    arr[index].disbursedDate = arr[index].date || dateStr;
+                                                    arr[index].emiDate = '';
+                                                    arr[index].sanctionedAmount = 0;
+                                                    arr[index].repaymentBank = '';
+                                                } else {
+                                                    if (['Issued', 'POLICY ISSUED', 'Not Issued', 'Sold'].includes(arr[index].fileStatus || '')) {
+                                                        arr[index].fileStatus = '';
+                                                    }
+                                                }
+                                            }
+
+                                            if (key === 'product') {
+                                                if (arr[index].category === 'Loan' && (val === 'Housing Loan/LAP' || val === 'Mortgage' || val === 'Home Loan')) {
+                                                    arr[index].fileLogin = 'lead force';
+                                                    if (arr[index].channel !== 'Bank of Baroda' && arr[index].channel !== 'Punjab & Sind Bank' && arr[index].channel !== 'BANK OF INDIA') {
+                                                        arr[index].channel = '';
+                                                    }
+                                                }
+                                            }
+
+                                            if (arr[index].category === 'Insurance') {
+                                                if (key === 'fileStatus') {
+                                                    if (val === 'Issued') {
+                                                        arr[index].disbursedAmount = arr[index].amount;
+                                                    } else if (val === 'Not Issued') {
+                                                        arr[index].disbursedAmount = 0;
+                                                    }
+                                                }
+                                                if (key === 'amount' && arr[index].fileStatus === 'Issued') {
+                                                    arr[index].disbursedAmount = Number(val) || 0;
+                                                }
+                                            }
+
+                                            if (arr[index].category === 'Forex') {
+                                                if (key === 'amount') {
+                                                    arr[index].disbursedAmount = Number(val) || 0;
+                                                }
+                                                if (key === 'date') {
+                                                    arr[index].disbursedDate = val;
+                                                }
+                                                if (key === 'fileStatus' && (val === 'Sold' || val === 'Disbursed')) {
+                                                    arr[index].disbursedAmount = Number(arr[index].amount) || 0;
+                                                    arr[index].disbursedDate = arr[index].date || dateStr;
+                                                }
+                                            }
+
+                                            setStagedItems(arr);
+                                        };
+                                        const handleRemove = () => setStagedItems(stagedItems.filter((_, i) => i !== index));
+
+                                        return (
+                                            <TableRow key={index} className="group border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                                {/* 1. Customer Name */}
+                                                <TableCell className="p-2">
+                                                    {(() => {
+                                                        const stagedEffectiveDate = item.date || dateStr;
+                                                        const isCustomerDropdownActive = entryMode === 'daily'
+                                                            ? stagedEffectiveDate >= '2026-11-16'
+                                                            : dateStr >= '2026-11';
+                                                        if (isCustomerDropdownActive) {
+                                                            const scopedCustomers = getScopedCustomers(item.branchLocation);
+                                                            const currentName = (item.customerName || '').trim();
+                                                            const hasCurrentInList = scopedCustomers.some(
+                                                                c => String(c.customer_name || '').trim() === currentName
+                                                            );
+                                                            return (
+                                                                <select
+                                                                    value={item.customerName || ''}
+                                                                    onChange={e => handleUpdate('customerName', e.target.value)}
+                                                                    className={`w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 ${!item.customerName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
+                                                                        }`}
+                                                                >
+                                                                    <option value="">— Select Customer —</option>
+                                                                    {currentName && !hasCurrentInList && (
+                                                                        <option value={item.customerName}>{item.customerName}</option>
+                                                                    )}
+                                                                    {scopedCustomers.map((c: any) => {
+                                                                        const nameStr = String(c.customer_name || '').trim();
+                                                                        return (
+                                                                            <option key={c.id} value={nameStr}>
+                                                                                {nameStr}
+                                                                            </option>
+                                                                        );
+                                                                    })}
+                                                                </select>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <Input value={item.customerName || ''} onChange={e => handleUpdate('customerName', e.target.value)} placeholder="Customer..." className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.customerName ? 'border-red-500 border' : ''}`} />
+                                                        );
+                                                    })()}
+                                                </TableCell>
+
+                                                {/* 2. Category */}
+                                                <TableCell className="p-2">
+                                                    <AppSelect
+                                                        value={item.category || ''}
+                                                        onChange={val => handleUpdate('category', val)}
+                                                        options={['Loan', 'Insurance', 'Forex', 'Consultancy', 'Investments'].map(c => ({ id: c, name: c === 'Consultancy' ? 'Consulting' : c }))}
+                                                        placeholder="Category"
+                                                        buttonClassName={`w-full flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.category ? 'border border-red-500' : 'border'}`}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 3. Product */}
+                                                <TableCell className="p-2">
+                                                    <AppSelect
+                                                        value={item.product || ''}
+                                                        onChange={val => handleUpdate('product', val)}
+                                                        options={allowedProducts(item.category).map((p: any) => ({ id: p.name, name: p.name }))}
+                                                        placeholder="Product"
+                                                        buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.product ? 'border border-red-500' : 'border'}`}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 4. Login Amount */}
+                                                <TableCell className="p-2">
+                                                    <NumericFormat
+                                                        value={item.amount === 0 ? '' : item.amount}
+                                                        thousandSeparator=","
+                                                        thousandsGroupStyle="lakh"
+                                                        onValueChange={(vals) => handleUpdate('amount', vals.floatValue || 0)}
+                                                        customInput={Input}
+                                                        placeholder="₹"
+                                                        className={`h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 ${!item.amount ? 'border-red-500 border' : ''}`}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 5. Staff Name */}
+                                                <TableCell className="p-2">
+                                                    {(() => {
+                                                        const rowBranchName = item.branchLocation || activeBranchName;
+                                                        const rowStaff = orgMembers.filter(m => {
+                                                            if (!m.branch) return false;
+                                                            const mB = m.branch.toLowerCase();
+                                                            const rB = rowBranchName.toLowerCase();
+                                                            return mB.includes(rB) || rB.includes(mB);
+                                                        });
+                                                        return rowStaff.length > 0 ? (
+                                                            <select
+                                                                value={item.staffName || ''}
+                                                                onChange={e => handleUpdate('staffName', e.target.value)}
+                                                                className={`w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 ${!item.staffName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
+                                                                    }`}
+                                                            >
+                                                                <option value="">— Select Staff —</option>
+                                                                {rowStaff.map(m => (
+                                                                    <option key={m.id} value={m.name}>{m.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <Input
+                                                                value={item.staffName || ''}
+                                                                onChange={e => handleUpdate('staffName', e.target.value)}
+                                                                placeholder="Staff Name..."
+                                                                className={`h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 ${!item.staffName ? 'border-red-500 border' : ''}`}
+                                                            />
+                                                        );
+                                                    })()}
+                                                </TableCell>
+
+                                                {/* 6. Login Date */}
+                                                <TableCell className="p-2"><InlineDatePicker value={item.date || ''} onChange={(val: string) => handleUpdate('date', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                                {/* 7. RM Name */}
+                                                <TableCell className="p-2"><Input value={item.relationshipManagerName || ''} onChange={e => handleUpdate('relationshipManagerName', e.target.value)} placeholder="RM Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+
+
+                                                {/* 10. Tracking Number */}
+                                                <TableCell className="p-2"><Input value={item.trackingNumber || ''} onChange={e => handleUpdate('trackingNumber', e.target.value)} placeholder="Track No..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                                {/* 11. Channel Partner */}
+                                                <TableCell className="p-2">
+                                                    <AppSelect
+                                                        value={item.channel || ''}
+                                                        onChange={val => handleUpdate('channel', val)}
+                                                        options={item.category === 'Insurance'
+                                                            ? ['Bajaj Allianz', 'Aditya Birla', 'LIC', 'ICICI Lombard', 'Niva Bupa', 'Tata AIG', 'Manipal Cigna', 'Star Health', 'Care Health', 'SBI', 'Magma', 'Galaxy Health', 'SIROI', 'Bank of Baroda', 'Punjab & Sind Bank', 'BANK OF INDIA'].map(c => ({ id: c, name: c }))
+                                                            : item.category === 'Forex' ? [{ id: 'SIROI', name: 'SIROI' }]
+                                                                : (item.category === 'Loan' && (item.product === 'Housing Loan/LAP' || item.product === 'Mortgage' || item.product === 'Home Loan')) ? ['Bank of Baroda', 'Punjab & Sind Bank', 'BANK OF INDIA'].map(c => ({ id: c, name: c }))
+                                                                    : channels.map((c: any) => ({ id: c.name, name: c.name }))
+                                                        }
+                                                        placeholder="Channel"
+                                                        buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.channel ? 'border border-red-500' : 'border'}`}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 12. Branch Location */}
+                                                <TableCell className="p-2">
+                                                    <BranchSelect
+                                                        value={item.branchLocation || ''}
+                                                        onChange={val => handleUpdate('branchLocation', val)}
+                                                        branches={branches}
+                                                        valueField="name"
+                                                        className="w-[120px]"
+                                                    />
+                                                </TableCell>
+
+                                                {/* 13. DOB */}
+                                                <TableCell className="p-2"><InlineDatePicker value={item.customerDOB || ''} onChange={(val: string) => handleUpdate('customerDOB', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                                {/* 14. Phone No. */}
+                                                <TableCell className="p-2"><Input value={item.phoneNumber || ''} onChange={e => handleUpdate('phoneNumber', e.target.value.replace(/\D/g, ''))} placeholder="Phone..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                                {/* 15. Email ID */}
+                                                <TableCell className="p-2"><Input type="email" value={item.emailId || ''} onChange={e => handleUpdate('emailId', e.target.value)} placeholder="Email..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                                {/* 16. Address */}
+                                                <TableCell className="p-2"><Input value={item.customerAddress || ''} onChange={e => handleUpdate('customerAddress', e.target.value)} placeholder="Address..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                                {/* 17. Firm Name */}
+                                                <TableCell className="p-2"><Input value={item.firmName || ''} onChange={e => handleUpdate('firmName', e.target.value)} placeholder="Firm Name..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" /></TableCell>
+
+                                                {/* 18. File Status */}
+                                                <TableCell className="p-2">
+                                                    <AppSelect
+                                                        value={item.fileStatus || (item.category === 'Forex' ? 'Sold' : '')}
+                                                        onChange={val => handleUpdate('fileStatus', val)}
+                                                        options={item.category === 'Insurance'
+                                                            ? ['Issued', 'Not Issued'].map(c => ({ id: c, name: c }))
+                                                            : item.category === 'Forex'
+                                                                ? ['Sold', 'Login', 'Customer Reject', 'Rejected'].map(c => ({ id: c, name: c }))
+                                                                : item.category === 'Loan'
+                                                                    ? ['Login', 'Underwriting', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({ id: c, name: c }))
+                                                                    : ['Login', 'Processing', 'Sanctioned', 'Disbursed', 'Customer Reject', 'Rejected'].map(c => ({ id: c, name: c }))
+                                                        }
+                                                        placeholder="Status"
+                                                        buttonClassName={`w-[90px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.fileStatus ? 'border border-red-500' : 'border'}`}
+                                                    />
+                                                </TableCell>
+
+                                                {/* 19. Sanctioned (₹) */}
+                                                <TableCell className="p-2">
+                                                    <NumericFormat
+                                                        disabled={item.category === 'Forex'}
+                                                        value={item.category === 'Forex' ? '' : (item.sanctionedAmount === 0 ? '' : item.sanctionedAmount)}
+                                                        thousandSeparator=","
+                                                        thousandsGroupStyle="lakh"
+                                                        onValueChange={(vals) => handleUpdate('sanctionedAmount', vals.floatValue || 0)}
+                                                        customInput={Input}
+                                                        placeholder={item.category === 'Forex' ? "N/A" : "₹"}
+                                                        className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50"
+                                                    />
+                                                </TableCell>
+
+                                                {/* 20. Disbursed (₹) */}
+                                                <TableCell className="p-2">
+                                                    <NumericFormat
+                                                        disabled={item.category === 'Forex'}
+                                                        value={item.category === 'Forex' ? (item.amount || '') : (item.disbursedAmount === 0 ? '' : item.disbursedAmount)}
+                                                        thousandSeparator=","
+                                                        thousandsGroupStyle="lakh"
+                                                        onValueChange={(vals) => handleUpdate('disbursedAmount', vals.floatValue || 0)}
+                                                        customInput={Input}
+                                                        placeholder={item.category === 'Forex' ? "Auto (Login Amt)" : "₹"}
+                                                        className="h-8 text-xs font-medium text-right bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50"
+                                                    />
+                                                </TableCell>
+
+                                                {/* 21. Disbursed Dt */}
+                                                <TableCell className="p-2"><InlineDatePicker disabled={item.category === 'Forex'} value={item.category === 'Forex' ? (item.date || dateStr) : (item.disbursedDate || '')} onChange={(val: string) => handleUpdate('disbursedDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
+
+                                                {/* 22. EMI Date */}
+                                                <TableCell className="p-2"><InlineDatePicker disabled={item.category === 'Forex'} value={item.category === 'Forex' ? '' : (item.emiDate || '')} onChange={(val: string) => handleUpdate('emiDate', val)} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
+
+                                                {/* 23. Repayment Bank */}
+                                                <TableCell className="p-2"><Input disabled={item.category === 'Forex'} value={item.category === 'Forex' ? '' : (item.repaymentBank || '')} onChange={e => handleUpdate('repaymentBank', e.target.value)} placeholder={item.category === 'Forex' ? "N/A" : "Bank..."} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
+
+                                                {/* 24. Manager Name */}
+                                                <TableCell className="p-2">
+                                                    {(() => {
+                                                        const managers = getLocationEmployees(item.branchLocation);
+                                                        return managers.length > 0 ? (
+                                                            <select
+                                                                value={item.managerName || ''}
+                                                                onChange={e => handleUpdate('managerName', e.target.value)}
+                                                                className="w-full h-8 text-xs rounded-md px-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700"
+                                                            >
+                                                                <option value="">— Manager —</option>
+                                                                {item.managerName && !managers.includes(item.managerName) && (
+                                                                    <option value={item.managerName}>{item.managerName}</option>
+                                                                )}
+                                                                {managers.map(name => (
+                                                                    <option key={name} value={name}>{name}</option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <Input value={item.managerName || ''} onChange={e => handleUpdate('managerName', e.target.value)} placeholder="Manager..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700" />
+                                                        );
+                                                    })()}
+                                                </TableCell>
+
+                                                {/* 25. Consultant Name */}
+                                                <TableCell className="p-2">
+                                                    <select
+                                                        disabled={item.category !== 'Loan'}
+                                                        value={item.category === 'Loan' ? (item.consultantName || '') : ''}
+                                                        onChange={e => {
+                                                            handleUpdate('consultantName', e.target.value);
+                                                            const consultant = consultants.find(c => c.name === e.target.value);
+                                                            if (consultant) {
+                                                                handleUpdate('consultantEmail', consultant.email);
+                                                            } else {
+                                                                handleUpdate('consultantEmail', '');
+                                                            }
+                                                        }}
+                                                        className="w-full h-8 text-xs rounded-md px-2 bg-transparent text-slate-900 dark:text-white border outline-none focus:ring-1 focus:ring-indigo-500 border-slate-200 dark:border-slate-700 disabled:opacity-50"
+                                                    >
+                                                        <option value="">{item.category === 'Loan' ? '— Select —' : 'N/A'}</option>
+                                                        {item.category === 'Loan' && consultants.map(c => (
+                                                            <option key={c.id} value={c.name} className="bg-slate-800 text-white">{c.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </TableCell>
+
+                                                {/* 25. Consultant Email ID */}
+                                                <TableCell className="p-2"><Input type="email" disabled={item.category !== 'Loan'} value={item.category === 'Loan' ? (item.consultantEmail || '') : ''} onChange={e => handleUpdate('consultantEmail', e.target.value)} placeholder={item.category === 'Loan' ? "Consultant Email..." : "N/A"} className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 disabled:opacity-50" /></TableCell>
+
+                                                {/* 26. Rejection Remark */}
+                                                <TableCell className="p-2"><Input type="text" value={item.rejectionRemark || ''} onChange={e => handleUpdate('rejectionRemark', e.target.value)} placeholder="Rejection remark..." className="h-8 text-xs bg-transparent border-slate-200 dark:border-slate-700 min-w-[200px]" /></TableCell>
+
+                                                <TableCell className="p-2 text-right">
+                                                    <button onClick={handleRemove} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={14} /></button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
                         </div>
-                        <Button 
-                            onClick={() => setShowSuccessModal(false)}
-                            className="w-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold py-3"
-                        >
-                            Acknowledge
-                        </Button>
+
+                        <div className="p-6 border-t border-slate-200 dark:border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <Input
+                                    placeholder="Your Name *"
+                                    value={lodgeName}
+                                    onChange={e => setLodgeName(e.target.value)}
+                                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs w-full md:w-48"
+                                />
+                                <Input
+                                    placeholder="Your @siroiforex.com Email *"
+                                    value={lodgeEmail}
+                                    onChange={e => setLodgeEmail(e.target.value)}
+                                    className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-xs w-full md:w-56"
+                                />
+                            </div>
+                            <div className="flex gap-3 w-full md:w-auto">
+                                {error && <div className="text-xs text-red-500 font-bold bg-white dark:bg-slate-900 border border-red-500/20 px-4 py-2 rounded shadow-sm w-full mb-3">{error}</div>}
+                                <Button variant="secondary" onClick={() => { setIsStagingModalOpen(false); setStagedItems([]); setStagedFile(null); }}>Discard</Button>
+                                <Button onClick={handleBulkSubmit} disabled={isBulkSubmitting || stagedItems.length === 0 || !lodgeName || !lodgeEmail.endsWith('@siroiforex.com')} className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[160px]">
+                                    {isBulkSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : <><Save className="w-4 h-4 mr-2" /> Approve & Lodge</>}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
-        {isAuditModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsAuditModalOpen(false)}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div 
-              className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                  <div>
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          Upload Audit Logs
-                      </h2>
-                      <p className="text-xs text-slate-500 mt-1">Your recent bulk upload history and source files.</p>
-                  </div>
-                  <button onClick={() => setIsAuditModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
-                      <X size={20} />
-                  </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-0">
-                  <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[220px] pl-4">Upload Date & Time</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[180px] text-center">Uploaded By</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[250px] text-center">Email ID</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center">Original Filename</TableHead>
-                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center w-[150px]">Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loadingAuditLogs ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
-                                            Loading logs...
-                                        </TableCell>
-                                    </TableRow>
-                                ) : executiveAuditLogs.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
-                                            No audit logs found.
-                                        </TableCell>
-                                    </TableRow>
+            )}
+
+            {/* Context Modal */}
+            {showContextModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setShowContextModal(false)}>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Start New Entry</h2>
+                            <p className="text-sm text-slate-500 mt-1">Please confirm your session parameters before logging data.</p>
+                        </div>
+                        <div className="p-6 flex flex-col gap-5 bg-slate-50 dark:bg-slate-900/50">
+                            {/* Branch Selector (Admin Only) */}
+                            {user?.role === 'admin' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                                        Branch Name
+                                    </label>
+                                    <select
+                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={adminSelectedBranch}
+                                        onChange={(e) => setAdminSelectedBranch(e.target.value)}
+                                    >
+                                        {branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => (
+                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Tracking Mode */}
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                                    Tracking Mode
+                                </label>
+                                <div className="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-md">
+                                    <button
+                                        className={`flex-1 text-xs font-bold py-2 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'monthly' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        onClick={() => {
+                                            setEntryMode('monthly');
+                                            setDateStr('2026-04-01');
+                                        }}
+                                    >
+                                        Monthly
+                                    </button>
+                                    <button
+                                        className={`flex-1 text-xs font-bold py-2 rounded-md uppercase tracking-widest transition-colors ${entryMode === 'daily' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                        onClick={() => {
+                                            setEntryMode('daily');
+                                            const today = new Date().toISOString().split('T')[0];
+                                            setDateStr(today >= '2026-01-01' ? today : '2026-01-01');
+                                        }}
+                                    >
+                                        Daily
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Date Context */}
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                                    Date
+                                </label>
+                                {entryMode === 'monthly' ? (
+                                    <MonthPicker
+                                        value={dateStr.substring(0, 7)}
+                                        onChange={(val) => setDateStr(val + '-01')}
+                                        buttonClassName="w-full h-10 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                                    />
                                 ) : (
-                                    executiveAuditLogs.map((log) => (
-                                        <TableRow key={log.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                            <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                                                {format(new Date(log.uploaded_at), "dd MMM yyyy, hh:mm a")}
-                                            </TableCell>
-                                            <TableCell className="p-4 text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap text-center">
-                                                {log.uploaded_by}
-                                            </TableCell>
-                                            <TableCell className="p-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap text-center">
-                                                {log.email_id}
-                                            </TableCell>
-                                            <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap text-center">
-                                                {log.filename}
-                                            </TableCell>
-                                            <TableCell className="p-4 text-center whitespace-nowrap">
-                                                <Button 
-                                                    variant="secondary" 
-                                                    size="sm" 
-                                                    onClick={async () => {
-                                                        try {
-                                                            const { data, error } = await supabase.storage.from("bulk_uploads").download(log.file_url);
-                                                            if (error) throw error;
-                                                            const url = URL.createObjectURL(data);
-                                                            const a = document.createElement("a");
-                                                            a.href = url;
-                                                            a.download = log.filename;
-                                                            a.click();
-                                                            URL.revokeObjectURL(url);
-                                                        } catch (err) {
-                                                            alert("Failed to download file.");
-                                                        }
-                                                    }}
-                                                    className="gap-2 text-xs h-8 border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                                >
-                                                    <Download size={14} />
-                                                    Download File
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                    <InlineDatePicker
+                                        min="2026-01-01"
+                                        value={dateStr}
+                                        onChange={setDateStr}
+                                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 w-full"
+                                    />
                                 )}
-                            </TableBody>
-                        </Table>
-                  </div>
-              </div>
-            </div>
-          </div>
-        )}
+                            </div>
 
-      {showDatePicker && (
-        <CustomDatePicker 
-          selectedDate={dateStr}
-          onChange={(date) => {
-              if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-              setDateStr(date);
-          }}
-          onClose={() => setShowDatePicker(false)}
-        />
-      )}
+                        </div>
+                        <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                            <Button variant="secondary" onClick={() => setShowContextModal(false)} className="flex-1">Cancel</Button>
+                            <Button onClick={() => { setShowContextModal(false); if (items.length === 0) handleAddItem(); }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">Start Entry</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-      {showStartDatePicker && (
-        <CustomDatePicker 
-          selectedDate={startDateStr}
-          onChange={(date) => {
-              if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-              setStartDateStr(date);
-          }}
-          onClose={() => setShowStartDatePicker(false)}
-        />
-      )}
+            {/* Projection Modal */}
+            {isProjectionModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsProjectionModalOpen(false)}>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-md overflow-hidden flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Lodge Daily Projection</h2>
+                            <p className="text-sm text-slate-500 mt-1">Set the expected business projection for {dateStr}. This cannot be modified after 11 AM.</p>
+                        </div>
+                        <div className="p-6 flex flex-col gap-5 bg-slate-50 dark:bg-slate-900/50">
+                            {isProjectionLodged && (
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 rounded-lg text-emerald-800 dark:text-emerald-300 text-xs font-medium">
+                                    <span className="font-bold uppercase tracking-wider block mb-1">Projection Already Set</span>
+                                    The target projection for today was previously lodged as ₹{lodgedProjectionAmount.toLocaleString('en-IN')}. You can override this by entering a new amount below.
+                                </div>
+                            )}
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block border-b border-slate-200 dark:border-slate-700 pb-2">
+                                    {isProjectionLodged ? 'Override Category Projections (₹)' : 'Category Projections (₹)'}
+                                </label>
+                                <div className="flex flex-col gap-3">
+                                    {Object.keys(projectionInputs).map((cat) => (
+                                        <div key={cat} className="flex items-center gap-3">
+                                            <span className="w-28 text-sm font-bold text-slate-700 dark:text-slate-300">{cat}</span>
+                                            <NumericFormat
+                                                value={projectionInputs[cat]}
+                                                onValueChange={(values) => setProjectionInputs(prev => ({ ...prev, [cat]: values.floatValue || 0 }))}
+                                                thousandSeparator=","
+                                                thousandsGroupStyle="lakh"
+                                                prefix="₹ "
+                                                className={`flex-1 bg-white dark:bg-slate-900 border ${isProjectionLodged ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 focus:ring-emerald-500' : 'border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-indigo-500'} p-2 text-md font-bold rounded-md focus:ring-2 outline-none transition-colors`}
+                                            />
+                                        </div>
+                                    ))}
+                                    <div className="flex items-center gap-3 pt-3 mt-1 border-t border-slate-200 dark:border-slate-700">
+                                        <span className="w-28 text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Total</span>
+                                        <div className="flex-1 p-2 text-lg font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-md border border-indigo-100 dark:border-indigo-800/50">
+                                            ₹ {Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0).toLocaleString('en-IN')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
+                                    Reason / Remarks
+                                </label>
+                                <select
+                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 text-sm rounded-md text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    value={projectionReason}
+                                    onChange={(e) => setProjectionReason(e.target.value)}
+                                >
+                                    <option value="Business as Usual">Business as Usual</option>
+                                    <option value="Holiday">Holiday</option>
+                                    <option value="Low Walk-ins Expected">Low Walk-ins Expected</option>
+                                    <option value="High Walk-ins Expected">High Walk-ins Expected</option>
+                                    <option value="Special Drive">Special Drive</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                            <Button variant="secondary" onClick={() => setIsProjectionModalOpen(false)} className="flex-1">Cancel</Button>
+                            <Button onClick={handleLodgeProjection} disabled={isLodgingProjection || Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0) < 0} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">
+                                {isLodgingProjection ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : 'Lodge Projection'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-      {showEndDatePicker && (
-        <CustomDatePicker 
-          selectedDate={endDateStr}
-          onChange={(date) => {
-              if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
-              setEndDateStr(date);
-          }}
-          onClose={() => setShowEndDatePicker(false)}
-        />
-      )}
-    </div>
-  );
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Save className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                                Record Lodged Successfully
+                            </h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                                Your entries have been successfully saved to the database.
+                            </p>
+                            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4 mb-6 text-left">
+                                <h4 className="text-sm font-bold text-amber-800 dark:text-amber-500 mb-1 flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4" />
+                                    Important Rule
+                                </h4>
+                                <p className="text-xs text-amber-700 dark:text-amber-400/80 leading-relaxed">
+                                    Please remember that these entries will remain fully <strong>editable for up to 60 days</strong> from their creation date. You can always come back to modify details, add missing manual rows, or update the file status.
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => setShowSuccessModal(false)}
+                                className="w-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold py-3"
+                            >
+                                Acknowledge
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {isAuditModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-auto" onClick={() => setIsAuditModalOpen(false)}>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                    <div
+                        className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    Upload Audit Logs
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-1">Your recent bulk upload history and source files.</p>
+                            </div>
+                            <button onClick={() => setIsAuditModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-0">
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="border-b border-slate-200 dark:border-white/10 hover:bg-transparent">
+                                            <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[220px] pl-4">Upload Date & Time</TableHead>
+                                            <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[180px] text-center">Uploaded By</TableHead>
+                                            <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 w-[250px] text-center">Email ID</TableHead>
+                                            <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center">Original Filename</TableHead>
+                                            <TableHead className="font-bold text-[10px] uppercase tracking-wider text-slate-500 text-center w-[150px]">Action</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {loadingAuditLogs ? (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                                                    Loading logs...
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : executiveAuditLogs.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                                                    No audit logs found.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            executiveAuditLogs.map((log) => (
+                                                <TableRow key={log.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                                    <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                                                        {format(new Date(log.uploaded_at), "dd MMM yyyy, hh:mm a")}
+                                                    </TableCell>
+                                                    <TableCell className="p-4 text-sm font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap text-center">
+                                                        {log.uploaded_by}
+                                                    </TableCell>
+                                                    <TableCell className="p-4 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap text-center">
+                                                        {log.email_id}
+                                                    </TableCell>
+                                                    <TableCell className="p-4 text-sm text-slate-800 dark:text-slate-200 whitespace-nowrap text-center">
+                                                        {log.filename}
+                                                    </TableCell>
+                                                    <TableCell className="p-4 text-center whitespace-nowrap">
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const { data, error } = await supabase.storage.from("bulk_uploads").download(log.file_url);
+                                                                    if (error) throw error;
+                                                                    const url = URL.createObjectURL(data);
+                                                                    const a = document.createElement("a");
+                                                                    a.href = url;
+                                                                    a.download = log.filename;
+                                                                    a.click();
+                                                                    URL.revokeObjectURL(url);
+                                                                } catch (err) {
+                                                                    alert("Failed to download file.");
+                                                                }
+                                                            }}
+                                                            className="gap-2 text-xs h-8 border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                        >
+                                                            <Download size={14} />
+                                                            Download File
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDatePicker && (
+                <CustomDatePicker
+                    selectedDate={dateStr}
+                    onChange={(date) => {
+                        if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                        setDateStr(date);
+                    }}
+                    onClose={() => setShowDatePicker(false)}
+                />
+            )}
+
+            {showStartDatePicker && (
+                <CustomDatePicker
+                    selectedDate={startDateStr}
+                    onChange={(date) => {
+                        if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                        setStartDateStr(date);
+                    }}
+                    onClose={() => setShowStartDatePicker(false)}
+                />
+            )}
+
+            {showEndDatePicker && (
+                <CustomDatePicker
+                    selectedDate={endDateStr}
+                    onChange={(date) => {
+                        if (isDirty && !window.confirm("You have unsaved rows. Changing date will discard them. Continue?")) return;
+                        setEndDateStr(date);
+                    }}
+                    onClose={() => setShowEndDatePicker(false)}
+                />
+            )}
+            u    </div>
+    );
 }
 
 
