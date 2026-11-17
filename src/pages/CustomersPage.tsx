@@ -644,12 +644,29 @@ export default function CustomersPage() {
 
               {/* Standard Address */}
               <div className="space-y-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
-                <span className="text-slate-400 block text-[10px] uppercase font-semibold">Current Address</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Current Address</span>
+                  {viewingCustomer.has_current_address_proof && (
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                      ✓ Address Proof Verified
+                    </span>
+                  )}
+                </div>
                 <span className="font-medium text-slate-900 dark:text-white block">
-                  {[viewingCustomer.address, viewingCustomer.city, viewingCustomer.district, viewingCustomer.pincode ? `PIN: ${viewingCustomer.pincode}` : ''].filter(Boolean).join(', ') || 'N/A'}
+                  {[viewingCustomer.address, viewingCustomer.city, viewingCustomer.district, viewingCustomer.state, viewingCustomer.pincode ? `PIN: ${viewingCustomer.pincode}` : ''].filter(Boolean).join(', ') || 'N/A'}
                 </span>
                 {viewingCustomer.current_address_landmark && (
                   <span className="text-slate-500 block text-[11px]">Landmark: {viewingCustomer.current_address_landmark}</span>
+                )}
+                {viewingCustomer.current_address_proof_url && (
+                  <a 
+                    href={viewingCustomer.current_address_proof_url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="inline-block text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold hover:underline pt-1"
+                  >
+                    View Address Proof Document ↗
+                  </a>
                 )}
               </div>
 

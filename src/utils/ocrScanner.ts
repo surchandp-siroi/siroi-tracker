@@ -9,6 +9,10 @@ export interface ScannedIdData {
     rawDob: string | null;
     gender?: string | null;
     fatherName?: string | null;
+    address?: string | null;
+    pincode?: string | null;
+    district?: string | null;
+    state?: string | null;
     confidence: number;
 }
 
@@ -284,13 +288,38 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
         }
     }
 
+    // 5. Address Extraction (especially from back of card or DigiLocker)
+    let address: string | null = null;
+    let pincode: string | null = null;
+
+    const addressMatch = rawText.match(/(?:Address|C\/O|S\/O|D\/O|W\/O)\s*[:\-]?\s*([\s\S]+?)(?=(?:\b\d{4}\s*\d{4}\s*\d{4}\b)|(?:www\.uidai\.gov\.in)|$)/i);
+    if (addressMatch) {
+        let rawAddr = addressMatch[1]
+            .replace(/\n+/g, ', ')
+            .replace(/[^A-Za-z0-9\s,.\-/]/g, '')
+            .replace(/\s+,/g, ',')
+            .replace(/,\s*,/g, ', ')
+            .trim();
+        rawAddr = rawAddr.replace(/^,\s*/, '').replace(/,\s*$/, '');
+        if (rawAddr.length >= 10) {
+            address = rawAddr;
+        }
+    }
+
+    const pinMatch = rawText.match(/\b([1-9][0-9]{2}\s?[0-9]{3})\b/);
+    if (pinMatch) {
+        pincode = pinMatch[1].replace(/\s+/g, '');
+    }
+
     return {
         documentType: 'AADHAAR',
         idNumber,
         fullName,
         dob,
         rawDob,
-        gender
+        gender,
+        address,
+        pincode
     };
 }
 
@@ -423,6 +452,69 @@ export async function scanIdentityDocument(
             rawDob: parsedData.rawDob || null,
             gender: parsedData.gender || null,
             fatherName: parsedData.fatherName || null,
+            address: parsedData.address || null,
+            pincode: parsedData.pincode || null,
+            confidence
+        };
+    } finally {
+        await worker.terminate();
+    }
+}
+
+// Scanned Salary Slip OCR Model
+export interface ScannedSalaryData {
+    rawText: string;
+    detectedSalary: number | null;
+    monthYear: string | null;
+    companyName: string | null;
+    confidence: number;
+}
+
+export async function scanSalarySlip(
+    file: File,
+    onProgress?: (progress: number, status: string) => void
+): Promise<ScannedSalaryData> {
+    onProgress?.(10, 'Initializing OCR engine...');
+    const worker = await createWorker('eng');
+    try {
+        onProgress?.(35, 'Scanning salary slip document...');
+        const result = await worker.recognize(file);
+        const text = result.data.text || '';
+        const confidence = result.data.confidence || 0;
+        onProgress?.(75, 'Analyzing earnings and net payable salary...');
+
+        // 1. Detect Net Salary / Net Pay / Take Home Pay
+        let detectedSalary: number | null = null;
+        const salaryMatches = [
+            /(?:Net\s*(?:Pay|Salary|Amount|Payable)|Take\s*Home(?:\s*Pay)?|Total\s*Net(?:\s*Amount)?|Salary\s*Credited)[\s:]*₹?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?|[0-9]{4,8})/i,
+            /(?:Gross\s*(?:Salary|Pay|Earnings))[\s:]*₹?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?|[0-9]{4,8})/i
+        ];
+
+        for (const regex of salaryMatches) {
+            const m = text.match(regex);
+            if (m && m[1]) {
+                const cleanNum = parseFloat(m[1].replace(/,/g, ''));
+                if (!isNaN(cleanNum) && cleanNum >= 5000 && cleanNum <= 5000000) {
+                    detectedSalary = Math.round(cleanNum);
+                    break;
+                }
+            }
+        }
+
+        // 2. Detect Month and Year (e.g. "Payslip for July 2026", "Month: January 2026")
+        let monthYear: string | null = null;
+        const monthRegex = /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[,\s]+(202[0-9])/i;
+        const mM = text.match(monthRegex);
+        if (mM) {
+            monthYear = `${mM[1]} ${mM[2]}`;
+        }
+
+        onProgress?.(100, 'Salary slip scan complete!');
+        return {
+            rawText: text,
+            detectedSalary,
+            monthYear,
+            companyName: null,
             confidence
         };
     } finally {

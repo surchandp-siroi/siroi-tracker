@@ -31,6 +31,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
   const [pincode, setPincode] = useState(customer.pincode || '');
   const [city, setCity] = useState(customer.city || '');
   const [district, setDistrict] = useState(customer.district || '');
+  const [state, setState] = useState(customer.state || '');
   const [phoneNumber, setPhoneNumber] = useState(customer.phone_number || '');
   const [emailId, setEmailId] = useState(customer.email_id || '');
   const [incomeType, setIncomeType] = useState(customer.income_type || '');
@@ -111,6 +112,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
           pincode,
           city,
           district,
+          state: state.trim() || null,
           phone_number: phoneNumber,
           email_id: emailId || null,
           income_type: incomeType || null,
@@ -277,8 +279,8 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
             {/* Address */}
             <div className="space-y-3">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Residential Address</span>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="space-y-1.5 md:col-span-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="space-y-1.5 md:col-span-4">
                   <Input required value={address} onChange={e => setAddress(e.target.value)} placeholder="Street Address / House No." className="h-10" />
                 </div>
                 <div className="space-y-1.5">
@@ -289,6 +291,9 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                 </div>
                 <div className="space-y-1.5">
                   <Input required value={district} onChange={e => setDistrict(e.target.value)} placeholder="District" className="h-10" />
+                </div>
+                <div className="space-y-1.5">
+                  <Input value={state} onChange={e => setState(e.target.value)} placeholder="State" className="h-10" />
                 </div>
               </div>
             </div>

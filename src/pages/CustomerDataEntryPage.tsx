@@ -36,7 +36,12 @@ import {
     Upload,
     Eye,
     FileCheck,
-    AlertCircle
+    AlertCircle,
+    Sparkles,
+    UploadCloud,
+    FileSpreadsheet,
+    Paperclip,
+    Save
 } from 'lucide-react';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
 import { NumericFormat } from 'react-number-format';
@@ -47,9 +52,47 @@ import {
     DeviationItem, 
     compareNames, 
     compareDates, 
-    formatDisplayDate 
+    formatDisplayDate,
+    scanSalarySlip,
+    ScannedSalaryData
 } from '@/utils/ocrScanner';
+import { lookupPincode } from '@/utils/pincodeLookup';
 import { KycDeviationDialog } from '@/components/KycDeviationDialog';
+
+export const BANK_OPTIONS = [
+    'State Bank of India (SBI)',
+    'HDFC Bank',
+    'ICICI Bank',
+    'Axis Bank',
+    'Kotak Mahindra Bank',
+    'Godrej Capital',
+    'Punjab National Bank (PNB)',
+    'Bank of Baroda (BOB)',
+    'IndusInd Bank',
+    'Canara Bank',
+    'Union Bank of India',
+    'IDFC First Bank',
+    'Federal Bank',
+    'Bandhan Bank',
+    'Yes Bank',
+    'Central Bank of India',
+    'Indian Bank',
+    'Bank of India',
+    'RBL Bank',
+    'South Indian Bank',
+    'Manipur Rural Bank',
+    'Other Bank / NBFC'
+];
+
+export const OBLIGATION_TYPES = [
+    'Personal Loan (BT Possible)',
+    'Home Loan',
+    'Credit Card',
+    '2 Wheeler Loan',
+    '4 Wheeler Loan',
+    'Gold Loan',
+    'Other Obligation'
+];
 
 // IndusInd Bank / Retail FOIR Matrix (DBR Ratio based on Employer Cat, Owned House, Mortgage TradeLine, Income Band)
 const FOIR_MATRIX: Record<string, number> = {
@@ -156,12 +199,51 @@ export default function CustomerDataEntryPage() {
     const [currentAddressLandmark, setCurrentAddressLandmark] = useState('');
     const [yearsInCurrentResidence, setYearsInCurrentResidence] = useState('');
     const [yearsInCurrentCity, setYearsInCurrentCity] = useState('');
+    const [state, setState] = useState('');
+    const [hasCurrentAddressProof, setHasCurrentAddressProof] = useState<boolean>(false);
+    const [currentAddressProofFile, setCurrentAddressProofFile] = useState<File | null>(null);
+    const [currentAddressProofUrl, setCurrentAddressProofUrl] = useState<string>('');
+    const [isUploadingAddressProof, setIsUploadingAddressProof] = useState<boolean>(false);
+
+    // Permanent Address Structured Fields
     const [isSameAsCurrentAddress, setIsSameAsCurrentAddress] = useState(false);
+    const [permanentStreet, setPermanentStreet] = useState('');
+    const [permanentPincode, setPermanentPincode] = useState('');
+    const [permanentCity, setPermanentCity] = useState('');
+    const [permanentDistrict, setPermanentDistrict] = useState('');
+    const [permanentState, setPermanentState] = useState('');
     const [permanentAddress, setPermanentAddress] = useState('');
     const [permanentAddressLandmark, setPermanentAddressLandmark] = useState('');
     const [permanentPhone, setPermanentPhone] = useState('');
+
     const [salaryBankName, setSalaryBankName] = useState('');
+    const [customBankName, setCustomBankName] = useState('');
     const [salaryAccountNumber, setSalaryAccountNumber] = useState('');
+    const [salarySlipMode, setSalarySlipMode] = useState<'individual' | 'combined'>('individual');
+    const [salarySlips, setSalarySlips] = useState<Array<{
+        id: string;
+        monthYear: string;
+        file: File | null;
+        fileUrl: string;
+        isScanning?: boolean;
+        detectedSalary?: number | null;
+    }>>([
+        { id: '1', monthYear: 'Last Month', file: null, fileUrl: '' },
+        { id: '2', monthYear: '2 Months Ago', file: null, fileUrl: '' },
+        { id: '3', monthYear: '3 Months Ago', file: null, fileUrl: '' },
+    ]);
+    const [combinedSlip, setCombinedSlip] = useState<{
+        monthYear: string;
+        file: File | null;
+        fileUrl: string;
+        isScanning?: boolean;
+        detectedSalary?: number | null;
+    }>({
+        monthYear: 'Last 3 Months Combined',
+        file: null,
+        fileUrl: ''
+    });
+
     const [tenure, setTenure] = useState('');
     const [ref1Name, setRef1Name] = useState('');
     const [ref1Phone, setRef1Phone] = useState('');
@@ -191,6 +273,7 @@ export default function CustomerDataEntryPage() {
 
     const [deviations, setDeviations] = useState<DeviationItem[]>([]);
     const [isDeviationDialogOpen, setIsDeviationDialogOpen] = useState<boolean>(false);
+    const [isEarlySaveModalOpen, setIsEarlySaveModalOpen] = useState<boolean>(false);
     const aadhaarInputRef = useRef<HTMLInputElement>(null);
     const panInputRef = useRef<HTMLInputElement>(null);
 
@@ -206,6 +289,7 @@ export default function CustomerDataEntryPage() {
     const [absoluteMaxCap, setAbsoluteMaxCap] = useState<number>(2500000);
     const [existingLoans, setExistingLoans] = useState<Array<{
         id: string;
+        loan_type: string;
         name: string;
         emi_amount: string;
         outstanding_principal: string;
@@ -338,7 +422,7 @@ export default function CustomerDataEntryPage() {
                 { id: 'family', title: 'Personal & Family', shortTitle: 'Family', icon: Users },
                 { id: 'employment', title: 'Work & Office', shortTitle: 'Employment', icon: Briefcase },
                 { id: 'residential', title: 'Addresses & Stay', shortTitle: 'Addresses', icon: Home },
-                { id: 'banking_refs', title: 'Banking & References', shortTitle: 'Bank & Refs', icon: ShieldCheck },
+                { id: 'banking_refs', title: 'Banking Details', shortTitle: 'Banking', icon: ShieldCheck },
                 { id: 'eligibility', title: 'Eligibility', shortTitle: 'Eligibility', icon: Calculator },
             ];
         }
@@ -396,16 +480,218 @@ export default function CustomerDataEntryPage() {
         fetchEmployees();
     }, [entryLocation]);
 
+    // Auto-fill District & State based on Pincode
+    const handlePincodeChange = async (val: string) => {
+        setPincode(val);
+        const clean = val.replace(/\D/g, '');
+        if (clean.length === 6) {
+            const details = await lookupPincode(clean);
+            if (details) {
+                if (details.district) setDistrict(details.district);
+                if (details.state) setState(details.state);
+                if (details.city && !city) setCity(details.city);
+            }
+        }
+    };
+
+    // Auto-fill Permanent District & State based on Pincode
+    const handlePermanentPincodeChange = async (val: string) => {
+        setPermanentPincode(val);
+        const clean = val.replace(/\D/g, '');
+        if (clean.length === 6) {
+            const details = await lookupPincode(clean);
+            if (details) {
+                if (details.district) setPermanentDistrict(details.district);
+                if (details.state) setPermanentState(details.state);
+                if (details.city && !permanentCity) setPermanentCity(details.city);
+            }
+        }
+    };
+
+    // Pull Current Address from Scanned Aadhaar Card
+    const handlePullCurrentAddressFromAadhaar = async () => {
+        if (scannedAadhaar?.address) {
+            setAddress(scannedAadhaar.address);
+        }
+        if (scannedAadhaar?.pincode) {
+            setPincode(scannedAadhaar.pincode);
+            const details = await lookupPincode(scannedAadhaar.pincode);
+            if (details) {
+                if (details.district) setDistrict(details.district);
+                if (details.state) setState(details.state);
+                if (details.city) setCity(details.city);
+            }
+        }
+    };
+
+    // Pull Permanent Address from Scanned Aadhaar Card
+    const handlePullPermanentAddressFromAadhaar = async () => {
+        if (scannedAadhaar?.address) {
+            setPermanentStreet(scannedAadhaar.address);
+            setPermanentAddress(scannedAadhaar.address);
+        }
+        if (scannedAadhaar?.pincode) {
+            setPermanentPincode(scannedAadhaar.pincode);
+            const details = await lookupPincode(scannedAadhaar.pincode);
+            if (details) {
+                if (details.district) setPermanentDistrict(details.district);
+                if (details.state) setPermanentState(details.state);
+                if (details.city) setPermanentCity(details.city);
+            }
+        }
+    };
+
     // Handle "Same as Current Address" toggle for Loans
     const handleSameAddressToggle = (checked: boolean) => {
         setIsSameAsCurrentAddress(checked);
         if (checked) {
-            const combined = [address, city, district, pincode ? `PIN: ${pincode}` : ''].filter(Boolean).join(', ');
-            setPermanentAddress(combined || address);
+            setPermanentStreet(address);
+            setPermanentPincode(pincode);
+            setPermanentCity(city);
+            setPermanentDistrict(district);
+            setPermanentState(state);
             setPermanentAddressLandmark(currentAddressLandmark);
+            const combined = [address, city, district, state, pincode ? `PIN: ${pincode}` : ''].filter(Boolean).join(', ');
+            setPermanentAddress(combined || address);
         } else {
-            setPermanentAddress('');
+            setPermanentStreet('');
+            setPermanentPincode('');
+            setPermanentCity('');
+            setPermanentDistrict('');
+            setPermanentState('');
             setPermanentAddressLandmark('');
+            setPermanentAddress('');
+        }
+    };
+
+    // Handle Current Address Proof Upload
+    const handleAddressProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setCurrentAddressProofFile(file);
+        setIsUploadingAddressProof(true);
+        setError('');
+        try {
+            const fileExt = file.name.split('.').pop() || 'jpg';
+            const cleanPan = panNumber || 'UNKNOWN_PAN';
+            const fileName = `${cleanPan}_address_proof_${Date.now()}.${fileExt}`;
+            const filePath = `address_proofs/${fileName}`;
+
+            const { error: uploadError, data } = await supabase.storage
+                .from('customer_kyc')
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabase.storage
+                .from('customer_kyc')
+                .getPublicUrl(data.path);
+
+            setCurrentAddressProofUrl(urlData.publicUrl);
+            setHasCurrentAddressProof(true);
+        } catch (err: any) {
+            setError(`Address Proof upload error: ${err.message || 'Failed to upload'}`);
+        } finally {
+            setIsUploadingAddressProof(false);
+        }
+    };
+
+    // Handle Individual Salary Slip Upload
+    const handleSalarySlipUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const fileExt = file.name.split('.').pop() || 'pdf';
+            const cleanPan = panNumber || 'UNKNOWN_PAN';
+            const fileName = `${cleanPan}_slip_${index + 1}_${Date.now()}.${fileExt}`;
+            const filePath = `salary_slips/${fileName}`;
+
+            const { error: uploadError, data } = await supabase.storage
+                .from('customer_kyc')
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabase.storage
+                .from('customer_kyc')
+                .getPublicUrl(data.path);
+
+            setSalarySlips(prev => prev.map((s, idx) => idx === index ? { ...s, file, fileUrl: urlData.publicUrl } : s));
+        } catch (err: any) {
+            setError(`Salary slip upload failed: ${err.message}`);
+        }
+    };
+
+    // Handle OCR Scan of an Individual Salary Slip
+    const handleScanSalarySlip = async (index: number) => {
+        const slip = salarySlips[index];
+        if (!slip?.file) return;
+
+        setSalarySlips(prev => prev.map((s, idx) => idx === index ? { ...s, isScanning: true } : s));
+        try {
+            const scanned = await scanSalarySlip(slip.file);
+            setSalarySlips(prev => prev.map((s, idx) => idx === index ? {
+                ...s,
+                isScanning: false,
+                detectedSalary: scanned.detectedSalary,
+                monthYear: scanned.monthYear || s.monthYear
+            } : s));
+
+            if (scanned.detectedSalary) {
+                setMonthlySalary(String(scanned.detectedSalary));
+            }
+        } catch (err: any) {
+            setError(`Salary slip scan failed: ${err.message}`);
+            setSalarySlips(prev => prev.map((s, idx) => idx === index ? { ...s, isScanning: false } : s));
+        }
+    };
+
+    // Handle Combined 3-Month Salary Statement Upload
+    const handleCombinedSlipUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const fileExt = file.name.split('.').pop() || 'pdf';
+            const cleanPan = panNumber || 'UNKNOWN_PAN';
+            const fileName = `${cleanPan}_combined_slip_${Date.now()}.${fileExt}`;
+            const filePath = `salary_slips/${fileName}`;
+
+            const { error: uploadError, data } = await supabase.storage
+                .from('customer_kyc')
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabase.storage
+                .from('customer_kyc')
+                .getPublicUrl(data.path);
+
+            setCombinedSlip(prev => ({ ...prev, file, fileUrl: urlData.publicUrl }));
+        } catch (err: any) {
+            setError(`Combined slip upload failed: ${err.message}`);
+        }
+    };
+
+    // Handle OCR Scan on Combined Statement
+    const handleScanCombinedSlip = async () => {
+        if (!combinedSlip.file) return;
+        setCombinedSlip(prev => ({ ...prev, isScanning: true }));
+        try {
+            const scanned = await scanSalarySlip(combinedSlip.file);
+            setCombinedSlip(prev => ({
+                ...prev,
+                isScanning: false,
+                detectedSalary: scanned.detectedSalary,
+                monthYear: scanned.monthYear || prev.monthYear
+            }));
+            if (scanned.detectedSalary) {
+                setMonthlySalary(String(scanned.detectedSalary));
+            }
+        } catch (err: any) {
+            setError(`Combined statement scan failed: ${err.message}`);
+            setCombinedSlip(prev => ({ ...prev, isScanning: false }));
         }
     };
 
@@ -415,6 +701,7 @@ export default function CustomerDataEntryPage() {
             ...prev,
             {
                 id: Date.now().toString(),
+                loan_type: 'Personal Loan (BT Possible)',
                 name: '',
                 emi_amount: '',
                 outstanding_principal: '',
@@ -830,10 +1117,51 @@ export default function CustomerDataEntryPage() {
                 setCurrentAddressLandmark(data.current_address_landmark || '');
                 setYearsInCurrentResidence(data.years_in_current_residence || '');
                 setYearsInCurrentCity(data.years_in_current_city || '');
+                setState(data.state || '');
+                setHasCurrentAddressProof(Boolean(data.has_current_address_proof));
+                setCurrentAddressProofUrl(data.current_address_proof_url || '');
+                setPermanentStreet(data.permanent_street || '');
+                setPermanentPincode(data.permanent_pincode || '');
+                setPermanentCity(data.permanent_city || '');
+                setPermanentDistrict(data.permanent_district || '');
+                setPermanentState(data.permanent_state || '');
                 setPermanentAddress(data.permanent_address || '');
                 setPermanentAddressLandmark(data.permanent_address_landmark || '');
                 setPermanentPhone(data.permanent_phone || '');
-                setSalaryBankName(data.salary_bank_name || '');
+                
+                if (data.salary_bank_name) {
+                    if (BANK_OPTIONS.includes(data.salary_bank_name)) {
+                        setSalaryBankName(data.salary_bank_name);
+                        setCustomBankName('');
+                    } else {
+                        setSalaryBankName('Other Bank / NBFC');
+                        setCustomBankName(data.salary_bank_name);
+                    }
+                } else {
+                    setSalaryBankName('');
+                    setCustomBankName('');
+                }
+
+                if (data.salary_slip_urls && Array.isArray(data.salary_slip_urls) && data.salary_slip_urls.length > 0) {
+                    if (data.salary_slip_urls.length === 1 && (data.salary_slip_urls[0].monthYear?.toLowerCase().includes('combined') || data.salary_slip_urls[0].url)) {
+                        setSalarySlipMode('combined');
+                        setCombinedSlip({
+                            monthYear: data.salary_slip_urls[0].monthYear || 'Last 3 Months Combined',
+                            file: null,
+                            fileUrl: data.salary_slip_urls[0].url || '',
+                            detectedSalary: data.salary_slip_urls[0].detectedSalary || null
+                        });
+                    } else {
+                        setSalarySlipMode('individual');
+                        setSalarySlips(data.salary_slip_urls.map((s: any, idx: number) => ({
+                            id: String(idx + 1),
+                            monthYear: s.monthYear || `Month ${idx + 1}`,
+                            file: null,
+                            fileUrl: s.url || '',
+                            detectedSalary: s.detectedSalary || null
+                        })));
+                    }
+                }
                 setSalaryAccountNumber(data.salary_account_number || '');
                 setTenure(data.tenure || '');
                 setRef1Name(data.ref1_name || '');
@@ -983,6 +1311,292 @@ export default function CustomerDataEntryPage() {
         }
     };
     
+    const buildCustomerPayload = (selectedAuthor?: string) => {
+        const author = selectedAuthor || entryPersonName;
+        return {
+            pan_number: panNumber.toUpperCase(),
+            customer_name: formatCustomerName(customerName, true),
+            customer_type: customerType,
+            category: mapCustomerTypeToCategory(customerType),
+            product: product,
+            amount: Number(amount) || 0,
+            aadhar_number: isLoan ? (aadharNumber.trim() || null) : null,
+            association_date: associationDate || null,
+            address: address.trim() || null,
+            pincode: pincode.trim() || null,
+            city: city.trim() || null,
+            district: district.trim() || null,
+            state: state.trim() || null,
+            phone_number: phoneNumber.trim(),
+            email_id: emailId.trim() || null,
+            income_type: isForex ? null : (incomeType || null),
+            company_name: isForex ? null : (companyName.trim() || null),
+            yearly_income_range: isForex ? null : (yearlyIncomeRange || null),
+            birthday: isForex ? null : (birthday || null),
+            anniversary: isForex ? null : (anniversary || null),
+            entry_person_name: author,
+            entry_location: entryLocation,
+
+            // KYC Document Uploads & Verification Status
+            aadhar_file_url: isLoan ? (aadharFileUrl || null) : null,
+            pan_file_url: isLoan ? (panFileUrl || null) : null,
+            kyc_verification_status: isLoan ? {
+                is_verified: deviations.length > 0 && !deviations.some(d => d.status === 'MISMATCH'),
+                has_deviations: deviations.some(d => d.status === 'MISMATCH' || d.status === 'WARNING'),
+                deviations: deviations,
+                scanned_aadhaar: scannedAadhaar,
+                scanned_pan: scannedPan,
+            } : null,
+
+            // Loan-specific KYC attributes
+            father_name: isLoan ? (fatherName.trim() || null) : null,
+            mother_name: isLoan ? (motherName.trim() || null) : null,
+            marital_status: isLoan ? (maritalStatus || null) : null,
+            spouse_name: isLoan ? (spouseName.trim() || null) : null,
+            education_qualification: isLoan ? (educationQualification || null) : null,
+            designation: isLoan ? (designation.trim() || null) : null,
+            official_email: isLoan ? (officialEmail.trim() || null) : null,
+            office_phone: isLoan ? (officePhone.trim() || null) : null,
+            office_address: isLoan ? (officeAddress.trim() || null) : null,
+            office_landmark: isLoan ? (officeLandmark.trim() || null) : null,
+            residence_type: isLoan ? (residenceType || null) : null,
+            current_address_landmark: isLoan ? (currentAddressLandmark.trim() || null) : null,
+            years_in_current_residence: isLoan ? (yearsInCurrentResidence.trim() || null) : null,
+            years_in_current_city: isLoan ? (yearsInCurrentCity.trim() || null) : null,
+            has_current_address_proof: isLoan ? Boolean(hasCurrentAddressProof) : false,
+            current_address_proof_url: isLoan ? (currentAddressProofUrl || null) : null,
+            permanent_street: isLoan ? (permanentStreet.trim() || null) : null,
+            permanent_pincode: isLoan ? (permanentPincode.trim() || null) : null,
+            permanent_city: isLoan ? (permanentCity.trim() || null) : null,
+            permanent_district: isLoan ? (permanentDistrict.trim() || null) : null,
+            permanent_state: isLoan ? (permanentState.trim() || null) : null,
+            permanent_address: isLoan ? (
+                permanentAddress.trim() || 
+                [permanentStreet, permanentCity, permanentDistrict, permanentState, permanentPincode ? `PIN: ${permanentPincode}` : ''].filter(Boolean).join(', ') || 
+                null
+            ) : null,
+            permanent_address_landmark: isLoan ? (permanentAddressLandmark.trim() || null) : null,
+            permanent_phone: isLoan ? (permanentPhone.trim() || null) : null,
+            salary_bank_name: isLoan ? (
+                salaryBankName === 'Other Bank / NBFC'
+                    ? (customBankName.trim() || 'Other Bank / NBFC')
+                    : (salaryBankName.trim() || null)
+            ) : null,
+            salary_account_number: isLoan ? (salaryAccountNumber.trim() || null) : null,
+            salary_slip_urls: isLoan ? (
+                salarySlipMode === 'individual'
+                    ? salarySlips.filter(s => !!s.fileUrl).map(s => ({
+                        monthYear: s.monthYear,
+                        url: s.fileUrl,
+                        detectedSalary: s.detectedSalary || null
+                    }))
+                    : (combinedSlip.fileUrl ? [{
+                        monthYear: combinedSlip.monthYear,
+                        url: combinedSlip.fileUrl,
+                        detectedSalary: combinedSlip.detectedSalary || null
+                    }] : null)
+            ) : null,
+            tenure: isLoan ? (tenure.trim() || null) : null,
+            ref1_name: isLoan ? (ref1Name.trim() || null) : null,
+            ref1_phone: isLoan ? (ref1Phone.trim() || null) : null,
+            ref1_address: isLoan ? (ref1Address.trim() || null) : null,
+            ref1_relation: isLoan ? (ref1Relation.trim() || null) : null,
+            ref2_name: isLoan ? (ref2Name.trim() || null) : null,
+            ref2_phone: isLoan ? (ref2Phone.trim() || null) : null,
+            ref2_address: isLoan ? (ref2Address.trim() || null) : null,
+            ref2_relation: isLoan ? (ref2Relation.trim() || null) : null,
+
+            // Loan Eligibility Engine Calculation Snapshot
+            loan_eligibility: isLoan ? {
+                monthly_salary: Number(monthlySalary) || 0,
+                employer_category: employerCategory,
+                owns_home: eligibilityResults.effectiveOwnsHome,
+                has_bureau_hl_lap: hasBureauHlLap,
+                interest_rate_annual: interestRateAnnual,
+                tenure_months: calcTenureMonths,
+                bank_multiplier: bankMultiplier,
+                absolute_max_cap: absoluteMaxCap,
+                existing_loans: existingLoans,
+                results: eligibilityResults
+            } : null,
+        };
+    };
+
+    const resetFormFields = () => {
+        setSuccess(false);
+        setStep(1);
+        setActiveSectionIndex(0);
+        setPanNumber('');
+        setCustomerName('');
+        setCustomerType('');
+        setProduct('');
+        setAmount('');
+        setAadharNumber('');
+        setAssociationDate('');
+        setAddress('');
+        setPincode('');
+        setCity('');
+        setDistrict('');
+        setState('');
+        setPhoneNumber('');
+        setEmailId('');
+        setIncomeType('');
+        setCompanyName('');
+        setYearlyIncomeRange('');
+        setBirthday('');
+        setAnniversary('');
+        setEntryPersonName('');
+        setFatherName('');
+        setMotherName('');
+        setMaritalStatus('');
+        setSpouseName('');
+        setEducationQualification('');
+        setDesignation('');
+        setOfficialEmail('');
+        setOfficePhone('');
+        setOfficeAddress('');
+        setOfficeLandmark('');
+        setResidenceType('');
+        setCurrentAddressLandmark('');
+        setYearsInCurrentResidence('');
+        setYearsInCurrentCity('');
+        setHasCurrentAddressProof(false);
+        setCurrentAddressProofFile(null);
+        setCurrentAddressProofUrl('');
+        setIsSameAsCurrentAddress(false);
+        setPermanentStreet('');
+        setPermanentPincode('');
+        setPermanentCity('');
+        setPermanentDistrict('');
+        setPermanentState('');
+        setPermanentAddress('');
+        setPermanentAddressLandmark('');
+        setPermanentPhone('');
+        setSalaryBankName('');
+        setCustomBankName('');
+        setSalaryAccountNumber('');
+        setSalarySlipMode('individual');
+        setSalarySlips([
+            { id: '1', monthYear: 'Last Month', file: null, fileUrl: '' },
+            { id: '2', monthYear: '2 Months Ago', file: null, fileUrl: '' },
+            { id: '3', monthYear: '3 Months Ago', file: null, fileUrl: '' },
+        ]);
+        setCombinedSlip({
+            monthYear: 'Last 3 Months Combined',
+            file: null,
+            fileUrl: ''
+        });
+        setTenure('');
+        setRef1Name('');
+        setRef1Phone('');
+        setRef1Address('');
+        setRef1Relation('');
+        setRef2Name('');
+        setRef2Phone('');
+        setRef2Address('');
+        setRef2Relation('');
+        setMonthlySalary('');
+        setEmployerCategory('A/B/G');
+        setCustomOwnsHome(null);
+        setHasBureauHlLap(false);
+        setInterestRateAnnual(11.0);
+        setCalcTenureMonths(36);
+        setBankMultiplier(24);
+        setManualFoirPercent('');
+        setAbsoluteMaxCap(2500000);
+        setExistingLoans([]);
+        setAadharFile(null);
+        setAadharFileUrl('');
+        setPanFile(null);
+        setPanFileUrl('');
+        setScannedAadhaar(null);
+        setScannedPan(null);
+        setDeviations([]);
+        setExistingRecord(null);
+    };
+
+    const executeCustomerSave = async (authorName?: string) => {
+        const finalAuthor = authorName || entryPersonName;
+        if (!finalAuthor) {
+            setIsEarlySaveModalOpen(true);
+            return;
+        }
+
+        setError('');
+        setIsLoading(true);
+
+        try {
+            const customerPayload = buildCustomerPayload(finalAuthor);
+
+            if (existingRecord?.id) {
+                const { error: updateError } = await supabase
+                    .from('customer_data')
+                    .update(customerPayload)
+                    .eq('id', existingRecord.id);
+                    
+                if (updateError) throw updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('customer_data')
+                    .insert([customerPayload]);
+                    
+                if (insertError) throw insertError;
+            }
+            
+            setIsEarlySaveModalOpen(false);
+            setSuccess(true);
+            setTimeout(() => {
+                resetFormFields();
+            }, 2500);
+        } catch (err: any) {
+            setError(err.message || 'Failed to save customer data.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDirectSaveCustomer = async () => {
+        // Validate Step 1 basics
+        if (!customerName.trim()) { setError('Please enter Customer Name.'); setActiveSectionIndex(0); return; }
+        if (!customerType) { setError('Please select a Customer Type.'); setActiveSectionIndex(0); return; }
+        if (!product) { setError('Please select a Product.'); setActiveSectionIndex(0); return; }
+        if (!amount || Number(amount) <= 0) { setError('Please enter a valid positive Amount.'); setActiveSectionIndex(0); return; }
+        if (!phoneNumber.trim()) { setError('Please enter Phone Number.'); setActiveSectionIndex(0); return; }
+
+        if (isLoan) {
+            const cleanAadhaar = aadharNumber.replace(/\s+/g, '');
+            if (!cleanAadhaar || cleanAadhaar.length !== 12) {
+                setError('Aadhaar Number is mandatory for Loan customers (Must be 12 digits).');
+                setActiveSectionIndex(0);
+                return;
+            }
+            if (!aadharFile && !aadharFileUrl) {
+                setError('Please upload the Aadhaar Card document for identity verification.');
+                setActiveSectionIndex(0);
+                return;
+            }
+            if (!panFile && !panFileUrl) {
+                setError('Please upload the PAN Card document for identity verification.');
+                setActiveSectionIndex(0);
+                return;
+            }
+        }
+
+        // Validate Address
+        if (!address.trim() || !pincode.trim() || !city.trim() || !district.trim()) {
+            setError('Please fill in complete Address details.');
+            setActiveSectionIndex(isLoan ? 3 : 1);
+            return;
+        }
+
+        if (!entryPersonName) {
+            setIsEarlySaveModalOpen(true);
+            return;
+        }
+
+        await executeCustomerSave(entryPersonName);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -1022,180 +1636,7 @@ export default function CustomerDataEntryPage() {
             }
         }
 
-        setError('');
-        setIsLoading(true);
-        
-        try {
-            const customerPayload = {
-                pan_number: panNumber.toUpperCase(),
-                customer_name: formatCustomerName(customerName, true),
-                customer_type: customerType,
-                category: mapCustomerTypeToCategory(customerType),
-                product: product,
-                amount: Number(amount) || 0,
-                aadhar_number: isLoan ? (aadharNumber.trim() || null) : null,
-                association_date: associationDate || null,
-                address: address.trim() || null,
-                pincode: pincode.trim() || null,
-                city: city.trim() || null,
-                district: district.trim() || null,
-                phone_number: phoneNumber.trim(),
-                email_id: emailId.trim() || null,
-                income_type: isForex ? null : (incomeType || null),
-                company_name: isForex ? null : (companyName.trim() || null),
-                yearly_income_range: isForex ? null : (yearlyIncomeRange || null),
-                birthday: isForex ? null : (birthday || null),
-                anniversary: isForex ? null : (anniversary || null),
-                entry_person_name: entryPersonName,
-                entry_location: entryLocation,
-
-                // KYC Document Uploads & Verification Status
-                aadhar_file_url: isLoan ? (aadharFileUrl || null) : null,
-                pan_file_url: isLoan ? (panFileUrl || null) : null,
-                kyc_verification_status: isLoan ? {
-                    is_verified: deviations.length > 0 && !deviations.some(d => d.status === 'MISMATCH'),
-                    has_deviations: deviations.some(d => d.status === 'MISMATCH' || d.status === 'WARNING'),
-                    deviations: deviations,
-                    scanned_aadhaar: scannedAadhaar,
-                    scanned_pan: scannedPan,
-                } : null,
-
-                // Loan-specific KYC attributes
-                father_name: isLoan ? (fatherName.trim() || null) : null,
-                mother_name: isLoan ? (motherName.trim() || null) : null,
-                marital_status: isLoan ? (maritalStatus || null) : null,
-                spouse_name: isLoan ? (spouseName.trim() || null) : null,
-                education_qualification: isLoan ? (educationQualification || null) : null,
-                designation: isLoan ? (designation.trim() || null) : null,
-                official_email: isLoan ? (officialEmail.trim() || null) : null,
-                office_phone: isLoan ? (officePhone.trim() || null) : null,
-                office_address: isLoan ? (officeAddress.trim() || null) : null,
-                office_landmark: isLoan ? (officeLandmark.trim() || null) : null,
-                residence_type: isLoan ? (residenceType || null) : null,
-                current_address_landmark: isLoan ? (currentAddressLandmark.trim() || null) : null,
-                years_in_current_residence: isLoan ? (yearsInCurrentResidence.trim() || null) : null,
-                years_in_current_city: isLoan ? (yearsInCurrentCity.trim() || null) : null,
-                permanent_address: isLoan ? (permanentAddress.trim() || null) : null,
-                permanent_address_landmark: isLoan ? (permanentAddressLandmark.trim() || null) : null,
-                permanent_phone: isLoan ? (permanentPhone.trim() || null) : null,
-                salary_bank_name: isLoan ? (salaryBankName.trim() || null) : null,
-                salary_account_number: isLoan ? (salaryAccountNumber.trim() || null) : null,
-                tenure: isLoan ? (tenure.trim() || null) : null,
-                ref1_name: isLoan ? (ref1Name.trim() || null) : null,
-                ref1_phone: isLoan ? (ref1Phone.trim() || null) : null,
-                ref1_address: isLoan ? (ref1Address.trim() || null) : null,
-                ref1_relation: isLoan ? (ref1Relation.trim() || null) : null,
-                ref2_name: isLoan ? (ref2Name.trim() || null) : null,
-                ref2_phone: isLoan ? (ref2Phone.trim() || null) : null,
-                ref2_address: isLoan ? (ref2Address.trim() || null) : null,
-                ref2_relation: isLoan ? (ref2Relation.trim() || null) : null,
-
-                // Loan Eligibility Engine Calculation Snapshot
-                loan_eligibility: isLoan ? {
-                    monthly_salary: Number(monthlySalary) || 0,
-                    employer_category: employerCategory,
-                    owns_home: eligibilityResults.effectiveOwnsHome,
-                    has_bureau_hl_lap: hasBureauHlLap,
-                    interest_rate_annual: interestRateAnnual,
-                    tenure_months: calcTenureMonths,
-                    bank_multiplier: bankMultiplier,
-                    absolute_max_cap: absoluteMaxCap,
-                    existing_loans: existingLoans,
-                    results: eligibilityResults
-                } : null,
-            };
-
-            if (existingRecord?.id) {
-                const { error: updateError } = await supabase
-                    .from('customer_data')
-                    .update(customerPayload)
-                    .eq('id', existingRecord.id);
-                    
-                if (updateError) throw updateError;
-            } else {
-                const { error: insertError } = await supabase
-                    .from('customer_data')
-                    .insert([customerPayload]);
-                    
-                if (insertError) throw insertError;
-            }
-            
-            setSuccess(true);
-            setTimeout(() => {
-                setSuccess(false);
-                setStep(1);
-                setActiveSectionIndex(0);
-                setPanNumber('');
-                setCustomerName('');
-                setCustomerType('');
-                setProduct('');
-                setAmount('');
-                setAadharNumber('');
-                setAssociationDate('');
-                setAddress('');
-                setPincode('');
-                setCity('');
-                setDistrict('');
-                setPhoneNumber('');
-                setEmailId('');
-                setIncomeType('');
-                setCompanyName('');
-                setYearlyIncomeRange('');
-                setBirthday('');
-                setAnniversary('');
-                setEntryPersonName('');
-                setFatherName('');
-                setMotherName('');
-                setMaritalStatus('');
-                setSpouseName('');
-                setEducationQualification('');
-                setDesignation('');
-                setOfficialEmail('');
-                setOfficePhone('');
-                setOfficeAddress('');
-                setOfficeLandmark('');
-                setResidenceType('');
-                setCurrentAddressLandmark('');
-                setYearsInCurrentResidence('');
-                setYearsInCurrentCity('');
-                setIsSameAsCurrentAddress(false);
-                setPermanentAddress('');
-                setPermanentAddressLandmark('');
-                setPermanentPhone('');
-                setSalaryBankName('');
-                setSalaryAccountNumber('');
-                setTenure('');
-                setRef1Name('');
-                setRef1Phone('');
-                setRef1Address('');
-                setRef1Relation('');
-                setRef2Name('');
-                setRef2Phone('');
-                setRef2Address('');
-                setRef2Relation('');
-                setMonthlySalary('');
-                setEmployerCategory('A/B/G');
-                setCustomOwnsHome(null);
-                setHasBureauHlLap(false);
-                setInterestRateAnnual(11.0);
-                setCalcTenureMonths(36);
-                setBankMultiplier(24);
-                setAbsoluteMaxCap(2500000);
-                setExistingLoans([]);
-                setAadharFile(null);
-                setAadharFileUrl('');
-                setPanFile(null);
-                setPanFileUrl('');
-                setScannedAadhaar(null);
-                setScannedPan(null);
-                setDeviations([]);
-                setExistingRecord(null);
-            }, 2500);
-        } catch (err: any) {
-            setError(err.message || 'Failed to save customer data.');
-        } finally {
-            setIsLoading(false);
-        }
+        await executeCustomerSave(entryPersonName);
     };
 
     return (
@@ -1928,9 +2369,22 @@ export default function CustomerDataEntryPage() {
                                                 
                                                 {/* Current Residence Box */}
                                                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
-                                                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                                                        <Home className="w-3.5 h-3.5 text-indigo-500" /> Current Residential Address
-                                                    </span>
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700/60 pb-2">
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                                            <Home className="w-3.5 h-3.5 text-indigo-500" /> Current Residential Address
+                                                        </span>
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            onClick={handlePullCurrentAddressFromAadhaar}
+                                                            className="h-8 px-2.5 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800 flex items-center gap-1.5 self-start sm:self-auto"
+                                                            title="Autofill current address & pincode from scanned Aadhaar card"
+                                                        >
+                                                            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                                                            <span>Pull Address from Aadhaar</span>
+                                                        </Button>
+                                                    </div>
 
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                         <div className="space-y-1.5">
@@ -1961,14 +2415,22 @@ export default function CustomerDataEntryPage() {
                                                         <div className="space-y-1.5">
                                                             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                                                 <span>Pincode</span>
-                                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                                <span className="text-[10px] text-red-500 font-bold">*Auto-fills District & State</span>
                                                             </label>
-                                                            <Input type="text" value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="e.g. 781354" maxLength={6} required className="h-10" />
+                                                            <Input 
+                                                                type="text" 
+                                                                value={pincode} 
+                                                                onChange={(e) => handlePincodeChange(e.target.value)} 
+                                                                placeholder="e.g. 781354" 
+                                                                maxLength={6} 
+                                                                required 
+                                                                className="h-10 font-mono" 
+                                                            />
                                                         </div>
 
                                                         <div className="space-y-1.5">
                                                             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                                                                <span>City</span>
+                                                                <span>City / Town</span>
                                                                 <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                                             </label>
                                                             <Input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City / Town" required className="h-10" />
@@ -1979,7 +2441,15 @@ export default function CustomerDataEntryPage() {
                                                                 <span>District</span>
                                                                 <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                                             </label>
-                                                            <Input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="District / State" required className="h-10" />
+                                                            <Input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="District" required className="h-10" />
+                                                        </div>
+
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                                <span>State</span>
+                                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                            </label>
+                                                            <Input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="State" required className="h-10" />
                                                         </div>
 
                                                         <div className="space-y-1.5">
@@ -1987,40 +2457,177 @@ export default function CustomerDataEntryPage() {
                                                             <Input type="text" value={yearsInCurrentResidence} onChange={(e) => setYearsInCurrentResidence(e.target.value)} placeholder="e.g. 5 Years" className="h-10" />
                                                         </div>
 
-                                                        <div className="space-y-1.5 md:col-span-2">
+                                                        <div className="space-y-1.5">
                                                             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Years in Current City</label>
                                                             <Input type="text" value={yearsInCurrentCity} onChange={(e) => setYearsInCurrentCity(e.target.value)} placeholder="e.g. 10 Years" className="h-10" />
                                                         </div>
+                                                    </div>
+
+                                                    {/* Current Address Proof Document Box */}
+                                                    <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                            <div>
+                                                                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                                                    <FileCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                                                    <span>Proof of Current Address</span>
+                                                                </label>
+                                                                <p className="text-[11px] text-slate-400">Electricity bill, Rent agreement, Gas connection, Voter ID, Aadhaar, etc.</p>
+                                                            </div>
+                                                            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-indigo-600 dark:text-indigo-400 select-none">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={hasCurrentAddressProof}
+                                                                    onChange={(e) => setHasCurrentAddressProof(e.target.checked)}
+                                                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                                                                />
+                                                                <span>Customer has proof</span>
+                                                            </label>
+                                                        </div>
+
+                                                        {hasCurrentAddressProof && (
+                                                            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*,.pdf"
+                                                                        id="current-address-proof-file"
+                                                                        className="hidden"
+                                                                        onChange={handleAddressProofUpload}
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="secondary"
+                                                                        disabled={isUploadingAddressProof}
+                                                                        onClick={() => document.getElementById('current-address-proof-file')?.click()}
+                                                                        className="h-9 px-3 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                                                                    >
+                                                                        {isUploadingAddressProof ? (
+                                                                            <>
+                                                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                                <span>Uploading...</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <UploadCloud className="w-3.5 h-3.5" />
+                                                                                <span>{currentAddressProofUrl ? 'Re-upload Address Proof' : 'Upload Address Proof'}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                </div>
+
+                                                                {currentAddressProofUrl && (
+                                                                    <a
+                                                                        href={currentAddressProofUrl}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                                                                    >
+                                                                        <FileCheck className="w-3.5 h-3.5" />
+                                                                        <span>✓ Proof Uploaded (View Document)</span>
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
 
                                                 {/* Permanent Address Box */}
                                                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700/60 pb-2">
-                                                        <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                                                            Permanent Address
+                                                        <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                                            <Home className="w-3.5 h-3.5 text-indigo-500" /> Permanent Address
                                                         </span>
-                                                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                                                            <input 
-                                                                type="checkbox" 
-                                                                checked={isSameAsCurrentAddress} 
-                                                                onChange={(e) => handleSameAddressToggle(e.target.checked)}
-                                                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
-                                                            />
-                                                            <span>Same as Current Address</span>
-                                                        </label>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-indigo-600 dark:text-indigo-400 select-none mr-2">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    checked={isSameAsCurrentAddress} 
+                                                                    onChange={(e) => handleSameAddressToggle(e.target.checked)}
+                                                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                                                                />
+                                                                <span>Same as Current Address</span>
+                                                            </label>
+
+                                                            <Button
+                                                                type="button"
+                                                                variant="secondary"
+                                                                size="sm"
+                                                                disabled={isSameAsCurrentAddress}
+                                                                onClick={handlePullPermanentAddressFromAadhaar}
+                                                                className="h-8 px-2.5 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800 flex items-center gap-1.5 disabled:opacity-50"
+                                                                title="Autofill permanent address from scanned Aadhaar card"
+                                                            >
+                                                                <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Pull from Aadhaar</span>
+                                                            </Button>
+                                                        </div>
                                                     </div>
 
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                         <div className="space-y-1.5 md:col-span-2">
-                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Permanent Address with Pincode</label>
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Street Address / House No.</label>
                                                             <Input 
                                                                 type="text" 
-                                                                value={permanentAddress} 
+                                                                value={permanentStreet} 
                                                                 disabled={isSameAsCurrentAddress}
-                                                                onChange={(e) => setPermanentAddress(e.target.value)} 
-                                                                placeholder="Permanent Address with PIN" 
-                                                                className="h-10 disabled:opacity-60" 
+                                                                onChange={(e) => {
+                                                                    setPermanentStreet(e.target.value);
+                                                                    setPermanentAddress(e.target.value);
+                                                                }} 
+                                                                placeholder="Permanent Street / Village / Locality" 
+                                                                className="h-10 disabled:opacity-60 bg-white dark:bg-slate-800" 
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                                <span>Pincode</span>
+                                                                <span className="text-[10px] text-slate-400 font-normal">Auto-fills District & State</span>
+                                                            </label>
+                                                            <Input 
+                                                                type="text" 
+                                                                value={permanentPincode} 
+                                                                disabled={isSameAsCurrentAddress}
+                                                                onChange={(e) => handlePermanentPincodeChange(e.target.value)} 
+                                                                placeholder="e.g. 781354" 
+                                                                maxLength={6}
+                                                                className="h-10 disabled:opacity-60 font-mono bg-white dark:bg-slate-800" 
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">City / Town</label>
+                                                            <Input 
+                                                                type="text" 
+                                                                value={permanentCity} 
+                                                                disabled={isSameAsCurrentAddress}
+                                                                onChange={(e) => setPermanentCity(e.target.value)} 
+                                                                placeholder="City / Town" 
+                                                                className="h-10 disabled:opacity-60 bg-white dark:bg-slate-800" 
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">District</label>
+                                                            <Input 
+                                                                type="text" 
+                                                                value={permanentDistrict} 
+                                                                disabled={isSameAsCurrentAddress}
+                                                                onChange={(e) => setPermanentDistrict(e.target.value)} 
+                                                                placeholder="District" 
+                                                                className="h-10 disabled:opacity-60 bg-white dark:bg-slate-800" 
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">State</label>
+                                                            <Input 
+                                                                type="text" 
+                                                                value={permanentState} 
+                                                                disabled={isSameAsCurrentAddress}
+                                                                onChange={(e) => setPermanentState(e.target.value)} 
+                                                                placeholder="State" 
+                                                                className="h-10 disabled:opacity-60 bg-white dark:bg-slate-800" 
                                                             />
                                                         </div>
 
@@ -2032,13 +2639,13 @@ export default function CustomerDataEntryPage() {
                                                                 disabled={isSameAsCurrentAddress}
                                                                 onChange={(e) => setPermanentAddressLandmark(e.target.value)} 
                                                                 placeholder="Permanent Landmark" 
-                                                                className="h-10 disabled:opacity-60" 
+                                                                className="h-10 disabled:opacity-60 bg-white dark:bg-slate-800" 
                                                             />
                                                         </div>
 
                                                         <div className="space-y-1.5">
                                                             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Permanent / Alt Mobile No.</label>
-                                                            <Input type="tel" value={permanentPhone} onChange={(e) => setPermanentPhone(e.target.value)} placeholder="Alternative Contact Number" className="h-10" />
+                                                            <Input type="tel" value={permanentPhone} onChange={(e) => setPermanentPhone(e.target.value)} placeholder="Alternative Contact Number" className="h-10 bg-white dark:bg-slate-800" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2046,7 +2653,7 @@ export default function CustomerDataEntryPage() {
                                             </div>
                                         )}
 
-                                        {/* SECTION 5: Banking & References */}
+                                        {/* SECTION 5: Banking Details */}
                                         {activeSectionIndex === 4 && (
                                             <div className="space-y-4 animate-in fade-in duration-200">
                                                 
@@ -2058,13 +2665,219 @@ export default function CustomerDataEntryPage() {
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                         <div className="space-y-1.5">
                                                             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Bank Name</label>
-                                                            <Input type="text" value={salaryBankName} onChange={(e) => setSalaryBankName(e.target.value)} placeholder="e.g. SBI, HDFC Bank, ICICI" className="h-10" />
+                                                            <select
+                                                                value={salaryBankName}
+                                                                onChange={(e) => setSalaryBankName(e.target.value)}
+                                                                className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                                            >
+                                                                <option value="">Select Bank / Financial Institution...</option>
+                                                                {BANK_OPTIONS.map(bank => (
+                                                                    <option key={bank} value={bank}>{bank}</option>
+                                                                ))}
+                                                            </select>
+                                                            {salaryBankName === 'Other Bank / NBFC' && (
+                                                                <Input
+                                                                    type="text"
+                                                                    value={customBankName}
+                                                                    onChange={(e) => setCustomBankName(e.target.value)}
+                                                                    placeholder="Specify Bank or NBFC Name"
+                                                                    className="h-10 mt-1.5 bg-white dark:bg-slate-800"
+                                                                />
+                                                            )}
                                                         </div>
                                                         <div className="space-y-1.5">
                                                             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Bank Account Number</label>
-                                                            <Input type="text" value={salaryAccountNumber} onChange={(e) => setSalaryAccountNumber(e.target.value)} placeholder="Account No." className="h-10 font-mono" />
+                                                            <Input type="text" value={salaryAccountNumber} onChange={(e) => setSalaryAccountNumber(e.target.value)} placeholder="Account No." className="h-10 font-mono bg-white dark:bg-slate-800" />
                                                         </div>
                                                     </div>
+                                                </div>
+
+                                                {/* Salary Slips Upload (Last 3 Months) */}
+                                                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700/60 pb-2.5">
+                                                        <div>
+                                                            <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                                                <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
+                                                                Last 3 Months Salary Slips / Statement
+                                                            </span>
+                                                            <p className="text-[11px] text-slate-400">Upload slips to auto-extract Net Salary via OCR scanner</p>
+                                                        </div>
+
+                                                        {/* Mode Switcher */}
+                                                        <div className="inline-flex rounded-lg p-0.5 bg-slate-200/70 dark:bg-slate-700/70 self-start sm:self-auto">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSalarySlipMode('individual')}
+                                                                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                                                                    salarySlipMode === 'individual'
+                                                                        ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                                                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                }`}
+                                                            >
+                                                                3 Separate Slips
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSalarySlipMode('combined')}
+                                                                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                                                                    salarySlipMode === 'combined'
+                                                                        ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                                                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                                                }`}
+                                                            >
+                                                                1 Combined Statement
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {salarySlipMode === 'individual' ? (
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                            {salarySlips.map((slip, idx) => (
+                                                                <div key={slip.id} className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase">Slip #{idx + 1}</span>
+                                                                        <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">{slip.monthYear}</span>
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <label className="text-[10px] font-medium text-slate-500 uppercase">Month & Year</label>
+                                                                        <Input
+                                                                            type="text"
+                                                                            value={slip.monthYear}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                setSalarySlips(prev => prev.map((s, i) => i === idx ? { ...s, monthYear: val } : s));
+                                                                            }}
+                                                                            placeholder={`e.g. Month ${idx + 1}`}
+                                                                            className="h-8 text-xs bg-slate-50 dark:bg-slate-800"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="relative">
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/*,.pdf"
+                                                                            id={`salary-slip-${idx}`}
+                                                                            className="hidden"
+                                                                            onChange={(e) => handleSalarySlipUpload(idx, e)}
+                                                                        />
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="secondary"
+                                                                            onClick={() => document.getElementById(`salary-slip-${idx}`)?.click()}
+                                                                            className="w-full h-8 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5"
+                                                                        >
+                                                                            <Paperclip className="w-3.5 h-3.5" />
+                                                                            <span className="truncate">{slip.file ? slip.file.name : (slip.fileUrl ? 'Change Slip' : 'Upload Slip')}</span>
+                                                                        </Button>
+                                                                    </div>
+                                                                    {(slip.file || slip.fileUrl) && (
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            disabled={slip.isScanning || !slip.file}
+                                                                            onClick={() => handleScanSalarySlip(idx)}
+                                                                            className="w-full h-7 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center gap-1"
+                                                                        >
+                                                                            {slip.isScanning ? (
+                                                                                <>
+                                                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                                                    <span>Scanning...</span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Sparkles className="w-3 h-3 text-indigo-500" />
+                                                                                    <span>Scan with OCR</span>
+                                                                                </>
+                                                                            )}
+                                                                        </Button>
+                                                                    )}
+                                                                    {slip.detectedSalary && (
+                                                                        <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 text-[10px] space-y-1">
+                                                                            <div className="flex items-center justify-between text-emerald-800 dark:text-emerald-300 font-bold font-mono">
+                                                                                <span>Detected:</span>
+                                                                                <span>₹{slip.detectedSalary.toLocaleString('en-IN')}</span>
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setMonthlySalary(String(slip.detectedSalary))}
+                                                                                className="w-full text-center py-1 rounded bg-emerald-600 text-white font-semibold hover:bg-emerald-500 transition-colors"
+                                                                            >
+                                                                                Apply to Step 6 Income
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                                <div className="space-y-1 flex-1">
+                                                                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Statement Description</label>
+                                                                    <Input
+                                                                        type="text"
+                                                                        value={combinedSlip.monthYear}
+                                                                        onChange={(e) => setCombinedSlip(prev => ({ ...prev, monthYear: e.target.value }))}
+                                                                        placeholder="e.g. Last 3 Months Combined Statement"
+                                                                        className="h-9 text-xs"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex items-center gap-2 pt-2 sm:pt-4">
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*,.pdf"
+                                                                        id="combined-salary-statement"
+                                                                        className="hidden"
+                                                                        onChange={handleCombinedSlipUpload}
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="secondary"
+                                                                        onClick={() => document.getElementById('combined-salary-statement')?.click()}
+                                                                        className="h-9 px-3 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                                                                    >
+                                                                        <UploadCloud className="w-3.5 h-3.5" />
+                                                                        <span className="truncate">{combinedSlip.file ? combinedSlip.file.name : (combinedSlip.fileUrl ? 'Change Statement' : 'Upload Combined Statement')}</span>
+                                                                    </Button>
+                                                                    {combinedSlip.file && (
+                                                                        <Button
+                                                                            type="button"
+                                                                            disabled={combinedSlip.isScanning}
+                                                                            onClick={handleScanCombinedSlip}
+                                                                            className="h-9 px-3 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5"
+                                                                        >
+                                                                            {combinedSlip.isScanning ? (
+                                                                                <>
+                                                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                                    <span>Scanning...</span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Sparkles className="w-3.5 h-3.5" />
+                                                                                    <span>Scan with OCR</span>
+                                                                                </>
+                                                                            )}
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            {combinedSlip.detectedSalary && (
+                                                                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-between text-xs">
+                                                                    <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold font-mono">
+                                                                        <Sparkles className="w-4 h-4 text-emerald-600" />
+                                                                        <span>Detected Net Salary: ₹{combinedSlip.detectedSalary.toLocaleString('en-IN')}</span>
+                                                                    </div>
+                                                                    <Button
+                                                                        type="button"
+                                                                        size="sm"
+                                                                        onClick={() => setMonthlySalary(String(combinedSlip.detectedSalary))}
+                                                                        className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+                                                                    >
+                                                                        Apply to Step 6 Income
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 {/* References */}
@@ -2470,12 +3283,23 @@ export default function CustomerDataEntryPage() {
                                                                             }`}
                                                                         >
                                                                             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                                                                                <div className="sm:col-span-4">
+                                                                                <div className="sm:col-span-3">
+                                                                                    <select
+                                                                                        value={loan.loan_type || 'Personal Loan (BT Possible)'}
+                                                                                        onChange={(e) => handleUpdateLoan(loan.id, 'loan_type', e.target.value)}
+                                                                                        className="w-full h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                                                                    >
+                                                                                        {OBLIGATION_TYPES.map(t => (
+                                                                                            <option key={t} value={t}>{t}</option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div className="sm:col-span-3">
                                                                                     <Input
                                                                                         type="text"
                                                                                         value={loan.name}
                                                                                         onChange={(e) => handleUpdateLoan(loan.id, 'name', e.target.value)}
-                                                                                        placeholder={`Loan ${idx + 1} (e.g. HDFC PL)`}
+                                                                                        placeholder={`Financer / Name (e.g. HDFC)`}
                                                                                         className="h-9 text-xs bg-white dark:bg-slate-800"
                                                                                     />
                                                                                 </div>
@@ -2493,7 +3317,7 @@ export default function CustomerDataEntryPage() {
                                                                                         />
                                                                                     </div>
                                                                                 </div>
-                                                                                <div className="sm:col-span-3">
+                                                                                <div className="sm:col-span-2">
                                                                                     <div className="relative">
                                                                                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">₹</span>
                                                                                         <NumericFormat
@@ -2507,7 +3331,7 @@ export default function CustomerDataEntryPage() {
                                                                                         />
                                                                                     </div>
                                                                                 </div>
-                                                                                <div className="sm:col-span-2 flex items-center justify-end gap-1">
+                                                                                <div className="sm:col-span-1 flex items-center justify-end">
                                                                                     <button
                                                                                         type="button"
                                                                                         onClick={() => handleRemoveLoan(loan.id)}
@@ -2531,6 +3355,11 @@ export default function CustomerDataEntryPage() {
                                                                                     <span className={`font-semibold ${loan.is_balance_transfer ? 'text-amber-800 dark:text-amber-300' : 'text-slate-600 dark:text-slate-400'}`}>
                                                                                         Balance Transfer (BT)
                                                                                     </span>
+                                                                                    {loan.loan_type?.includes('Personal Loan') && (
+                                                                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-medium">
+                                                                                            BT Eligible
+                                                                                        </span>
+                                                                                    )}
                                                                                 </label>
                                                                                 <span className="text-[10px] text-slate-400 font-mono">
                                                                                     {loan.is_balance_transfer ? '✓ EMI Waived from FOIR' : 'Counts toward FOIR'}
@@ -2836,27 +3665,34 @@ export default function CustomerDataEntryPage() {
                                                     <Input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="House No, Road, Locality" required className="h-11 bg-white/70 dark:bg-slate-800/70" />
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                                                     <div className="space-y-1.5">
                                                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                                             <span>Pincode</span>
                                                             <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                                         </label>
-                                                        <Input type="text" value={pincode} onChange={(e) => setPincode(e.target.value)} placeholder="795001" maxLength={6} required className="h-11 bg-white/70 dark:bg-slate-800/70" />
+                                                        <Input type="text" value={pincode} onChange={(e) => handlePincodeChange(e.target.value)} placeholder="e.g. 795001" maxLength={6} required className="h-11 font-mono bg-white/70 dark:bg-slate-800/70" />
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                                             <span>City</span>
                                                             <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                                         </label>
-                                                        <Input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Imphal" required className="h-11 bg-white/70 dark:bg-slate-800/70" />
+                                                        <Input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City / Town" required className="h-11 bg-white/70 dark:bg-slate-800/70" />
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                                             <span>District</span>
                                                             <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                                         </label>
-                                                        <Input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Imphal West" required className="h-11 bg-white/70 dark:bg-slate-800/70" />
+                                                        <Input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="District" required className="h-11 bg-white/70 dark:bg-slate-800/70" />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span>State</span>
+                                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                        </label>
+                                                        <Input type="text" value={state} onChange={(e) => setState(e.target.value)} placeholder="State" required className="h-11 bg-white/70 dark:bg-slate-800/70" />
                                                     </div>
                                                 </div>
 
@@ -3028,26 +3864,42 @@ export default function CustomerDataEntryPage() {
                                         <span>{activeSectionIndex === 0 ? 'Back to PAN' : 'Previous'}</span>
                                     </Button>
 
-                                    {activeSectionIndex < sections.length - 1 ? (
-                                        <Button 
-                                            type="button" 
-                                            onClick={handleNextSection}
-                                            className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 text-xs font-semibold shadow-md shadow-indigo-500/20"
-                                        >
-                                            <span>Continue to {sections[activeSectionIndex + 1]?.shortTitle}</span>
-                                            <ChevronRight className="w-4 h-4" />
-                                        </Button>
-                                    ) : (
-                                        <Button 
-                                            type="submit" 
-                                            disabled={isLoading}
-                                            className="h-11 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs tracking-wide shadow-lg shadow-indigo-500/30 flex items-center gap-2"
-                                        >
-                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                                                <><span>Submit Customer Profile</span><Check className="w-4 h-4" /></>
-                                            )}
-                                        </Button>
-                                    )}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {/* Option to Save & Submit early after Step 4 or Step 5 for Loan customers */}
+                                        {isLoan && (activeSectionIndex === 3 || activeSectionIndex === 4) && (
+                                            <Button
+                                                type="button"
+                                                disabled={isLoading}
+                                                onClick={handleDirectSaveCustomer}
+                                                className="h-11 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs tracking-wide shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all active:scale-95"
+                                                title="Save and submit customer now without filling remaining steps"
+                                            >
+                                                <Save className="w-4 h-4" />
+                                                <span>Save Customer Profile Now</span>
+                                            </Button>
+                                        )}
+
+                                        {activeSectionIndex < sections.length - 1 ? (
+                                            <Button 
+                                                type="button" 
+                                                onClick={handleNextSection}
+                                                className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 text-xs font-semibold shadow-md shadow-indigo-500/20"
+                                            >
+                                                <span>Continue to {sections[activeSectionIndex + 1]?.shortTitle}</span>
+                                                <ChevronRight className="w-4 h-4" />
+                                            </Button>
+                                        ) : (
+                                            <Button 
+                                                type="submit" 
+                                                disabled={isLoading}
+                                                className="h-11 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs tracking-wide shadow-lg shadow-indigo-500/30 flex items-center gap-2"
+                                            >
+                                                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                                                    <><span>Submit Customer Profile</span><Check className="w-4 h-4" /></>
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
 
                             </div>
@@ -3070,6 +3922,61 @@ export default function CustomerDataEntryPage() {
                     hasAadhaarData={Boolean(scannedAadhaar?.fullName || scannedAadhaar?.dob || scannedAadhaar?.idNumber)}
                     hasPanData={Boolean(scannedPan?.fullName || scannedPan?.dob || scannedPan?.idNumber)}
                 />
+
+                {/* Early Save Confirm Dialog (if Data Enterer not chosen) */}
+                {isEarlySaveModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
+                                    <Save className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Save Customer Profile</h3>
+                                    <p className="text-xs text-slate-400">Please select your staff identity to complete customer onboarding.</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5 pt-2">
+                                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Your Name (Data Enterer)</label>
+                                <select
+                                    value={entryPersonName}
+                                    onChange={(e) => setEntryPersonName(e.target.value)}
+                                    className="w-full h-11 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                >
+                                    <option value="">Select your name...</option>
+                                    {employees.map(name => (
+                                        <option key={name} value={name}>{name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() => setIsEarlySaveModalOpen(false)}
+                                    className="h-10 px-4 rounded-xl text-xs font-semibold"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    disabled={!entryPersonName || isLoading}
+                                    onClick={() => executeCustomerSave(entryPersonName)}
+                                    className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-500/20 flex items-center gap-1.5"
+                                >
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                                        <>
+                                            <span>Confirm & Submit Customer</span>
+                                            <Check className="w-4 h-4" />
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </LiquidGlassCard>
         </div>
     );
