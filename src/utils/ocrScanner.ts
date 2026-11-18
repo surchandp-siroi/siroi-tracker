@@ -179,15 +179,42 @@ export function compareDates(d1: string | null | undefined, d2: string | null | 
 export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
     const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
 
-    // 1. Aadhaar Number (12 digits with or without spaces)
+    // 1. Aadhaar Number Extraction - Ultra-robust matching
     let idNumber: string | null = null;
-    const aadhaarRegex = /\b([2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4})\b/g;
-    const aadhaarMatches = rawText.match(aadhaarRegex);
-    if (aadhaarMatches && aadhaarMatches.length > 0) {
-        // Format as XXXX XXXX XXXX
-        const cleanDigits = aadhaarMatches[0].replace(/\s+/g, '');
-        if (cleanDigits.length === 12) {
-            idNumber = `${cleanDigits.slice(0, 4)} ${cleanDigits.slice(4, 8)} ${cleanDigits.slice(8, 12)}`;
+
+    // Pattern A: Standard 3 groups of 4 digits with flexible separators (spaces, dashes, tabs, dots)
+    const flexiblePattern = /(?:^|[^\d])([2-9]\d{3})[\s\-_.]+([0-9]{4})[\s\-_.]+([0-9]{4})(?:[^\d]|$)/;
+    const flexMatch = rawText.match(flexiblePattern);
+    if (flexMatch) {
+        idNumber = `${flexMatch[1]} ${flexMatch[2]} ${flexMatch[3]}`;
+    }
+
+    // Pattern B: 12 continuous digits starting with 2-9
+    if (!idNumber) {
+        const continuousMatch = rawText.match(/(?:^|[^\d])([2-9]\d{11})(?:[^\d]|$)/);
+        if (continuousMatch) {
+            const d = continuousMatch[1];
+            idNumber = `${d.slice(0, 4)} ${d.slice(4, 8)} ${d.slice(8, 12)}`;
+        }
+    }
+
+    // Pattern C: Flexible with common OCR letter/digit confusions (O->0, I/l/|->1, S/s->5, B->8, Z->2)
+    if (!idNumber) {
+        const fuzzyPattern = /(?:^|[^\w])([2-9][0-9OISBZolsb]{3})[\s\-_.]+([0-9OISBZolsb]{4})[\s\-_.]+([0-9OISBZolsb]{4})(?:[^\w]|$)/i;
+        const fMatch = rawText.match(fuzzyPattern);
+        if (fMatch) {
+            const normalizeDigits = (str: string) => str
+                .replace(/[oO]/g, '0')
+                .replace(/[iIl|]/g, '1')
+                .replace(/[zZ]/g, '2')
+                .replace(/[sS]/g, '5')
+                .replace(/[bB]/g, '8');
+            const g1 = normalizeDigits(fMatch[1]);
+            const g2 = normalizeDigits(fMatch[2]);
+            const g3 = normalizeDigits(fMatch[3]);
+            if (/^\d{4}$/.test(g1) && /^\d{4}$/.test(g2) && /^\d{4}$/.test(g3) && /^[2-9]/.test(g1)) {
+                idNumber = `${g1} ${g2} ${g3}`;
+            }
         }
     }
 
@@ -195,8 +222,9 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
     let dob: string | null = null;
     let rawDob: string | null = null;
 
-    // Pattern: DOB: 12/05/1990 or DOB 12-05-1990 or Date of Birth: ...
-    const dobMatch = rawText.match(/(?:DOB|Date\s*of\s*Birth|D\.O\.B\.?)[\s:]*([0-3]?[0-9][/-][0-1]?[0-9][/-][12][90]\d{2})/i);
+    // Pattern: DOB: 12/05/1990 or DOB 12-05-1990 or Date of Birth: ... or Hindi
+    const dobMatch = rawText.match(/(?:DOB|Date\s*of\s*Birth|D\.O\.B\.?|जन्म\s*तिथि)[\s:]*([0-3]?[0-9][/-][0-1]?[0-9][/-][12][90]\d{2})/i)
+                  || rawText.match(/\b([0-3]?[0-9][/-][0-1]?[0-9][/-][12][90]\d{2})\b/);
     if (dobMatch) {
         rawDob = dobMatch[1];
         dob = normalizeDate(dobMatch[1]);
@@ -206,24 +234,27 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
         if (yobMatch) {
             rawDob = yobMatch[1];
             dob = yobMatch[1];
-        } else {
-            // General date pattern in document
-            const anyDate = rawText.match(/\b([0-3]?[0-9][/-][0-1]?[0-9][/-][12][90]\d{2})\b/);
-            if (anyDate) {
-                rawDob = anyDate[1];
-                dob = normalizeDate(anyDate[1]);
-            }
         }
     }
 
     // 3. Gender
     let gender: string | null = null;
-    if (/\b(?:FEMALE|WOMAN)\b/i.test(rawText)) gender = 'Female';
-    else if (/\b(?:MALE|MAN)\b/i.test(rawText)) gender = 'Male';
+    if (/\b(?:FEMALE|WOMAN|महिला)\b/i.test(rawText)) gender = 'Female';
+    else if (/\b(?:MALE|MAN|पुरुष)\b/i.test(rawText)) gender = 'Male';
     else if (/\bTRANSGENDER\b/i.test(rawText)) gender = 'Transgender';
 
-    // 4. Name Extraction
-    // First attempt: Explicit label extraction (e.g. DigiLocker, e-Aadhaar, PDF downloads)
+    // 4. Father / Husband / Care-of Name (from S/O, D/O, W/O, C/O on back of card)
+    let fatherName: string | null = null;
+    const relationMatch = rawText.match(/(?:S\/O|D\/O|W\/O|C\/O|SO|DO|WO|CO)[\s:]+([A-Za-z. ]{3,40}?)(?=[,\n\r]|THOUBAL|VILLAGE|STREET|PO|DISTRICT|\d|$)/i);
+    if (relationMatch) {
+        let f = relationMatch[1].replace(/[^A-Za-z\s.]/g, '').trim();
+        f = f.replace(/^(mr|shri|smt)\s+/i, '').trim();
+        if (f.length >= 3) {
+            fatherName = f;
+        }
+    }
+
+    // 5. Name Extraction (Front of Card)
     let fullName: string | null = null;
     const nameLabelMatch = rawText.match(/(?:^|\n)\s*(?:Name|Cardholder(?:'s)?\s*Name|Customer(?:\s*Name)?)\s*[:\-]\s*([A-Za-z. ]{3,40})/i);
     if (nameLabelMatch) {
@@ -235,53 +266,33 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
         'authority', 'enrolment', 'help', 'aadhaar', 'dob', 'male', 'female', 'yob',
         'address', 'father', 'mother', 'husband', 'card', 'mera', 'meri', 'pehchan',
         'powered', 'by', 'nsdl', 'utiitsl', 'protean', 'issued', 'download', 'valid',
-        'digilocker', 'digi', 'locker', 'meripehchan', 'gender', 'satyameva', 'jayate'
+        'digilocker', 'digi', 'locker', 'meripehchan', 'gender', 'satyameva', 'jayate',
+        'antificationuthority', 'identificationauthority'
     ];
 
-    // Second attempt: On physical UIDAI cards, English name is located immediately above the DOB line
+    // Positional extraction: check lines above DOB
     if (!fullName) {
-        // Find the index of the line containing DOB
         let dobLineIndex = -1;
         for (let i = 0; i < lines.length; i++) {
-            if (/DOB|Date\s*of\s*Birth|Year\s*of\s*Birth/i.test(lines[i])) {
+            if (/DOB|Date\s*of\s*Birth|Year\s*of\s*Birth|जन्म\s*तिथि/i.test(lines[i])) {
                 dobLineIndex = i;
                 break;
             }
         }
 
         if (dobLineIndex > 0) {
-            // Look at the lines above the DOB line for a valid name
             for (let i = dobLineIndex - 1; i >= 0; i--) {
                 const line = lines[i].trim();
                 const lower = line.toLowerCase();
                 if (/^(powered(\s+by)?|digilocker)\b/i.test(line) || lower.includes('powered by') || lower.includes('digilocker')) continue;
                 const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
-                const cleaned = line.replace(/^(name|customer\s*name)\s*[:\-]\s*/i, '').trim();
+                // Strip non-letter prefix/suffix borders (e.g. '|', ':', '~', etc.)
+                const cleaned = line.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, '').trim();
                 const isAlphaOnly = /^[A-Za-z\s.]{3,35}$/.test(cleaned);
-
-                if (!hasNoise && isAlphaOnly && cleaned.split(/\s+/).length >= 1) {
-                    const words = cleaned.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
-                    if (words.length > 0) {
-                        fullName = cleaned.replace(/[^A-Za-z\s.]/g, '').trim();
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    // Third attempt: Fallback name search if not found above DOB
-    if (!fullName) {
-        for (const line of lines) {
-            const trimmed = line.trim();
-            const lower = trimmed.toLowerCase();
-            if (/^(powered(\s+by)?|digilocker)\b/i.test(trimmed) || lower.includes('powered by') || lower.includes('digilocker')) continue;
-            const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
-            const cleaned = trimmed.replace(/^(name|customer\s*name)\s*[:\-]\s*/i, '').trim();
-            const isAlphaOnly = /^[A-Za-z\s.]{4,30}$/.test(cleaned);
-            if (!hasNoise && isAlphaOnly) {
                 const words = cleaned.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
-                if (words.length >= 2) {
+                const allShort = words.every(w => w.length <= 2);
+
+                if (!hasNoise && isAlphaOnly && words.length >= 2 && !allShort && cleaned.length >= 5) {
                     fullName = cleaned.replace(/[^A-Za-z\s.]/g, '').trim();
                     break;
                 }
@@ -289,31 +300,69 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
         }
     }
 
-    // 5. Address Extraction (especially from back of card or DigiLocker)
-    let address: string | null = null;
-    let pincode: string | null = null;
-
-    const addressMatch = rawText.match(/(?:Address|C\/O|S\/O|D\/O|W\/O)\s*[:\-]?\s*([\s\S]+?)(?=(?:\b[2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4}\b)|(?:www\.uidai\.gov\.in)|(?:help@uidai\.gov\.in)|(?:1947)|(?:1800\s*300\s*1947)|$)/i);
-    if (addressMatch) {
-        let rawAddr = addressMatch[1]
-            // Join hyphenated words split across lines: e.g. "Sub-\nDivision" -> "Sub-Division"
-            .replace(/([A-Za-z0-9])-\s*\n\s*([A-Za-z0-9])/g, '$1-$2')
-            .replace(/,\s*\n\s*/g, ', ')
-            .replace(/\n+/g, ', ')
-            .replace(/[^A-Za-z0-9\s,.\-:/]/g, ' ')
-            .replace(/\s+,/g, ',')
-            .replace(/,\s*,/g, ', ')
-            .replace(/\s+/g, ' ')
-            .trim();
-        rawAddr = rawAddr.replace(/^,\s*/, '').replace(/,\s*$/, '');
-        if (rawAddr.length >= 10) {
-            address = rawAddr;
+    // Fallback general name search across lines
+    if (!fullName) {
+        for (const line of lines) {
+            const trimmed = line.trim();
+            const lower = trimmed.toLowerCase();
+            if (/^(powered(\s+by)?|digilocker)\b/i.test(trimmed) || lower.includes('powered by') || lower.includes('digilocker')) continue;
+            const hasNoise = noiseKeywords.some(kw => lower.includes(kw));
+            const cleaned = trimmed.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g, '').trim();
+            const isAlphaOnly = /^[A-Za-z\s.]{5,35}$/.test(cleaned);
+            if (!hasNoise && isAlphaOnly) {
+                const words = cleaned.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g, '').length >= 2);
+                const allShort = words.every(w => w.length <= 2);
+                if (words.length >= 2 && !allShort) {
+                    fullName = cleaned.replace(/[^A-Za-z\s.]/g, '').trim();
+                    break;
+                }
+            }
         }
     }
 
+    // 6. Address Extraction (Back of Card)
+    let address: string | null = null;
+    let pincode: string | null = null;
+
+    // Detect 6-digit Indian PIN code
     const pinMatch = rawText.match(/\b([1-9][0-9]{2}\s?[0-9]{3})\b/);
     if (pinMatch) {
         pincode = pinMatch[1].replace(/\s+/g, '');
+    }
+
+    // Match address block starting with Address / C/O / S/O / D/O / W/O / पता
+    const addressMatch = rawText.match(/(?:Address|C\/O|S\/O|D\/O|W\/O|पता)\s*[:\-]?\s*([\s\S]+?)(?=(?:\b[2-9]\d{3}[\s\-_.]+\d{4}[\s\-_.]+\d{4}\b)|(?:www\.uidai\.gov\.in)|(?:help@uidai\.gov\.in)|(?:1947)|(?:1800\s*300\s*1947)|$)/i);
+    if (addressMatch) {
+        let rawAddr = addressMatch[1];
+
+        // Clean cut cleanly at pincode if detected to prevent trailing noise
+        if (pincode) {
+            const pinIndex = rawAddr.indexOf(pincode);
+            if (pinIndex !== -1) {
+                rawAddr = rawAddr.slice(0, pinIndex + pincode.length);
+            }
+        }
+
+        // Clean line breaks and line-end border artifacts
+        const addrLines = rawAddr.split(/\r?\n/).map(l => {
+            let cl = l.trim();
+            // Remove trailing single-character OCR artifacts like ' 4', ' p', ' i', ' 3'
+            cl = cl.replace(/\s+[0-9a-zA-Z]\s*$/, '');
+            // Remove leading/trailing stray non-alphanumeric noise
+            cl = cl.replace(/^[^a-zA-Z0-9(]+/, '').replace(/[^a-zA-Z0-9)]+$/, '');
+            return cl;
+        }).filter(Boolean);
+
+        let formattedAddr = addrLines.join(', ')
+            .replace(/([A-Za-z0-9])-\s*,\s*([A-Za-z0-9])/g, '$1-$2') // e.g. Sub- , Division -> Sub-Division
+            .replace(/,\s*,+/g, ', ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        formattedAddr = formattedAddr.replace(/^,\s*/, '').replace(/,\s*$/, '');
+        if (formattedAddr.length >= 10) {
+            address = formattedAddr;
+        }
     }
 
     return {
@@ -323,6 +372,7 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
         dob,
         rawDob,
         gender,
+        fatherName,
         address,
         pincode
     };
@@ -529,8 +579,23 @@ export async function preprocessImage(
 
                 canvas.toBlob((blob) => {
                     if (blob) resolve(blob);
-                    else resolve(file instanceof Blob ? file : new Blob([]));
-                }, 'image/png');
+                    else {
+                        // Fallback: convert dataURL to Blob if toBlob failed
+                        try {
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                            const byteString = atob(dataUrl.split(',')[1]);
+                            const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+                            const ab = new ArrayBuffer(byteString.length);
+                            const ia = new Uint8Array(ab);
+                            for (let i = 0; i < byteString.length; i++) {
+                                ia[i] = byteString.charCodeAt(i);
+                            }
+                            resolve(new Blob([ab], { type: mimeString }));
+                        } catch {
+                            resolve(file instanceof Blob ? file : new Blob([]));
+                        }
+                    }
+                }, 'image/jpeg', 0.92);
             } catch (err) {
                 console.warn('Canvas pre-processing failed, using original file:', err);
                 resolve(file instanceof Blob ? file : new Blob([]));
@@ -557,7 +622,7 @@ export async function scanIdentityDocument(
     const { width, height } = await getImageDimensions(file);
     const isPortrait = height > width;
     // Portrait photos from smartphones usually turn landscape ID cards by 270° or 90°
-    const candidateAngles = isPortrait ? [270, 90, 0] : [0, 180, 270, 90];
+    const candidateAngles = isPortrait ? [270, 90, 0, 180] : [0, 270, 90, 180];
 
     const worker = await createWorker('eng');
 
@@ -587,16 +652,17 @@ export async function scanIdentityDocument(
             let score = 0;
             if (expectedType === 'AADHAAR') {
                 if (parsed.idNumber) score += 50;
-                if (parsed.fullName) score += 25;
+                if (parsed.fullName) score += 30;
                 if (parsed.dob || parsed.rawDob) score += 20;
-                if (parsed.address) score += 35;
-                if (parsed.pincode) score += 15;
+                if (parsed.address) score += 40;
+                if (parsed.pincode) score += 20;
+                if (parsed.fatherName) score += 15;
                 if (parsed.gender) score += 10;
             } else {
                 if (parsed.idNumber) score += 60;
-                if (parsed.fullName) score += 25;
+                if (parsed.fullName) score += 30;
                 if (parsed.dob || parsed.rawDob) score += 20;
-                if (parsed.fatherName) score += 15;
+                if (parsed.fatherName) score += 20;
             }
 
             if (!bestResult || score > bestResult.score || (score === bestResult.score && confidence > bestResult.confidence)) {
@@ -607,7 +673,7 @@ export async function scanIdentityDocument(
             if (expectedType === 'AADHAAR' && (
                 (parsed.idNumber && (parsed.fullName || parsed.address)) || 
                 (parsed.address && parsed.pincode) ||
-                (parsed.idNumber && parsed.dob)
+                (parsed.idNumber && parsed.dob && parsed.fullName)
             )) {
                 break;
             }

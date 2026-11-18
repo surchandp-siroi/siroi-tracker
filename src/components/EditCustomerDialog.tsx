@@ -6,6 +6,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { X, Loader2, ChevronDown, Landmark, Users, Briefcase, Home } from 'lucide-react';
 import { NumericFormat } from 'react-number-format';
 import { formatCustomerName, mapCustomerTypeToCategory, mapCategoryToCustomerType } from '@/utils/formatCustomerName';
+import { CHANNEL_PARTNER_OPTIONS } from '@/pages/CustomerDataEntryPage';
 
 type CustomerData = any;
 
@@ -39,6 +40,8 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
   const [yearlyIncomeRange, setYearlyIncomeRange] = useState(customer.yearly_income_range || '');
   const [birthday, setBirthday] = useState(customer.birthday || '');
   const [anniversary, setAnniversary] = useState(customer.anniversary || '');
+  const [channelPartner, setChannelPartner] = useState(customer.channel_partner || '');
+  const [trackingNumber, setTrackingNumber] = useState(customer.tracking_number || '');
 
   // Extended Loan KYC State
   const [fatherName, setFatherName] = useState(customer.father_name || '');
@@ -120,6 +123,8 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
           yearly_income_range: yearlyIncomeRange || null,
           birthday: birthday || null,
           anniversary: anniversary || null,
+          channel_partner: channelPartner.trim() || null,
+          tracking_number: trackingNumber.trim() || null,
 
           // Loan-specific KYC
           father_name: isLoan ? (fatherName.trim() || null) : null,
@@ -273,6 +278,23 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
                     <Input value={tenure} onChange={e => setTenure(e.target.value)} placeholder="e.g. 60 Months" className="h-10" />
                   </div>
                 )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Channel Partner</label>
+                  <select
+                    value={channelPartner}
+                    onChange={(e) => setChannelPartner(e.target.value)}
+                    className="w-full h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  >
+                    <option value="">Select Channel Partner Bank...</option>
+                    {CHANNEL_PARTNER_OPTIONS.map(cp => (
+                      <option key={cp} value={cp}>{cp}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Tracking Number</label>
+                  <Input value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="e.g. LAN12345678" className="h-10 font-mono" />
+                </div>
               </div>
             </div>
 

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui';
 import { 
   Search, UsersRound, Phone, MapPin, User, Calendar, Mail, 
   Building, Copy, Check, ShieldCheck, Sparkles, Filter, RefreshCw, Eye, X, Landmark, Briefcase, Home, Users,
-  AlertCircle, Calculator, UserCheck
+  AlertCircle, Calculator, UserCheck, FileText
 } from 'lucide-react';
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
@@ -469,6 +469,24 @@ export default function CustomersPage() {
                             <span className="truncate max-w-[130px]">{customer.manager_name}</span>
                           </div>
                         )}
+                        {customer.channel_partner && (
+                          <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                            <span className="flex items-center gap-1">
+                              <Landmark className="w-2.5 h-2.5 text-indigo-500" />
+                              <span>Channel:</span>
+                            </span>
+                            <span className="truncate max-w-[130px] font-medium">{customer.channel_partner}</span>
+                          </div>
+                        )}
+                        {customer.tracking_number && (
+                          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <FileText className="w-2.5 h-2.5 text-indigo-500" />
+                              <span>Tracking #:</span>
+                            </span>
+                            <span className="truncate max-w-[130px] font-mono">{customer.tracking_number}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -710,18 +728,26 @@ export default function CustomersPage() {
                     <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                       <UserCheck className="w-3.5 h-3.5 text-indigo-500" /> Sourcing & Branch Governance
                     </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
                       <div>
                         <span className="text-slate-400 block text-[10px] uppercase font-semibold">Data Enterer</span>
-                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.entry_person_name || 'System Record'}</span>
+                        <span className="font-medium text-slate-900 dark:text-white truncate block">{viewingCustomer.entry_person_name || 'System Record'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[10px] uppercase font-semibold">Consultant / Partner</span>
-                        <span className="font-semibold text-indigo-600 dark:text-indigo-400">{viewingCustomer.consultant_name || 'Direct / Walk-in'}</span>
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-400 truncate block">{viewingCustomer.consultant_name || 'Direct / Walk-in'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[10px] uppercase font-semibold">Branch Manager</span>
-                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.manager_name || 'N/A'}</span>
+                        <span className="font-medium text-slate-900 dark:text-white truncate block">{viewingCustomer.manager_name || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Channel Partner (Bank)</span>
+                        <span className="font-semibold text-slate-900 dark:text-white truncate block">{viewingCustomer.channel_partner || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Tracking Number</span>
+                        <span className="font-mono text-slate-900 dark:text-white truncate block">{viewingCustomer.tracking_number || 'N/A'}</span>
                       </div>
                     </div>
                   </div>

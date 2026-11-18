@@ -89,6 +89,48 @@ export const BANK_OPTIONS = [
     'Other Bank / NBFC'
 ];
 
+export const CHANNEL_PARTNER_OPTIONS = [
+    'State Bank of India (SBI)',
+    'HDFC Bank',
+    'ICICI Bank',
+    'Axis Bank',
+    'Kotak Bank',
+    'IndusInd Bank',
+    'Punjab National Bank (PNB)',
+    'Bank of Baroda (BOB)',
+    'IDFC First Bank',
+    'Godrej Capital',
+    'Bandhan Bank',
+    'Federal Bank',
+    'Yes Bank',
+    'Canara Bank',
+    'Union Bank of India',
+    'Central Bank of India',
+    'Indian Bank',
+    'Bank of India',
+    'Punjab & Sind Bank',
+    'RBL Bank',
+    'South Indian Bank',
+    'Manipur Rural Bank',
+    'Axis Finance',
+    'SMFG India',
+    'Cholamandalam',
+    'Finnable',
+    'L&T Finance',
+    'Piramal Capital',
+    'Poonawalla Fincorp',
+    'Tata Capital',
+    'Bajaj Finserv',
+    'Bajaj Market',
+    'Aditya Birla Finance',
+    'Credit Saison',
+    'InCred',
+    'Indifi',
+    'Slice',
+    'SIROI',
+    'Other Bank / NBFC'
+];
+
 export const OBLIGATION_TYPES = [
     'Personal Loan (BT Possible)',
     'Home Loan',
@@ -158,6 +200,7 @@ export default function CustomerDataEntryPage() {
     const navigate = useNavigate();
     const branches = useDataStore(state => state.branches);
     const products = useDataStore(state => state.products);
+    const channels = useDataStore(state => state.channels);
     const consultants = useDataStore(state => state.consultants);
     const currentUser = useAuthStore(state => state.user);
     const isAdmin = currentUser?.role === 'admin';
@@ -185,6 +228,8 @@ export default function CustomerDataEntryPage() {
     const [associationDate, setAssociationDate] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [emailId, setEmailId] = useState('');
+    const [channelPartner, setChannelPartner] = useState('');
+    const [trackingNumber, setTrackingNumber] = useState('');
     const [address, setAddress] = useState('');
     const [pincode, setPincode] = useState('');
     const [city, setCity] = useState('');
@@ -203,6 +248,16 @@ export default function CustomerDataEntryPage() {
     const [employees, setEmployees] = useState<string[]>(['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive']);
     const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
     const employeeDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Consolidated Channel Partner banks & lenders
+    const availableChannelPartners = useMemo(() => {
+        const set = new Set<string>();
+        CHANNEL_PARTNER_OPTIONS.forEach(c => set.add(c));
+        channels.forEach(c => {
+            if (c.name) set.add(c.name.trim());
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }, [channels]);
 
     // Normalizes branch name strings for strict branch-specific filtering
     const normalizeBranchName = (name?: string): string => {
@@ -416,12 +471,16 @@ export default function CustomerDataEntryPage() {
     // Loan-Specific KYC Document Upload & Scanning State
     const [aadharFile, setAadharFile] = useState<File | null>(null);
     const [aadharFileUrl, setAadharFileUrl] = useState<string>('');
+    const [aadharBackFile, setAadharBackFile] = useState<File | null>(null);
+    const [aadharBackFileUrl, setAadharBackFileUrl] = useState<string>('');
     const [panFile, setPanFile] = useState<File | null>(null);
     const [panFileUrl, setPanFileUrl] = useState<string>('');
 
     const [isScanningAadhaar, setIsScanningAadhaar] = useState<boolean>(false);
+    const [isScanningAadhaarBack, setIsScanningAadhaarBack] = useState<boolean>(false);
     const [isScanningPan, setIsScanningPan] = useState<boolean>(false);
     const [scanProgressAadhaar, setScanProgressAadhaar] = useState<{ progress: number; status: string }>({ progress: 0, status: '' });
+    const [scanProgressAadhaarBack, setScanProgressAadhaarBack] = useState<{ progress: number; status: string }>({ progress: 0, status: '' });
     const [scanProgressPan, setScanProgressPan] = useState<{ progress: number; status: string }>({ progress: 0, status: '' });
 
     const [scannedAadhaar, setScannedAadhaar] = useState<ScannedIdData | null>(null);
@@ -452,6 +511,7 @@ export default function CustomerDataEntryPage() {
         }
     };
     const aadhaarInputRef = useRef<HTMLInputElement>(null);
+    const aadhaarBackInputRef = useRef<HTMLInputElement>(null);
     const panInputRef = useRef<HTMLInputElement>(null);
 
     // Loan-Specific Eligibility Calculator State (Step 6)
@@ -948,7 +1008,7 @@ export default function CustomerDataEntryPage() {
     };
 
     // KYC Document Storage Helper
-    const uploadDocToSupabase = async (file: File, type: 'aadhar' | 'pan'): Promise<string> => {
+    const uploadDocToSupabase = async (file: File, type: 'aadhar' | 'aadhar_back' | 'pan'): Promise<string> => {
         const fileExt = file.name.split('.').pop() || 'jpg';
         const cleanPan = panNumber || 'UNKNOWN_PAN';
         const fileName = `${cleanPan}_${type}_${Date.now()}.${fileExt}`;
@@ -960,7 +1020,8 @@ export default function CustomerDataEntryPage() {
 
         if (uploadError) {
             console.error('Storage upload error:', uploadError);
-            throw new Error(`Failed to upload ${type === 'aadhar' ? 'Aadhaar' : 'PAN'} card: ${uploadError.message}`);
+            const docLabel = type === 'aadhar' ? 'Aadhaar Front' : type === 'aadhar_back' ? 'Aadhaar Back' : 'PAN';
+            throw new Error(`Failed to upload ${docLabel} card: ${uploadError.message}`);
         }
 
         const { data: urlData } = supabase.storage
@@ -1142,14 +1203,14 @@ export default function CustomerDataEntryPage() {
         return items;
     };
 
-    // Upload & Scan Aadhaar Card
+    // Upload & Scan Aadhaar Card (Front)
     const handleAadhaarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         setAadharFile(file);
         setError('');
         setIsScanningAadhaar(true);
-        setScanProgressAadhaar({ progress: 10, status: 'Uploading Aadhaar to vault...' });
+        setScanProgressAadhaar({ progress: 10, status: 'Uploading Aadhaar Front to vault...' });
 
         try {
             const publicUrl = await uploadDocToSupabase(file, 'aadhar');
@@ -1159,7 +1220,22 @@ export default function CustomerDataEntryPage() {
                 setScanProgressAadhaar({ progress: p, status: s });
             });
 
-            setScannedAadhaar(scanned);
+            // Merge with existing Aadhaar data (e.g. from Back if already uploaded)
+            setScannedAadhaar(prev => ({
+                documentType: 'AADHAAR',
+                rawText: (scanned.rawText || '') + (prev?.rawText ? '\n--- BACK ---\n' + prev.rawText : ''),
+                idNumber: scanned.idNumber || prev?.idNumber || null,
+                fullName: scanned.fullName || prev?.fullName || null,
+                dob: scanned.dob || prev?.dob || null,
+                rawDob: scanned.rawDob || prev?.rawDob || null,
+                gender: scanned.gender || prev?.gender || null,
+                fatherName: prev?.fatherName || scanned.fatherName || null,
+                address: prev?.address || scanned.address || null,
+                pincode: prev?.pincode || scanned.pincode || null,
+                district: prev?.district || scanned.district || null,
+                state: prev?.state || scanned.state || null,
+                confidence: Math.round(((scanned.confidence || 0) + (prev?.confidence || 0)) / (prev ? 2 : 1))
+            }));
 
             // Auto-fill form fields if empty
             if (scanned.idNumber && !aadharNumber) {
@@ -1199,6 +1275,89 @@ export default function CustomerDataEntryPage() {
             setError(`Aadhaar Scan Error: ${err.message || 'Failed to scan document'}`);
         } finally {
             setIsScanningAadhaar(false);
+        }
+    };
+
+    // Upload & Scan Aadhaar Card (Back / Address side)
+    const handleAadhaarBackFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setAadharBackFile(file);
+        setError('');
+        setIsScanningAadhaarBack(true);
+        setScanProgressAadhaarBack({ progress: 10, status: 'Uploading Aadhaar Back to vault...' });
+
+        try {
+            const publicUrl = await uploadDocToSupabase(file, 'aadhar_back');
+            setAadharBackFileUrl(publicUrl);
+
+            const scanned = await scanIdentityDocument(file, 'AADHAAR', (p, s) => {
+                setScanProgressAadhaarBack({ progress: p, status: s });
+            });
+
+            // Merge with existing Aadhaar data (e.g. from Front if already uploaded)
+            setScannedAadhaar(prev => ({
+                documentType: 'AADHAAR',
+                rawText: (prev?.rawText ? prev.rawText + '\n--- BACK ---\n' : '') + (scanned.rawText || ''),
+                idNumber: prev?.idNumber || scanned.idNumber || null,
+                fullName: prev?.fullName || scanned.fullName || null,
+                dob: prev?.dob || scanned.dob || null,
+                rawDob: prev?.rawDob || scanned.rawDob || null,
+                gender: prev?.gender || scanned.gender || null,
+                fatherName: scanned.fatherName || prev?.fatherName || null,
+                address: scanned.address || prev?.address || null,
+                pincode: scanned.pincode || prev?.pincode || null,
+                district: scanned.district || prev?.district || null,
+                state: scanned.state || prev?.state || null,
+                confidence: Math.round(((prev?.confidence || 0) + (scanned.confidence || 0)) / (prev ? 2 : 1))
+            }));
+
+            // Auto-fill form fields
+            if (scanned.idNumber && !aadharNumber) {
+                setAadharNumber(scanned.idNumber);
+            }
+            if (scanned.address && !address) {
+                setAddress(scanned.address);
+                if (!permanentAddress) {
+                    setPermanentAddress(scanned.address);
+                    setPermanentStreet(scanned.address);
+                }
+            }
+            if (scanned.pincode && !pincode) {
+                setPincode(scanned.pincode);
+                if (!permanentPincode) setPermanentPincode(scanned.pincode);
+                if (scanned.district && !district) {
+                    setDistrict(scanned.district);
+                    if (!permanentDistrict) setPermanentDistrict(scanned.district);
+                }
+                if (scanned.state && !state) {
+                    setState(scanned.state);
+                    if (!permanentState) setPermanentState(scanned.state);
+                }
+            }
+            if (scanned.fatherName && !fatherName) {
+                setFatherName(scanned.fatherName);
+            }
+
+            // Run cross-check
+            const devList = evaluateDeviations(
+                scanned, 
+                scannedPan, 
+                customerName || scanned.fullName || '', 
+                birthday || scanned.dob || '',
+                aadharNumber || scanned.idNumber || '',
+                panNumber
+            );
+
+            setDeviations(devList);
+            const hasIssue = devList.some(d => d.status === 'MISMATCH' || d.status === 'WARNING');
+            if (hasIssue) {
+                setIsDeviationDialogOpen(true);
+            }
+        } catch (err: any) {
+            setError(`Aadhaar Back Scan Error: ${err.message || 'Failed to scan document'}`);
+        } finally {
+            setIsScanningAadhaarBack(false);
         }
     };
 
@@ -1323,6 +1482,8 @@ export default function CustomerDataEntryPage() {
                 if (data.entry_person_name) setEntryPersonName(data.entry_person_name);
                 setConsultantName(data.consultant_name || '');
                 setManagerName(data.manager_name || '');
+                setChannelPartner(data.channel_partner || '');
+                setTrackingNumber(data.tracking_number || '');
 
                 // Loan-specific KYC attributes
                 setFatherName(data.father_name || '');
@@ -1411,6 +1572,7 @@ export default function CustomerDataEntryPage() {
 
                 // Restore KYC Document details if present
                 if (data.aadhar_file_url) setAadharFileUrl(data.aadhar_file_url);
+                if (data.aadhar_back_file_url) setAadharBackFileUrl(data.aadhar_back_file_url);
                 if (data.pan_file_url) setPanFileUrl(data.pan_file_url);
                 if (data.kyc_verification_status) {
                     if (Array.isArray(data.kyc_verification_status.deviations)) {
@@ -1562,9 +1724,12 @@ export default function CustomerDataEntryPage() {
             entry_location: entryLocation,
             consultant_name: consultantName.trim() || null,
             manager_name: managerName.trim() || null,
+            channel_partner: channelPartner.trim() || null,
+            tracking_number: trackingNumber.trim() || null,
 
             // KYC Document Uploads & Verification Status
             aadhar_file_url: isLoan ? (aadharFileUrl || null) : null,
+            aadhar_back_file_url: isLoan ? (aadharBackFileUrl || null) : null,
             pan_file_url: isLoan ? (panFileUrl || null) : null,
             kyc_verification_status: isLoan ? {
                 is_verified: deviations.length > 0 && !deviations.some(d => d.status === 'MISMATCH'),
@@ -1687,6 +1852,8 @@ export default function CustomerDataEntryPage() {
         setEntryPersonName('');
         setConsultantName('');
         setManagerName('');
+        setChannelPartner('');
+        setTrackingNumber('');
         setFatherName('');
         setMotherName('');
         setMaritalStatus('');
@@ -1748,6 +1915,8 @@ export default function CustomerDataEntryPage() {
         setExistingLoans([]);
         setAadharFile(null);
         setAadharFileUrl('');
+        setAadharBackFile(null);
+        setAadharBackFileUrl('');
         setPanFile(null);
         setPanFileUrl('');
         setScannedAadhaar(null);
@@ -1789,7 +1958,8 @@ export default function CustomerDataEntryPage() {
             const cleanCustomerName = customerPayload.customer_name || formatCustomerName(customerName, true);
             const cleanCategory = customerPayload.category || (isLoan ? 'Loan' : isForex ? 'Forex' : 'Insurance');
             const cleanProduct = customerPayload.product || product || (isLoan ? 'Personal Loan' : '');
-            const cleanChannel = customerPayload.salary_bank_name || salaryBankName || '';
+            const cleanChannel = customerPayload.channel_partner || channelPartner || customerPayload.salary_bank_name || salaryBankName || '';
+            const cleanTrackingNumber = customerPayload.tracking_number || trackingNumber || '';
             const loginAmount = Number(customerPayload.amount) || Number(amount) || 0;
 
             const entryLineItem: any = {
@@ -1801,7 +1971,8 @@ export default function CustomerDataEntryPage() {
                 customerAddress: customerPayload.address || address || '',
                 category: cleanCategory,
                 product: cleanProduct,
-                channel: cleanChannel, // Bank Name
+                channel: cleanChannel, // Bank Name / Channel Partner
+                trackingNumber: cleanTrackingNumber,
                 amount: loginAmount, // Login Amount
                 status: 'Login',
                 fileStatus: 'Login',
@@ -2432,7 +2603,7 @@ export default function CustomerDataEntryPage() {
                                                         />
                                                     </div>
 
-                                                    <div className="space-y-1.5 md:col-span-2">
+                                                    <div className="space-y-1.5">
                                                         <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                                             <span className="flex items-center gap-1.5">
                                                                 <FileText className="w-3.5 h-3.5 text-indigo-500" />
@@ -2451,6 +2622,45 @@ export default function CustomerDataEntryPage() {
                                                         />
                                                     </div>
 
+                                                    {/* Channel Partner (Bank) - Optional */}
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Landmark className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Channel Partner (Bank)</span>
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                        </label>
+                                                        <select
+                                                            value={channelPartner}
+                                                            onChange={(e) => setChannelPartner(e.target.value)}
+                                                            className="w-full h-11 bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer shadow-xs"
+                                                        >
+                                                            <option value="">Select Channel Partner Bank / NBFC...</option>
+                                                            {availableChannelPartners.map(cp => (
+                                                                <option key={cp} value={cp}>{cp}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Tracking Number - Optional */}
+                                                    <div className="space-y-1.5 md:col-span-2">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Tracking / Application Number</span>
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                        </label>
+                                                        <Input
+                                                            type="text"
+                                                            value={trackingNumber}
+                                                            onChange={(e) => setTrackingNumber(e.target.value)}
+                                                            placeholder="e.g. LAN12345678, Lead ID or Bank File No."
+                                                            className="h-11 bg-white/70 dark:bg-slate-800/70 font-mono"
+                                                        />
+                                                    </div>
+
                                                     {/* DOCUMENT SCAN & VERIFICATION SUITE (For Loans) */}
                                                     <div className="md:col-span-2 space-y-4 pt-2">
                                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-1 border-b border-slate-200/60 dark:border-slate-800 gap-2">
@@ -2460,7 +2670,7 @@ export default function CustomerDataEntryPage() {
                                                                     KYC Document Verification Suite
                                                                 </span>
                                                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                                                    Upload Aadhaar and PAN cards. Automatic OCR scans for any spelling or DOB mistakes and alerts for deviations.
+                                                                    Upload Aadhaar (Front & Back) and PAN cards. Automatic OCR scans for any spelling or DOB mistakes and alerts for deviations.
                                                                 </p>
                                                             </div>
                                                             {deviations.length > 0 && (
@@ -2481,9 +2691,9 @@ export default function CustomerDataEntryPage() {
                                                             )}
                                                         </div>
 
-                                                        {/* 1. Aadhaar Card Upload Box */}
+                                                        {/* 1. Aadhaar Card (Front Side) */}
                                                         <div className={`p-4 rounded-2xl border transition-all ${
-                                                            scannedAadhaar 
+                                                            scannedAadhaar?.fullName || scannedAadhaar?.dob 
                                                                 ? 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-200/80 dark:border-indigo-800/50' 
                                                                 : 'bg-white/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/60'
                                                         }`}>
@@ -2494,11 +2704,11 @@ export default function CustomerDataEntryPage() {
                                                                     </div>
                                                                     <div>
                                                                         <div className="flex items-center gap-2">
-                                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">Aadhaar Card Document</span>
+                                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">Aadhaar Card (Front Side)</span>
                                                                             <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
                                                                         </div>
                                                                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                                                            {aadharFile ? aadharFile.name : (aadharFileUrl ? 'Aadhaar uploaded to vault' : 'Upload photo or PDF of Aadhaar card')}
+                                                                            {aadharFile ? aadharFile.name : (aadharFileUrl ? 'Aadhaar Front uploaded' : 'Upload front photo (Scans Name, DOB, Photo & Aadhaar No)')}
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -2526,48 +2736,109 @@ export default function CustomerDataEntryPage() {
                                                                         ) : (
                                                                             <>
                                                                                 <Upload className="w-3.5 h-3.5 text-indigo-600" />
-                                                                                <span>{aadharFileUrl || aadharFile ? 'Re-upload Aadhaar' : 'Upload Aadhaar Card'}</span>
+                                                                                <span>{aadharFileUrl || aadharFile ? 'Re-upload Front' : 'Upload Aadhaar Front'}</span>
                                                                             </>
                                                                         )}
                                                                     </Button>
                                                                 </div>
                                                             </div>
-
-                                                            {/* Aadhaar Scan Results Summary Chips */}
-                                                            {scannedAadhaar && (
-                                                                <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
-                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
-                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned Name</span>
-                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                                                                            {scannedAadhaar.fullName || 'Not detected'}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
-                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned DOB</span>
-                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                                                                            {formatDisplayDate(scannedAadhaar.dob)}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
-                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned Aadhaar No</span>
-                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
-                                                                            {scannedAadhaar.idNumber || 'Not detected'}
-                                                                        </span>
-                                                                    </div>
-                                                                    {scannedAadhaar.address && (
-                                                                        <div className="sm:col-span-3 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
-                                                                            <span className="text-slate-400 block text-[9px] uppercase font-bold flex items-center justify-between">
-                                                                                <span>Scanned Address</span>
-                                                                                {scannedAadhaar.pincode && <span className="text-indigo-600 dark:text-indigo-400 font-mono font-bold">PIN: {scannedAadhaar.pincode}</span>}
-                                                                            </span>
-                                                                            <span className="font-semibold text-slate-800 dark:text-slate-200 text-[10px] leading-relaxed block mt-0.5">
-                                                                                {scannedAadhaar.address}
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
                                                         </div>
+
+                                                        {/* 2. Aadhaar Card (Back Side / Address) */}
+                                                        <div className={`p-4 rounded-2xl border transition-all ${
+                                                            scannedAadhaar?.address || scannedAadhaar?.pincode 
+                                                                ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-800/50' 
+                                                                : 'bg-white/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/60'
+                                                        }`}>
+                                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                                                        <Home className="w-5 h-5" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs font-bold text-slate-900 dark:text-white">Aadhaar Card (Back Side / Address)</span>
+                                                                            <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">For Address & S/O</span>
+                                                                        </div>
+                                                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                                            {aadharBackFile ? aadharBackFile.name : (aadharBackFileUrl ? 'Aadhaar Back uploaded' : 'Upload back photo (Scans Address, Pincode & S/O Father Name)')}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                                    <input 
+                                                                        type="file" 
+                                                                        ref={aadhaarBackInputRef}
+                                                                        accept="image/*,application/pdf" 
+                                                                        onChange={handleAadhaarBackFileChange} 
+                                                                        className="hidden" 
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="secondary"
+                                                                        disabled={isScanningAadhaarBack}
+                                                                        onClick={() => aadhaarBackInputRef.current?.click()}
+                                                                        className="text-xs h-9 px-3.5 rounded-xl flex items-center gap-1.5 font-semibold bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 w-full sm:w-auto justify-center"
+                                                                    >
+                                                                        {isScanningAadhaarBack ? (
+                                                                            <>
+                                                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                                                                                <span>{scanProgressAadhaarBack.status || 'Scanning...'}</span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                                                                                <span>{aadharBackFileUrl || aadharBackFile ? 'Re-upload Back' : 'Upload Aadhaar Back'}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Consolidated Aadhaar Scan Results Summary Chips */}
+                                                        {scannedAadhaar && (
+                                                            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                                                                <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned Name</span>
+                                                                    <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                        {scannedAadhaar.fullName || 'Not detected'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned DOB</span>
+                                                                    <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                        {formatDisplayDate(scannedAadhaar.dob)}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned Aadhaar No</span>
+                                                                    <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono">
+                                                                        {scannedAadhaar.idNumber || 'Not detected'}
+                                                                    </span>
+                                                                </div>
+                                                                {scannedAadhaar.fatherName && (
+                                                                    <div className="sm:col-span-3 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                                                        <span className="text-slate-400 text-[9px] uppercase font-bold">Care of / Father (S/O):</span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 font-mono text-[10px]">
+                                                                            {scannedAadhaar.fatherName}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {scannedAadhaar.address && (
+                                                                    <div className="sm:col-span-3 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                        <span className="text-slate-400 block text-[9px] uppercase font-bold flex items-center justify-between">
+                                                                            <span>Scanned Address (from Back)</span>
+                                                                            {scannedAadhaar.pincode && <span className="text-indigo-600 dark:text-indigo-400 font-mono font-bold">PIN: {scannedAadhaar.pincode}</span>}
+                                                                        </span>
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-200 text-[10px] leading-relaxed block mt-0.5">
+                                                                            {scannedAadhaar.address}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
 
                                                         {/* 2. PAN Card Upload Box (Placed Directly Below Aadhaar Upload) */}
                                                         <div className={`p-4 rounded-2xl border transition-all ${
@@ -3538,6 +3809,46 @@ export default function CustomerDataEntryPage() {
                                                     </select>
                                                 </div>
 
+                                                {/* Channel Partner & Tracking Governance */}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Landmark className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Channel Partner Bank</span>
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                        </label>
+                                                        <select
+                                                            value={channelPartner}
+                                                            onChange={(e) => setChannelPartner(e.target.value)}
+                                                            className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-xs"
+                                                        >
+                                                            <option value="">Select Channel Partner Bank / NBFC...</option>
+                                                            {availableChannelPartners.map(cp => (
+                                                                <option key={cp} value={cp}>{cp}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Tracking / File Number</span>
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                        </label>
+                                                        <Input
+                                                            type="text"
+                                                            value={trackingNumber}
+                                                            onChange={(e) => setTrackingNumber(e.target.value)}
+                                                            placeholder="e.g. LAN12345678, Lead ID"
+                                                            className="h-11 bg-white dark:bg-slate-800 font-mono"
+                                                        />
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         )}
 
@@ -4209,6 +4520,45 @@ export default function CustomerDataEntryPage() {
                                                           onChange={(_, dateStr) => setAssociationDate(dateStr)}
                                                           captionLayout="dropdown"
                                                           buttonClassName="h-11 bg-white/70 dark:bg-slate-800/70"
+                                                        />
+                                                    </div>
+
+                                                    {/* Channel Partner - Optional */}
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <Landmark className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Channel Partner</span>
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                        </label>
+                                                        <select
+                                                            value={channelPartner}
+                                                            onChange={(e) => setChannelPartner(e.target.value)}
+                                                            className="w-full h-11 bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium cursor-pointer shadow-xs"
+                                                        >
+                                                            <option value="">Select Channel Partner Bank / NBFC...</option>
+                                                            {availableChannelPartners.map(cp => (
+                                                                <option key={cp} value={cp}>{cp}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Tracking Number - Optional */}
+                                                    <div className="space-y-1.5 md:col-span-2">
+                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                            <span className="flex items-center gap-1.5">
+                                                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span>Tracking Number</span>
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                        </label>
+                                                        <Input
+                                                            type="text"
+                                                            value={trackingNumber}
+                                                            onChange={(e) => setTrackingNumber(e.target.value)}
+                                                            placeholder="e.g. Lead / Application Number"
+                                                            className="h-11 bg-white/70 dark:bg-slate-800/70 font-mono"
                                                         />
                                                     </div>
                                                 </div>
