@@ -4,7 +4,7 @@ import { Input } from '@/components/ui';
 import { 
   Search, UsersRound, Phone, MapPin, User, Calendar, Mail, 
   Building, Copy, Check, ShieldCheck, Sparkles, Filter, RefreshCw, Eye, X, Landmark, Briefcase, Home, Users,
-  AlertCircle, Calculator
+  AlertCircle, Calculator, UserCheck
 } from 'lucide-react';
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { EditCustomerDialog } from '@/components/EditCustomerDialog';
@@ -442,13 +442,33 @@ export default function CustomersPage() {
                         )}
                       </div>
 
-                      {/* Entry Author */}
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 pt-1">
-                        <span>Created by:</span>
-                        <span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1">
-                          <User className="w-2.5 h-2.5" />
-                          {customer.entry_person_name || 'System Record'}
-                        </span>
+                      {/* Provenance: Author, Consultant, Manager */}
+                      <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-white/5 text-[10px] text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center justify-between">
+                          <span>Created by:</span>
+                          <span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                            <User className="w-2.5 h-2.5" />
+                            {customer.entry_person_name || 'System Record'}
+                          </span>
+                        </div>
+                        {customer.consultant_name && (
+                          <div className="flex items-center justify-between text-indigo-600 dark:text-indigo-400 font-medium">
+                            <span className="flex items-center gap-1">
+                              <UserCheck className="w-2.5 h-2.5" />
+                              <span>Consultant:</span>
+                            </span>
+                            <span className="truncate max-w-[130px] font-semibold">{customer.consultant_name}</span>
+                          </div>
+                        )}
+                        {customer.manager_name && (
+                          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <ShieldCheck className="w-2.5 h-2.5" />
+                              <span>Manager:</span>
+                            </span>
+                            <span className="truncate max-w-[130px]">{customer.manager_name}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -682,6 +702,27 @@ export default function CustomersPage() {
                           <span className="text-slate-500 block truncate">{viewingCustomer.ref2_address}</span>
                         </div>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Sourcing & Governance */}
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-indigo-500" /> Sourcing & Branch Governance
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Data Enterer</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.entry_person_name || 'System Record'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Consultant / Partner</span>
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-400">{viewingCustomer.consultant_name || 'Direct / Walk-in'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Branch Manager</span>
+                        <span className="font-medium text-slate-900 dark:text-white">{viewingCustomer.manager_name || 'N/A'}</span>
+                      </div>
                     </div>
                   </div>
 

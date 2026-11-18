@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useDataStore } from '@/store/useDataStore';
+import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { Button, Input } from '@/components/ui';
 import { DatePicker } from '@/components/ui/date-picker';
 import { 
@@ -68,7 +69,7 @@ export const BANK_OPTIONS = [
     'HDFC Bank',
     'ICICI Bank',
     'Axis Bank',
-    'Kotak Mahindra Bank',
+    'Kotak Bank',
     'Godrej Capital',
     'Punjab National Bank (PNB)',
     'Bank of Baroda (BOB)',
@@ -157,6 +158,18 @@ export default function CustomerDataEntryPage() {
     const navigate = useNavigate();
     const branches = useDataStore(state => state.branches);
     const products = useDataStore(state => state.products);
+    const consultants = useDataStore(state => state.consultants);
+    const currentUser = useAuthStore(state => state.user);
+    const isAdmin = currentUser?.role === 'admin';
+
+    // Resolve user's designated branch based on login profile / accounts
+    const userBranchAccount = currentUser?.email ? BRANCH_ACCOUNTS[currentUser.email.toLowerCase().trim()] : null;
+    const userBranchId = currentUser?.branchId || userBranchAccount?.branchId;
+    const userBranchName = userBranchAccount?.branchName || 
+                           (userBranchId ? (branches.find(b => b.id === userBranchId)?.name) : null) || 
+                           currentUser?.latestLocation;
+
+    const initialLocationSetRef = useRef(false);
     
     const [step, setStep] = useState<1 | 2>(1);
     const [activeSectionIndex, setActiveSectionIndex] = useState(0);
@@ -182,11 +195,150 @@ export default function CustomerDataEntryPage() {
     const [birthday, setBirthday] = useState('');
     const [anniversary, setAnniversary] = useState('');
     const [entryPersonName, setEntryPersonName] = useState('');
+    const [consultantName, setConsultantName] = useState<string>('');
+    const [managerName, setManagerName] = useState<string>('');
+    const [consultantOptions, setConsultantOptions] = useState<Array<{ name: string; branch?: string }>>([]);
     const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
-    const [entryLocation, setEntryLocation] = useState(branches[0]?.name || 'HO');
+    const [entryLocation, setEntryLocation] = useState(userBranchName || branches[0]?.name || 'HO');
     const [employees, setEmployees] = useState<string[]>(['Surchand Singh', 'Sharju Thoudam', 'Tomas', 'Branch Manager', 'Branch Executive']);
     const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
     const employeeDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Normalizes branch name strings for strict branch-specific filtering
+    const normalizeBranchName = (name?: string): string => {
+        if (!name) return '';
+        const clean = name.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (clean.includes('guwahati') || clean === 'ho' || clean.includes('ghy')) {
+            return 'guwahati';
+        }
+        if (clean.includes('manipur') || clean.includes('imphal')) {
+            return 'manipur';
+        }
+        if (clean.includes('itanagar') || clean.includes('arunachal')) {
+            return 'itanagar';
+        }
+        if (clean.includes('nagaland') || clean.includes('mizoram') || clean.includes('dimapur') || clean.includes('aizawl') || clean.includes('mizo')) {
+            return 'nagaland & mizoram';
+        }
+        return clean;
+    };
+
+    // Initialize or lock branch location
+    useEffect(() => {
+        if (!initialLocationSetRef.current) {
+            if (userBranchName) {
+                setEntryLocation(userBranchName);
+                initialLocationSetRef.current = true;
+            } else if (branches.length > 0 && (!entryLocation || entryLocation === 'HO')) {
+                setEntryLocation(branches[0].name);
+                initialLocationSetRef.current = true;
+            }
+        }
+    }, [userBranchName, branches]);
+
+    // For non-admin users with an assigned branch, enforce their branch
+    useEffect(() => {
+        if (userBranchName && !isAdmin && entryLocation !== userBranchName) {
+            setEntryLocation(userBranchName);
+        }
+    }, [userBranchName, isAdmin, entryLocation]);
+
+    // Fetch approved consultants directly from Supabase for guaranteed real-time availability
+    useEffect(() => {
+        const fetchApprovedConsultants = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('consultants')
+                    .select('name, associated_branch')
+                    .eq('status', 'approved')
+                    .order('name');
+                if (data && data.length > 0) {
+                    const list = data.map((c: any) => ({
+                        name: c.name?.replace(/\s+/g, ' ').trim() || '',
+                        branch: c.associated_branch?.trim() || ''
+                    })).filter(c => Boolean(c.name));
+                    setConsultantOptions(list);
+                }
+            } catch (err) {
+                console.warn('Could not fetch consultants directly:', err);
+            }
+        };
+        fetchApprovedConsultants();
+    }, []);
+
+    // Consolidated consultant options (merging Supabase query + dataStore)
+    const allConsultants = useMemo(() => {
+        const map = new Map<string, { name: string; branch?: string }>();
+        consultantOptions.forEach(c => {
+            if (c.name) map.set(c.name, c);
+        });
+        consultants.forEach(c => {
+            if (c.name) {
+                const clean = c.name.replace(/\s+/g, ' ').trim();
+                if (!map.has(clean)) {
+                    map.set(clean, { name: clean, branch: c.associated_branch?.trim() });
+                }
+            }
+        });
+        return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    }, [consultantOptions, consultants]);
+
+    // Filter consultants strictly by the active branch (entryLocation or user's branch)
+    const branchConsultants = useMemo(() => {
+        const activeNorm = normalizeBranchName(entryLocation || userBranchName || '');
+        if (!activeNorm) return allConsultants;
+
+        const filtered = allConsultants.filter(c => {
+            const cNorm = normalizeBranchName(c.branch);
+            return cNorm === activeNorm;
+        });
+
+        // Ensure previously assigned consultant is retained on edit / viewing
+        if (consultantName && !filtered.some(c => c.name.toLowerCase() === consultantName.toLowerCase())) {
+            const existing = allConsultants.find(c => c.name.toLowerCase() === consultantName.toLowerCase());
+            if (existing) {
+                return [existing, ...filtered];
+            }
+        }
+
+        return filtered;
+    }, [allConsultants, entryLocation, userBranchName, consultantName]);
+
+    // Consolidated branch managers list
+    const managerOptions = useMemo(() => {
+        const set = new Set<string>();
+        ['Aroop Sharma', 'Ajay Waikhom', 'Nobin Nani', 'Ramesh Singh'].forEach(m => set.add(m));
+        branches.forEach(b => {
+            if (b.managerName) set.add(b.managerName.trim());
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }, [branches]);
+
+    // Auto-update branch manager when entryLocation changes
+    const defaultManagers = ['Aroop Sharma', 'Ajay Waikhom', 'Nobin Nani', 'Ramesh Singh'];
+    useEffect(() => {
+        const loc = normalizeBranchName(entryLocation || userBranchName || '');
+        let defaultManager = '';
+        if (loc === 'guwahati') defaultManager = 'Aroop Sharma';
+        else if (loc === 'manipur') defaultManager = 'Ajay Waikhom';
+        else if (loc === 'itanagar') defaultManager = 'Nobin Nani';
+        else if (loc === 'nagaland & mizoram') defaultManager = 'Ramesh Singh';
+
+        if (defaultManager && (!managerName || defaultManagers.includes(managerName))) {
+            setManagerName(defaultManager);
+        }
+    }, [entryLocation, userBranchName]);
+
+    // Reset selected consultant if active branch changes and current consultant is not in new branch
+    useEffect(() => {
+        if (consultantName) {
+            const activeNorm = normalizeBranchName(entryLocation || userBranchName || '');
+            const currentCons = allConsultants.find(c => c.name.toLowerCase() === consultantName.toLowerCase());
+            if (currentCons && normalizeBranchName(currentCons.branch) !== activeNorm) {
+                setConsultantName('');
+            }
+        }
+    }, [entryLocation]);
 
     // Loan-Specific Extended Form State
     const [fatherName, setFatherName] = useState('');
@@ -477,12 +629,7 @@ export default function CustomerDataEntryPage() {
         return products.filter((p: any) => p.category === cat);
     }, [products, customerType]);
 
-    // Sync initial location when branches load
-    useEffect(() => {
-        if (branches.length > 0 && entryLocation === 'HO') {
-            setEntryLocation(branches[0].name);
-        }
-    }, [branches, entryLocation]);
+
 
     useEffect(() => {
         const fetchEmployees = async () => {
@@ -555,34 +702,54 @@ export default function CustomerDataEntryPage() {
 
     // Pull Current Address from Scanned Aadhaar Card
     const handlePullCurrentAddressFromAadhaar = async () => {
-        if (scannedAadhaar?.address) {
+        if (!scannedAadhaar?.address && !scannedAadhaar?.pincode) {
+            setError('Please upload and scan the Aadhaar Card document in Step 1 first.');
+            return;
+        }
+        if (scannedAadhaar.address) {
             setAddress(scannedAadhaar.address);
         }
-        if (scannedAadhaar?.pincode) {
+        if (scannedAadhaar.pincode) {
             setPincode(scannedAadhaar.pincode);
             const details = await lookupPincode(scannedAadhaar.pincode);
             if (details) {
                 if (details.district) setDistrict(details.district);
                 if (details.state) setState(details.state);
                 if (details.city) setCity(details.city);
+            } else {
+                if (scannedAadhaar.district) setDistrict(scannedAadhaar.district);
+                if (scannedAadhaar.state) setState(scannedAadhaar.state);
             }
+        } else {
+            if (scannedAadhaar.district) setDistrict(scannedAadhaar.district);
+            if (scannedAadhaar.state) setState(scannedAadhaar.state);
         }
     };
 
     // Pull Permanent Address from Scanned Aadhaar Card
     const handlePullPermanentAddressFromAadhaar = async () => {
-        if (scannedAadhaar?.address) {
+        if (!scannedAadhaar?.address && !scannedAadhaar?.pincode) {
+            setError('Please upload and scan the Aadhaar Card document in Step 1 first.');
+            return;
+        }
+        if (scannedAadhaar.address) {
             setPermanentStreet(scannedAadhaar.address);
             setPermanentAddress(scannedAadhaar.address);
         }
-        if (scannedAadhaar?.pincode) {
+        if (scannedAadhaar.pincode) {
             setPermanentPincode(scannedAadhaar.pincode);
             const details = await lookupPincode(scannedAadhaar.pincode);
             if (details) {
                 if (details.district) setPermanentDistrict(details.district);
                 if (details.state) setPermanentState(details.state);
                 if (details.city) setPermanentCity(details.city);
+            } else {
+                if (scannedAadhaar.district) setPermanentDistrict(scannedAadhaar.district);
+                if (scannedAadhaar.state) setPermanentState(scannedAadhaar.state);
             }
+        } else {
+            if (scannedAadhaar.district) setPermanentDistrict(scannedAadhaar.district);
+            if (scannedAadhaar.state) setPermanentState(scannedAadhaar.state);
         }
     };
 
@@ -1004,6 +1171,14 @@ export default function CustomerDataEntryPage() {
             if (scanned.dob && !birthday) {
                 setBirthday(scanned.dob);
             }
+            if (scanned.address && !address) {
+                setAddress(scanned.address);
+            }
+            if (scanned.pincode && !pincode) {
+                setPincode(scanned.pincode);
+                if (scanned.district && !district) setDistrict(scanned.district);
+                if (scanned.state && !state) setState(scanned.state);
+            }
 
             // Run cross-check
             const devList = evaluateDeviations(
@@ -1146,6 +1321,8 @@ export default function CustomerDataEntryPage() {
                 setBirthday(data.birthday || '');
                 setAnniversary(data.anniversary || '');
                 if (data.entry_person_name) setEntryPersonName(data.entry_person_name);
+                setConsultantName(data.consultant_name || '');
+                setManagerName(data.manager_name || '');
 
                 // Loan-specific KYC attributes
                 setFatherName(data.father_name || '');
@@ -1383,6 +1560,8 @@ export default function CustomerDataEntryPage() {
             anniversary: isForex ? null : (anniversary || null),
             entry_person_name: author,
             entry_location: entryLocation,
+            consultant_name: consultantName.trim() || null,
+            manager_name: managerName.trim() || null,
 
             // KYC Document Uploads & Verification Status
             aadhar_file_url: isLoan ? (aadharFileUrl || null) : null,
@@ -1506,6 +1685,8 @@ export default function CustomerDataEntryPage() {
         setBirthday('');
         setAnniversary('');
         setEntryPersonName('');
+        setConsultantName('');
+        setManagerName('');
         setFatherName('');
         setMotherName('');
         setMaritalStatus('');
@@ -1577,6 +1758,158 @@ export default function CustomerDataEntryPage() {
         setExistingRecord(null);
     };
 
+    // Auto-populate customer record as an active line item in the daily entries ledger
+    const syncCustomerToEntryPage = async (customerPayload: any, authorName: string) => {
+        try {
+            // 1. Resolve branch ID from entry location
+            const loc = (customerPayload.entry_location || entryLocation || '').toLowerCase().trim();
+            let targetBranchId = 'b1'; // default to Guwahati / HO
+            const matchedBranch = branches.find(b => 
+                b.name.toLowerCase().trim() === loc || 
+                (loc === 'ho' && b.id === 'b1')
+            );
+            if (matchedBranch) {
+                targetBranchId = matchedBranch.id;
+            } else if (loc.includes('manipur')) {
+                targetBranchId = 'b2';
+            } else if (loc.includes('itanagar')) {
+                targetBranchId = 'b3';
+            } else if (loc.includes('nagaland') || loc.includes('mizoram')) {
+                targetBranchId = 'b4';
+            }
+
+            // 2. Resolve Target Date (association_date or today's date in YYYY-MM-DD)
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const targetDate = customerPayload.association_date || todayStr;
+
+            // 3. Format fields
+            const cleanPan = (customerPayload.pan_number || panNumber || '').toUpperCase().trim();
+            const cleanPhone = (customerPayload.phone_number || phoneNumber || '').trim();
+            const cleanCustomerName = customerPayload.customer_name || formatCustomerName(customerName, true);
+            const cleanCategory = customerPayload.category || (isLoan ? 'Loan' : isForex ? 'Forex' : 'Insurance');
+            const cleanProduct = customerPayload.product || product || (isLoan ? 'Personal Loan' : '');
+            const cleanChannel = customerPayload.salary_bank_name || salaryBankName || '';
+            const loginAmount = Number(customerPayload.amount) || Number(amount) || 0;
+
+            const entryLineItem: any = {
+                date: targetDate,
+                customerName: cleanCustomerName,
+                phoneNumber: cleanPhone,
+                emailId: customerPayload.email_id || emailId || '',
+                customerDOB: customerPayload.birthday || birthday || '',
+                customerAddress: customerPayload.address || address || '',
+                category: cleanCategory,
+                product: cleanProduct,
+                channel: cleanChannel, // Bank Name
+                amount: loginAmount, // Login Amount
+                status: 'Login',
+                fileStatus: 'Login',
+                staffName: authorName,
+                managerName: customerPayload.manager_name || managerName || '',
+                consultantName: customerPayload.consultant_name || consultantName || '',
+                repaymentBank: customerPayload.salary_bank_name || salaryBankName || '',
+                branchLocation: customerPayload.entry_location || entryLocation,
+                firmName: isForex ? 'FOREX' : '',
+                fileLogin: 'Branch walkin',
+                sanctionedAmount: 0,
+                disbursedAmount: 0,
+                disbursedDate: '',
+                emiDate: '', // Updated by staff on Entry Page
+                rejectionRemark: '',
+                panNumber: cleanPan,
+                isManual: true
+            };
+
+            // 4. Check if an achievement entry already exists for targetBranchId + targetDate + mode: 'daily'
+            const { data: existingRows, error: fetchErr } = await supabase
+                .from('entries')
+                .select('*')
+                .eq('branchId', targetBranchId)
+                .eq('entryDate', targetDate)
+                .eq('mode', 'daily');
+
+            if (fetchErr) {
+                console.warn('Could not fetch existing entries for sync:', fetchErr);
+                return;
+            }
+
+            const achievementRow = existingRows?.find(r => !r.recordType || r.recordType === 'achievement');
+
+            if (achievementRow) {
+                const currentItems: any[] = Array.isArray(achievementRow.items) ? [...achievementRow.items] : [];
+                
+                // Match existing item by PAN number or Customer Name + Phone Number
+                const existingIdx = currentItems.findIndex((it: any) => 
+                    (cleanPan && it.panNumber === cleanPan) ||
+                    (it.customerName?.toLowerCase().trim() === cleanCustomerName.toLowerCase().trim() && it.phoneNumber === cleanPhone)
+                );
+
+                if (existingIdx >= 0) {
+                    const existingItem = currentItems[existingIdx];
+                    currentItems[existingIdx] = {
+                        ...entryLineItem,
+                        // Preserve any updates the staff already made on the Entry page
+                        fileStatus: existingItem.fileStatus || entryLineItem.fileStatus,
+                        disbursedAmount: existingItem.disbursedAmount !== undefined ? existingItem.disbursedAmount : entryLineItem.disbursedAmount,
+                        disbursedDate: existingItem.disbursedDate || entryLineItem.disbursedDate,
+                        emiDate: existingItem.emiDate || entryLineItem.emiDate,
+                        sanctionedAmount: existingItem.sanctionedAmount !== undefined ? existingItem.sanctionedAmount : entryLineItem.sanctionedAmount,
+                        rejectionRemark: existingItem.rejectionRemark || entryLineItem.rejectionRemark,
+                        channel: existingItem.channel || entryLineItem.channel,
+                        repaymentBank: existingItem.repaymentBank || entryLineItem.repaymentBank
+                    };
+                } else {
+                    currentItems.push(entryLineItem);
+                }
+
+                const newTotal = currentItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+
+                const { error: updateErr } = await supabase
+                    .from('entries')
+                    .update({
+                        items: currentItems,
+                        totalAmount: newTotal,
+                        location: customerPayload.entry_location || entryLocation,
+                        recordType: 'achievement'
+                    })
+                    .eq('id', achievementRow.id);
+
+                if (updateErr) {
+                    console.warn('Failed to update entries table with new line item:', updateErr);
+                } else {
+                    console.log('Successfully synced customer line item to entries table.');
+                }
+            } else {
+                // Create a new daily achievement entry row
+                const newEntryRecord = {
+                    branchId: targetBranchId,
+                    entryDate: targetDate,
+                    mode: 'daily',
+                    recordType: 'achievement',
+                    items: [entryLineItem],
+                    totalAmount: loginAmount,
+                    authorEmail: currentUser?.email || 'portal@siroiforex.com',
+                    authorId: currentUser?.id || null,
+                    location: customerPayload.entry_location || entryLocation,
+                    createdAt: new Date().toISOString()
+                };
+
+                const { error: insertErr } = await supabase
+                    .from('entries')
+                    .insert([newEntryRecord]);
+
+                if (insertErr) {
+                    console.warn('Failed to create new daily entry with line item:', insertErr);
+                } else {
+                    console.log('Successfully created daily entry row with customer line item.');
+                }
+            }
+        } catch (syncErr) {
+            console.warn('Error in syncCustomerToEntryPage:', syncErr);
+        }
+    };
+
     const executeCustomerSave = async (authorName?: string, skipReason?: string) => {
         const finalAuthor = authorName || entryPersonName;
         if (!finalAuthor) {
@@ -1604,6 +1937,9 @@ export default function CustomerDataEntryPage() {
                     
                 if (insertError) throw insertError;
             }
+
+            // Auto-populate customer record as an active line item in the daily entries ledger
+            await syncCustomerToEntryPage(customerPayload, finalAuthor);
             
             setIsEarlySaveModalOpen(false);
             setEligibilitySkipReason('');
@@ -1779,24 +2115,39 @@ export default function CustomerDataEntryPage() {
                             <div className="space-y-6 animate-in fade-in duration-300">
                                 {/* Operating Location Dropdown */}
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                                        <MapPin className="w-3.5 h-3.5 text-indigo-500" />
-                                        <span>Operating Location</span>
+                                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                            <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                                            <span>Operating Location</span>
+                                        </span>
+                                        {!isAdmin && Boolean(userBranchName) && (
+                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Assigned Branch
+                                            </span>
+                                        )}
                                     </label>
                                     <div className="relative">
                                         <button
                                             type="button"
-                                            onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-                                            className="flex items-center justify-between h-12 w-full rounded-2xl border border-slate-200/90 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all shadow-xs hover:border-slate-300"
+                                            disabled={!isAdmin && Boolean(userBranchName)}
+                                            onClick={() => {
+                                                if (isAdmin || !userBranchName) {
+                                                    setIsLocationDropdownOpen(!isLocationDropdownOpen);
+                                                }
+                                            }}
+                                            className={`flex items-center justify-between h-12 w-full rounded-2xl border border-slate-200/90 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all shadow-xs ${(!isAdmin && Boolean(userBranchName)) ? 'cursor-default opacity-95' : 'hover:border-slate-300'}`}
                                         >
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
                                                 <span className="font-semibold text-slate-800 dark:text-slate-100">{entryLocation}</span>
                                             </div>
-                                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                                            {(isAdmin || !userBranchName) && (
+                                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                                            )}
                                         </button>
                                         
-                                        {isLocationDropdownOpen && (
+                                        {(isAdmin || !userBranchName) && isLocationDropdownOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setIsLocationDropdownOpen(false)}></div>
                                                 <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
@@ -2203,6 +2554,17 @@ export default function CustomerDataEntryPage() {
                                                                             {scannedAadhaar.idNumber || 'Not detected'}
                                                                         </span>
                                                                     </div>
+                                                                    {scannedAadhaar.address && (
+                                                                        <div className="sm:col-span-3 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                                                                            <span className="text-slate-400 block text-[9px] uppercase font-bold flex items-center justify-between">
+                                                                                <span>Scanned Address</span>
+                                                                                {scannedAadhaar.pincode && <span className="text-indigo-600 dark:text-indigo-400 font-mono font-bold">PIN: {scannedAadhaar.pincode}</span>}
+                                                                            </span>
+                                                                            <span className="font-semibold text-slate-800 dark:text-slate-200 text-[10px] leading-relaxed block mt-0.5">
+                                                                                {scannedAadhaar.address}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -2284,6 +2646,8 @@ export default function CustomerDataEntryPage() {
                                                             )}
                                                         </div>
                                                     </div>
+
+
                                                 </div>
                                             </div>
                                         )}
@@ -2776,6 +3140,8 @@ export default function CustomerDataEntryPage() {
                                                             <Input type="tel" value={permanentPhone} onChange={(e) => setPermanentPhone(e.target.value)} placeholder="Alternative Contact Number" className="h-10 bg-white dark:bg-slate-800" />
                                                         </div>
                                                     </div>
+
+
                                                 </div>
 
                                             </div>
@@ -2833,6 +3199,8 @@ export default function CustomerDataEntryPage() {
                                                             <Input type="text" value={salaryAccountNumber} onChange={(e) => setSalaryAccountNumber(e.target.value)} placeholder="Account No." className="h-10 font-mono bg-white dark:bg-slate-800" />
                                                         </div>
                                                     </div>
+
+
                                                 </div>
 
                                                 {/* Salary Slips Upload (Last 3 Months) */}
@@ -3040,6 +3408,8 @@ export default function CustomerDataEntryPage() {
                                                             <Input type="text" value={ref1Address} onChange={(e) => setRef1Address(e.target.value)} placeholder="Address & Pincode" className="h-10 bg-white dark:bg-slate-800" />
                                                         </div>
                                                     </div>
+
+
                                                 </div>
 
                                                 <div className="p-3.5 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
@@ -3064,6 +3434,8 @@ export default function CustomerDataEntryPage() {
                                                             <Input type="text" value={ref2Address} onChange={(e) => setRef2Address(e.target.value)} placeholder="Address & Pincode" className="h-10 bg-white dark:bg-slate-800" />
                                                         </div>
                                                     </div>
+
+
                                                 </div>
 
                                                 {/* Staff Signature */}
@@ -3112,6 +3484,58 @@ export default function CustomerDataEntryPage() {
                                                             </>
                                                         )}
                                                     </div>
+                                                </div>
+
+                                                {/* Sourcing Consultant Dropdown */}
+                                                <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <UserCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                                            <span>Consultant / Sourcing Partner</span>
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-normal">Optional / Walk-in</span>
+                                                    </label>
+                                                    <select
+                                                        value={consultantName}
+                                                        onChange={(e) => setConsultantName(e.target.value)}
+                                                        className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-xs"
+                                                    >
+                                                        <option value="">Direct / Walk-in (No Consultant)</option>
+                                                        {branchConsultants.length > 0 && (
+                                                            <optgroup label={`${entryLocation || 'Branch'} Connectors (${branchConsultants.length})`}>
+                                                                {branchConsultants.map(c => (
+                                                                    <option key={c.name} value={c.name}>
+                                                                        {c.name}
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                        )}
+                                                    </select>
+                                                    <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-0.5">
+                                                        <span>Showing connectors for <strong className="text-slate-600 dark:text-slate-300 font-medium">{entryLocation}</strong></span>
+                                                        <span className="font-medium text-indigo-600 dark:text-indigo-400">{branchConsultants.length} available</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Reporting Branch Manager Dropdown */}
+                                                <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                                            <span>Branch Manager / Reporting Manager</span>
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                    </label>
+                                                    <select
+                                                        value={managerName}
+                                                        onChange={(e) => setManagerName(e.target.value)}
+                                                        className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-xs"
+                                                    >
+                                                        <option value="">Select Manager...</option>
+                                                        {managerOptions.map(m => (
+                                                            <option key={m} value={m}>{m}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
 
                                             </div>
@@ -3679,6 +4103,8 @@ export default function CustomerDataEntryPage() {
                                                             <span className="font-mono text-amber-700 dark:text-amber-300 font-bold text-sm mt-0.5 block">{formatInr(eligibilityResults.totalBtPayoff)}</span>
                                                         </div>
                                                     </div>
+
+
                                                 </div>
 
                                             </div>
@@ -3831,54 +4257,108 @@ export default function CustomerDataEntryPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* For Forex: include Staff Signature directly in Address section */}
+                                                {/* For Forex: include Staff Signature, Sourcing Partner and Manager */}
                                                 {isForex && (
-                                                    <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
-                                                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                                                            <span>Your Name (Data Enterer)</span>
-                                                            <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
-                                                        </label>
-                                                        <div className="relative" ref={employeeDropdownRef}>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    if (!isEmployeeDropdownOpen && employeeDropdownRef.current) {
-                                                                        const rect = employeeDropdownRef.current.getBoundingClientRect();
-                                                                        const spaceBelow = window.innerHeight - rect.bottom;
-                                                                        setDropdownPosition(spaceBelow < 320 ? 'top' : 'bottom');
-                                                                    }
-                                                                    setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen);
-                                                                }}
-                                                                className="flex items-center justify-between h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm"
-                                                            >
-                                                                <span className={entryPersonName ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-400'}>
-                                                                    {entryPersonName || 'Select your name...'}
-                                                                </span>
-                                                                <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isEmployeeDropdownOpen ? 'rotate-180' : ''}`} />
-                                                            </button>
-                                                            
-                                                            {isEmployeeDropdownOpen && (
-                                                                <>
-                                                                    <div className="fixed inset-0 z-40" onClick={() => setIsEmployeeDropdownOpen(false)}></div>
-                                                                    <div className={`absolute ${dropdownPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 w-full bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50 max-h-[260px] overflow-y-auto`}>
-                                                                        {employees.map(name => (
-                                                                            <button
-                                                                                key={name}
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    setEntryPersonName(name);
-                                                                                    setIsEmployeeDropdownOpen(false);
-                                                                                }}
-                                                                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${entryPersonName === name ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-                                                                            >
-                                                                                {name}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                </>
-                                                            )}
+                                                    <>
+                                                        <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                                <span>Your Name (Data Enterer)</span>
+                                                                <span className="text-[10px] text-red-500 font-bold">*Mandatory</span>
+                                                            </label>
+                                                            <div className="relative" ref={employeeDropdownRef}>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (!isEmployeeDropdownOpen && employeeDropdownRef.current) {
+                                                                            const rect = employeeDropdownRef.current.getBoundingClientRect();
+                                                                            const spaceBelow = window.innerHeight - rect.bottom;
+                                                                            setDropdownPosition(spaceBelow < 320 ? 'top' : 'bottom');
+                                                                        }
+                                                                        setIsEmployeeDropdownOpen(!isEmployeeDropdownOpen);
+                                                                    }}
+                                                                    className="flex items-center justify-between h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 px-4 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm"
+                                                                >
+                                                                    <span className={entryPersonName ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-400'}>
+                                                                        {entryPersonName || 'Select your name...'}
+                                                                    </span>
+                                                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isEmployeeDropdownOpen ? 'rotate-180' : ''}`} />
+                                                                </button>
+                                                                
+                                                                {isEmployeeDropdownOpen && (
+                                                                    <>
+                                                                        <div className="fixed inset-0 z-40" onClick={() => setIsEmployeeDropdownOpen(false)}></div>
+                                                                        <div className={`absolute ${dropdownPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 w-full bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50 max-h-[260px] overflow-y-auto`}>
+                                                                            {employees.map(name => (
+                                                                                <button
+                                                                                    key={name}
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        setEntryPersonName(name);
+                                                                                        setIsEmployeeDropdownOpen(false);
+                                                                                    }}
+                                                                                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${entryPersonName === name ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                                                                                >
+                                                                                    {name}
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
+
+                                                        {/* Sourcing Consultant Dropdown (Forex) */}
+                                                        <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <UserCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                                                    <span>Consultant / Sourcing Partner</span>
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-400 font-normal">Optional / Walk-in</span>
+                                                            </label>
+                                                            <select
+                                                                value={consultantName}
+                                                                onChange={(e) => setConsultantName(e.target.value)}
+                                                                className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-xs"
+                                                            >
+                                                                <option value="">Direct / Walk-in (No Consultant)</option>
+                                                                {branchConsultants.length > 0 && (
+                                                                    <optgroup label={`${entryLocation || 'Branch'} Connectors (${branchConsultants.length})`}>
+                                                                        {branchConsultants.map(c => (
+                                                                            <option key={c.name} value={c.name}>
+                                                                                {c.name}
+                                                                            </option>
+                                                                        ))}
+                                                                    </optgroup>
+                                                                )}
+                                                            </select>
+                                                            <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-0.5">
+                                                                <span>Showing connectors for <strong className="text-slate-600 dark:text-slate-300 font-medium">{entryLocation}</strong></span>
+                                                                <span className="font-medium text-indigo-600 dark:text-indigo-400">{branchConsultants.length} available</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Reporting Branch Manager Dropdown (Forex) */}
+                                                        <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                                                    <span>Branch Manager / Reporting Manager</span>
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                            </label>
+                                                            <select
+                                                                value={managerName}
+                                                                onChange={(e) => setManagerName(e.target.value)}
+                                                                className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-xs"
+                                                            >
+                                                                <option value="">Select Manager...</option>
+                                                                {managerOptions.map(m => (
+                                                                    <option key={m} value={m}>{m}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </>
                                                 )}
                                             </div>
                                         )}
@@ -3980,6 +4460,58 @@ export default function CustomerDataEntryPage() {
                                                             </>
                                                         )}
                                                     </div>
+                                                </div>
+
+                                                {/* Sourcing Consultant Dropdown (Standard) */}
+                                                <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <UserCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                                            <span>Consultant / Sourcing Partner</span>
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-normal">Optional / Walk-in</span>
+                                                    </label>
+                                                    <select
+                                                        value={consultantName}
+                                                        onChange={(e) => setConsultantName(e.target.value)}
+                                                        className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-xs"
+                                                    >
+                                                        <option value="">Direct / Walk-in (No Consultant)</option>
+                                                        {branchConsultants.length > 0 && (
+                                                            <optgroup label={`${entryLocation || 'Branch'} Connectors (${branchConsultants.length})`}>
+                                                                {branchConsultants.map(c => (
+                                                                    <option key={c.name} value={c.name}>
+                                                                        {c.name}
+                                                                    </option>
+                                                                ))}
+                                                            </optgroup>
+                                                        )}
+                                                    </select>
+                                                    <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-0.5">
+                                                        <span>Showing connectors for <strong className="text-slate-600 dark:text-slate-300 font-medium">{entryLocation}</strong></span>
+                                                        <span className="font-medium text-indigo-600 dark:text-indigo-400">{branchConsultants.length} available</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Reporting Branch Manager Dropdown (Standard) */}
+                                                <div className="space-y-2 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+                                                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                                            <span>Branch Manager / Reporting Manager</span>
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                                                    </label>
+                                                    <select
+                                                        value={managerName}
+                                                        onChange={(e) => setManagerName(e.target.value)}
+                                                        className="w-full h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-xs"
+                                                    >
+                                                        <option value="">Select Manager...</option>
+                                                        {managerOptions.map(m => (
+                                                            <option key={m} value={m}>{m}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                             </div>
                                         )}

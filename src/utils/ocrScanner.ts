@@ -1,4 +1,5 @@
 import { createWorker } from 'tesseract.js';
+import { lookupPincode } from './pincodeLookup';
 
 export interface ScannedIdData {
     documentType: 'AADHAAR' | 'PAN' | 'UNKNOWN';
@@ -292,13 +293,17 @@ export function parseAadhaarText(rawText: string): Partial<ScannedIdData> {
     let address: string | null = null;
     let pincode: string | null = null;
 
-    const addressMatch = rawText.match(/(?:Address|C\/O|S\/O|D\/O|W\/O)\s*[:\-]?\s*([\s\S]+?)(?=(?:\b\d{4}\s*\d{4}\s*\d{4}\b)|(?:www\.uidai\.gov\.in)|$)/i);
+    const addressMatch = rawText.match(/(?:Address|C\/O|S\/O|D\/O|W\/O)\s*[:\-]?\s*([\s\S]+?)(?=(?:\b[2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4}\b)|(?:www\.uidai\.gov\.in)|(?:help@uidai\.gov\.in)|(?:1947)|(?:1800\s*300\s*1947)|$)/i);
     if (addressMatch) {
         let rawAddr = addressMatch[1]
+            // Join hyphenated words split across lines: e.g. "Sub-\nDivision" -> "Sub-Division"
+            .replace(/([A-Za-z0-9])-\s*\n\s*([A-Za-z0-9])/g, '$1-$2')
+            .replace(/,\s*\n\s*/g, ', ')
             .replace(/\n+/g, ', ')
-            .replace(/[^A-Za-z0-9\s,.\-/]/g, '')
+            .replace(/[^A-Za-z0-9\s,.\-:/]/g, ' ')
             .replace(/\s+,/g, ',')
             .replace(/,\s*,/g, ', ')
+            .replace(/\s+/g, ' ')
             .trim();
         rawAddr = rawAddr.replace(/^,\s*/, '').replace(/,\s*$/, '');
         if (rawAddr.length >= 10) {
@@ -415,7 +420,133 @@ export function parsePanText(rawText: string): Partial<ScannedIdData> {
     };
 }
 
-// Main OCR Scan Function using Tesseract.js Worker
+/**
+ * Inspect image dimensions in browser
+ */
+async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return { width: 1000, height: 1000 };
+    }
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve({ width: img.naturalWidth || 1000, height: img.naturalHeight || 1000 });
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve({ width: 1000, height: 1000 });
+        };
+        img.src = url;
+    });
+}
+
+/**
+ * Browser-side image pre-processor using HTML5 Canvas.
+ * Handles auto-orientation, scaling, grayscale conversion, and contrast enhancement.
+ */
+export async function preprocessImage(
+    file: File | Blob, 
+    rotationDeg: number = 0
+): Promise<Blob> {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return file instanceof Blob ? file : new Blob([]);
+    }
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(file instanceof Blob ? file : new Blob([]));
+                    return;
+                }
+
+                const isRotated90or270 = rotationDeg === 90 || rotationDeg === 270;
+                const srcWidth = img.naturalWidth || img.width;
+                const srcHeight = img.naturalHeight || img.height;
+
+                const targetWidth = isRotated90or270 ? srcHeight : srcWidth;
+                const targetHeight = isRotated90or270 ? srcWidth : srcHeight;
+
+                // Optimal resolution for Tesseract OCR is ~1800-2400px on the longest dimension
+                const maxDim = 2200;
+                let scale = 1;
+                const longestDim = Math.max(targetWidth, targetHeight);
+                if (longestDim > maxDim) {
+                    scale = maxDim / longestDim;
+                } else if (longestDim < 1200 && longestDim > 0) {
+                    scale = Math.min(2.5, 1800 / longestDim);
+                }
+
+                canvas.width = Math.round(targetWidth * scale);
+                canvas.height = Math.round(targetHeight * scale);
+
+                // Set white background in case of transparent PNGs
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Apply rotation around the center
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate((rotationDeg * Math.PI) / 180);
+
+                const drawWidth = Math.round(srcWidth * scale);
+                const drawHeight = Math.round(srcHeight * scale);
+                ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+
+                // Grayscale and luminance contrast stretch to enhance faint text & eliminate camera glare
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                const len = data.length;
+
+                // Compute min and max luminance with sampling for performance
+                let minLum = 255;
+                let maxLum = 0;
+                for (let i = 0; i < len; i += 16) {
+                    const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                    if (lum < minLum) minLum = lum;
+                    if (lum > maxLum) maxLum = lum;
+                }
+                const range = Math.max(1, maxLum - minLum);
+
+                for (let i = 0; i < len; i += 4) {
+                    const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                    // Stretch dynamic range
+                    const stretched = Math.min(255, Math.max(0, ((lum - minLum) / range) * 255));
+                    // Gentle non-linear tone curve to make text crisp
+                    const enhanced = stretched < 125 ? Math.max(0, stretched * 0.85) : Math.min(255, stretched * 1.05);
+                    data[i] = enhanced;
+                    data[i + 1] = enhanced;
+                    data[i + 2] = enhanced;
+                }
+                ctx.putImageData(imgData, 0, 0);
+
+                canvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else resolve(file instanceof Blob ? file : new Blob([]));
+                }, 'image/png');
+            } catch (err) {
+                console.warn('Canvas pre-processing failed, using original file:', err);
+                resolve(file instanceof Blob ? file : new Blob([]));
+            }
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(file instanceof Blob ? file : new Blob([]));
+        };
+
+        img.src = objectUrl;
+    });
+}
+
+// Main Smart OCR Scan Function with Multi-Orientation Adaptive Detection
 export async function scanIdentityDocument(
     file: File, 
     expectedType: 'AADHAAR' | 'PAN',
@@ -423,38 +554,103 @@ export async function scanIdentityDocument(
 ): Promise<ScannedIdData> {
     onProgress?.(10, 'Initializing OCR engine...');
 
+    const { width, height } = await getImageDimensions(file);
+    const isPortrait = height > width;
+    // Portrait photos from smartphones usually turn landscape ID cards by 270° or 90°
+    const candidateAngles = isPortrait ? [270, 90, 0] : [0, 180, 270, 90];
+
     const worker = await createWorker('eng');
 
     try {
-        onProgress?.(30, `Scanning ${expectedType === 'AADHAAR' ? 'Aadhaar Card' : 'PAN Card'}...`);
+        let bestResult: {
+            text: string;
+            confidence: number;
+            parsed: Partial<ScannedIdData>;
+            score: number;
+        } | null = null;
 
-        const result = await worker.recognize(file);
-        const text = result.data.text || '';
-        const confidence = result.data.confidence || 0;
+        for (let i = 0; i < candidateAngles.length; i++) {
+            const angle = candidateAngles[i];
+            const percent = 20 + Math.round((i / candidateAngles.length) * 60);
+            onProgress?.(percent, `Analyzing document orientation (${angle}°)...`);
 
-        onProgress?.(80, 'Analyzing extracted text and signatures...');
+            const preprocessedBlob = await preprocessImage(file, angle);
+            const recognizeResult = await worker.recognize(preprocessedBlob);
+            const text = recognizeResult.data.text || '';
+            const confidence = recognizeResult.data.confidence || 0;
 
-        let parsedData: Partial<ScannedIdData> = {};
-        if (expectedType === 'AADHAAR') {
-            parsedData = parseAadhaarText(text);
-        } else {
-            parsedData = parsePanText(text);
+            const parsed = expectedType === 'AADHAAR' 
+                ? parseAadhaarText(text) 
+                : parsePanText(text);
+
+            // Calculate match quality score
+            let score = 0;
+            if (expectedType === 'AADHAAR') {
+                if (parsed.idNumber) score += 50;
+                if (parsed.fullName) score += 25;
+                if (parsed.dob || parsed.rawDob) score += 20;
+                if (parsed.address) score += 35;
+                if (parsed.pincode) score += 15;
+                if (parsed.gender) score += 10;
+            } else {
+                if (parsed.idNumber) score += 60;
+                if (parsed.fullName) score += 25;
+                if (parsed.dob || parsed.rawDob) score += 20;
+                if (parsed.fatherName) score += 15;
+            }
+
+            if (!bestResult || score > bestResult.score || (score === bestResult.score && confidence > bestResult.confidence)) {
+                bestResult = { text, confidence, parsed, score };
+            }
+
+            // Early exit conditions: if we cleanly found the primary ID number and name/address, finish immediately
+            if (expectedType === 'AADHAAR' && (
+                (parsed.idNumber && (parsed.fullName || parsed.address)) || 
+                (parsed.address && parsed.pincode) ||
+                (parsed.idNumber && parsed.dob)
+            )) {
+                break;
+            }
+            if (expectedType === 'PAN' && parsed.idNumber && (parsed.fullName || parsed.dob)) {
+                break;
+            }
+        }
+
+        const finalParsed = bestResult?.parsed || (expectedType === 'AADHAAR' ? parseAadhaarText('') : parsePanText(''));
+        const finalText = bestResult?.text || '';
+        const finalConfidence = bestResult?.confidence || 0;
+
+        onProgress?.(85, 'Resolving address and geographical metadata...');
+
+        // If pincode is detected, resolve district and state automatically
+        if (finalParsed.pincode) {
+            try {
+                const pinDetails = await lookupPincode(finalParsed.pincode);
+                if (pinDetails) {
+                    finalParsed.district = finalParsed.district || pinDetails.district;
+                    finalParsed.state = finalParsed.state || pinDetails.state;
+                }
+            } catch (err) {
+                console.warn('Pincode auto-lookup failed:', err);
+            }
         }
 
         onProgress?.(100, 'Scan completed!');
 
         return {
             documentType: expectedType,
-            rawText: text,
-            idNumber: parsedData.idNumber || null,
-            fullName: parsedData.fullName || null,
-            dob: parsedData.dob || null,
-            rawDob: parsedData.rawDob || null,
-            gender: parsedData.gender || null,
-            fatherName: parsedData.fatherName || null,
-            address: parsedData.address || null,
-            pincode: parsedData.pincode || null,
-            confidence
+            rawText: finalText,
+            idNumber: finalParsed.idNumber || null,
+            fullName: finalParsed.fullName || null,
+            dob: finalParsed.dob || null,
+            rawDob: finalParsed.rawDob || null,
+            gender: finalParsed.gender || null,
+            fatherName: finalParsed.fatherName || null,
+            address: finalParsed.address || null,
+            pincode: finalParsed.pincode || null,
+            district: finalParsed.district || null,
+            state: finalParsed.state || null,
+            confidence: finalConfidence
         };
     } finally {
         await worker.terminate();
