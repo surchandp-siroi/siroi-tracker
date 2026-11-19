@@ -46,8 +46,11 @@ import {
     Fingerprint,
     Building2,
     FileUp,
-    UserCheck
+    UserCheck,
+    FileDown,
+    Printer
 } from 'lucide-react';
+import { exportCustomerDocx, exportCustomerPdf, CustomerExportData } from '@/utils/exportCustomerDoc';
 import { LiquidGlassCard } from '@/components/ui/liquid-glass';
 import { NumericFormat } from 'react-number-format';
 import { formatCustomerName, mapCustomerTypeToCategory } from '@/utils/formatCustomerName';
@@ -1962,13 +1965,22 @@ export default function CustomerDataEntryPage() {
             const cleanTrackingNumber = customerPayload.tracking_number || trackingNumber || '';
             const loginAmount = Number(customerPayload.amount) || Number(amount) || 0;
 
+            const fullDetailedAddress = [
+                customerPayload.address || address,
+                (customerPayload.current_address_landmark || currentAddressLandmark) ? `Near ${customerPayload.current_address_landmark || currentAddressLandmark}` : '',
+                customerPayload.city || city,
+                customerPayload.district || district,
+                customerPayload.state || state,
+                (customerPayload.pincode || pincode) ? `PIN: ${customerPayload.pincode || pincode}` : ''
+            ].filter(Boolean).join(', ');
+
             const entryLineItem: any = {
                 date: targetDate,
                 customerName: cleanCustomerName,
                 phoneNumber: cleanPhone,
                 emailId: customerPayload.email_id || emailId || '',
                 customerDOB: customerPayload.birthday || birthday || '',
-                customerAddress: customerPayload.address || address || '',
+                customerAddress: fullDetailedAddress || customerPayload.address || address || '',
                 category: cleanCategory,
                 product: cleanProduct,
                 channel: cleanChannel, // Bank Name / Channel Partner
@@ -2122,6 +2134,126 @@ export default function CustomerDataEntryPage() {
             setError(err.message || 'Failed to save customer data.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const [isExportingDocx, setIsExportingDocx] = useState(false);
+    const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+    const getFormDataForExport = (): CustomerExportData => {
+        const finalAuthor = entryPersonName.trim() || currentUser?.email?.split('@')[0] || 'Admin';
+        const isSkippingEligibility = isLoan && (Boolean(eligibilitySkipReason && eligibilitySkipReason.trim()) || incomeCategory === 'business');
+        const finalSkipReason = (eligibilitySkipReason || (incomeCategory === 'business' ? 'Business Income profile - Eligibility calculation logic yet to be received from team.' : '')).trim();
+
+        return {
+            customerName: formatCustomerName(customerName, true),
+            panNumber: (panNumber || '').toUpperCase(),
+            aadharNumber: isLoan ? aadharNumber.trim() : undefined,
+            customerType: customerType,
+            category: mapCustomerTypeToCategory(customerType),
+            product: product,
+            amount: Number(amount) || 0,
+            associationDate: associationDate || undefined,
+            entryLocation: entryLocation,
+            staffName: finalAuthor,
+            consultantName: consultantName.trim() || undefined,
+            managerName: managerName.trim() || undefined,
+            channelPartner: channelPartner.trim() || undefined,
+            trackingNumber: trackingNumber.trim() || undefined,
+
+            phoneNumber: phoneNumber.trim(),
+            emailId: emailId.trim() || undefined,
+
+            birthday: isForex ? undefined : (birthday || undefined),
+            anniversary: isForex ? undefined : (anniversary || undefined),
+            gender: scannedAadhaar?.gender || scannedPan?.gender || undefined,
+            fatherName: isLoan ? fatherName.trim() || undefined : undefined,
+            motherName: isLoan ? motherName.trim() || undefined : undefined,
+            maritalStatus: isLoan ? maritalStatus || undefined : undefined,
+            spouseName: isLoan ? spouseName.trim() || undefined : undefined,
+            educationQualification: isLoan ? educationQualification || undefined : undefined,
+
+            address: address.trim(),
+            city: city.trim(),
+            district: district.trim(),
+            state: state.trim(),
+            pincode: pincode.trim(),
+            currentAddressLandmark: isLoan ? currentAddressLandmark.trim() || undefined : undefined,
+            residenceType: isLoan ? residenceType || undefined : undefined,
+            yearsInCurrentResidence: isLoan ? yearsInCurrentResidence.trim() || undefined : undefined,
+            yearsInCurrentCity: isLoan ? yearsInCurrentCity.trim() || undefined : undefined,
+
+            isSameAsCurrentAddress: isLoan ? isSameAsCurrentAddress : undefined,
+            permanentStreet: isLoan ? permanentStreet.trim() || undefined : undefined,
+            permanentCity: isLoan ? permanentCity.trim() || undefined : undefined,
+            permanentDistrict: isLoan ? permanentDistrict.trim() || undefined : undefined,
+            permanentState: isLoan ? permanentState.trim() || undefined : undefined,
+            permanentPincode: isLoan ? permanentPincode.trim() || undefined : undefined,
+            permanentAddress: isLoan ? permanentAddress.trim() || undefined : undefined,
+            permanentAddressLandmark: isLoan ? permanentAddressLandmark.trim() || undefined : undefined,
+            permanentPhone: isLoan ? permanentPhone.trim() || undefined : undefined,
+
+            incomeType: isForex ? undefined : incomeType || undefined,
+            incomeCategory: isLoan ? incomeCategory : undefined,
+            companyName: isForex ? undefined : companyName.trim() || undefined,
+            designation: isLoan ? designation.trim() || undefined : undefined,
+            officialEmail: isLoan ? officialEmail.trim() || undefined : undefined,
+            officePhone: isLoan ? officePhone.trim() || undefined : undefined,
+            officeAddress: isLoan ? officeAddress.trim() || undefined : undefined,
+            officeLandmark: isLoan ? officeLandmark.trim() || undefined : undefined,
+            yearlyIncomeRange: isForex ? undefined : yearlyIncomeRange || undefined,
+            monthlySalary: isLoan ? (Number(monthlySalary) || 0) : undefined,
+
+            salaryBankName: isLoan ? (salaryBankName === 'Other Bank / NBFC' ? (customBankName.trim() || 'Other Bank / NBFC') : salaryBankName.trim() || undefined) : undefined,
+            salaryAccountNumber: isLoan ? salaryAccountNumber.trim() || undefined : undefined,
+
+            tenure: isLoan ? tenure.trim() || undefined : undefined,
+            ref1Name: isLoan ? ref1Name.trim() || undefined : undefined,
+            ref1Phone: isLoan ? ref1Phone.trim() || undefined : undefined,
+            ref1Address: isLoan ? ref1Address.trim() || undefined : undefined,
+            ref1Relation: isLoan ? ref1Relation.trim() || undefined : undefined,
+            ref2Name: isLoan ? ref2Name.trim() || undefined : undefined,
+            ref2Phone: isLoan ? ref2Phone.trim() || undefined : undefined,
+            ref2Address: isLoan ? ref2Address.trim() || undefined : undefined,
+            ref2Relation: isLoan ? ref2Relation.trim() || undefined : undefined,
+
+            eligibilitySummary: isLoan ? {
+                isSkipped: isSkippingEligibility,
+                skipReason: finalSkipReason,
+                monthlySalary: Number(monthlySalary) || 0,
+                maxLoanAmount: eligibilityResults.grossEligibleLoan,
+                foirPercent: (eligibilityResults.foirPercent || 0) * 100,
+                netDisposableIncome: eligibilityResults.maxAllowedEmi,
+                interestRateAnnual: interestRateAnnual,
+                tenureMonths: calcTenureMonths,
+                existingEmiTotal: eligibilityResults.continuingEmis
+            } : undefined
+        };
+    };
+
+    const handleDownloadDocx = async () => {
+        try {
+            setIsExportingDocx(true);
+            const data = getFormDataForExport();
+            await exportCustomerDocx(data);
+        } catch (err: any) {
+            console.error('Word export error:', err);
+            setError(err.message || 'Failed to download Word document.');
+        } finally {
+            setIsExportingDocx(false);
+        }
+    };
+
+    const handleDownloadPdf = () => {
+        try {
+            setIsExportingPdf(true);
+            const data = getFormDataForExport();
+            exportCustomerPdf(data);
+        } catch (err: any) {
+            console.error('PDF export error:', err);
+            setError(err.message || 'Failed to initialize PDF print dialog.');
+        } finally {
+            setTimeout(() => setIsExportingPdf(false), 800);
         }
     };
 
@@ -3412,6 +3544,45 @@ export default function CustomerDataEntryPage() {
                                                         </div>
                                                     </div>
 
+                                                    {/* Step 4 Form Download Banner */}
+                                                    <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-slate-50 dark:from-slate-800/80 dark:via-indigo-950/30 dark:to-slate-800/80 border border-blue-200/80 dark:border-blue-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-9 h-9 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                                <FileDown className="w-5 h-5 stroke-[2.2]" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                                                    <span>Download Completed Application Form</span>
+                                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">Word & PDF</span>
+                                                                </h4>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                    Need an offline copy or physical signature before proceeding? Download the filled application now.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                disabled={isExportingDocx}
+                                                                onClick={handleDownloadDocx}
+                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-400 hover:text-blue-600 transition-all cursor-pointer disabled:opacity-50"
+                                                                title="Download Word Document (.docx)"
+                                                            >
+                                                                {isExportingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <FileText className="w-3.5 h-3.5 text-blue-600" />}
+                                                                <span>Word (.docx)</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={isExportingPdf}
+                                                                onClick={handleDownloadPdf}
+                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-rose-400 hover:text-rose-600 transition-all cursor-pointer disabled:opacity-50"
+                                                                title="Download / Print PDF"
+                                                            >
+                                                                {isExportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" /> : <Printer className="w-3.5 h-3.5 text-rose-600" />}
+                                                                <span>Download PDF</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
 
                                                 </div>
 
@@ -4415,6 +4586,45 @@ export default function CustomerDataEntryPage() {
                                                         </div>
                                                     </div>
 
+                                                    {/* Step 6 Form Download Banner */}
+                                                    <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-slate-50 dark:from-slate-800/80 dark:via-indigo-950/30 dark:to-slate-800/80 border border-blue-200/80 dark:border-blue-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-5">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-9 h-9 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                                <FileDown className="w-5 h-5 stroke-[2.2]" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                                                    <span>Download Pre-Submission Application Form</span>
+                                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">Word & PDF</span>
+                                                                </h4>
+                                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                    Download the complete application including personal, address, banking, and eligibility calculations before final submission.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                disabled={isExportingDocx}
+                                                                onClick={handleDownloadDocx}
+                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-400 hover:text-blue-600 transition-all cursor-pointer disabled:opacity-50"
+                                                                title="Download Word Document (.docx)"
+                                                            >
+                                                                {isExportingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <FileText className="w-3.5 h-3.5 text-blue-600" />}
+                                                                <span>Word (.docx)</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                disabled={isExportingPdf}
+                                                                onClick={handleDownloadPdf}
+                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-rose-400 hover:text-rose-600 transition-all cursor-pointer disabled:opacity-50"
+                                                                title="Download / Print PDF"
+                                                            >
+                                                                {isExportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" /> : <Printer className="w-3.5 h-3.5 text-rose-600" />}
+                                                                <span>Download PDF</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
 
                                                 </div>
 
@@ -4882,6 +5092,41 @@ export default function CustomerDataEntryPage() {
                                     </Button>
 
                                     <div className="flex flex-wrap items-center gap-2">
+                                        {/* Download Form Options (Available at Step 4, Step 5, Step 6, or Final Step) */}
+                                        {(activeSectionIndex >= 3 || activeSectionIndex === sections.length - 1) && (
+                                            <div className="flex items-center gap-1.5 mr-1">
+                                                <button
+                                                    type="button"
+                                                    disabled={isExportingDocx}
+                                                    onClick={handleDownloadDocx}
+                                                    className="inline-flex items-center gap-1.5 h-11 px-3.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-400 hover:text-blue-600 transition-all cursor-pointer disabled:opacity-50"
+                                                    title="Download filled customer application as Microsoft Word (.docx)"
+                                                >
+                                                    {isExportingDocx ? (
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                                                    ) : (
+                                                        <FileText className="w-3.5 h-3.5 text-blue-600" />
+                                                    )}
+                                                    <span className="hidden sm:inline">Word</span>
+                                                    <span className="sm:hidden">Doc</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isExportingPdf}
+                                                    onClick={handleDownloadPdf}
+                                                    className="inline-flex items-center gap-1.5 h-11 px-3.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-rose-400 hover:text-rose-600 transition-all cursor-pointer disabled:opacity-50"
+                                                    title="Download or Print filled customer application as PDF"
+                                                >
+                                                    {isExportingPdf ? (
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" />
+                                                    ) : (
+                                                        <Printer className="w-3.5 h-3.5 text-rose-600" />
+                                                    )}
+                                                    <span>PDF</span>
+                                                </button>
+                                            </div>
+                                        )}
+
                                         {/* Option to Save & Submit early after Step 4 or Step 5 for Loan customers */}
                                         {isLoan && (activeSectionIndex === 3 || activeSectionIndex === 4) && (
                                             <button
