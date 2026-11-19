@@ -295,6 +295,39 @@ export default function ProfitLossPage() {
     };
   }, [branchPnlMatrix]);
 
+  // Performance analytics: highest income/profit branches and relative rankings for horizontal chart
+  const performanceTags = useMemo(() => {
+    let highestIncomeId = '';
+    let highestIncomeVal = 0;
+    let highestProfitId = '';
+    let highestProfitVal = -Infinity;
+
+    branchPnlMatrix.forEach(b => {
+      if (b.totalIncome > highestIncomeVal && b.totalIncome > 0) {
+        highestIncomeVal = b.totalIncome;
+        highestIncomeId = b.id;
+      }
+      if (b.netProfit > highestProfitVal && b.netProfit > 0) {
+        highestProfitVal = b.netProfit;
+        highestProfitId = b.id;
+      }
+    });
+
+    const maxAbsNetProfit = Math.max(
+      ...branchPnlMatrix.map(b => Math.abs(b.netProfit)),
+      1
+    );
+
+    const rankedBranches = [...branchPnlMatrix].sort((a, b) => b.netProfit - a.netProfit);
+
+    return {
+      highestIncomeId,
+      highestProfitId,
+      maxAbsNetProfit,
+      rankedBranches
+    };
+  }, [branchPnlMatrix]);
+
   // Filtered branches for display based on branch filter
   const displayedBranchRows = useMemo(() => {
     if (selectedBranchFilter === 'all') return branchPnlMatrix;
@@ -414,24 +447,40 @@ export default function ProfitLossPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-300">
       
+      {/* Breadcrumb & Scope Header */}
+      <div className="flex items-center justify-between text-xs text-slate-400 px-1 -mb-2">
+        <div className="flex items-center gap-1.5 font-medium">
+          <span className="hover:text-slate-600 dark:hover:text-slate-300">Finance MIS</span>
+          <span>&gt;</span>
+          <span className="text-slate-800 dark:text-slate-200 font-semibold">P&L Overview</span>
+        </div>
+        <div className="flex items-center gap-2 font-mono text-[11px] font-semibold text-slate-500">
+          <span>INR</span>
+          <span>·</span>
+          <span>Cash basis</span>
+          <span>·</span>
+          <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold text-emerald-600 dark:text-emerald-400">SIROI</span>
+        </div>
+      </div>
+
       {/* Top Header & Executive Control Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-emerald-600/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
               <Scale className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                  Branch Profit & Loss Terminal
+                  Branch P&L
                 </h1>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                   Financial Operations
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Real-time income, operating expenses, consultant payouts, and net profitability across all branches.
+                Track cash income, expenses and profitability across SIROI branches.
               </p>
             </div>
           </div>
@@ -673,11 +722,137 @@ export default function ProfitLossPage() {
       {/* TAB 1: Branch-wise P&L Master Matrix Table (Exact format requested) */}
       {activeTab === 'matrix' && (
         <div className="space-y-6">
+
+          {/* Visual Analytics Row: Allocation Summary & Net P&L by branch */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Left card (7 cols): Income vs Cost Structure */}
+            <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                    Cash P&L Allocation Summary
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Proportion of gross revenue retained as net profit vs operating costs and payouts.
+                  </p>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                  {formattedMonthLabel}
+                </span>
+              </div>
+
+              {/* Proportional visual distribution bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <span>Revenue Retention</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                    {companySummary.profitMargin >= 0 ? '+' : ''}{companySummary.profitMargin.toFixed(1)}% Net Margin
+                  </span>
+                </div>
+                <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
+                  <div 
+                    className="bg-emerald-500 transition-all duration-500" 
+                    style={{ width: `${companySummary.totalIncome > 0 ? Math.min(100, Math.max(0, (companySummary.netProfit / companySummary.totalIncome) * 100)) : 0}%` }}
+                    title={`Net Profit: ${formatInr(companySummary.netProfit)}`}
+                  />
+                  <div 
+                    className="bg-rose-500 transition-all duration-500" 
+                    style={{ width: `${companySummary.totalIncome > 0 ? Math.min(100, ((companySummary.totalOperating + companySummary.totalMisc) / companySummary.totalIncome) * 100) : 0}%` }}
+                    title={`Operating & Misc: ${formatInr(companySummary.totalOperating + companySummary.totalMisc)}`}
+                  />
+                  <div 
+                    className="bg-indigo-500 transition-all duration-500" 
+                    style={{ width: `${companySummary.totalIncome > 0 ? Math.min(100, (companySummary.totalConsultant / companySummary.totalIncome) * 100) : 0}%` }}
+                    title={`Consultant Commissions: ${formatInr(companySummary.totalConsultant)}`}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-4 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span>Net Profit ({formatInr(companySummary.netProfit)})</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                    <span>Operating ({formatInr(companySummary.totalOperating + companySummary.totalMisc)})</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                    <span>Commissions ({formatInr(companySummary.totalConsultant)})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick 3 Stat Pills */}
+              <div className="grid grid-cols-3 gap-2.5 pt-2">
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Income</span>
+                  <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                    {formatInr(companySummary.totalIncome)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Expenses</span>
+                  <span className="text-xs font-mono font-bold text-rose-600 dark:text-rose-400 block mt-0.5">
+                    {formatInr(companySummary.totalExpenses)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Net Bottom Line</span>
+                  <span className={`text-xs font-mono font-bold block mt-0.5 ${companySummary.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {formatInr(companySummary.netProfit)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right card (5 cols): Net P&L by branch (Ranked Horizontal Bars from Reference) */}
+            <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
+                    Net P&L by branch
+                  </h3>
+                  <span className="text-[11px] text-slate-400">{formattedMonthLabel} · Cash basis</span>
+                </div>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
+                  Ranked
+                </span>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {performanceTags.rankedBranches.map(branch => {
+                  const isPositive = branch.netProfit >= 0;
+                  const widthPercent = Math.min(100, Math.max(8, (Math.abs(branch.netProfit) / performanceTags.maxAbsNetProfit) * 100));
+
+                  return (
+                    <div key={branch.id} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 truncate pr-2">
+                          {branch.name}
+                        </span>
+                        <span className={`font-mono font-bold text-xs shrink-0 ${isPositive ? 'text-slate-900 dark:text-white' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {formatInr(branch.netProfit)}
+                        </span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${isPositive ? 'bg-emerald-600 dark:bg-emerald-500' : 'bg-rose-500 dark:bg-rose-600'}`}
+                          style={{ width: `${widthPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
-                  Branch-wise P&L for {formattedMonthLabel}
+                  Branch Profitability ({formattedMonthLabel})
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Detailed branch breakdown of revenue vs expenditure and resulting profit margins.
@@ -709,6 +884,7 @@ export default function ProfitLossPage() {
                     <th className="py-3.5 px-4 text-right">Total Expenses</th>
                     <th className="py-3.5 px-4 text-right">Net Profit / (Loss)</th>
                     <th className="py-3.5 px-4 text-right">Profit Margin</th>
+                    <th className="py-3.5 px-4 text-center">Performance</th>
                     <th className="py-3.5 px-4 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -785,6 +961,32 @@ export default function ProfitLossPage() {
                           </span>
                         </td>
 
+                        {/* Performance Tags from Reference */}
+                        <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-1 flex-wrap">
+                            {row.id === performanceTags.highestIncomeId && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-800 whitespace-nowrap">
+                                Highest income
+                              </span>
+                            )}
+                            {row.id === performanceTags.highestProfitId && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 border border-teal-300/60 dark:border-teal-800 whitespace-nowrap">
+                                Highest profit
+                              </span>
+                            )}
+                            {row.netProfit < 0 && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-300/60 dark:border-rose-800 whitespace-nowrap">
+                                Loss
+                              </span>
+                            )}
+                            {row.netProfit >= 0 && row.id !== performanceTags.highestProfitId && row.id !== performanceTags.highestIncomeId && (
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                Profitable
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
                         {/* Action Drill Down */}
                         <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-1.5">
@@ -847,6 +1049,9 @@ export default function ProfitLossPage() {
                       <span className={companySummary.profitMargin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
                         {companySummary.profitMargin >= 0 ? '+' : ''}{companySummary.profitMargin.toFixed(1)}%
                       </span>
+                    </td>
+                    <td className="text-center font-bold text-[10px] text-slate-400 uppercase tracking-wider">
+                      All Branches
                     </td>
                     <td></td>
                   </tr>
