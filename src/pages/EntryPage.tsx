@@ -4123,7 +4123,7 @@ export default function DataEntryTerminal() {
                     onClose={() => setShowEndDatePicker(false)}
                 />
             )}
-            u    </div>
+        </div>
     );
 }
 

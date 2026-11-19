@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
-import { LayoutDashboard, Package, UsersRound, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2, Copy, UserCheck } from 'lucide-react';
+import { LayoutDashboard, Package, UsersRound, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2, Copy, UserCheck, Scale } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { Input } from '@/components/ui';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -316,58 +316,102 @@ export default function DashboardLayout() {
             </nav>
           </div>
 
-          {/* Finances section */}
-          {user?.email?.toLowerCase() === 'sharjuthoudam@siroiforex.com' && (
-            <div>
-              <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 font-extrabold px-3 mb-2.5">
-                Financial Operations
-              </p>
-              <nav className="space-y-1">
-                <NavLink
-                  to="/dashboard/consultant-approval"
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-1 ring-indigo-500/50'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
+          {/* Financial Operations section */}
+          {(() => {
+            const email = user?.email?.toLowerCase() || '';
+            const isSharju = email === 'sharjuthoudam@siroiforex.com';
+            const isSurchand = email === 'surchanddsingh@siroiforex.com';
+            const isSuperAdminDev = email === 'tomas@siroiforex.com' || email === 'executive@siroiforex.com';
+            
+            // Financial Operations is visible for Sharju, Surchand, and SuperAdmin/Dev
+            const canSeeFinances = isSharju || isSurchand || isSuperAdminDev;
+            if (!canSeeFinances) return null;
+
+            // Sharju and Dev see Consultant Approval and Consultant Payouts
+            const canSeeConsultantOps = isSharju || isSuperAdminDev;
+            // Sharju, Surchand and Dev see Profit & Loss
+            const canSeeProfitLoss = isSharju || isSurchand || isSuperAdminDev;
+
+            return (
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 font-extrabold px-3 mb-2.5">
+                  Financial Operations
+                </p>
+                <nav className="space-y-1">
+                  {canSeeConsultantOps && (
                     <>
-                      <div className="flex items-center gap-3">
-                        <CheckSquare size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors'} />
-                        <span>Consultant Approval</span>
-                      </div>
-                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
+                      <NavLink
+                        to="/dashboard/consultant-approval"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                            isActive
+                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-1 ring-indigo-500/50'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
+                          }`
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <CheckSquare size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors'} />
+                              <span>Consultant Approval</span>
+                            </div>
+                            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
+                          </>
+                        )}
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/consultant-payouts"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                            isActive
+                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-1 ring-indigo-500/50'
+                              : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
+                          }`
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <CircleDollarSign size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors'} />
+                              <span>Consultant Payouts</span>
+                            </div>
+                            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
+                          </>
+                        )}
+                      </NavLink>
                     </>
                   )}
-                </NavLink>
-                <NavLink
-                  to="/dashboard/consultant-payouts"
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-1 ring-indigo-500/50'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <CircleDollarSign size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors'} />
-                        <span>Consultant Payouts</span>
-                      </div>
-                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
-                    </>
+
+                  {canSeeProfitLoss && (
+                    <NavLink
+                      to="/dashboard/profit-loss"
+                      onClick={() => setIsMobileSidebarOpen(false)}
+                      className={({ isActive }) =>
+                        `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                          isActive
+                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20 ring-1 ring-emerald-500/50'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <div className="flex items-center gap-3">
+                            <Scale size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors'} />
+                            <span>Branch Profit & Loss</span>
+                          </div>
+                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
+                        </>
+                      )}
+                    </NavLink>
                   )}
-                </NavLink>
-              </nav>
-            </div>
-          )}
+                </nav>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Bottom Section */}

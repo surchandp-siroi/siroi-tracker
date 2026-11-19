@@ -15,6 +15,7 @@ import EntryPage from '@/pages/EntryPage';
 import AuditLogsPage from '@/pages/AuditLogsPage';
 import ConsultantPayoutsPage from '@/pages/ConsultantPayoutsPage';
 import ConsultantApprovalPage from '@/pages/ConsultantApprovalPage';
+import ProfitLossPage from '@/pages/ProfitLossPage';
 import OnboardingPage from '@/pages/OnboardingPage';
 import CustomerDataEntryPage from '@/pages/CustomerDataEntryPage';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="audit" element={<AuditLogsPage />} />
             <Route path="consultant-approval" element={<ConsultantApprovalPage />} />
             <Route path="consultant-payouts" element={<ConsultantPayoutsPage />} />
+            <Route path="profit-loss" element={<ProfitLossPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
