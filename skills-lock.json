@@ -265,6 +265,12 @@
       "skillPath": "skills/mobbin-search/SKILL.md",
       "computedHash": "6e6e20efde97a7420404499629f0cde54589488856d7022694b53007f670ff36"
     },
+    "modern-web-guidance": {
+      "source": "GoogleChrome/modern-web-guidance",
+      "sourceType": "github",
+      "skillPath": "skills/modern-web-guidance/SKILL.md",
+      "computedHash": "9e69ce00dc314b64f6664031b70295ea46c7de93ac682c624808df6e48e08b66"
+    },
     "owasp-security": {
       "source": "agamm/claude-code-owasp",
       "sourceType": "github",
