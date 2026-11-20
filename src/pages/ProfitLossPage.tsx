@@ -547,82 +547,96 @@ export default function ProfitLossPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Total Income Card */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-950/30 dark:via-emerald-900/10 dark:to-transparent border border-emerald-500/25 dark:border-emerald-800/40 shadow-xs relative overflow-hidden group">
+        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-              <ArrowDownLeft className="w-4 h-4 stroke-[2.5]" />
-              <span>Total Network Income</span>
+            <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center size-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/40">
+                <ArrowDownLeft className="size-4 stroke-[2.5]" />
+              </span>
+              <span className="text-body-2-medium text-text-secondary">
+                Total Cash Income
+              </span>
             </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300">
+            <span className="text-caption-2-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
               7 Streams
             </span>
           </div>
-          <div className="mt-2.5">
-            <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="mt-3">
+            <div className="font-mono text-2xl sm:text-3xl font-bold text-text-primary tracking-tight tabular-nums">
               {formatInr(companySummary.totalIncome)}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-caption-1-regular text-text-tertiary mt-1">
               Forex, Loans, Insurance, Wealth, Services & Advisory
             </p>
           </div>
         </div>
 
         {/* Operating & Misc Expenses Card */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-500/10 via-slate-500/5 to-transparent dark:from-slate-800/40 dark:via-slate-800/10 dark:to-transparent border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden group">
+        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Building2 className="w-4 h-4 text-slate-500" />
-              <span>Operating & Misc Expenses</span>
+            <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center size-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40">
+                <Building2 className="size-4" />
+              </span>
+              <span className="text-body-2-medium text-text-secondary">
+                Total Cash Expenses
+              </span>
             </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            <span className="text-caption-2-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
               Rent & Operations
             </span>
           </div>
-          <div className="mt-2.5">
-            <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="mt-3">
+            <div className="font-mono text-2xl sm:text-3xl font-bold text-text-primary tracking-tight tabular-nums">
               {formatInr(companySummary.totalOperating + companySummary.totalMisc)}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-caption-1-regular text-text-tertiary mt-1">
               Rent, staff salaries, travel, marketing & utilities
             </p>
           </div>
         </div>
 
         {/* Consultant Payouts Card */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-transparent dark:from-indigo-950/30 dark:via-indigo-900/10 dark:to-transparent border border-indigo-500/25 dark:border-indigo-800/40 shadow-xs relative overflow-hidden group">
+        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
-              <Receipt className="w-4 h-4 stroke-[2.2]" />
-              <span>Consultant Commissions</span>
+            <span className="flex items-center gap-2">
+              <span className="flex items-center justify-center size-8 rounded-xl bg-accent-50 dark:bg-accent-950/40 text-accent-600 dark:text-accent-400 border border-accent-200/50 dark:border-accent-800/40">
+                <Receipt className="size-4 stroke-[2.2]" />
+              </span>
+              <span className="text-body-2-medium text-text-secondary">
+                Consultant Commissions
+              </span>
             </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+            <span className="text-caption-2-bold px-2 py-0.5 rounded-full bg-accent-100 dark:bg-accent-950/80 text-accent-700 dark:text-accent-300">
               Auto-Synced
             </span>
           </div>
-          <div className="mt-2.5">
-            <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <div className="mt-3">
+            <div className="font-mono text-2xl sm:text-3xl font-bold text-text-primary tracking-tight tabular-nums">
               {formatInr(companySummary.totalConsultant)}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-caption-1-regular text-text-tertiary mt-1">
               Disbursal payouts linked directly to connectors
             </p>
           </div>
         </div>
 
         {/* Net Profit / (Loss) Card */}
-        <div className={`p-5 rounded-3xl border shadow-xs relative overflow-hidden group ${
-          companySummary.netProfit >= 0
-            ? 'bg-gradient-to-br from-emerald-500/15 via-teal-500/5 to-transparent dark:from-emerald-950/40 dark:via-teal-900/10 dark:to-transparent border-emerald-500/35 dark:border-emerald-700/50'
-            : 'bg-gradient-to-br from-rose-500/15 via-red-500/5 to-transparent dark:from-rose-950/40 dark:via-red-900/10 dark:to-transparent border-rose-500/35 dark:border-rose-700/50'
-        }`}>
+        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
           <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
-              companySummary.netProfit >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
-            }`}>
-              {companySummary.netProfit >= 0 ? <TrendingUp className="w-4 h-4 stroke-[2.5]" /> : <TrendingDown className="w-4 h-4 stroke-[2.5]" />}
-              <span>Net Profit / (Loss)</span>
+            <span className="flex items-center gap-2">
+              <span className={`flex items-center justify-center size-8 rounded-xl border ${
+                companySummary.netProfit >= 0
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
+                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200/50 dark:border-rose-800/40'
+              }`}>
+                {companySummary.netProfit >= 0 ? <TrendingUp className="size-4 stroke-[2.5]" /> : <TrendingDown className="size-4 stroke-[2.5]" />}
+              </span>
+              <span className="text-body-2-medium text-text-secondary">
+                Net Profit / (Loss)
+              </span>
             </span>
-            <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full font-mono ${
+            <span className={`text-caption-2-bold px-2.5 py-0.5 rounded-full font-mono ${
               companySummary.profitMargin >= 0
                 ? 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200'
                 : 'bg-rose-100 dark:bg-rose-900/80 text-rose-800 dark:text-rose-200'
@@ -630,13 +644,13 @@ export default function ProfitLossPage() {
               {companySummary.profitMargin >= 0 ? '+' : ''}{companySummary.profitMargin.toFixed(1)}% Margin
             </span>
           </div>
-          <div className="mt-2.5">
-            <div className={`font-mono text-2xl sm:text-3xl font-black tracking-tight ${
+          <div className="mt-3">
+            <div className={`font-mono text-2xl sm:text-3xl font-bold tracking-tight tabular-nums ${
               companySummary.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
             }`}>
               {formatInr(companySummary.netProfit)}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-caption-1-regular text-text-tertiary mt-1">
               Total Revenue minus All Operating & Commission Costs
             </p>
           </div>
@@ -710,18 +724,18 @@ export default function ProfitLossPage() {
           {/* Visual Analytics Row: Allocation Summary & Net P&L by branch */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Left card (7 cols): Income vs Cost Structure */}
-            <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="lg:col-span-7 bg-background-full rounded-3xl border border-separator-border p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-separator-border pb-3">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-text-primary flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                     Cash P&L Allocation Summary
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-text-secondary mt-0.5">
                     Proportion of gross revenue retained as net profit vs operating costs and payouts.
                   </p>
                 </div>
-                <span className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                <span className="text-[11px] font-mono font-bold text-text-secondary bg-background-tertiary-default px-2.5 py-1 rounded-lg">
                   {formattedMonthLabel}
                 </span>
               </div>
@@ -791,15 +805,15 @@ export default function ProfitLossPage() {
             </div>
 
             {/* Right card (5 cols): Net P&L by branch (Ranked Horizontal Bars from Reference) */}
-            <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-white/10 p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <div className="lg:col-span-5 bg-background-full rounded-3xl border border-separator-border p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-separator-border pb-2.5">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-text-primary">
                     Net P&L by branch
                   </h3>
-                  <span className="text-[11px] text-slate-400">{formattedMonthLabel} · Cash basis</span>
+                  <span className="text-[11px] text-text-tertiary">{formattedMonthLabel} · Cash basis</span>
                 </div>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-background-tertiary-default text-text-secondary">
                   Ranked
                 </span>
               </div>
@@ -1050,9 +1064,9 @@ export default function ProfitLossPage() {
       {activeTab === 'deepdive' && (
         <div className="space-y-6">
           {/* Branch Picker */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-background-full p-4 rounded-3xl border border-separator-border shadow-xs">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Branch Statement:</span>
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Select Branch Statement:</span>
               <div className="flex flex-wrap gap-1.5">
                 {DISPLAY_BRANCHES.map(b => (
                   <button
@@ -1103,17 +1117,17 @@ export default function ProfitLossPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Income Streams (7 Categories) */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="bg-background-full rounded-3xl border border-separator-border p-6 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-separator-border pb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     <ArrowDownLeft className="w-4 h-4 stroke-[2.5]" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-tight">
+                    <h4 className="text-sm font-extrabold text-text-primary uppercase tracking-tight">
                       Income Streams ({deepDiveBranch})
                     </h4>
-                    <span className="text-[10px] text-slate-400">7 Required Revenue Categories</span>
+                    <span className="text-[10px] text-text-tertiary">7 Required Revenue Categories</span>
                   </div>
                 </div>
                 <span className="font-mono text-base font-black text-emerald-600 dark:text-emerald-400">
@@ -1126,18 +1140,18 @@ export default function ProfitLossPage() {
                   const amt = currentDeepDiveData.incomeStreams[cat.id] || 0;
                   const pct = currentDeepDiveData.totalIncome > 0 ? (amt / currentDeepDiveData.totalIncome) * 100 : 0;
                   return (
-                    <div key={cat.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200/60 dark:border-slate-800/60 space-y-1.5">
+                    <div key={cat.id} className="p-3.5 rounded-2xl bg-background-tertiary-default border border-separator-border space-y-1.5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block">{cat.name}</span>
-                          <span className="text-[10px] text-slate-400">{cat.examples}</span>
+                          <span className="text-xs font-bold text-text-primary block">{cat.name}</span>
+                          <span className="text-[10px] text-text-tertiary">{cat.examples}</span>
                         </div>
                         <div className="text-right">
-                          <span className="font-mono text-xs font-bold text-slate-900 dark:text-white block">{formatInr(amt)}</span>
-                          <span className="text-[10px] font-mono text-slate-400">{pct.toFixed(1)}% of income</span>
+                          <span className="font-mono text-xs font-bold text-text-primary block">{formatInr(amt)}</span>
+                          <span className="text-[10px] font-mono text-text-tertiary">{pct.toFixed(1)}% of income</span>
                         </div>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-background-secondary-default rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, pct)}%` }} />
                       </div>
                     </div>
@@ -1153,17 +1167,17 @@ export default function ProfitLossPage() {
             </div>
 
             {/* Expenses Structure (Operating, Misc, Consultant) */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="bg-background-full rounded-3xl border border-separator-border p-6 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-separator-border pb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                     <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-tight">
+                    <h4 className="text-sm font-extrabold text-text-primary uppercase tracking-tight">
                       Expenses Breakdown ({deepDiveBranch})
                     </h4>
-                    <span className="text-[10px] text-slate-400">Operating, Sundry & Consultant Payouts</span>
+                    <span className="text-[10px] text-text-tertiary">Operating, Sundry & Consultant Payouts</span>
                   </div>
                 </div>
                 <span className="font-mono text-base font-black text-rose-600 dark:text-rose-400">
@@ -1290,40 +1304,40 @@ export default function ProfitLossPage() {
 
       {/* TAB 3: Voucher Ledger */}
       {activeTab === 'ledger' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden space-y-4 p-5">
+        <div className="bg-background-full rounded-3xl border border-separator-border shadow-xs overflow-hidden space-y-4 p-5">
           {/* Filter Bar */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
               <Input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search description, category, voucher ref, branch..."
-                className="pl-9 h-10 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl"
+                className="pl-9 h-10 text-xs bg-background-tertiary-default border-border-button-default text-text-primary rounded-xl focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center bg-background-tertiary-default p-1 rounded-xl text-xs font-bold border border-separator-border">
                 <button
                   type="button"
                   onClick={() => setLedgerTypeFilter('all')}
-                  className={`px-3 py-1 rounded-lg transition-all ${ledgerTypeFilter === 'all' ? 'bg-white dark:bg-slate-700 shadow-xs text-indigo-600 dark:text-white' : 'text-slate-500'}`}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${ledgerTypeFilter === 'all' ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10' : 'text-text-secondary hover:text-text-primary'}`}
                 >
                   All ({records.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setLedgerTypeFilter('income')}
-                  className={`px-3 py-1 rounded-lg transition-all ${ledgerTypeFilter === 'income' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500'}`}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${ledgerTypeFilter === 'income' ? 'bg-emerald-600 text-white shadow-xs' : 'text-text-secondary hover:text-text-primary'}`}
                 >
                   Income ({records.filter(r => r.entry_type === 'income').length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setLedgerTypeFilter('expense')}
-                  className={`px-3 py-1 rounded-lg transition-all ${ledgerTypeFilter === 'expense' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-500'}`}
+                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${ledgerTypeFilter === 'expense' ? 'bg-rose-600 text-white shadow-xs' : 'text-text-secondary hover:text-text-primary'}`}
                 >
                   Expenses ({records.filter(r => r.entry_type === 'expense').length})
                 </button>
@@ -1346,10 +1360,10 @@ export default function ProfitLossPage() {
                   <th className="py-3.5 px-4 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+              <tbody className="divide-y divide-separator-border text-body-2-regular">
                 {filteredLedgerRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <td colSpan={8} className="py-12 text-center text-text-tertiary">
                       No financial records found for {formattedMonthLabel}. Click "Add Income" or "Add Expense" to record entries.
                     </td>
                   </tr>
@@ -1357,11 +1371,11 @@ export default function ProfitLossPage() {
                   filteredLedgerRecords.map((r) => {
                     const isInc = r.entry_type === 'income';
                     return (
-                      <tr key={r.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3 px-4 font-mono text-slate-500">{r.entry_date}</td>
-                        <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-200">{r.branch_name}</td>
+                      <tr key={r.id} className="hover:bg-background-secondary-hover transition-colors duration-150">
+                        <td className="py-3 px-4 font-mono text-text-tertiary">{r.entry_date}</td>
+                        <td className="py-3 px-4 font-bold text-text-primary">{r.branch_name}</td>
                         <td className="py-3 px-4">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-caption-2-bold uppercase ${
                             isInc
                               ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
                               : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
@@ -1370,16 +1384,16 @@ export default function ProfitLossPage() {
                             {r.entry_type}
                           </span>
                         </td>
-                        <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">{r.category}</td>
+                        <td className="py-3 px-4 font-semibold text-text-primary">{r.category}</td>
                         <td className="py-3 px-4">
-                          <div className="max-w-xs truncate text-slate-700 dark:text-slate-300">
+                          <div className="max-w-xs truncate text-text-secondary">
                             {r.description || '—'}
                           </div>
                           {r.sub_category && (
-                            <span className="text-[10px] text-indigo-500 font-mono">#{r.sub_category}</span>
+                            <span className="text-[10px] text-accent-500 font-mono">#{r.sub_category}</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 font-mono text-slate-400">{r.voucher_ref || '—'}</td>
+                        <td className="py-3 px-4 font-mono text-text-tertiary">{r.voucher_ref || '—'}</td>
                         <td className="py-3 px-4 text-right font-mono font-bold">
                           <span className={isInc ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
                             {formatInr(r.amount)}
@@ -1395,7 +1409,7 @@ export default function ProfitLossPage() {
                                 setDialogBranch(r.branch_name);
                                 setIsEntryDialogOpen(true);
                               }}
-                              className="p-1 text-slate-400 hover:text-indigo-600 rounded-md transition-colors"
+                              className="p-1.5 text-text-tertiary hover:text-accent-600 rounded-lg transition-colors cursor-pointer active:scale-[0.95]"
                               title="Edit"
                             >
                               <Edit size={14} />
@@ -1403,7 +1417,7 @@ export default function ProfitLossPage() {
                             <button
                               type="button"
                               onClick={() => handleDeleteRecord(r.id)}
-                              className="p-1 text-slate-400 hover:text-red-500 rounded-md transition-colors"
+                              className="p-1.5 text-text-tertiary hover:text-button-danger rounded-lg transition-colors cursor-pointer active:scale-[0.95]"
                               title="Delete"
                             >
                               <Trash2 size={14} />

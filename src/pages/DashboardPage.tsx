@@ -921,29 +921,29 @@ export default function DashboardOverview() {
             </div>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="flex bg-slate-100 p-1 rounded-xl flex-1">
+              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex-1">
                 <button 
                   onClick={() => setViewMode('daily')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'daily' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${viewMode === 'daily' ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
                   DAILY
                 </button>
                 <button 
                   onClick={() => setViewMode('month')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'month' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${viewMode === 'month' ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
                   MONTH
                 </button>
                 <button 
                   onClick={() => setViewMode('year')}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === 'year' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${viewMode === 'year' ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
                   YEAR
                 </button>
               </div>
 
               <button 
-                className="relative flex-shrink-0 flex items-center justify-center w-11 h-11 bg-indigo-600 text-white rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
+                className="relative flex-shrink-0 flex items-center justify-center w-11 h-11 bg-button-primary text-text-white rounded-xl shadow-xs inset-shadow-2xs border border-white/10 active:scale-95 transition-all cursor-pointer"
                 onClick={() => setShowDatePicker(true)}
               >
                 <Calendar className="h-5 w-5" />
@@ -1840,7 +1840,7 @@ export default function DashboardOverview() {
                          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm" />
                          <CardTitle className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Branch Targets</CardTitle>
                        </div>
-                       <button onClick={() => setShowTargetLeaders(!showTargetLeaders)} className={`text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-colors ${showTargetLeaders ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'}`}>
+                       <button onClick={() => setShowTargetLeaders(!showTargetLeaders)} className={`text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-all cursor-pointer ${showTargetLeaders ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10' : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'}`}>
                            {showTargetLeaders ? 'Show Targets' : 'Show Leaders'}
                        </button>
                    </div>
@@ -2328,7 +2328,7 @@ export default function DashboardOverview() {
                                   }
                               }}
                               disabled={savingTargets}
-                              className="flex-1 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                              className="flex-1 py-2.5 text-sm font-bold text-text-white bg-button-primary shadow-xs inset-shadow-2xs border border-white/10 rounded-xl hover:opacity-95 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer"
                           >
                               {savingTargets ? 'Saving...' : 'Save Targets'}
                           </button>
@@ -2338,7 +2338,7 @@ export default function DashboardOverview() {
                                   onClick={() => {
                                       setProductTargetModal(prev => prev ? { ...prev, isEdit: true } : null);
                                   }}
-                                  className="flex-1 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                                  className="flex-1 py-2.5 text-sm font-bold text-text-white bg-button-primary shadow-xs inset-shadow-2xs border border-white/10 rounded-xl hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
                               >
                                   Edit Targets
                               </button>
