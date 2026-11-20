@@ -18,7 +18,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       default: "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-sm",
-      primary: "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-500/25",
+      primary: "bg-button-primary text-text-white shadow-xs",
       secondary: "bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-white/10",
       outline: "bg-white/80 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 hover:border-indigo-500/30 shadow-sm",
       ghost: "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white",
@@ -49,7 +49,7 @@ export const buttonVariants = (options?: { variant?: ButtonProps["variant"]; siz
   const size = options?.size || "md";
   return cn(
     "inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-150",
-    variant === "primary" && "bg-indigo-600 text-white hover:bg-indigo-700",
+    variant === "primary" && "bg-button-primary text-text-white shadow-xs",
     variant === "secondary" && "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100",
     variant === "outline" && "bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10",
     variant === "ghost" && "hover:bg-slate-100 dark:hover:bg-white/5",
