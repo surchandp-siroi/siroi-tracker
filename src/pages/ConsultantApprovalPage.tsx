@@ -274,9 +274,9 @@ export default function ConsultantApprovalPage() {
                 <p className="text-base text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">Review and approve new consultant registrations. Ensure all provided documents and bank details are accurate before proceeding.</p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.02)] ring-1 ring-slate-200/50 dark:ring-white/10 rounded-3xl overflow-hidden">
-                <div className="flex flex-col space-y-1.5 p-6 md:p-8 border-b border-slate-100 dark:border-white/5">
-                        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="bg-background-full border border-separator-border shadow-xs rounded-3xl overflow-hidden">
+                <div className="flex flex-col space-y-1.5 p-6 md:p-8 border-b border-separator-border">
+                        <h2 className="text-xl font-bold tracking-tight text-text-primary flex items-center gap-3">
                             Pending Requests
                             <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-semibold">
                                 {pendingConsultants.length}
@@ -286,16 +286,16 @@ export default function ConsultantApprovalPage() {
                     <div className="p-0">
                     {isLoading ? (
                         <div className="flex justify-center p-8">
-                            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                            <Loader2 className="w-8 h-8 animate-spin text-accent-500" />
                         </div>
                     ) : pendingConsultants.length === 0 ? (
-                        <div className="text-center p-8 text-slate-500">
+                        <div className="text-center p-8 text-text-tertiary">
                             No pending consultant requests.
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/50">
+                            <table className="bui-table w-full text-start border-collapse text-body-2-regular">
+                                <thead className="bg-background-secondary-default border-b border-border-table text-caption-1-semibold text-text-tertiary uppercase tracking-wider">
                                     <tr>
                                         <th className="px-6 py-4 font-semibold">Name & Contact</th>
                                         <th className="px-6 py-4 font-semibold">Location</th>
@@ -304,9 +304,9 @@ export default function ConsultantApprovalPage() {
                                         <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                <tbody className="divide-y divide-separator-border">
                                     {pendingConsultants.map((consultant) => (
-                                        <tr key={consultant.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors duration-300">
+                                        <tr key={consultant.id} className="group hover:bg-background-secondary-hover transition-colors duration-150">
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-5">
                                                     <div className="p-2 rounded-full bg-blue-500 dark:bg-blue-600 shrink-0 shadow-sm">
@@ -435,8 +435,8 @@ export default function ConsultantApprovalPage() {
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/50">
+                            <table className="bui-table w-full text-start border-collapse text-body-2-regular">
+                                <thead className="bg-background-secondary-default border-b border-border-table text-caption-1-semibold text-text-tertiary uppercase tracking-wider">
                                     <tr>
                                         <th className="px-6 py-4 font-semibold">Name & Contact</th>
                                         <th className="px-6 py-4 font-semibold">Location</th>
@@ -444,9 +444,9 @@ export default function ConsultantApprovalPage() {
                                         <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                <tbody className="divide-y divide-separator-border">
                                     {filteredApproved.map((consultant) => (
-                                        <tr key={consultant.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors duration-300">
+                                        <tr key={consultant.id} className="group hover:bg-background-secondary-hover transition-colors duration-150">
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-5">
                                                     <div className="p-2 rounded-full bg-blue-500 dark:bg-blue-600 shrink-0 shadow-sm">

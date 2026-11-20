@@ -479,7 +479,7 @@ export default function ConsultantPayoutsPage() {
                 type="button"
                 onClick={handleSaveAll}
                 disabled={isSavingAll}
-                className="h-9 px-4 flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="h-9 px-4 flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider rounded-xl bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
               >
                 {isSavingAll ? (
                   <>
@@ -498,10 +498,10 @@ export default function ConsultantPayoutsPage() {
         </div>
 
         {/* 13-Column Master Payouts Table */}
-        <div className="rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-x-auto">
+        <div className="rounded-3xl overflow-hidden border border-separator-border bg-background-full shadow-xs overflow-x-auto">
           <Table className="w-full text-left border-collapse">
-            <TableHeader className="bg-slate-50 dark:bg-slate-850/80 border-b border-slate-200/80 dark:border-slate-800">
-              <TableRow className="text-[11px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <TableHeader className="bg-background-secondary-default border-b border-border-table">
+              <TableRow className="text-caption-1-semibold text-text-tertiary uppercase tracking-wider">
                 <TableHead className="py-3 px-3.5 whitespace-nowrap">Entry Date</TableHead>
                 <TableHead className="py-3 px-3.5 whitespace-nowrap">Disbursed Date</TableHead>
                 <TableHead className="py-3 px-3.5 whitespace-nowrap">Consultant Name</TableHead>
@@ -718,7 +718,7 @@ export default function ConsultantPayoutsPage() {
                           <button
                             type="button"
                             onClick={() => handleSaveItem(item)}
-                            className="h-7 px-3 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
+                            className="h-7 px-3 text-xs font-bold rounded-lg bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 active:scale-[0.98] transition-all cursor-pointer"
                           >
                             Save
                           </button>
@@ -726,7 +726,7 @@ export default function ConsultantPayoutsPage() {
                           <button
                             type="button"
                             onClick={() => setEditingIds(prev => ({ ...prev, [item._uniqueId]: true }))}
-                            className="h-7 px-2.5 text-xs font-bold rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer"
+                            className="h-7 px-2.5 text-xs font-bold rounded-lg text-accent-600 hover:bg-background-secondary-hover dark:text-accent-400 active:scale-[0.98] transition-all cursor-pointer"
                           >
                             Edit
                           </button>

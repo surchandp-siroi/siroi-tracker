@@ -832,13 +832,13 @@ export default function ProfitLossPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="bg-background-full rounded-3xl border border-separator-border shadow-xs overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-separator-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight uppercase">
+                <h3 className="text-sm font-extrabold text-text-primary tracking-tight uppercase">
                   Branch Profitability ({formattedMonthLabel})
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-text-secondary">
                   Detailed branch breakdown of revenue vs expenditure and resulting profit margins.
                 </p>
               </div>
@@ -858,9 +858,9 @@ export default function ProfitLossPage() {
 
             {/* The Master P&L Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="bui-table w-full text-start border-collapse text-body-2-regular">
                 <thead>
-                  <tr className="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/50 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <tr className="border-b border-border-table bg-background-secondary-default text-caption-1-semibold text-text-tertiary uppercase tracking-wider">
                     <th className="py-3.5 px-4 sm:px-6">Branch</th>
                     <th className="py-3.5 px-4 text-right">Income</th>
                     <th className="py-3.5 px-4 text-right">Operating Expenses</th>
@@ -1332,18 +1332,18 @@ export default function ProfitLossPage() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-800/60 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 dark:border-slate-800">
+          <div className="overflow-x-auto rounded-3xl border border-separator-border bg-background-full shadow-xs">
+            <table className="bui-table w-full text-start border-collapse text-body-2-regular">
+              <thead className="bg-background-secondary-default text-caption-1-semibold uppercase tracking-wider text-text-tertiary border-b border-border-table">
                 <tr>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Branch</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Description / Sub-category</th>
-                  <th className="py-3 px-4">Voucher Ref</th>
-                  <th className="py-3 px-4 text-right">Amount</th>
-                  <th className="py-3 px-4 text-center">Actions</th>
+                  <th className="py-3.5 px-4">Date</th>
+                  <th className="py-3.5 px-4">Branch</th>
+                  <th className="py-3.5 px-4">Type</th>
+                  <th className="py-3.5 px-4">Category</th>
+                  <th className="py-3.5 px-4">Description / Sub-category</th>
+                  <th className="py-3.5 px-4">Voucher Ref</th>
+                  <th className="py-3.5 px-4 text-right">Amount</th>
+                  <th className="py-3.5 px-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">

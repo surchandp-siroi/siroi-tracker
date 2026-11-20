@@ -49,38 +49,97 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
 )
 Input.displayName = "Input"
 
-export function Card({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <div className={cn("glass text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden", className)}>{children}</div>;
+export function Card({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div 
+      className={cn("rounded-3xl border border-separator-border bg-background-primary-default text-text-primary shadow-xs flex flex-col overflow-hidden transition-colors", className)} 
+      {...props}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function CardHeader({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <div className={cn("flex flex-col space-y-1.5 p-4 border-b border-slate-900/10 dark:border-white/10", className)}>{children}</div>;
+export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div 
+      className={cn("flex flex-col space-y-1.5 p-5 border-b border-separator-border", className)} 
+      {...props}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function CardTitle({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <h2 className={cn("text-sm font-semibold tracking-tight", className)}>{children}</h2>;
+export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  return (
+    <h2 
+      className={cn("text-title-3-semibold text-text-primary tracking-tight", className)} 
+      {...props}
+    >
+      {children}
+    </h2>
+  );
 }
 
-export function CardContent({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <div className={cn("p-4", className)}>{children}</div>;
+export function CardContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div 
+      className={cn("p-5 text-body-regular text-text-secondary", className)} 
+      {...props}
+    >
+      {children}
+    </div>
+  );
 }
 
 // Table components
-export function Table({ className, containerClassName, children }: { className?: string, containerClassName?: string, children: React.ReactNode }) {
-  return <div className={cn("w-full overflow-auto", containerClassName)}><table className={cn("w-full text-left text-sm", className)}>{children}</table></div>
+export function Table({ className, containerClassName, children, ...props }: React.TableHTMLAttributes<HTMLTableElement> & { containerClassName?: string }) {
+  return (
+    <div className={cn("w-full overflow-x-auto", containerClassName)}>
+      <table className={cn("bui-table w-full text-start border-collapse text-body-2-regular text-text-primary", className)} {...props}>
+        {children}
+      </table>
+    </div>
+  );
 }
-export function TableHeader({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <thead className={cn("text-slate-500 text-[10px] uppercase border-b border-black/5 dark:border-white/5", className)}>{children}</thead>
+
+export function TableHeader({ className, children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return (
+    <thead className={cn("bg-background-secondary-default text-text-tertiary border-y border-separator-border text-caption-1-semibold uppercase tracking-wider", className)} {...props}>
+      {children}
+    </thead>
+  );
 }
-export function TableBody({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <tbody className={cn("divide-y divide-black/5 dark:divide-white/5", className)}>{children}</tbody>
+
+export function TableBody({ className, children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return (
+    <tbody className={cn("divide-y divide-separator-border", className)} {...props}>
+      {children}
+    </tbody>
+  );
 }
-export function TableRow({ className, children }: { className?: string, children: React.ReactNode }) {
-  return <tr className={cn("text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-100/50 dark:hover:bg-white/5 cursor-default group", className)}>{children}</tr>
+
+export function TableRow({ className, children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
+  return (
+    <tr className={cn("text-text-primary transition-colors duration-150 hover:bg-background-secondary-hover cursor-default group border-b border-separator-border last:border-b-0", className)} {...props}>
+      {children}
+    </tr>
+  );
 }
+
 export function TableHead({ className, children, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn("pb-2 font-medium", className)} {...props}>{children}</th>
+  return (
+    <th className={cn("px-3.5 py-3 text-start align-middle font-semibold text-text-tertiary whitespace-nowrap outline-none", className)} {...props}>
+      {children}
+    </th>
+  );
 }
+
 export function TableCell({ className, children, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("py-3", className)} {...props}>{children}</td>
+  return (
+    <td className={cn("px-3.5 py-3 align-middle text-text-primary outline-none", className)} {...props}>
+      {children}
+    </td>
+  );
 }
