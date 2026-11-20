@@ -101,7 +101,7 @@ export function DropdownMenu({
   return (
     <div
       className={cn(
-        "absolute top-full mt-2 z-[9999] min-w-[200px] p-1.5 rounded-2xl bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 shadow-2xl text-slate-800 dark:text-slate-200 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 flex flex-col gap-0.5",
+        "absolute top-full mt-2 z-[9999] min-w-[200px] p-1.5 rounded-2xl bg-background-full border border-separator-border shadow-dropdown text-text-primary animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 flex flex-col gap-0.5",
         alignClasses[align],
         className
       )}

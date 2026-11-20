@@ -215,7 +215,7 @@ export default function DashboardLayout() {
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0b0f19]">
       {/* Mobile Top Bar */}
       <div 
-        className={`md:hidden fixed left-3 right-3 h-14 rounded-2xl flex items-center px-4 z-40 shadow-xl justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-indigo-600 top-[calc(env(safe-area-inset-top)+16px)] ${
+        className={`md:hidden fixed left-3 right-3 h-14 rounded-2xl flex items-center px-4 z-40 shadow-xl justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-button-primary text-text-white border border-white/10 top-[calc(env(safe-area-inset-top)+16px)] ${
           isScrolled 
             ? '-translate-y-12 opacity-0 pointer-events-none scale-95' 
             : 'translate-y-0 opacity-100 scale-100'
@@ -294,7 +294,7 @@ export default function DashboardLayout() {
                     className={({ isActive }) =>
                       `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                         isActive
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-1 ring-indigo-500/50'
+                          ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 ring-1 ring-white/10'
                           : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
                       }`
                     }
@@ -346,7 +346,7 @@ export default function DashboardLayout() {
                         className={({ isActive }) =>
                           `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                             isActive
-                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-1 ring-indigo-500/50'
+                              ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 ring-1 ring-white/10'
                               : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
                           }`
                         }
@@ -367,7 +367,7 @@ export default function DashboardLayout() {
                         className={({ isActive }) =>
                           `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                             isActive
-                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-1 ring-indigo-500/50'
+                              ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 ring-1 ring-white/10'
                               : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
                           }`
                         }
@@ -442,7 +442,7 @@ export default function DashboardLayout() {
                 onClick={() => setTheme('dark')}
                 className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
                   theme === 'dark' 
-                    ? 'bg-indigo-600 text-white shadow-sm' 
+                    ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10' 
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
                 title="Dark Mode"

@@ -496,7 +496,7 @@ export default function ProfitLossPage() {
             <button
               type="button"
               onClick={handleCurrentMonth}
-              className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 ml-1 rounded-lg bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 transition-colors shadow-2xs"
+              className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 ml-1 rounded-lg bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 active:scale-[0.98] transition-all cursor-pointer"
             >
               Today
             </button>
@@ -652,8 +652,8 @@ export default function ProfitLossPage() {
             onClick={() => setActiveTab('matrix')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'matrix'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10'
+                : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary-hover'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -665,8 +665,8 @@ export default function ProfitLossPage() {
             onClick={() => setActiveTab('deepdive')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'deepdive'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10'
+                : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary-hover'
             }`}
           >
             <PieChart className="w-4 h-4" />
@@ -678,8 +678,8 @@ export default function ProfitLossPage() {
             onClick={() => setActiveTab('ledger')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'ledger'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10'
+                : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary-hover'
             }`}
           >
             <Receipt className="w-4 h-4" />
@@ -1061,8 +1061,8 @@ export default function ProfitLossPage() {
                     onClick={() => setDeepDiveBranch(b.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       deepDiveBranch === b.id
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10'
+                        : 'bg-background-tertiary-default text-text-secondary hover:bg-background-secondary-hover hover:text-text-primary'
                     }`}
                   >
                     {b.name}
