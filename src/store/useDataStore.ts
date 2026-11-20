@@ -58,6 +58,7 @@ export interface EntryItem {
     consultantName?: string;
     consultantEmail?: string;
     rejectionRemark?: string;
+    payoutPercentage?: number;
     commissionPercentage?: number;
     settlementStatus?: 'Not Settled' | 'Settled';
     settlementDate?: string;
@@ -169,7 +170,7 @@ interface DataState {
   deleteBranch: (id: string) => void;
   setBranchTarget: (branchId: string, monthYear: string, targetAmount: number, authorId: string, productTargets?: Record<string, number>) => Promise<boolean>;
   refreshOrgMembers: () => Promise<void>;
-  updateCommission: (entryId: string, itemIdx: number, updates: { commissionPercentage?: number, settlementStatus?: 'Not Settled' | 'Settled', settlementDate?: string }) => Promise<boolean>;
+  updateCommission: (entryId: string, itemIdx: number, updates: { payoutPercentage?: number, commissionPercentage?: number, settlementStatus?: 'Not Settled' | 'Settled', settlementDate?: string }) => Promise<boolean>;
 }
 
 let globalSubscription: any = null;
