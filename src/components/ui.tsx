@@ -9,17 +9,17 @@ export function cn(...inputs: ClassValue[]) {
 // Simple button component
 export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost', size?: 'sm' | 'md' | 'lg' }>(
   ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+    const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus-ring disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] select-none cursor-pointer";
     const variants = {
-      primary: "bg-indigo-600 text-white hover:bg-indigo-500",
-      secondary: "bg-slate-900/10 dark:bg-white/10 text-slate-900 dark:text-white hover:bg-slate-900/20 dark:hover:bg-white/20 border border-slate-900/10 dark:border-white/10",
-      danger: "bg-red-500/80 text-white hover:bg-red-600/80",
-      ghost: "hover:bg-slate-900/10 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+      primary: "bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10",
+      secondary: "bg-background-primary-default text-text-primary hover:bg-background-primary-hover active:bg-background-primary-active border border-border-button-default shadow-xs",
+      danger: "bg-button-danger text-text-white shadow-xs hover:opacity-95 active:scale-[0.98]",
+      ghost: "hover:bg-background-secondary-hover text-text-secondary hover:text-text-primary"
     };
     const sizes = {
       sm: "h-8 px-3 text-xs",
       md: "h-9 py-2 px-4 text-sm",
-      lg: "h-11 px-8 text-lg"
+      lg: "h-11 px-8 text-base"
     };
     
     return (
@@ -38,7 +38,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     return (
       <input
         className={cn(
-          "flex h-9 w-full rounded-md glass-input px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-9.5 w-full rounded-xl border border-border-button-default bg-background-tertiary-default px-3 py-2 text-sm text-text-primary placeholder:text-text-placeholder transition-all duration-150 outline-none hover:border-border-button-hover focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.18)] disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         ref={ref}
