@@ -447,22 +447,6 @@ export default function ProfitLossPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-300">
       
-      {/* Breadcrumb & Scope Header */}
-      <div className="flex items-center justify-between text-xs text-slate-400 px-1 -mb-2">
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="hover:text-slate-600 dark:hover:text-slate-300">Finance MIS</span>
-          <span>&gt;</span>
-          <span className="text-slate-800 dark:text-slate-200 font-semibold">P&L Overview</span>
-        </div>
-        <div className="flex items-center gap-2 font-mono text-[11px] font-semibold text-slate-500">
-          <span>INR</span>
-          <span>·</span>
-          <span>Cash basis</span>
-          <span>·</span>
-          <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold text-emerald-600 dark:text-emerald-400">SIROI</span>
-        </div>
-      </div>
-
       {/* Top Header & Executive Control Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-sm">
         <div>
