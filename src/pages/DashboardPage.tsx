@@ -9,6 +9,13 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { BranchSelect } from '@/components/BranchSelect';
 import { CustomDatePicker } from '@/components/CustomDatePicker';
 import { MonthPicker } from '@/components/ui/month-picker';
+import { StatCards, type Stat } from '@/components/application/dashboard/stat-cards';
+import {
+  RiFlashlightFill,
+  RiBarChart2Fill,
+  RiTrophyFill,
+  RiFocus3Fill,
+} from '@remixicon/react';
 const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
 
 const BRANCH_COLORS: Record<string, string> = {
@@ -1179,138 +1186,52 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* KPI Timeline Metrics Cards (Desktop Doppelrand Architecture with Prominent Icon Badges) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-        {/* FTD Card (Electric Sky) */}
-        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
-          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-sky-500/20 via-sky-500/10 to-transparent text-sky-600 dark:text-sky-400 items-center justify-center border border-sky-500/30 shadow-lg shadow-sky-500/10 group-hover:scale-105 group-hover:shadow-sky-500/20 transition-all duration-300 shrink-0">
-                  <Zap className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wide text-sky-600 dark:text-sky-400 block">
-                    FTD Summary
-                  </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
-                    {kpiCategory}
-                  </span>
-                </div>
-              </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 md:py-1 rounded-full text-sky-700 dark:text-sky-300 shrink-0 whitespace-nowrap ml-1">
-                {kpiMetrics[kpiCategory]?.ftdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
-              </span>
-            </div>
-            <div className="mt-1">
-              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`}>
-                ₹{(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}
-              </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
-                <span className="truncate">For Selected Date</span>
-                <span className="text-sky-600 dark:text-sky-400 font-bold xl:text-right truncate">Daily Pulse</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* MTD Card (Royal Indigo) */}
-        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
-          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-transparent text-indigo-600 dark:text-indigo-400 items-center justify-center border border-indigo-500/30 shadow-lg shadow-indigo-500/10 group-hover:scale-105 group-hover:shadow-indigo-500/20 transition-all duration-300 shrink-0">
-                  <BarChart3 className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wide text-indigo-600 dark:text-indigo-400 block">
-                    MTD Summary
-                  </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
-                    {kpiCategory}
-                  </span>
-                </div>
-              </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 md:py-1 rounded-full text-indigo-700 dark:text-indigo-300 shrink-0 whitespace-nowrap ml-1">
-                {kpiMetrics[kpiCategory]?.mtdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
-              </span>
-            </div>
-            <div className="mt-1">
-              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`}>
-                ₹{(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}
-              </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
-                <span className="truncate">Month-To-Date Vol</span>
-                <span className="text-indigo-600 dark:text-indigo-400 font-bold xl:text-right truncate">Monthly Target</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* YTD Card (Emerald Crown) */}
-        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
-          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent text-emerald-600 dark:text-emerald-400 items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:scale-105 group-hover:shadow-emerald-500/20 transition-all duration-300 shrink-0">
-                  <Trophy className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-400 block">
-                    YTD Summary
-                  </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
-                    {kpiCategory}
-                  </span>
-                </div>
-              </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 md:py-1 rounded-full text-emerald-700 dark:text-emerald-300 shrink-0 whitespace-nowrap ml-1">
-                {kpiMetrics[kpiCategory]?.ytdCount || 0} <span className="hidden sm:inline">{kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}</span>
-              </span>
-            </div>
-            <div className="mt-1">
-              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`}>
-                ₹{(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}
-              </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
-                <span className="truncate">Financial Year Prog</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold xl:text-right truncate">Annual Cum.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Daily Proj Card (Amber Bullseye) */}
-        <div className="double-bezel transition-all duration-300 hover:scale-[1.01] group">
-          <div className="double-bezel-inner p-4 md:p-5 flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="hidden md:flex w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent text-amber-600 dark:text-amber-400 items-center justify-center border border-amber-500/30 shadow-lg shadow-amber-500/10 group-hover:scale-105 group-hover:shadow-amber-500/20 transition-all duration-300 shrink-0">
-                  <Target className="w-5 h-5 md:w-6 md:h-6 stroke-[2.3]" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400 block">
-                    Daily Target
-                  </span>
-                  <span className="text-[11px] md:text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5">
-                    {isManager ? `${managerBranchName} Branch` : 'All Branches'}
-                  </span>
-                </div>
-              </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 md:py-1 rounded-full text-amber-700 dark:text-amber-300 shrink-0 whitespace-nowrap ml-1"><span className="hidden sm:inline">Pipeline</span></span>
-            </div>
-            <div className="mt-1">
-              <div className="text-xl lg:text-3xl font-mono font-black text-slate-900 dark:text-white tracking-tight truncate" title={`₹${filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}`}>
-                ₹{filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}
-              </div>
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-semibold mt-1 gap-0.5 xl:gap-0">
-                <span className="truncate">{isManager ? `${managerBranchName} Forecast` : 'Consolidated Forecast'}</span>
-                <span className="text-amber-600 dark:text-amber-400 font-bold xl:text-right truncate">Today Target</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* BoardUI KPI Stat Cards */}
+      {(() => {
+        const dashboardKpiStats: Stat[] = [
+          {
+            icon: RiFlashlightFill,
+            label: `FTD (${kpiCategory})`,
+            value: `₹${(kpiMetrics[kpiCategory]?.ftd || 0).toLocaleString('en-IN')}`,
+            delta: `${kpiMetrics[kpiCategory]?.ftdCount || 0} ${kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}`,
+            deltaColor: "lime",
+            tone: "sky",
+            caption: "Daily Pulse",
+            hint: "For Selected Date across branches",
+          },
+          {
+            icon: RiBarChart2Fill,
+            label: `MTD (${kpiCategory})`,
+            value: `₹${(kpiMetrics[kpiCategory]?.mtd || 0).toLocaleString('en-IN')}`,
+            delta: `${kpiMetrics[kpiCategory]?.mtdCount || 0} ${kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}`,
+            deltaColor: "lime",
+            tone: "purple",
+            caption: "Monthly Target",
+            hint: "Month-To-Date aggregated volume",
+          },
+          {
+            icon: RiTrophyFill,
+            label: `YTD (${kpiCategory})`,
+            value: `₹${(kpiMetrics[kpiCategory]?.ytd || 0).toLocaleString('en-IN')}`,
+            delta: `${kpiMetrics[kpiCategory]?.ytdCount || 0} ${kpiCategory === 'All Products' ? 'Entries' : kpiCategory.includes('Insurance') ? 'Policies' : kpiCategory.includes('Loan') ? 'Cases' : kpiCategory.includes('Mutual') ? 'Accounts' : kpiCategory.includes('Forex') ? 'Txns' : 'Entries'}`,
+            deltaColor: "lime",
+            tone: "emerald",
+            caption: "Annual Cum.",
+            hint: "Financial Year Progress",
+          },
+          {
+            icon: RiFocus3Fill,
+            label: "Daily Target",
+            value: `₹${filteredBranches.reduce((acc, b) => acc + b.dailyProjection, 0).toLocaleString('en-IN')}`,
+            delta: isManager ? `${managerBranchName} Branch` : "All Branches",
+            deltaColor: "neutral",
+            tone: "orange",
+            caption: "Today Target",
+            hint: isManager ? `${managerBranchName} Forecast` : "Consolidated Forecast Pipeline",
+          },
+        ];
+        return <StatCards variant="footer" stats={dashboardKpiStats} columns={4} />;
+      })()}
 
       {/* Core Bento Analytics Section */}
       <div className="grid gap-6 lg:grid-cols-7">

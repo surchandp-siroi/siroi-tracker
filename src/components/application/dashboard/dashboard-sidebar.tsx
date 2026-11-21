@@ -34,6 +34,7 @@ import { Kbd } from "@/components/base/kbd/kbd";
 import { cx } from "@/utils/cx";
 import { DashboardTeamMenu } from "./dashboard-team-menu";
 import { DashboardUserMenu } from "./dashboard-user-menu";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Figma sources:
@@ -86,6 +87,7 @@ function NavItem({
   collapsed = false,
   href = "#",
   onClick,
+  onNavigate,
 }: {
   icon: IconComponent;
   label: string;
@@ -95,19 +97,24 @@ function NavItem({
   href?: string;
   /** Action rows (e.g. Settings → modal) intercept the navigation. */
   onClick?: () => void;
+  onNavigate?: (href: string) => void;
 }) {
   const localize = useTemplateCopy();
+  const navigate = useNavigate();
+
   return localize((
     <a
       href={href}
-      onClick={
-        onClick
-          ? (event) => {
-              event.preventDefault();
-              onClick();
-            }
-          : undefined
-      }
+      onClick={(event) => {
+        if (onClick) {
+          event.preventDefault();
+          onClick();
+        } else if (href && href !== "#") {
+          event.preventDefault();
+          onNavigate?.(href);
+          navigate(href);
+        }
+      }}
       aria-current={isSelected ? "page" : undefined}
       aria-label={label}
       title={collapsed ? label : undefined}
@@ -116,7 +123,7 @@ function NavItem({
         "transition-[width,background-color] duration-300 ease-in-out",
         collapsed ? "w-9" : "w-full",
         isSelected
-          ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected"
+          ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected text-white"
           : "hover:bg-background-secondary-hover",
       )}
     >
@@ -129,7 +136,7 @@ function NavItem({
           <span
             className={cx(
               "text-body-medium whitespace-nowrap",
-              isSelected ? "text-white" : "text-text-secondary",
+              isSelected ? "text-white font-semibold" : "text-text-secondary",
             )}
           >
             {label}
@@ -178,6 +185,7 @@ function NavRows({
   selected,
   collapsed,
   secondaryMatch,
+  onNavigate,
 }: {
   items: DashboardNavItem[];
   query: string;
@@ -185,6 +193,7 @@ function NavRows({
   collapsed: boolean;
   /** Whether Support or Settings matches, so "No results" only shows when nothing does. */
   secondaryMatch: boolean;
+  onNavigate?: (href: string) => void;
 }) {
   const localize = useTemplateCopy();
   const shown = items.filter((item) => item.label.toLocaleLowerCase().includes(query));
@@ -201,6 +210,7 @@ function NavRows({
           href={item.href}
           isSelected={isSelected}
           collapsed={collapsed}
+          onNavigate={onNavigate}
           badge={
             item.badge !== undefined ? (
               <Counter color={isSelected ? "primary" : "neutral"}>{item.badge}</Counter>
@@ -220,6 +230,7 @@ export function DashboardSidebar({
   items = DASHBOARD_NAV,
   flat = false,
   className,
+  onNavigate,
 }: {
   /** Rendered inside the mobile drawer: always expanded, close button instead of collapse. */
   mobile?: boolean;
@@ -239,6 +250,7 @@ export function DashboardSidebar({
   /** Removes the floating panel treatment for a sidebar revealed beneath mobile content. */
   flat?: boolean;
   className?: string;
+  onNavigate?: (href: string) => void;
 } = {}) {
   const localize = useTemplateCopy();
   const [collapsedState, setCollapsed] = useState(false);
@@ -254,6 +266,11 @@ export function DashboardSidebar({
   const matches = (label: string) => label.toLocaleLowerCase().includes(normalizedQuery);
   const secondaryLabels = ["Support", "Settings"];
   const secondaryMatch = secondaryLabels.some(matches);
+
+  const handleNavigate = (href: string) => {
+    if (mobile) onClose?.();
+    onNavigate?.(href);
+  };
 
   const activateSearch = useCallback(() => {
     if (!mobile) setCollapsed(false);
@@ -513,6 +530,7 @@ export function DashboardSidebar({
               selected={selected}
               collapsed={collapsed}
               secondaryMatch={secondaryMatch}
+              onNavigate={handleNavigate}
             />
           </nav>
         </div>

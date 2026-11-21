@@ -4,7 +4,7 @@ import { useTemplateCopy, useTemplateLanguageSelector } from "@/components/found
 
 import { useDirection } from "@/components/foundations/direction/direction";
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
-import { RiAddFill, RiEqualizer3Line } from "@remixicon/react";
+import { RiAddFill, RiEqualizer3Line, RiBuilding2Line, RiShieldCheckLine } from "@remixicon/react";
 import {
   Button as AriaButton,
   Dialog as AriaDialog,
@@ -15,19 +15,7 @@ import { Avatar } from "@/components/base/avatar/avatar";
 import { Button } from "@/components/base/buttons/button";
 import { ChevronUpDownSmall } from "@/components/foundations/icons/chevrons";
 import { cx } from "@/utils/cx";
-
-/**
- * Figma source: Board UI → sidebar account menu (node 3828:3895).
- *
- * Dropdown opened from the sidebar's workspace switcher (avatar + name +
- * chevron) at the top. Floats to the right of the sidebar with the team
- * menu's surface and appear animation (white, 1px border, shadow/dropdown) in
- * BoardUI's compact dropdown: radius 14 at 4px padding. Lists the users with
- * access (20px tinted-initial avatars + name), a full-bleed divider, then
- * "Add user" / "Manage" actions. Rows and the divider keep the panel's 4px
- * rhythm, the buttons sit 6px in; rows (10px) and buttons (8px) both stay
- * concentric in the 14px panel.
- */
+import { useAuthStore, BRANCH_ACCOUNTS } from "@/store/useAuthStore";
 
 type AvatarColor = "neutral" | "lime" | "pink";
 
@@ -38,10 +26,11 @@ type UserRow = {
   isSelected?: boolean;
 };
 
-const USERS: UserRow[] = [
-  { initials: "M", color: "neutral", name: "Mertcan Esmergul" },
-  { initials: "S", color: "lime", name: "Steven Raule" },
-  { initials: "L", color: "pink", name: "Lauren Proso" },
+const SIROI_BRANCHES = [
+  { initials: "GH", color: "lime" as const, name: "Guwahati (HO)", location: "Assam" },
+  { initials: "IM", color: "neutral" as const, name: "Imphal Branch", location: "Manipur" },
+  { initials: "IT", color: "pink" as const, name: "Itanagar Branch", location: "Arunachal Pradesh" },
+  { initials: "NM", color: "neutral" as const, name: "Nagaland & Mizoram", location: "Dimapur & Aizawl" },
 ];
 
 /** Label slot on the trigger: blurs + fades away as the rail collapses. */
@@ -84,39 +73,40 @@ function UserMenuItem({ initials, color, name, isSelected, onSelect }: UserRow &
  *  inbox icon) can open the same panel without duplicating it. */
 export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
   const localize = useTemplateCopy();
-  const languageSelector = useTemplateLanguageSelector();
+  const { user } = useAuthStore();
   return localize((
     <>
-      {/* Users with access */}
+      {/* Branches with access */}
       <div className="flex w-full flex-col gap-1 pt-1">
-        <span className="px-2 text-body-medium text-text-secondary">Users with access</span>
+        <span className="px-2 text-caption-1-semibold uppercase tracking-wider text-text-tertiary">Branches & Offices</span>
         <div className="flex w-full flex-col gap-1">
-          {USERS.map((user) => (
-            <UserMenuItem key={user.name} {...user} onSelect={onSelect} />
+          {SIROI_BRANCHES.map((branch) => (
+            <div
+              key={branch.name}
+              onClick={onSelect}
+              className="flex w-full cursor-pointer items-center justify-between rounded-2lg px-2 py-1.5 text-start transition-colors hover:bg-background-secondary-hover"
+            >
+              <div className="flex items-center gap-2">
+                <Avatar size="xs" color={branch.color} initials={branch.initials} />
+                <span className="truncate text-body-medium text-text-primary">{branch.name}</span>
+              </div>
+              <span className="text-[10px] text-text-tertiary">{branch.location}</span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Full-bleed divider, 4px from the list and the actions */}
-      <div className="-mx-1 my-1 h-px bg-border-button-default" />
+      {/* Full-bleed divider */}
+      <div className="-mx-1 my-1.5 h-px bg-separator-border" />
 
-      {/* Actions — 6px from the divider, the panel's edges and each other;
-          the buttons' 8px radius stays concentric in the 14px panel. */}
-      <div className="flex w-full items-center gap-1.5 p-0.5">
-        <Button variant="secondary" size="small" leadingIcon={RiAddFill} className="flex-1" onClick={onSelect}>
-          Add user
-        </Button>
-        <Button
-          variant="secondary"
-          size="small"
-          leadingIcon={RiEqualizer3Line}
-          className="flex-1"
-          onClick={onSelect}
-        >
-          Manage
-        </Button>
+      {/* Session details */}
+      <div className="flex flex-col gap-0.5 px-2 py-1">
+        <span className="text-[10px] uppercase font-bold text-text-tertiary">Current Session</span>
+        <span className="truncate text-body-2-regular font-medium text-text-secondary">{user?.email}</span>
+        <span className="text-[10px] font-semibold text-accent-600 dark:text-accent-400 uppercase tracking-wider">
+          {user?.role === 'admin' ? 'Super Admin' : user?.role === 'manager' ? 'Branch Manager' : 'State Terminal'}
+        </span>
       </div>
-      {languageSelector}
     </>
   ));
 }
@@ -137,11 +127,9 @@ export function DashboardUserMenu({
   const localize = useTemplateCopy();
   const direction = useDirection();
   const [isOpen, setIsOpen] = useState(false);
-  // "right" placement assumes room to the sidebar's right (true in-flow on
-  // desktop) — on mobile the sidebar can span the full viewport, so the
-  // 265px panel would render off-screen. Below sm, drop into a plain
-  // dropdown under the trigger instead.
+  const { user } = useAuthStore();
   const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     setIsMobile(mq.matches);
@@ -150,37 +138,39 @@ export function DashboardUserMenu({
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  const portalName = user?.role === 'manager' 
+    ? `${user?.latestLocation || (user?.email && BRANCH_ACCOUNTS[user.email.toLowerCase()]?.branchName) || 'Branch'} Portal` 
+    : user?.role === 'admin' 
+    ? 'Admin Terminal' 
+    : 'State Terminal';
+
   return localize((
     <AriaDialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
       <AriaButton
-        aria-label="Mertcan Esmergul"
+        aria-label="Siroi Forex"
         onPointerLeave={() => {
           if (suppressHover) onHoverSuppressionEnd?.();
         }}
         className={cx(
-          "relative flex min-w-0 cursor-pointer items-center gap-2 rounded-full outline-none",
+          "relative flex min-w-0 cursor-pointer items-center gap-2.5 rounded-full outline-none",
           "focus-visible:ring-2 focus-visible:ring-border-focus-ring focus-visible:ring-offset-2",
-          // Hover pill (Figma node 3829:4063): a fully-rounded 2px border/button/hover
-          // outline drawn via a pseudo-element so it never shifts the layout.
           "before:pointer-events-none before:absolute before:-inset-x-1.5 before:-inset-y-[5px] before:rounded-full before:border-2 before:border-transparent before:transition-colors before:duration-150",
           !suppressHover && "hover:before:border-border-sidebar-profile-hover",
-          // Collapsed, the trigger takes the rail's own 36px column and centres
-          // the 32px avatar in it, instead of sizing to the avatar plus a gap
-          // held open for a label that's shrunk to nothing. That gap made the
-          // button 42px wide in a 36px rail, which pushed its hover pill
-          // off-centre and into the rail's clip.
-          //
-          // The pill's insets go square too: 36×32 plus the expanded 6/5 reach
-          // is a 48×42 stadium, not the circle the avatar wants. 3/5 lands it
-          // on 42×42.
           collapsed && "w-9 justify-center gap-0 before:-inset-x-[3px]",
         )}
       >
-        <Avatar size="md" color="neutral" initials="M" className={avatarClassName} />
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-button-primary text-text-white font-black text-sm shadow-xs inset-shadow-2xs border border-white/10">
+          S
+        </span>
         <Collapsible collapsed={collapsed}>
-          <span className="flex items-center gap-0.5">
-            <span className="text-body-medium whitespace-nowrap text-text-primary">Mertcan Esmergul</span>
-            <ChevronUpDownSmall className="size-4 shrink-0 text-foreground-icon-tertiary" />
+          <span className="flex flex-col text-start">
+            <span className="flex items-center gap-1 text-caption-1-semibold uppercase tracking-wider text-text-primary leading-tight">
+              Siroi Forex
+              <ChevronUpDownSmall className="size-4 shrink-0 text-foreground-icon-tertiary" />
+            </span>
+            <span className="text-[10px] text-text-tertiary font-medium leading-tight truncate max-w-[150px]">
+              {portalName}
+            </span>
           </span>
         </Collapsible>
       </AriaButton>
@@ -190,7 +180,7 @@ export function DashboardUserMenu({
         offset={8}
         className={cx(
           "w-[265px] max-w-[calc(100vw-32px)] origin-top-left overflow-y-auto",
-          "rounded-[14px] border border-border-button-default bg-background-primary-default p-1 shadow-dropdown",
+          "rounded-[14px] border border-border-button-default bg-background-primary-default p-1.5 shadow-dropdown",
           "transition duration-150 ease-out",
           "data-[entering]:opacity-0 data-[entering]:scale-95 data-[entering]:blur-[2px]",
           "data-[exiting]:opacity-0 data-[exiting]:scale-95 data-[exiting]:blur-[2px]",

@@ -16,7 +16,10 @@ import {
   RiPaletteLine,
   RiSchoolLine,
   RiShieldUserLine,
+  RiUserSettingsLine,
+  RiRefreshLine,
 } from "@remixicon/react";
+import { Capacitor } from "@capacitor/core";
 import {
   Button as AriaButton,
   Dialog as AriaDialog,
@@ -28,18 +31,8 @@ import { Avatar } from "@/components/base/avatar/avatar";
 import { Counter } from "@/components/base/badges/counter";
 import { ChevronDownSmall } from "@/components/foundations/icons/chevrons";
 import { cx } from "@/utils/cx";
-
-/**
- * Figma source: Board UI → sidebar profile menu (node 3823:3699).
- *
- * Dropdown opened from the sidebar's "Board team" card. Floats to the right of
- * the sidebar: white panel, 1px border/button/default, radius 16, p 10,
- * shadow/dropdown. Header (team avatar + name/email), three grouped sections of
- * sidebar-style rows separated by full-bleed dividers, and a "BoardUI" + version
- * footer. Rows mirror the sidebar nav item pattern (icon + label + optional
- * counter) but use the menu tokens from Figma (text/primary label,
- * background/primary/hover on hover + the selected row).
- */
+import { useAuthStore } from "@/store/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 type IconComponent = ComponentType<{
   className?: string;
@@ -51,6 +44,7 @@ type MenuRow = {
   label: string;
   badge?: string;
   isSelected?: boolean;
+  onClick?: () => void;
 };
 
 type MenuGroup = {
@@ -104,13 +98,16 @@ function Collapsible({ collapsed, children }: { collapsed: boolean; children: Re
   ));
 }
 
-function TeamMenuItem({ icon: Icon, label, badge, isSelected, onSelect }: MenuRow & { onSelect: () => void }) {
+function TeamMenuItem({ icon: Icon, label, badge, isSelected, onClick, onSelect }: MenuRow & { onSelect: () => void }) {
   const localize = useTemplateCopy();
   return localize((
     <AriaButton
       type="button"
       aria-current={isSelected ? "page" : undefined}
-      onPress={onSelect}
+      onPress={() => {
+        onSelect();
+        onClick?.();
+      }}
       className={cx(
         "flex w-full cursor-pointer items-center gap-2.5 rounded-2lg p-2 text-start outline-none transition-colors",
         isSelected
@@ -155,16 +152,62 @@ export function DashboardTeamMenu({
   const languageSelector = useTemplateLanguageSelector();
   const direction = useDirection();
   const [isOpen, setIsOpen] = useState(false);
-  // "right" placement assumes room to the sidebar's right (true in-flow on
-  // desktop) — on mobile the sidebar can span the full viewport, so the
-  // 265px panel would render off-screen. Below sm, drop into a plain
-  // dropdown under the trigger instead.
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
   const isMobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, () => false);
+
+  const displayName = user?.displayName || user?.email?.split('@')[0] || "User";
+  const userEmail = user?.email || "";
+  const initials = displayName.slice(0, 2).toUpperCase();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      navigate('/');
+    }
+  };
+
+  const isNative = Capacitor.isNativePlatform();
+
+  const groups: MenuGroup[] = [
+    {
+      id: "personal",
+      label: "Account",
+      items: [
+        {
+          icon: RiShieldUserLine,
+          label: user?.role === 'admin' ? "Super Admin" : "Branch User",
+        },
+        {
+          icon: RiUserSettingsLine,
+          label: "Profile Settings",
+          onClick: () => {
+            window.dispatchEvent(new CustomEvent('siroi:open-profile'));
+          },
+        },
+        ...(isNative ? [{
+          icon: RiRefreshLine,
+          label: "Update App",
+          onClick: () => {
+            window.dispatchEvent(new CustomEvent('siroi:update-app'));
+          },
+        }] : []),
+        {
+          icon: RiLogoutBoxRLine,
+          label: "Sign out",
+          onClick: handleLogout,
+        },
+      ],
+    },
+  ];
 
   return localize((
     <AriaDialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
       <AriaButton
-        aria-label="Board team"
+        aria-label={displayName}
         className={cx(
           "flex cursor-pointer items-center overflow-hidden outline-none",
           "border-2 border-transparent hover:border-border-button-hover",
@@ -177,11 +220,11 @@ export function DashboardTeamMenu({
         )}
       >
         <span className="flex min-w-0 items-center gap-2">
-          <Avatar size="md" color="blue" src="/brand/boardui_logo_circle.webp" alt="Board team" />
+          <Avatar size="md" color="lime" initials={initials} alt={displayName} />
           <Collapsible collapsed={collapsed}>
-            <span className="flex min-w-0 flex-col items-start justify-center">
-              <span className="text-body-medium whitespace-nowrap text-text-primary">Board team</span>
-              <span className="text-body-regular whitespace-nowrap text-text-secondary">hi@boardui.com</span>
+            <span className="flex min-w-0 flex-col items-start justify-center text-start">
+              <span className="text-body-medium whitespace-nowrap text-text-primary font-bold">{displayName}</span>
+              <span className="text-body-2-regular whitespace-nowrap text-text-secondary truncate max-w-[140px] text-xs">{userEmail}</span>
             </span>
           </Collapsible>
         </span>
@@ -205,19 +248,19 @@ export function DashboardTeamMenu({
           "data-[exiting]:opacity-0 data-[exiting]:scale-95 data-[exiting]:blur-[2px]",
         )}
       >
-        <AriaDialog aria-label="Board team menu" className="flex flex-col gap-[7px] outline-none">
+        <AriaDialog aria-label="User account menu" className="flex flex-col gap-[7px] outline-none">
           {/* Header */}
-          <div className="flex w-full items-center gap-2 px-2 pt-1">
-            <Avatar size="md" color="blue" src="/brand/boardui_logo_circle.webp" alt="Board team" />
+          <div className="flex w-full items-center gap-2.5 px-2 pt-1 pb-1">
+            <Avatar size="md" color="lime" initials={initials} alt={displayName} />
             <div className="flex min-w-0 flex-col items-start justify-center">
-              <span className="text-body-medium whitespace-nowrap text-text-primary">Board team</span>
-              <span className="text-body-regular whitespace-nowrap text-text-secondary">hi@boardui.com</span>
+              <span className="text-body-medium whitespace-nowrap text-text-primary font-bold">{displayName}</span>
+              <span className="text-body-2-regular whitespace-nowrap text-text-secondary text-xs truncate max-w-[170px]">{userEmail}</span>
             </div>
           </div>
 
           {/* Grouped sidebar-style rows */}
           <div className="flex w-full flex-col">
-            {GROUPS.map((group, index) => (
+            {groups.map((group, index) => (
               <Group key={group.id} group={group} showDivider={index > 0} onSelect={() => setIsOpen(false)}>
                 {showThemeToggle && group.id === "personal" && (
                   <div className="flex w-full items-center justify-between gap-2.5 rounded-2lg px-2 py-1">
@@ -234,10 +277,10 @@ export function DashboardTeamMenu({
           </div>
 
           {/* Footer */}
-          <div className="flex w-full items-center justify-between px-2 pt-1 pb-2">
-            <span className="text-body-2-medium whitespace-nowrap text-text-tertiary">BoardUI</span>
-            <span className="inline-flex items-center justify-center rounded-sm bg-background-tertiary-default px-1 py-px text-body-2-medium whitespace-nowrap text-text-tertiary">
-              v1.0.1
+          <div className="flex w-full items-center justify-between px-2 pt-1 pb-1 border-t border-separator-border mt-1">
+            <span className="text-[10px] uppercase font-bold text-text-tertiary">Siroi Tracker</span>
+            <span className="inline-flex items-center justify-center rounded-sm bg-background-tertiary-default px-1.5 py-0.5 text-[10px] font-mono font-bold text-text-tertiary">
+              v1.2.47
             </span>
           </div>
         </AriaDialog>

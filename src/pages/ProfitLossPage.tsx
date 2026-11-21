@@ -32,6 +32,15 @@ import {
   Scale
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { StatCards, type Stat } from '@/components/application/dashboard/stat-cards';
+import { LineChartCard } from '@/components/application/dashboard/line-chart-card';
+import { EarningsChartCard } from '@/components/application/dashboard/earnings-chart-card';
+import {
+  RiArrowDownCircleFill,
+  RiBuilding2Fill,
+  RiCoinsFill,
+  RiScales3Line,
+} from '@remixicon/react';
 import { 
   AddFinancialEntryDialog, 
   BRANCH_NAMES, 
@@ -100,7 +109,7 @@ export default function ProfitLossPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const [activeTab, setActiveTab] = useState<'matrix' | 'deepdive' | 'ledger'>('matrix');
+  const [activeTab, setActiveTab] = useState<'matrix' | 'deepdive' | 'ledger' | 'analytics'>('matrix');
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all');
   const [deepDiveBranch, setDeepDiveBranch] = useState<string>('Guwahati');
 
@@ -444,6 +453,49 @@ export default function ProfitLossPage() {
     );
   }
 
+  const kpiStats: Stat[] = [
+    {
+      icon: RiArrowDownCircleFill,
+      label: "Total Cash Income",
+      value: formatInr(companySummary.totalIncome),
+      delta: "7 Streams",
+      deltaColor: "lime",
+      tone: "emerald",
+      caption: "Cash Inflow",
+      hint: "Consolidated cash income across Forex, Loans, Insurance, Wealth, Services & Advisory for all branches.",
+    },
+    {
+      icon: RiBuilding2Fill,
+      label: "Operating & Misc Expenses",
+      value: formatInr(companySummary.totalOperating + companySummary.totalMisc),
+      delta: "Rent & Ops",
+      deltaColor: "neutral",
+      tone: "orange",
+      caption: "Branch Operations",
+      hint: "Rent, staff salaries, travel, marketing, electricity and office utilities across all branches.",
+    },
+    {
+      icon: RiCoinsFill,
+      label: "Consultant Commissions",
+      value: formatInr(companySummary.totalConsultant),
+      delta: "Auto-Synced",
+      deltaColor: "neutral",
+      tone: "purple",
+      caption: "Partner Share",
+      hint: "Disbursal payouts linked directly to connectors and trade consultants.",
+    },
+    {
+      icon: RiScales3Line,
+      label: "Net Profit / (Loss)",
+      value: formatInr(companySummary.netProfit),
+      delta: `${companySummary.profitMargin >= 0 ? '+' : ''}${companySummary.profitMargin.toFixed(1)}% Margin`,
+      deltaColor: companySummary.netProfit >= 0 ? "lime" : "rose",
+      tone: companySummary.netProfit >= 0 ? "blue" : "pink",
+      caption: companySummary.netProfit >= 0 ? "Profitable" : "Deficit",
+      hint: "Net profitability after deducting operating expenses, overheads, and consultant commission.",
+    },
+  ];
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-300">
       
@@ -543,120 +595,8 @@ export default function ProfitLossPage() {
         </div>
       </div>
 
-      {/* KPI Overview Cards Shelf */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Total Income Card */}
-        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span className="flex items-center justify-center size-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/40">
-                <ArrowDownLeft className="size-4 stroke-[2.5]" />
-              </span>
-              <span className="text-body-2-medium text-text-secondary">
-                Total Cash Income
-              </span>
-            </span>
-            <span className="text-caption-2-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
-              7 Streams
-            </span>
-          </div>
-          <div className="mt-3">
-            <div className="font-mono text-2xl sm:text-3xl font-bold text-text-primary tracking-tight tabular-nums">
-              {formatInr(companySummary.totalIncome)}
-            </div>
-            <p className="text-caption-1-regular text-text-tertiary mt-1">
-              Forex, Loans, Insurance, Wealth, Services & Advisory
-            </p>
-          </div>
-        </div>
-
-        {/* Operating & Misc Expenses Card */}
-        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span className="flex items-center justify-center size-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40">
-                <Building2 className="size-4" />
-              </span>
-              <span className="text-body-2-medium text-text-secondary">
-                Total Cash Expenses
-              </span>
-            </span>
-            <span className="text-caption-2-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
-              Rent & Operations
-            </span>
-          </div>
-          <div className="mt-3">
-            <div className="font-mono text-2xl sm:text-3xl font-bold text-text-primary tracking-tight tabular-nums">
-              {formatInr(companySummary.totalOperating + companySummary.totalMisc)}
-            </div>
-            <p className="text-caption-1-regular text-text-tertiary mt-1">
-              Rent, staff salaries, travel, marketing & utilities
-            </p>
-          </div>
-        </div>
-
-        {/* Consultant Payouts Card */}
-        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span className="flex items-center justify-center size-8 rounded-xl bg-accent-50 dark:bg-accent-950/40 text-accent-600 dark:text-accent-400 border border-accent-200/50 dark:border-accent-800/40">
-                <Receipt className="size-4 stroke-[2.2]" />
-              </span>
-              <span className="text-body-2-medium text-text-secondary">
-                Consultant Commissions
-              </span>
-            </span>
-            <span className="text-caption-2-bold px-2 py-0.5 rounded-full bg-accent-100 dark:bg-accent-950/80 text-accent-700 dark:text-accent-300">
-              Auto-Synced
-            </span>
-          </div>
-          <div className="mt-3">
-            <div className="font-mono text-2xl sm:text-3xl font-bold text-text-primary tracking-tight tabular-nums">
-              {formatInr(companySummary.totalConsultant)}
-            </div>
-            <p className="text-caption-1-regular text-text-tertiary mt-1">
-              Disbursal payouts linked directly to connectors
-            </p>
-          </div>
-        </div>
-
-        {/* Net Profit / (Loss) Card */}
-        <div className="p-5 rounded-3xl bg-background-full border border-separator-border shadow-xs relative overflow-hidden group hover:border-border-button-hover transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <span className={`flex items-center justify-center size-8 rounded-xl border ${
-                companySummary.netProfit >= 0
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/40'
-                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200/50 dark:border-rose-800/40'
-              }`}>
-                {companySummary.netProfit >= 0 ? <TrendingUp className="size-4 stroke-[2.5]" /> : <TrendingDown className="size-4 stroke-[2.5]" />}
-              </span>
-              <span className="text-body-2-medium text-text-secondary">
-                Net Profit / (Loss)
-              </span>
-            </span>
-            <span className={`text-caption-2-bold px-2.5 py-0.5 rounded-full font-mono ${
-              companySummary.profitMargin >= 0
-                ? 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200'
-                : 'bg-rose-100 dark:bg-rose-900/80 text-rose-800 dark:text-rose-200'
-            }`}>
-              {companySummary.profitMargin >= 0 ? '+' : ''}{companySummary.profitMargin.toFixed(1)}% Margin
-            </span>
-          </div>
-          <div className="mt-3">
-            <div className={`font-mono text-2xl sm:text-3xl font-bold tracking-tight tabular-nums ${
-              companySummary.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-            }`}>
-              {formatInr(companySummary.netProfit)}
-            </div>
-            <p className="text-caption-1-regular text-text-tertiary mt-1">
-              Total Revenue minus All Operating & Commission Costs
-            </p>
-          </div>
-        </div>
-
-      </div>
+      {/* BoardUI KPI Stat Cards */}
+      <StatCards variant="footer" stats={kpiStats} columns={4} />
 
       {/* Navigation Tabs Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2">
@@ -698,6 +638,19 @@ export default function ProfitLossPage() {
           >
             <Receipt className="w-4 h-4" />
             <span>Voucher Ledger ({records.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('analytics')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'analytics'
+                ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10'
+                : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary-hover'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>BoardUI Analytics</span>
           </button>
         </div>
 
@@ -1431,6 +1384,14 @@ export default function ProfitLossPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* TAB 4: BoardUI Analytics & Trend Charts */}
+      {activeTab === 'analytics' && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-in fade-in duration-200">
+          <LineChartCard />
+          <EarningsChartCard />
         </div>
       )}
 

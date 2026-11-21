@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore, BRANCH_ACCOUNTS } from '@/store/useAuthStore';
 import { LayoutDashboard, Package, UsersRound, GitBranch, Moon, Sun, LogOut, Users, ShieldAlert, Settings, X, CircleDollarSign, CheckSquare, Menu, TrendingUp, RefreshCw, MapPin, Sparkles, Download, CheckCircle2, AlertCircle, Loader2, Copy, UserCheck, Scale } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -10,7 +10,19 @@ import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Geolocation } from '@capacitor/geolocation';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { LogoIcon } from '@/components/LogoIcon';
-import { useEffect } from 'react';
+import { DashboardSidebar, type DashboardNavItem } from '@/components/application/dashboard/dashboard-sidebar';
+import {
+  RiDashboardLine,
+  RiBox3Line,
+  RiGroupLine,
+  RiShieldUserLine,
+  RiGitBranchLine,
+  RiNodeTree,
+  RiFileShieldLine,
+  RiCheckDoubleLine,
+  RiCoinsLine,
+  RiScales3Line,
+} from '@remixicon/react';
 
 const AVATAR_OPTIONS = [
   'Aneka', 'Surchand', 'Tomas', 'Elena', 'Raj', 
@@ -206,13 +218,89 @@ export default function DashboardLayout() {
     }
   };
 
+  // Listen for custom events from BoardUI profile menu
+  useEffect(() => {
+    const onOpenProfile = () => {
+      setProfileModal({
+        isOpen: true,
+        displayName: user?.displayName || user?.email?.split('@')[0] || 'User',
+        avatarSeed: user?.avatarSeed || user?.email?.split('@')[0] || 'admin'
+      });
+    };
+    const onUpdateApp = () => {
+      handleUpdateApp();
+    };
+    window.addEventListener('siroi:open-profile', onOpenProfile);
+    window.addEventListener('siroi:update-app', onUpdateApp);
+    return () => {
+      window.removeEventListener('siroi:open-profile', onOpenProfile);
+      window.removeEventListener('siroi:update-app', onUpdateApp);
+    };
+  }, [user]);
+
+  const email = user?.email?.toLowerCase() || '';
+  const isSuperAdmin = user?.role === 'admin' || email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com' || email === 'sharjuthoudam@siroiforex.com' || email === 'executive@siroiforex.com';
+  const isSharju = email === 'sharjuthoudam@siroiforex.com';
+  const isSurchand = email === 'surchanddsingh@siroiforex.com';
+  const isSuperAdminDev = email === 'tomas@siroiforex.com' || email === 'executive@siroiforex.com';
+  const canSeeFinances = isSharju || isSurchand || isSuperAdminDev;
+  const canSeeConsultantOps = isSharju || isSuperAdminDev;
+  const canSeeProfitLoss = isSharju || isSurchand || isSuperAdminDev;
+
+  const siroiNavItems: DashboardNavItem[] = useMemo(() => {
+    const items: DashboardNavItem[] = [
+      { key: 'dashboard', label: 'Dashboard', icon: RiDashboardLine, href: '/dashboard' },
+      { key: 'products', label: 'Products', icon: RiBox3Line, href: '/dashboard/products' },
+      { key: 'customers', label: 'Customers', icon: RiGroupLine, href: '/dashboard/customers' },
+      { key: 'consultants', label: 'Consultants', icon: RiShieldUserLine, href: '/dashboard/consultants' },
+      { key: 'branches', label: 'Branches', icon: RiGitBranchLine, href: '/dashboard/branches' },
+    ];
+
+    if (isSuperAdmin) {
+      items.push(
+        { key: 'organigram', label: 'Organigram', icon: RiNodeTree, href: '/dashboard/organigram' },
+        { key: 'audit', label: 'Audit Logs', icon: RiFileShieldLine, href: '/dashboard/audit' }
+      );
+    }
+
+    if (canSeeConsultantOps) {
+      items.push(
+        { key: 'consultant-approval', label: 'Consultant Approval', icon: RiCheckDoubleLine, href: '/dashboard/consultant-approval' },
+        { key: 'consultant-payouts', label: 'Consultant Payouts', icon: RiCoinsLine, href: '/dashboard/consultant-payouts' }
+      );
+    }
+
+    if (canSeeProfitLoss) {
+      items.push(
+        { key: 'profit-loss', label: 'Branch Profit & Loss', icon: RiScales3Line, href: '/dashboard/profit-loss' }
+      );
+    }
+
+    return items;
+  }, [isSuperAdmin, canSeeConsultantOps, canSeeProfitLoss]);
+
+  const currentSelectedKey = useMemo(() => {
+    const p = location.pathname;
+    if (p === '/dashboard') return 'dashboard';
+    if (p.startsWith('/dashboard/products')) return 'products';
+    if (p.startsWith('/dashboard/customers')) return 'customers';
+    if (p.startsWith('/dashboard/consultants')) return 'consultants';
+    if (p.startsWith('/dashboard/branches')) return 'branches';
+    if (p.startsWith('/dashboard/organigram')) return 'organigram';
+    if (p.startsWith('/dashboard/audit')) return 'audit';
+    if (p.startsWith('/dashboard/consultant-approval')) return 'consultant-approval';
+    if (p.startsWith('/dashboard/consultant-payouts')) return 'consultant-payouts';
+    if (p.startsWith('/dashboard/profit-loss')) return 'profit-loss';
+    return 'dashboard';
+  }, [location.pathname]);
+
   // Extract display name from email (before @)
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const avatarSeed = user?.avatarSeed || user?.email?.split('@')[0] || displayName;
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0b0f19]">
+    <div className="flex h-screen overflow-hidden bg-background-full">
       {/* Mobile Top Bar */}
       <div 
         className={`md:hidden fixed left-3 right-3 h-14 rounded-2xl flex items-center px-4 z-40 shadow-xl justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-button-primary text-text-white border border-white/10 top-[calc(env(safe-area-inset-top)+16px)] ${
@@ -231,307 +319,35 @@ export default function DashboardLayout() {
         </div>
       </div>
 
-      {/* Backdrop for mobile */}
-      {isMobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsMobileSidebarOpen(false)}
+      {/* Desktop BoardUI Sidebar (Floating panel with collapse rail) */}
+      <div className="hidden md:flex p-3 shrink-0">
+        <DashboardSidebar
+          items={siroiNavItems}
+          selected={currentSelectedKey}
+          className="h-full"
         />
-      )}
+      </div>
 
-      {/* Sidebar */}
-      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-[260px] shrink-0 flex flex-col bg-white/85 dark:bg-slate-900/85 border-r border-slate-200/80 dark:border-white/5 backdrop-blur-2xl shadow-xl md:shadow-none transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        {/* Logo / Branding Header */}
-        <div 
-          className="flex items-center justify-between px-6 pb-5 border-b border-slate-100 dark:border-white/5 pt-[calc(env(safe-area-inset-top,0px)+24px)]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-900 flex items-center justify-center shadow-md shadow-indigo-500/20 text-white font-black text-base ring-1 ring-white/20 shrink-0">
-              S
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
-                  Siroi Forex
-                </h1>
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="System Live" />
-              </div>
-              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 font-bold mt-1">
-                {user?.role === 'manager' 
-                  ? `${user?.latestLocation || (user?.email && BRANCH_ACCOUNTS[user.email.toLowerCase()]?.branchName) || 'Branch'} Portal` 
-                  : user?.role === 'admin' 
-                  ? 'Admin Terminal' 
-                  : 'State Terminal'}
-              </p>
-            </div>
-          </div>
-          <button 
-            className="md:hidden p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+      {/* Mobile Drawer with BoardUI Sidebar */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden animate-in fade-in duration-200">
+          <button
+            type="button"
+            aria-label="Close navigation"
             onClick={() => setIsMobileSidebarOpen(false)}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Scrollable Navigation Area */}
-        <div className="flex-1 overflow-y-auto px-3.5 py-5 space-y-6">
-          {/* Main Navigation */}
-          <div>
-            <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 font-extrabold px-3 mb-2.5">
-              Core Platform
-            </p>
-            <nav className="space-y-1">
-              {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
-                const isSuperAdmin = user?.email === 'tomas@siroiforex.com' || user?.email === 'surchanddsingh@siroiforex.com' || user?.email?.toLowerCase() === 'sharjuthoudam@siroiforex.com' || user?.email?.toLowerCase() === 'executive@siroiforex.com';
-                if (adminOnly && user?.role !== 'admin' && !isSuperAdmin) return null;
-                
-                return (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    end={to === '/dashboard'}
-                    onClick={() => setIsMobileSidebarOpen(false)}
-                    className={({ isActive }) =>
-                      `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                        isActive
-                          ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 ring-1 ring-white/10'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
-                      }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <div className="flex items-center gap-3">
-                          <Icon size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors'} />
-                          <span>{label}</span>
-                        </div>
-                        {isActive && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
-                        )}
-                      </>
-                    )}
-                  </NavLink>
-                );
-              })}
-            </nav>
+            className="absolute inset-0 cursor-pointer bg-black/50 backdrop-blur-xs"
+          />
+          <div className="relative flex h-full p-3 z-10">
+            <DashboardSidebar
+              mobile
+              items={siroiNavItems}
+              selected={currentSelectedKey}
+              onClose={() => setIsMobileSidebarOpen(false)}
+              className="flex shadow-2xl"
+            />
           </div>
-
-          {/* Financial Operations section */}
-          {(() => {
-            const email = user?.email?.toLowerCase() || '';
-            const isSharju = email === 'sharjuthoudam@siroiforex.com';
-            const isSurchand = email === 'surchanddsingh@siroiforex.com';
-            const isSuperAdminDev = email === 'tomas@siroiforex.com' || email === 'executive@siroiforex.com';
-            
-            // Financial Operations is visible for Sharju, Surchand, and SuperAdmin/Dev
-            const canSeeFinances = isSharju || isSurchand || isSuperAdminDev;
-            if (!canSeeFinances) return null;
-
-            // Sharju and Dev see Consultant Approval and Consultant Payouts
-            const canSeeConsultantOps = isSharju || isSuperAdminDev;
-            // Sharju, Surchand and Dev see Profit & Loss
-            const canSeeProfitLoss = isSharju || isSurchand || isSuperAdminDev;
-
-            return (
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 font-extrabold px-3 mb-2.5">
-                  Financial Operations
-                </p>
-                <nav className="space-y-1">
-                  {canSeeConsultantOps && (
-                    <>
-                      <NavLink
-                        to="/dashboard/consultant-approval"
-                        onClick={() => setIsMobileSidebarOpen(false)}
-                        className={({ isActive }) =>
-                          `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                            isActive
-                              ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 ring-1 ring-white/10'
-                              : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
-                          }`
-                        }
-                      >
-                        {({ isActive }) => (
-                          <>
-                            <div className="flex items-center gap-3">
-                              <CheckSquare size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors'} />
-                              <span>Consultant Approval</span>
-                            </div>
-                            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
-                          </>
-                        )}
-                      </NavLink>
-                      <NavLink
-                        to="/dashboard/consultant-payouts"
-                        onClick={() => setIsMobileSidebarOpen(false)}
-                        className={({ isActive }) =>
-                          `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                            isActive
-                              ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10 ring-1 ring-white/10'
-                              : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
-                          }`
-                        }
-                      >
-                        {({ isActive }) => (
-                          <>
-                            <div className="flex items-center gap-3">
-                              <CircleDollarSign size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors'} />
-                              <span>Consultant Payouts</span>
-                            </div>
-                            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
-                          </>
-                        )}
-                      </NavLink>
-                    </>
-                  )}
-
-                  {canSeeProfitLoss && (
-                    <NavLink
-                      to="/dashboard/profit-loss"
-                      onClick={() => setIsMobileSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                          isActive
-                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20 ring-1 ring-emerald-500/50'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 active:scale-[0.98]'
-                        }`
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <div className="flex items-center gap-3">
-                            <Scale size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors'} />
-                            <span>Branch Profit & Loss</span>
-                          </div>
-                          {isActive && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
-                        </>
-                      )}
-                    </NavLink>
-                  )}
-                </nav>
-              </div>
-            );
-          })()}
         </div>
-
-        {/* Bottom Section */}
-        <div 
-          className="mt-auto px-4 pt-4 border-t border-slate-100 dark:border-white/5 space-y-3 bg-slate-50/50 dark:bg-black/20 pb-[calc(env(safe-area-inset-bottom,0px)+120px)] md:pb-[calc(env(safe-area-inset-bottom,0px)+16px)]"
-        >
-          {/* Theme Toggle (Light / Dark) */}
-          <div className="flex flex-col gap-1.5 bg-white dark:bg-slate-800/80 rounded-xl p-2 border border-slate-200/80 dark:border-white/5 shadow-sm">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 px-1">
-              Theme Mode
-            </span>
-            <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-black/40 rounded-lg p-1">
-              <button
-                type="button"
-                onClick={() => setTheme('light')}
-                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  theme === 'light' 
-                    ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60' 
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-                title="Light Mode"
-              >
-                <Sun size={13} className={theme === 'light' ? 'text-amber-500' : ''} />
-                Light
-              </button>
-              <button
-                type="button"
-                onClick={() => setTheme('dark')}
-                className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                  theme === 'dark' 
-                    ? 'bg-button-primary text-text-white shadow-xs inset-shadow-2xs border border-white/10' 
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-                title="Dark Mode"
-              >
-                <Moon size={13} className={theme === 'dark' ? 'text-indigo-200' : ''} />
-                Dark
-              </button>
-            </div>
-          </div>
-
-          {/* User Profile Card with Animated Dropdown Menu */}
-          <DropdownMenuTrigger className="w-full">
-            <div className="w-full flex items-center gap-3 p-2 bg-white/90 dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-white/5 shadow-xs cursor-pointer transition-all duration-200 select-none group">
-              <img 
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`} 
-                alt="Avatar" 
-                className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0 object-cover ring-2 ring-indigo-500/20 group-hover:scale-105 transition-transform" 
-              />
-              <div className="min-w-0 flex-1 text-left">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate" title={displayName}>
-                  {displayName}
-                </p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate uppercase tracking-wider">
-                  {user?.role === 'admin' 
-                    ? 'Super Admin' 
-                    : user?.role === 'manager' 
-                    ? `${user?.latestLocation || (user?.email && BRANCH_ACCOUNTS[user.email.toLowerCase()]?.branchName) || 'Branch'} Manager` 
-                    : 'State Head'}
-                </p>
-              </div>
-              <div className="flex items-center gap-0.5">
-                <div className="p-1 rounded-lg text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  <Settings size={14} />
-                </div>
-              </div>
-            </div>
-
-            <DropdownMenu align="end" className="w-56 mb-2 bottom-full top-auto origin-bottom-left">
-              <DropdownMenuItem onClick={() => {
-                if (user?.role === 'admin') {
-                  setProfileModal({
-                    isOpen: true,
-                    displayName: user.displayName || user.email.split('@')[0],
-                    avatarSeed: user.avatarSeed || user.email.split('@')[0]
-                  });
-                }
-              }}>
-                <Users className="w-3.5 h-3.5" />
-                Profile: {displayName}
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                <CircleDollarSign className="w-3.5 h-3.5" />
-                Executive Command Center
-              </DropdownMenuItem>
-
-              {user?.role === 'admin' && (
-                <DropdownMenuItem onClick={() => {
-                  setProfileModal({
-                    isOpen: true,
-                    displayName: user.displayName || user.email.split('@')[0],
-                    avatarSeed: user.avatarSeed || user.email.split('@')[0]
-                  });
-                }}>
-                  <Settings className="w-3.5 h-3.5" />
-                  Settings & Avatar
-                </DropdownMenuItem>
-              )}
-
-              <DropdownMenuSeparator />
-
-              {isNative && (
-                <>
-                  <DropdownMenuItem onClick={handleUpdateApp} disabled={updateStatus === 'checking' || updateStatus === 'downloading'}>
-                    <RefreshCw className={`w-3.5 h-3.5 ${updateStatus === 'checking' || updateStatus === 'downloading' ? 'animate-spin' : ''}`} />
-                    {updateStatus === 'checking' ? 'Checking...' : updateStatus === 'downloading' ? 'Updating...' : 'Update App'}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-
-              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-                <LogOut className="w-3.5 h-3.5" />
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenu>
-          </DropdownMenuTrigger>
-        </div>
-      </aside>
+      )}
 
       <main 
         onScroll={handleScroll}
