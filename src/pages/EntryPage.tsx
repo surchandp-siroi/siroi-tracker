@@ -1396,7 +1396,8 @@ export default function DataEntryTerminal() {
                 scrollToRowAndField(i, 'staffName');
                 return;
             }
-            if (!item.channel) {
+            const isLoan = item.category === 'Loan' || (!item.category && item.product);
+            if (isLoan && (!item.channel || !item.channel.trim())) {
                 setError(`Row ${i + 1} is missing Bank Name / Channel. Please select one before logging.`);
                 scrollToRowAndField(i, 'channel');
                 return;
@@ -1887,16 +1888,21 @@ export default function DataEntryTerminal() {
 
 
     const isFieldMissing = (item: any, field: string) => {
+        const isLoan = item.category === 'Loan' || (!item.category && item.product);
         if (item.category === 'Forex') {
-            if (['emiDate', 'disbursedDate', 'disbursedAmount', 'sanctionedAmount', 'repaymentBank'].includes(field)) return false;
+            if (['emiDate', 'disbursedDate', 'disbursedAmount', 'sanctionedAmount', 'repaymentBank', 'channel'].includes(field)) return false;
         }
-        if (field === 'emiDate' && item.fileStatus === 'Disbursed' && (item.category === 'Loan' || (!item.category && item.product)) && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-')) return true;
+        if (field === 'emiDate' && item.fileStatus === 'Disbursed' && isLoan && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-')) return true;
         if (field === 'disbursedDate' && item.fileStatus === 'Disbursed' && item.category !== 'Forex' && (!item.disbursedDate || !item.disbursedDate.trim())) return true;
         if (field === 'disbursedAmount' && item.fileStatus === 'Disbursed' && item.category !== 'Forex' && (item.disbursedAmount === undefined || item.disbursedAmount === null || Number(item.disbursedAmount) <= 0)) return true;
         if (field === 'staffName' && (!item.staffName || !item.staffName.trim())) return true;
         if (field === 'category' && !item.category) return true;
         if (field === 'product' && !item.product) return true;
-        if (field === 'channel' && (!item.channel || !item.channel.trim())) return true;
+        if (field === 'channel') {
+            // Channel partner is ONLY required for Loan products
+            if (!isLoan) return false;
+            return (!item.channel || !item.channel.trim());
+        }
         if (field === 'customerName' && (!item.customerName || !item.customerName.trim())) return true;
         if (field === 'amount' && (item.amount === undefined || item.amount === null)) return true;
         if (field === 'fileStatus' && (!item.fileStatus || !item.fileStatus.trim())) return true;
@@ -2630,7 +2636,7 @@ export default function DataEntryTerminal() {
                                                             }
                                                         }}
                                                     >
-                                                        <option value="">{isFieldMissing(item, 'channel') ? '⚠️ Select Bank / Channel...' : 'Select Channel...'}</option>
+                                                        <option value="">{isLoan && isFieldMissing(item, 'channel') ? '⚠️ Select Bank / Channel...' : !isLoan ? 'N/A (Optional)' : 'Select Channel...'}</option>
                                                         {item.category === 'Insurance' ? (
                                                             <>
                                                                 <option value="Bajaj Allianz">Bajaj Allianz</option>
@@ -3707,7 +3713,7 @@ export default function DataEntryTerminal() {
                                                                     : channels.map((c: any) => ({ id: c.name, name: c.name }))
                                                         }
                                                         placeholder="Channel"
-                                                        buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.channel ? 'border border-red-500' : 'border'}`}
+                                                        buttonClassName={`w-[100px] flex items-center justify-between h-8 px-2 text-xs rounded-md bg-transparent border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white ${!item.channel && (item.category === 'Loan' || (!item.category && item.product)) ? 'border border-red-500' : 'border'}`}
                                                     />
                                                 </TableCell>
 
