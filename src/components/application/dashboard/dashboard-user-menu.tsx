@@ -138,11 +138,11 @@ export function DashboardUserMenu({
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const portalName = user?.role === 'manager' 
-    ? `${user?.latestLocation || (user?.email && BRANCH_ACCOUNTS[user.email.toLowerCase()]?.branchName) || 'Branch'} Portal` 
-    : user?.role === 'admin' 
-    ? 'Admin Terminal' 
-    : 'State Terminal';
+  const portalName = user?.role === 'manager'
+    ? `${user?.latestLocation || (user?.email && BRANCH_ACCOUNTS[user.email.toLowerCase()]?.branchName) || 'Branch'} Portal`
+    : user?.role === 'admin'
+      ? 'Admin Terminal'
+      : 'State Terminal';
 
   return localize((
     <AriaDialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>

@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/useAuthStore';
-import { 
-  ArrowRight, ShieldCheck, Shield, AlertTriangle, Wallet, Plus, 
+import {
+  ArrowRight, ShieldCheck, Shield, AlertTriangle, Wallet, Plus,
   TrendingUp, Activity, Users, BarChart3, PieChart, ArrowUpRight,
   Clock, CheckCircle2, Building2, Star, Key, Phone, MessageSquare
 } from 'lucide-react';
@@ -27,13 +27,13 @@ const AUTHORIZED_EMAILS = [
   'surchanddsingh@siroiforex.com',
   'sharjuthoudam@siroiforex.com',
   'executive@siroiforex.com',
-  
+
   // Branch Managers (for Managers Dashboard)
   'aroop.sharma@siroiforex.com',
   'ajay.waikhom@siroiforex.com',
   'nobin.nani@siroiforex.com',
   'ramesh@siroiforex.com',
-  
+
   // MIS Data Entry Accounts (for Web redirect)
   'mis.ghy@siroiforex.com',
   'mis.manipur@siroiforex.com',
@@ -75,7 +75,7 @@ export default function HomePage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
-  
+
   // Mobile SMS Flow States
   const [showPhoneSelector, setShowPhoneSelector] = useState(false);
   const [availablePhones, setAvailablePhones] = useState<string[]>([]);
@@ -84,13 +84,13 @@ export default function HomePage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [timeLeft, setTimeLeft] = useState(60);
-  
+
   const isEmailAuthorized = useMemo(() => {
     const typedEmail = email.toLowerCase().trim();
     if (!typedEmail) return false;
     return AUTHORIZED_EMAILS.includes(typedEmail) || (MOBILE_SMS_USERS[typedEmail] && MOBILE_SMS_USERS[typedEmail].length > 0);
   }, [email]);
-  
+
   const { login, requestOtpLogin, verifyOtpLogin } = useAuthStore();
   const navigate = useNavigate();
 
@@ -106,7 +106,7 @@ export default function HomePage() {
         setAdaptiveScale(1);
         return;
       }
-      
+
       // 1. Calculate browser zoom ratio from outerWidth vs innerWidth
       let zoomFactor = 1;
       if (window.outerWidth && window.innerWidth) {
@@ -225,7 +225,7 @@ export default function HomePage() {
   const handleContinue = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setError('');
-    
+
     if (!email) {
       setError('Please enter your email address.');
       return;
@@ -237,30 +237,30 @@ export default function HomePage() {
     try {
       if (isNative) {
         if (!showPhoneSelector && !otpSent) {
-           setError('You are not an Authorised User');
-           setIsLoading(false);
-           return;
+          setError('You are not an Authorised User');
+          setIsLoading(false);
+          return;
         } else if (showPhoneSelector && !otpSent) {
-           // Step 2: Request OTP
-           await requestOtpLogin(typedEmail, 'HO', selectedPhone, deliveryChannel);
-           setOtpSent(true);
-           setTimeLeft(60);
-           setIsLoading(false);
-           return;
+          // Step 2: Request OTP
+          await requestOtpLogin(typedEmail, 'HO', selectedPhone, deliveryChannel);
+          setOtpSent(true);
+          setTimeLeft(60);
+          setIsLoading(false);
+          return;
         } else if (otpSent) {
-           // Step 3: Verify OTP
-           if (!otp) {
-              setError('Please enter the OTP.');
-              setIsLoading(false);
-              return;
-           }
-           await verifyOtpLogin(typedEmail, otp, 'HO', selectedPhone);
-           const updatedUser = useAuthStore.getState().user;
-           if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
-             navigate('/entry');
-           } else {
-             navigate('/dashboard');
-           }
+          // Step 3: Verify OTP
+          if (!otp) {
+            setError('Please enter the OTP.');
+            setIsLoading(false);
+            return;
+          }
+          await verifyOtpLogin(typedEmail, otp, 'HO', selectedPhone);
+          const updatedUser = useAuthStore.getState().user;
+          if (updatedUser?.role === 'statehead' || updatedUser?.email === 'executive@siroiforex.com' || updatedUser?.email?.toLowerCase().startsWith('mis.')) {
+            navigate('/entry');
+          } else {
+            navigate('/dashboard');
+          }
         }
       } else {
         // Web Flow - Redirect to /login
@@ -268,7 +268,7 @@ export default function HomePage() {
         if (isAuthorized) {
           try {
             sessionStorage.setItem('siroi_auth_email', typedEmail);
-          } catch {}
+          } catch { }
           navigate('/login', { state: { email: typedEmail } });
         } else {
           setError('You are not an Authorised User');
@@ -276,9 +276,9 @@ export default function HomePage() {
         }
       }
     } catch (err: any) {
-       console.error("Login Error:", err);
-       setError(err.message || 'Authentication failed. Please try again.');
-       setIsLoading(false);
+      console.error("Login Error:", err);
+      setError(err.message || 'Authentication failed. Please try again.');
+      setIsLoading(false);
     }
   };
 
@@ -308,8 +308,8 @@ export default function HomePage() {
   else if (isNative && otpSent) buttonText = 'Verify OTP';
 
   return (
-    <div 
-      className="h-screen flex w-full bg-slate-50 dark:bg-slate-900 selection:bg-indigo-500/30 overflow-hidden gap-4"
+    <div
+      className="h-screen flex w-full bg-slate-50 dark:bg-slate-900 selection:bg-accent-500/30 overflow-hidden gap-4"
       style={{
         paddingTop: 'max(1rem, env(safe-area-inset-top))',
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
@@ -322,330 +322,329 @@ export default function HomePage() {
         maxHeight: `${(100 / adaptiveScale)}vh`,
       }}
     >
-      
+
       {/* Left Section - Dark Grid & Glassmorphism Cards */}
-      <div 
+      <div
         className={`${isNative ? 'hidden' : 'flex'} w-[55%] relative flex-col justify-between overflow-hidden bg-slate-950 border border-slate-800 shadow-xl shrink-0`}
         style={{
           borderRadius: 'max(24px, env(safe-area-inset-bottom))'
         }}
       >
-        
+
         {/* Top Left Logo (White) */}
         <Link to="/" className="absolute top-7 left-8 z-20 flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity">
-            <LogoIcon className="w-8 h-8 text-white" />
-            <span className="font-bold text-xl tracking-tight text-white uppercase">Siroi Forex</span>
+          <LogoIcon className="w-8 h-8 text-white" />
+          <span className="font-bold text-xl tracking-tight text-white uppercase">Siroi Forex</span>
         </Link>
 
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none"></div>
         {/* Soft glowing orb in the background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent-600/20 rounded-full blur-[120px] pointer-events-none"></div>
 
         {/* Floating UI Elements / Cards Area */}
         <div className="flex-1 relative flex items-center justify-center p-2 z-10 w-full mt-4 mb-0">
-            
-            {/* Mockup Composition Wrapper */}
-            <div className="relative w-full max-w-4xl flex justify-center items-center gap-2.5 py-1 scale-[0.85] 2xl:scale-95 origin-center">
-                
-                {/* Column 1 (Left) */}
-                <div className="flex flex-col items-end gap-4 translate-y-2">
-                    {/* 1. Main Dashboard Card */}
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-56 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <p className="text-[10px] font-semibold text-slate-400 mb-1">Financial Plan</p>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full border-[3px] border-indigo-500 border-r-slate-700 flex-shrink-0"></div>
-                                    <div>
-                                        <p className="text-lg font-bold text-white">₹8.7Cr</p>
-                                        <p className="text-[8px] text-indigo-400 font-medium">Total Disbursed</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-white/10 px-1 py-0.5 rounded text-[8px] text-white">This Month ▾</div>
-                        </div>
-                        <div className="space-y-2.5 mt-3">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1 h-1 rounded-full bg-indigo-500"></div>
-                                <p className="text-[10px] text-slate-300 flex-1">Personal</p>
-                                <p className="text-[10px] text-white font-medium">₹5.2Cr</p>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-1 h-1 rounded-full bg-blue-500"></div>
-                                <p className="text-[10px] text-slate-300 flex-1">Business</p>
-                                <p className="text-[10px] text-white font-medium">₹3.5Cr</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* 3. Revenue Analytics Bar Chart */}
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-3.5 rounded-3xl border border-white/10 w-64 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-300 delay-300 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
-                        <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center gap-1.5">
-                                <div className="p-1 bg-indigo-500/20 rounded-lg">
-                                    <BarChart3 className="w-3 h-3 text-indigo-400" />
-                                </div>
-                                <p className="text-[10px] font-semibold text-white">Revenue Growth</p>
-                            </div>
-                            <span className="text-[9px] text-green-400 font-medium">+24.5%</span>
-                        </div>
-                        
-                        <div className="flex items-end justify-between gap-1 h-16 mt-2">
-                            {[40, 65, 45, 80, 55, 95, 75].map((height, i) => (
-                                <div key={i} className="w-full bg-slate-800 rounded-t-sm relative group-hover:bg-slate-700 transition-colors h-full flex items-end">
-                                    <div 
-                                        className={`w-full rounded-t-sm transition-all duration-300 ${i === 5 ? 'bg-indigo-500' : 'bg-blue-500/50 group-hover:bg-blue-500/70'}`}
-                                        style={{ height: `${height}%` }}
-                                    ></div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex justify-between mt-1.5 text-[7px] text-slate-500">
-                            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                        </div>
-                    </div>
+          {/* Mockup Composition Wrapper */}
+          <div className="relative w-full max-w-4xl flex justify-center items-center gap-2.5 py-1 scale-[0.85] 2xl:scale-95 origin-center">
 
-                    {/* 6. Quick Action Button */}
-                    <div className="bg-indigo-600/90 backdrop-blur-md p-2.5 rounded-2xl border border-white/10 w-64 flex items-center gap-2.5 shadow-2xl shadow-indigo-600/20 animate-in fade-in slide-in-from-bottom-16 duration-300 delay-1000 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-indigo-500 cursor-pointer group">
-                        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                            <Plus className="w-3 h-3" />
-                        </div>
-                        <div>
-                            <p className="text-[11px] font-bold text-white mb-0.5">Quick Action</p>
-                            <p className="text-[8px] text-indigo-200">Record a new application</p>
-                        </div>
+            {/* Column 1 (Left) */}
+            <div className="flex flex-col items-end gap-4 translate-y-2">
+              {/* 1. Main Dashboard Card */}
+              <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-56 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="text-[10px] font-semibold text-slate-400 mb-1">Financial Plan</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full border-[3px] border-accent-500 border-r-slate-700 flex-shrink-0"></div>
+                      <div>
+                        <p className="text-lg font-bold text-white">₹8.7Cr</p>
+                        <p className="text-[8px] text-accent-400 font-medium">Total Disbursed</p>
+                      </div>
                     </div>
+                  </div>
+                  <div className="bg-white/10 px-1 py-0.5 rounded text-[8px] text-white">This Month ▾</div>
+                </div>
+                <div className="space-y-2.5 mt-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1 h-1 rounded-full bg-accent-500"></div>
+                    <p className="text-[10px] text-slate-300 flex-1">Personal</p>
+                    <p className="text-[10px] text-white font-medium">₹5.2Cr</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                    <p className="text-[10px] text-slate-300 flex-1">Business</p>
+                    <p className="text-[10px] text-white font-medium">₹3.5Cr</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Revenue Analytics Bar Chart */}
+              <div className="bg-slate-900/60 backdrop-blur-xl p-3.5 rounded-3xl border border-white/10 w-64 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-300 delay-300 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="p-1 bg-accent-500/20 rounded-lg">
+                      <BarChart3 className="w-3 h-3 text-accent-400" />
+                    </div>
+                    <p className="text-[10px] font-semibold text-white">Revenue Growth</p>
+                  </div>
+                  <span className="text-[9px] text-green-400 font-medium">+24.5%</span>
                 </div>
 
-                {/* Column 2 (Center) */}
-                <div className="flex flex-col items-center gap-4 -translate-y-4">
-                    {/* 8. Approval Rate */}
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-top-8 duration-300 delay-200 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group self-start flex flex-col justify-center">
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <CheckCircle2 className="w-3 h-3 text-green-400" />
-                            <p className="text-[9px] font-semibold text-slate-300">Approval Rate</p>
-                        </div>
-                        <p className="text-xl font-bold text-white">92.8%</p>
+                <div className="flex items-end justify-between gap-1 h-16 mt-2">
+                  {[40, 65, 45, 80, 55, 95, 75].map((height, i) => (
+                    <div key={i} className="w-full bg-slate-800 rounded-t-sm relative group-hover:bg-slate-700 transition-colors h-full flex items-end">
+                      <div
+                        className={`w-full rounded-t-sm transition-all duration-300 ${i === 5 ? 'bg-accent-500' : 'bg-blue-500/50 group-hover:bg-blue-500/70'}`}
+                        style={{ height: `${height}%` }}
+                      ></div>
                     </div>
-
-                    {/* 10. Daily Volume */}
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-[180px] shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col">
-                        <p className="text-[10px] font-semibold text-slate-400 mb-1">Daily Volume</p>
-                        <p className="text-2xl font-bold text-white mb-3">₹1.2Cr</p>
-                        
-                        <div className="flex items-end gap-1 flex-1 mt-2">
-                            {[30, 45, 25, 60, 40, 75, 55, 85, 65, 95].map((h, i) => (
-                                <div key={i} className="flex-1 bg-slate-800 rounded-t group-hover:bg-slate-700 transition-colors h-full flex items-end">
-                                    <div className="w-full rounded-t bg-cyan-400/80 transition-all duration-300" style={{ height: `${h}%` }}></div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 9. Support Satisfaction */}
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-32 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-400 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex items-center justify-between">
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-1.5">
-                                <div className="p-1.5 bg-orange-500/20 rounded-lg">
-                                    <Star className="w-4 h-4 text-orange-400" />
-                                </div>
-                                <p className="text-[11px] font-semibold text-white">Satisfaction</p>
-                            </div>
-                            <span className="text-[9px] text-slate-400">Based on 1.2k reviews</span>
-                        </div>
-                        <div className="relative w-14 h-14 flex items-center justify-center">
-                            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                <path className="text-slate-800" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="text-orange-400" strokeDasharray="85, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span className="absolute text-sm font-bold text-white">4.8</span>
-                        </div>
-                    </div>
-
-                    {/* Row for Active Users & System Health */}
-                    <div className="flex items-center gap-4 self-center">
-                        {/* 7. Active Users */}
-                        <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
-                            <div className="flex items-center gap-1.5">
-                                <div className="p-1 bg-purple-500/20 rounded-md">
-                                    <Users className="w-3 h-3 text-purple-400" />
-                                </div>
-                                <p className="text-[9px] font-semibold text-slate-300">Active Users</p>
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                                <p className="text-2xl font-bold text-white">8.4k</p>
-                                <span className="text-[8px] text-green-400 font-medium flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> +124 today</span>
-                            </div>
-                        </div>
-
-                        {/* 11. System Health */}
-                        <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
-                            <div className="flex items-center gap-1.5">
-                                <div className="p-1 bg-teal-500/20 rounded-md">
-                                    <ShieldCheck className="w-3 h-3 text-teal-400" />
-                                </div>
-                                <p className="text-[9px] font-semibold text-slate-300">System Health</p>
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                                <p className="text-2xl font-bold text-white">99.9%</p>
-                                <span className="text-[8px] text-teal-400 font-medium flex items-center">Optimal state</span>
-                            </div>
-                        </div>
-                    </div>
+                  ))}
                 </div>
-
-                {/* Column 3 (Right) */}
-                <div className="flex flex-col items-start gap-4 translate-y-4">
-                    {/* 2. Capital Allocations */}
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-3.5 rounded-3xl border border-white/10 w-52 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-150 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
-                        <div className="flex justify-between items-center mb-2">
-                            <p className="text-[10px] font-semibold text-slate-400">Capital Allocations</p>
-                            <span className="text-[7px] text-slate-500 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div> Live</span>
-                        </div>
-                        <p className="text-base font-bold text-white mb-1">94%</p>
-                        <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-2.5">
-                            <div className="w-[94%] h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="flex justify-between items-center bg-white/5 rounded-lg p-1.5">
-                                 <div className="flex items-center gap-1.5">
-                                    <Wallet className="w-2.5 h-2.5 text-slate-400" />
-                                    <span className="text-[8px] text-slate-300">Target Achieved</span>
-                                 </div>
-                                 <span className="text-[8px] text-green-400 flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> 12%</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 4. Activity Stream */}
-                    <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-56 h-[220px] shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-500 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Activity className="w-3.5 h-3.5 text-slate-400" />
-                            <p className="text-[11px] font-semibold text-white">Recent Activity</p>
-                        </div>
-                        <div className="space-y-3 flex-1 overflow-hidden">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                    <Users className="w-3 h-3 text-blue-400" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-medium text-white">New Client Lead</p>
-                                    <p className="text-[8px] text-slate-400">2 mins ago</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
-                                    <TrendingUp className="w-3 h-3 text-green-400" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-medium text-white">Target Exceeded</p>
-                                    <p className="text-[8px] text-slate-400">1 hour ago</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                                    <PieChart className="w-3 h-3 text-indigo-400" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-medium text-white">Monthly Report</p>
-                                    <p className="text-[8px] text-slate-400">Generated</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2.5 opacity-50 group-hover:opacity-100 transition-opacity">
-                                <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center">
-                                    <Star className="w-3 h-3 text-orange-400" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-medium text-white">5-Star Review</p>
-                                    <p className="text-[8px] text-slate-400">3 hours ago</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 5. Mini Stat / Conversion Rate */}
-                    <div className="bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl border border-white/10 w-44 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-300 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-800/80 cursor-pointer group">
-                        <p className="text-[8px] text-slate-400 mb-1">Conversion Rate</p>
-                        <div className="flex items-end gap-1.5">
-                            <p className="text-lg font-bold text-white">68.4%</p>
-                            <span className="text-[9px] text-green-400 flex items-center mb-0.5"><ArrowUpRight className="w-2 h-2" /> 4.2%</span>
-                        </div>
-                        <div className="mt-2 w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                            <div className="bg-green-400 h-full w-[68%]"></div>
-                        </div>
-                    </div>
+                <div className="flex justify-between mt-1.5 text-[7px] text-slate-500">
+                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
                 </div>
+              </div>
 
+              {/* 6. Quick Action Button */}
+              <div className="bg-button-primary backdrop-blur-md p-2.5 rounded-2xl border border-white/10 w-64 flex items-center gap-2.5 shadow-2xl shadow-accent-600/20 animate-in fade-in slide-in-from-bottom-16 duration-300 delay-1000 transform transition-all hover:-translate-y-2 hover:scale-105 cursor-pointer group">
+                <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                  <Plus className="w-3 h-3" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-white mb-0.5">Quick Action</p>
+                  <p className="text-[8px] text-accent-100">Record a new application</p>
+                </div>
+              </div>
             </div>
+
+            {/* Column 2 (Center) */}
+            <div className="flex flex-col items-center gap-4 -translate-y-4">
+              {/* 8. Approval Rate */}
+              <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-top-8 duration-300 delay-200 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group self-start flex flex-col justify-center">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <CheckCircle2 className="w-3 h-3 text-green-400" />
+                  <p className="text-[9px] font-semibold text-slate-300">Approval Rate</p>
+                </div>
+                <p className="text-xl font-bold text-white">92.8%</p>
+              </div>
+
+              {/* 10. Daily Volume */}
+              <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-[180px] shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col">
+                <p className="text-[10px] font-semibold text-slate-400 mb-1">Daily Volume</p>
+                <p className="text-2xl font-bold text-white mb-3">₹1.2Cr</p>
+
+                <div className="flex items-end gap-1 flex-1 mt-2">
+                  {[30, 45, 25, 60, 40, 75, 55, 85, 65, 95].map((h, i) => (
+                    <div key={i} className="flex-1 bg-slate-800 rounded-t group-hover:bg-slate-700 transition-colors h-full flex items-end">
+                      <div className="w-full rounded-t bg-cyan-400/80 transition-all duration-300" style={{ height: `${h}%` }}></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 9. Support Satisfaction */}
+              <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-32 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-400 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex items-center justify-between">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="p-1.5 bg-orange-500/20 rounded-lg">
+                      <Star className="w-4 h-4 text-orange-400" />
+                    </div>
+                    <p className="text-[11px] font-semibold text-white">Satisfaction</p>
+                  </div>
+                  <span className="text-[9px] text-slate-400">Based on 1.2k reviews</span>
+                </div>
+                <div className="relative w-14 h-14 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <path className="text-slate-800" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path className="text-orange-400" strokeDasharray="85, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <span className="absolute text-sm font-bold text-white">4.8</span>
+                </div>
+              </div>
+
+              {/* Row for Active Users & System Health */}
+              <div className="flex items-center gap-4 self-center">
+                {/* 7. Active Users */}
+                <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="p-1 bg-purple-500/20 rounded-md">
+                      <Users className="w-3 h-3 text-purple-400" />
+                    </div>
+                    <p className="text-[9px] font-semibold text-slate-300">Active Users</p>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-2xl font-bold text-white">8.4k</p>
+                    <span className="text-[8px] text-green-400 font-medium flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> +124 today</span>
+                  </div>
+                </div>
+
+                {/* 11. System Health */}
+                <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="p-1 bg-teal-500/20 rounded-md">
+                      <ShieldCheck className="w-3 h-3 text-teal-400" />
+                    </div>
+                    <p className="text-[9px] font-semibold text-slate-300">System Health</p>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-2xl font-bold text-white">99.9%</p>
+                    <span className="text-[8px] text-teal-400 font-medium flex items-center">Optimal state</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 3 (Right) */}
+            <div className="flex flex-col items-start gap-4 translate-y-4">
+              {/* 2. Capital Allocations */}
+              <div className="bg-slate-900/60 backdrop-blur-xl p-3.5 rounded-3xl border border-white/10 w-52 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-150 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-[10px] font-semibold text-slate-400">Capital Allocations</p>
+                  <span className="text-[7px] text-slate-500 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-accent-400 animate-pulse"></div> Live</span>
+                </div>
+                <p className="text-base font-bold text-white mb-1">94%</p>
+                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-2.5">
+                  <div className="w-[94%] h-full bg-gradient-to-r from-accent-400 to-accent-600 rounded-full"></div>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center bg-white/5 rounded-lg p-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Wallet className="w-2.5 h-2.5 text-slate-400" />
+                      <span className="text-[8px] text-slate-300">Target Achieved</span>
+                    </div>
+                    <span className="text-[8px] text-green-400 flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> 12%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Activity Stream */}
+              <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-56 h-[220px] shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-500 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
+                  <Activity className="w-3.5 h-3.5 text-slate-400" />
+                  <p className="text-[11px] font-semibold text-white">Recent Activity</p>
+                </div>
+                <div className="space-y-3 flex-1 overflow-hidden">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Users className="w-3 h-3 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-white">New Client Lead</p>
+                      <p className="text-[8px] text-slate-400">2 mins ago</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <TrendingUp className="w-3 h-3 text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-white">Target Exceeded</p>
+                      <p className="text-[8px] text-slate-400">1 hour ago</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-accent-500/20 flex items-center justify-center">
+                      <PieChart className="w-3 h-3 text-accent-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-white">Monthly Report</p>
+                      <p className="text-[8px] text-slate-400">Generated</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center">
+                      <Star className="w-3 h-3 text-orange-400" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-white">5-Star Review</p>
+                      <p className="text-[8px] text-slate-400">3 hours ago</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Mini Stat / Conversion Rate */}
+              <div className="bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl border border-white/10 w-44 shadow-2xl animate-in fade-in slide-in-from-bottom-16 duration-300 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-800/80 cursor-pointer group">
+                <p className="text-[8px] text-slate-400 mb-1">Conversion Rate</p>
+                <div className="flex items-end gap-1.5">
+                  <p className="text-lg font-bold text-white">68.4%</p>
+                  <span className="text-[9px] text-green-400 flex items-center mb-0.5"><ArrowUpRight className="w-2 h-2" /> 4.2%</span>
+                </div>
+                <div className="mt-2 w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                  <div className="bg-green-400 h-full w-[68%]"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         {/* Bottom Text & Pagination aligned to the left */}
         <div className="p-6 pl-10 pb-6 z-10 flex flex-col items-start w-full">
-            <style>{`
+          <style>{`
               @keyframes slideProgress {
                 0% { width: 0%; }
                 100% { width: 100%; }
               }
             `}</style>
-            
-            {/* Fixed height container to prevent layout shifts */}
-            <div className="h-[110px] relative w-full max-w-md">
-                <div key={activeSlide} className="absolute inset-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <h2 className="text-2xl font-bold text-white mb-2 tracking-tight whitespace-pre-line">
-                        {contentSlides[activeSlide].title}
-                    </h2>
-                    <p className="text-slate-400 text-xs leading-relaxed max-w-md">
-                        {contentSlides[activeSlide].description}
-                    </p>
-                </div>
+
+          {/* Fixed height container to prevent layout shifts */}
+          <div className="h-[110px] relative w-full max-w-md">
+            <div key={activeSlide} className="absolute inset-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <h2 className="text-2xl font-bold text-white mb-2 tracking-tight whitespace-pre-line">
+                {contentSlides[activeSlide].title}
+              </h2>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-md">
+                {contentSlides[activeSlide].description}
+              </p>
             </div>
-            
-            {/* Pagination Dots (Interactive) */}
-            <div className="flex items-center justify-start gap-2 mt-3">
-                {contentSlides.map((_, index) => (
-                    <div 
-                        key={index}
-                        onClick={() => setActiveSlide(index)}
-                        className={`h-1.5 rounded-full transition-all cursor-pointer relative overflow-hidden ${
-                            activeSlide === index ? 'w-12 bg-white/20' : 'w-6 bg-white/20 hover:bg-white/40'
-                        }`}
-                    >
-                        {activeSlide === index && (
-                            <div 
-                                className="absolute top-0 left-0 h-full bg-white"
-                                style={{ animation: 'slideProgress 2.5s linear forwards' }}
-                            ></div>
-                        )}
-                    </div>
-                ))}
-            </div>
+          </div>
+
+          {/* Pagination Dots (Interactive) */}
+          <div className="flex items-center justify-start gap-2 mt-3">
+            {contentSlides.map((_, index) => (
+              <div
+                key={index}
+                onClick={() => setActiveSlide(index)}
+                className={`h-1.5 rounded-full transition-all cursor-pointer relative overflow-hidden ${activeSlide === index ? 'w-12 bg-white/20' : 'w-6 bg-white/20 hover:bg-white/40'
+                  }`}
+              >
+                {activeSlide === index && (
+                  <div
+                    className="absolute top-0 left-0 h-full bg-white"
+                    style={{ animation: 'slideProgress 2.5s linear forwards' }}
+                  ></div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Disclaimer */}
         <div className="absolute bottom-4 right-8 z-10 text-[8px] text-white/50 text-right pointer-events-none">
-            Figures and data shown are for illustrative design purposes only.
+          Figures and data shown are for illustrative design purposes only.
         </div>
       </div>
 
       {/* Right Section - Login Form */}
-      <div 
+      <div
         className="flex-1 flex flex-col bg-white dark:bg-slate-950 p-6 sm:p-12 relative shadow-xl border border-slate-200 dark:border-slate-800 overflow-y-auto shrink-0"
         style={{
           borderRadius: 'max(24px, env(safe-area-inset-bottom))'
         }}
       >
-        
+
         {/* Top Left Logo (For Mobile Devices) */}
         {isNative && (
           <div className="flex items-center gap-2 shrink-0 mb-4">
-              <LogoIcon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white uppercase">Siroi Forex</span>
+            <LogoIcon className="w-8 h-8 text-accent-600 dark:text-accent-400" />
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white uppercase">Siroi Forex</span>
           </div>
         )}
 
         <div className="w-full max-w-[380px] mx-auto my-auto flex flex-col justify-center min-h-[70vh] animate-in fade-in slide-in-from-right-8 duration-700">
-          
+
           <div className={`mb-10 ${isNative ? 'text-center' : 'text-left'}`}>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">
               Secure Gateway
@@ -667,7 +666,7 @@ export default function HomePage() {
           <form onSubmit={handleContinue} className="space-y-6">
             <div className="space-y-4">
               <div className="relative group">
-                <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-500 pointer-events-none ${isEmailAuthorized ? 'text-emerald-500' : 'text-slate-400 group-focus-within:text-indigo-600'}`}>
+                <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-500 pointer-events-none ${isEmailAuthorized ? 'text-emerald-500' : 'text-slate-400 group-focus-within:text-accent-600'}`}>
                   {isEmailAuthorized ? (
                     <ShieldCheck className="w-5 h-5 animate-in zoom-in spin-in-12 duration-500" />
                   ) : (
@@ -680,146 +679,139 @@ export default function HomePage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@siroiforex.com"
-                  className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full"
+                  className="pl-12 pr-4 py-6 text-base bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-accent-600 focus:ring-accent-600/20 transition-all rounded-xl w-full"
                   required
                   disabled={isLoading || otpSent}
                 />
               </div>
 
-                {/* Mobile Only: Phone Selector Custom UI */}
-                {isNative && (
-                  <div 
-                      className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                          showPhoneSelector && !otpSent ? 'max-h-[380px] opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
-                      }`}
-                  >
-                      <div className="flex flex-col gap-2">
-                        {/* Channel selector */}
-                        <div className="grid grid-cols-2 gap-2 mb-2">
-                          <button
-                            type="button"
-                            onClick={() => setDeliveryChannel('whatsapp')}
-                            disabled={isLoading}
-                            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
-                              deliveryChannel === 'whatsapp'
-                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
-                            }`}
-                          >
-                            <MessageSquare className="w-4 h-4 text-emerald-500" />
-                            WhatsApp
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeliveryChannel('sms')}
-                            disabled={isLoading}
-                            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
-                              deliveryChannel === 'sms'
-                                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
-                            }`}
-                          >
-                            <Phone className="w-4 h-4 text-indigo-500" />
-                            SMS
-                          </button>
-                        </div>
+              {/* Mobile Only: Phone Selector Custom UI */}
+              {isNative && (
+                <div
+                  className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${showPhoneSelector && !otpSent ? 'max-h-[380px] opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                    }`}
+                >
+                  <div className="flex flex-col gap-2">
+                    {/* Channel selector */}
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <button
+                        type="button"
+                        onClick={() => setDeliveryChannel('whatsapp')}
+                        disabled={isLoading}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${deliveryChannel === 'whatsapp'
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          }`}
+                      >
+                        <MessageSquare className="w-4 h-4 text-emerald-500" />
+                        WhatsApp
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeliveryChannel('sms')}
+                        disabled={isLoading}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${deliveryChannel === 'sms'
+                          ? 'border-accent-500 bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-400 shadow-sm'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                          }`}
+                      >
+                        <Phone className="w-4 h-4 text-accent-500" />
+                        SMS
+                      </button>
+                    </div>
 
-                        {availablePhones.map((phone) => (
-                           <button
-                             type="button"
-                             key={phone}
-                             onClick={() => setSelectedPhone(phone)}
-                             disabled={isLoading}
-                             className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
-                               selectedPhone === phone 
-                               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-500/50' 
-                               : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
-                             }`}
-                           >
-                              {/* radio dot */}
-                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                                selectedPhone === phone 
-                                ? 'border-indigo-500' 
-                                : 'border-slate-300 dark:border-slate-600'
-                              }`}>
-                                 {selectedPhone === phone && <div className="w-2 h-2 rounded-full bg-indigo-500" />}
-                              </div>
-                              <Phone className={`w-4 h-4 ${
-                                selectedPhone === phone ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'
-                              }`} />
-                              <span className={`text-base font-medium tracking-wide ${
-                                selectedPhone === phone 
-                                ? 'text-indigo-700 dark:text-indigo-300' 
-                                : 'text-slate-700 dark:text-slate-300'
-                              }`}>
-                                {maskPhoneNumber(phone)}
-                              </span>
-                           </button>
-                        ))}
-                      </div>
+                    {availablePhones.map((phone) => (
+                      <button
+                        type="button"
+                        key={phone}
+                        onClick={() => setSelectedPhone(phone)}
+                        disabled={isLoading}
+                        className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${selectedPhone === phone
+                          ? 'border-accent-500 bg-accent-50 dark:bg-accent-500/10 dark:border-accent-500/50'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+                          }`}
+                      >
+                        {/* radio dot */}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${selectedPhone === phone
+                          ? 'border-accent-500'
+                          : 'border-slate-300 dark:border-slate-600'
+                          }`}>
+                          {selectedPhone === phone && <div className="w-2 h-2 rounded-full bg-accent-500" />}
+                        </div>
+                        <Phone className={`w-4 h-4 ${selectedPhone === phone ? 'text-accent-600 dark:text-accent-400' : 'text-slate-400'
+                          }`} />
+                        <span className={`text-base font-medium tracking-wide ${selectedPhone === phone
+                          ? 'text-accent-700 dark:text-accent-300'
+                          : 'text-slate-700 dark:text-slate-300'
+                          }`}>
+                          {maskPhoneNumber(phone)}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Mobile Only: OTP Field */}
               {isNative && (
-                <div 
-                    className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                        otpSent ? 'max-h-40 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
+                <div
+                  className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${otpSent ? 'max-h-40 opacity-100 mt-4 translate-y-0' : 'max-h-0 opacity-0 mt-0 -translate-y-4 pointer-events-none'
                     }`}
                 >
-                    <div className="flex flex-col gap-3">
-                      <div className="relative group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors pointer-events-none">
-                            <Key className="w-5 h-5" />
-                        </div>
-                        <Input
-                          id="otp"
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={6}
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                          placeholder="6-digit OTP"
-                          autoComplete="one-time-code"
-                          className="pl-12 pr-4 py-6 text-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-indigo-600 focus:ring-indigo-600/20 transition-all rounded-xl w-full tracking-[0.5em] font-mono text-slate-900 dark:text-white"
-                          required={otpSent}
-                          disabled={isLoading}
-                        />
+                  <div className="flex flex-col gap-3">
+                    <div className="relative group">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent-600 transition-colors pointer-events-none">
+                        <Key className="w-5 h-5" />
                       </div>
-                      
-                      {otpSent && (
-                         <div className="flex justify-between items-center px-1">
-                            <div className="flex items-center gap-2">
-                              <div className="relative flex items-center justify-center w-5 h-5">
-                                 <svg className="w-5 h-5 -rotate-90 transform" viewBox="0 0 36 36">
-                                    <path className="text-slate-200 dark:text-slate-800" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                    <path className="text-indigo-500 transition-all duration-1000 ease-linear" strokeDasharray={`${(timeLeft/60)*100}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                 </svg>
-                                 <span className="absolute text-[8px] font-bold text-slate-600 dark:text-slate-400">{timeLeft}</span>
-                              </div>
-                              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                                 {timeLeft > 0 ? `Resend in ${timeLeft}s` : 'Resend available'}
-                              </span>
-                            </div>
-                            <button
-                               type="button"
-                               onClick={handleResend}
-                               disabled={timeLeft > 0 || isLoading}
-                               className={`text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all ${timeLeft > 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 active:scale-95'}`}
-                            >
-                               Resend OTP
-                            </button>
-                         </div>
-                      )}
+                      <Input
+                        id="otp"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                        placeholder="6-digit OTP"
+                        autoComplete="one-time-code"
+                        className="pl-12 pr-4 py-6 text-xl bg-slate-50/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:border-accent-600 focus:ring-accent-600/20 transition-all rounded-xl w-full tracking-[0.5em] font-mono text-slate-900 dark:text-white"
+                        required={otpSent}
+                        disabled={isLoading}
+                      />
                     </div>
+
+                    {otpSent && (
+                      <div className="flex justify-between items-center px-1">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex items-center justify-center w-5 h-5">
+                            <svg className="w-5 h-5 -rotate-90 transform" viewBox="0 0 36 36">
+                              <path className="text-slate-200 dark:text-slate-800" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                              <path className="text-accent-500 transition-all duration-1000 ease-linear" strokeDasharray={`${(timeLeft / 60) * 100}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <span className="absolute text-[8px] font-bold text-slate-600 dark:text-slate-400">{timeLeft}</span>
+                          </div>
+                          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                            {timeLeft > 0 ? `Resend in ${timeLeft}s` : 'Resend available'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleResend}
+                          disabled={timeLeft > 0 || isLoading}
+                          className={`text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all ${timeLeft > 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-100 dark:hover:bg-accent-500/20 active:scale-95'}`}
+                        >
+                          Resend OTP
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-14 text-base font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full h-14 text-base font-semibold bg-button-primary text-white rounded-xl shadow-lg shadow-accent-600/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               disabled={isLoading}
             >
               {buttonText}
@@ -830,11 +822,11 @@ export default function HomePage() {
             <p className="text-xs text-slate-400 font-medium">
               Copyright © {new Date().getFullYear()} Siroi Forex. All rights reserved.
             </p>
-            <a 
+            <a
               href="https://mis.siroiforex.com/onboarding/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-slate-500 hover:text-indigo-600 font-medium transition-colors border border-slate-200 dark:border-slate-800 hover:border-indigo-600/30 px-4 py-2 rounded-full bg-slate-50 dark:bg-slate-900 shadow-sm hover:shadow inline-flex items-center"
+              className="text-xs text-slate-500 hover:text-accent-600 font-medium transition-colors border border-slate-200 dark:border-slate-800 hover:border-accent-600/30 px-4 py-2 rounded-full bg-slate-50 dark:bg-slate-900 shadow-sm hover:shadow inline-flex items-center"
             >
               Are you a vendor?
             </a>
@@ -843,7 +835,7 @@ export default function HomePage() {
         </div>
 
       </div>
-      
+
     </div>
   );
 }

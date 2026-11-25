@@ -243,6 +243,7 @@ export default function DataEntryTerminal() {
     const [branchDetails, setBranchDetails] = useState<any>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+    const [invalidCell, setInvalidCell] = useState<{ rowIndex: number; field: string } | null>(null);
     const [executiveAuditLogs, setExecutiveAuditLogs] = useState<any[]>([]);
     const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
 
@@ -1055,13 +1056,14 @@ export default function DataEntryTerminal() {
     };
 
     const handleAddItem = () => {
+        const lastItem = items.length > 0 ? items[items.length - 1] : null;
         setItems([...items, {
             date: dateSelectionType === 'range' ? endDateStr : dateStr,
-            staffName: '',
+            staffName: lastItem?.staffName || '',
             customerName: '',
-            category: (metricCategory && metricCategory !== 'All' ? (metricCategory === 'Consulting' ? 'Consultancy' : metricCategory as any) : 'Loan'),
+            category: (metricCategory && metricCategory !== 'All' ? (metricCategory === 'Consulting' ? 'Consultancy' : metricCategory as any) : (lastItem?.category || 'Loan')),
             product: '',
-            channel: '',
+            channel: lastItem?.channel || '',
             amount: 0,
             status: '',
             isManual: true,
@@ -1080,7 +1082,7 @@ export default function DataEntryTerminal() {
             disbursedDate: '',
             emiDate: '',
             repaymentBank: '',
-            managerName: '',
+            managerName: lastItem?.managerName || '',
             consultantName: '',
             consultantEmail: '',
             rejectionRemark: ''
@@ -1284,6 +1286,33 @@ export default function DataEntryTerminal() {
         }
     };
 
+    const scrollToRowAndField = useCallback((origIndex: number, field: string) => {
+        setInvalidCell({ rowIndex: origIndex, field });
+
+        // Ensure we navigate to the page where this item is located
+        const filteredIdx = filteredItemsWithIndex.findIndex(f => f.originalIndex === origIndex);
+        if (filteredIdx !== -1 && pageSize !== -1) {
+            const targetPage = Math.floor(filteredIdx / pageSize) + 1;
+            if (targetPage !== currentPage) {
+                setCurrentPage(targetPage);
+            }
+        }
+
+        setTimeout(() => {
+            const el = document.getElementById(`cell-row-${origIndex}-${field}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                if ('focus' in el) {
+                    (el as HTMLElement).focus();
+                }
+            }
+        }, 150);
+
+        setTimeout(() => {
+            setInvalidCell(prev => (prev?.rowIndex === origIndex && prev?.field === field ? null : prev));
+        }, 6000);
+    }, [filteredItemsWithIndex, pageSize, currentPage]);
+
     const handleSubmit = async () => {
         if (isSunday && !isBackdoor && !isBypassedForPendingBackfill) {
             setError("Tracking submission is restricted on Sundays. Enjoy your holiday!");
@@ -1349,35 +1378,43 @@ export default function DataEntryTerminal() {
             const item = items[i];
             if (!item.customerName || !item.customerName.trim()) {
                 setError(`Row ${i + 1} is missing Customer Name. Please fill it before logging.`);
+                scrollToRowAndField(i, 'customerName');
                 return;
             }
             if (!item.category) {
                 setError(`Row ${i + 1} is missing Category. Please select one before logging.`);
+                scrollToRowAndField(i, 'category');
                 return;
             }
             if (!item.product) {
                 setError(`Row ${i + 1} is missing Product. Please select one before logging.`);
+                scrollToRowAndField(i, 'product');
                 return;
             }
             if (!item.staffName || !item.staffName.trim()) {
                 setError(`Row ${i + 1} is missing Staff Name. Please fill it before logging.`);
+                scrollToRowAndField(i, 'staffName');
                 return;
             }
             if (!item.channel) {
                 setError(`Row ${i + 1} is missing Bank Name / Channel. Please select one before logging.`);
+                scrollToRowAndField(i, 'channel');
                 return;
             }
             if ((item.amount || 0) < 0 || (item.disbursedAmount || 0) < 0) {
                 setError(`Row ${i + 1} requires valid amounts (>= 0).`);
+                scrollToRowAndField(i, 'amount');
                 return;
             }
             if (!item.fileStatus || !item.fileStatus.trim()) {
                 setError(`Row ${i + 1} is missing File Status. Please fill it before logging.`);
+                scrollToRowAndField(i, 'fileStatus');
                 return;
             }
             if ((item.fileStatus === 'Disbursed' || item.disbursedDate) && item.category === 'Loan') {
                 if (!item.emiDate || !item.emiDate.trim()) {
                     setError(`Row ${i + 1} (${item.customerName || 'Customer'}) is Disbursed. EMI Date is mandatory for disbursed loans.`);
+                    scrollToRowAndField(i, 'emiDate');
                     return;
                 }
             }
@@ -1856,14 +1893,13 @@ export default function DataEntryTerminal() {
         if (field === 'emiDate' && item.fileStatus === 'Disbursed' && (item.category === 'Loan' || (!item.category && item.product)) && (!item.emiDate || !item.emiDate.trim() || item.emiDate === '-')) return true;
         if (field === 'disbursedDate' && item.fileStatus === 'Disbursed' && item.category !== 'Forex' && (!item.disbursedDate || !item.disbursedDate.trim())) return true;
         if (field === 'disbursedAmount' && item.fileStatus === 'Disbursed' && item.category !== 'Forex' && (item.disbursedAmount === undefined || item.disbursedAmount === null || Number(item.disbursedAmount) <= 0)) return true;
-        if (!item.isManual) return false;
-        if (field === 'staffName' && !item.staffName) return true;
+        if (field === 'staffName' && (!item.staffName || !item.staffName.trim())) return true;
         if (field === 'category' && !item.category) return true;
         if (field === 'product' && !item.product) return true;
-        if (field === 'channel' && !item.channel) return true;
-        if (field === 'customerName' && !item.customerName) return true;
+        if (field === 'channel' && (!item.channel || !item.channel.trim())) return true;
+        if (field === 'customerName' && (!item.customerName || !item.customerName.trim())) return true;
         if (field === 'amount' && (item.amount === undefined || item.amount === null)) return true;
-        if (field === 'fileStatus' && !item.fileStatus) return true;
+        if (field === 'fileStatus' && (!item.fileStatus || !item.fileStatus.trim())) return true;
         return false;
     };
 
@@ -2577,12 +2613,24 @@ export default function DataEntryTerminal() {
                                                 {/* 10. Channel Partner */}
                                                 <TableCell className="py-2 px-2 align-top">
                                                     <select
+                                                        id={`cell-row-${originalIndex}-channel`}
                                                         disabled={isFieldDisabled}
-                                                        className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 ${isFieldMissing(item, 'channel') ? 'border-red-500/50 focus:border-red-500' : 'border-slate-200 dark:border-white/10'}`}
+                                                        className={`w-full h-[34px] bg-white dark:bg-slate-900/50 border px-2 text-xs rounded shadow-none text-slate-900 dark:text-slate-200 disabled:opacity-50 transition-all ${
+                                                            invalidCell?.rowIndex === originalIndex && invalidCell?.field === 'channel'
+                                                                ? 'border-red-500 ring-2 ring-red-500/50 bg-red-50/40 dark:bg-red-950/40 animate-pulse'
+                                                                : isFieldMissing(item, 'channel')
+                                                                ? 'border-red-500/70 bg-red-50/20 dark:bg-red-950/20 focus:border-red-500 ring-1 ring-red-400/30'
+                                                                : 'border-slate-200 dark:border-white/10'
+                                                        }`}
                                                         value={item.channel || ''}
-                                                        onChange={(e) => handleUpdateItem(originalIndex, 'channel', e.target.value)}
+                                                        onChange={(e) => {
+                                                            handleUpdateItem(originalIndex, 'channel', e.target.value);
+                                                            if (invalidCell?.rowIndex === originalIndex && invalidCell?.field === 'channel') {
+                                                                setInvalidCell(null);
+                                                            }
+                                                        }}
                                                     >
-                                                        <option value="">Select Channel...</option>
+                                                        <option value="">{isFieldMissing(item, 'channel') ? '⚠️ Select Bank / Channel...' : 'Select Channel...'}</option>
                                                         {item.category === 'Insurance' ? (
                                                             <>
                                                                 <option value="Bajaj Allianz">Bajaj Allianz</option>
@@ -3109,9 +3157,35 @@ export default function DataEntryTerminal() {
 
                         {/* Messages (Error / Success) */}
                         {error && (
-                            <div className="text-xs text-rose-600 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+                            <div
+                                onClick={() => {
+                                    const match = error.match(/Row (\d+)/);
+                                    if (match) {
+                                        const rowNum = parseInt(match[1], 10);
+                                        if (rowNum >= 1 && rowNum <= items.length) {
+                                            const rowIdx = rowNum - 1;
+                                            let f = 'channel';
+                                            if (error.includes('Customer Name')) f = 'customerName';
+                                            else if (error.includes('Category')) f = 'category';
+                                            else if (error.includes('Product')) f = 'product';
+                                            else if (error.includes('Staff Name')) f = 'staffName';
+                                            else if (error.includes('Bank Name') || error.includes('Channel')) f = 'channel';
+                                            else if (error.includes('File Status')) f = 'fileStatus';
+                                            else if (error.includes('EMI Date')) f = 'emiDate';
+                                            scrollToRowAndField(rowIdx, f);
+                                        }
+                                    }
+                                }}
+                                className="text-xs text-rose-600 dark:text-rose-400 font-semibold bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer hover:bg-rose-100/80 dark:hover:bg-rose-900/40 transition-colors"
+                                title="Click to jump directly to this row and field"
+                            >
                                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate max-w-[180px] md:max-w-xs">{error}</span>
+                                <span className="max-w-xs md:max-w-lg truncate">{error}</span>
+                                {error.includes('Row ') && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/60 px-1.5 py-0.5 rounded border border-rose-300 dark:border-rose-700 shrink-0 ml-1">
+                                        Jump to Row ↗
+                                    </span>
+                                )}
                             </div>
                         )}
                         {success && (
@@ -3171,7 +3245,7 @@ export default function DataEntryTerminal() {
                                 type="button"
                                 disabled={isSaving || items.length === 0}
                                 onClick={handleSubmit}
-                                className="h-[38px] px-6 md:px-7 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 shadow-md shadow-indigo-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="h-[38px] px-6 md:px-7 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-button-primary hover:opacity-95 shadow-md shadow-accent-950/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
                                 <span>{hasExistingEntry ? 'Update Record' : 'Lodge Record'}</span>

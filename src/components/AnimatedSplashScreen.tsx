@@ -48,7 +48,7 @@ export function AnimatedSplashScreen({ onComplete }: { onComplete: () => void })
             className="flex flex-col items-center"
           >
             <div className="flex items-center gap-4">
-               <LogoIcon className="w-20 h-20 text-indigo-600 dark:text-indigo-400" />
+               <LogoIcon className="w-20 h-20 text-accent-600 dark:text-accent-400" />
                <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">SIROI FOREX</h1>
             </div>
             
@@ -58,7 +58,7 @@ export function AnimatedSplashScreen({ onComplete }: { onComplete: () => void })
                transition={{ delay: 1, duration: 0.8 }}
                className="mt-12"
             >
-               <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+               <div className="w-8 h-8 border-4 border-accent-600 border-t-transparent rounded-full animate-spin" />
             </motion.div>
           </motion.div>
         </motion.div>

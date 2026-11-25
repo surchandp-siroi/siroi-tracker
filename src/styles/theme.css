@@ -22,23 +22,47 @@
   --color-neutral-925: #121212;
   --color-blue-400:    #3392ff;
 
-  /* ----- Accent ramp (Siroi Signature Purple) --------------------------------
-   * The CTA hue. Interactive/selection surfaces (primary button gradient,
-   * ghost + link buttons, checkbox, radio, switch, slider, tabs, sidebar
-   * selected, focus ring, date-range selection) reference accent-* instead of
-   * a raw hue, so the whole system re-tints to Siroi's signature purple.
+  /* ----- Accent ramp (Siroi Signature Dark Teal & Brand Theme) ---------------
+   * Sourced directly from the Siroi brand logo arrow:
+   *   Light Teal Gradient Top / Hover: #4b7e85 (accent-400)
+   *   Base Slate Teal / Default Stop:  #375e69 (accent-500)
+   *   Deep Petrol Teal / Bottom Stop:  #2b4b51 (accent-600)
+   *   Active Pressed Teal:             #20383d (accent-700)
+   * Primary button gradient: 180° light-to-dark from #375e69 to #2b4b51
+   * with specular top highlight and deep teal ambient drop shadow.
    * --------------------------------------------------------------------------*/
-  --color-accent-50:  var(--color-indigo-50);
-  --color-accent-100: var(--color-indigo-100);
-  --color-accent-200: var(--color-indigo-200);
-  --color-accent-300: var(--color-indigo-300);
-  --color-accent-400: var(--color-indigo-400);
-  --color-accent-500: var(--color-indigo-500);
-  --color-accent-600: var(--color-indigo-600);
-  --color-accent-700: var(--color-indigo-700);
-  --color-accent-800: var(--color-indigo-800);
-  --color-accent-900: var(--color-indigo-900);
-  --color-accent-950: var(--color-indigo-950);
+  --color-accent-50:  #f0f6f7;
+  --color-accent-100: #dce9eb;
+  --color-accent-200: #bdd5d9;
+  --color-accent-300: #8eb7bf;
+  --color-accent-400: #4b7e85;
+  --color-accent-500: #375e69;
+  --color-accent-600: #2b4b51;
+  --color-accent-700: #20383d;
+  --color-accent-800: #17292d;
+  --color-accent-900: #101c1f;
+  --color-accent-950: #080f11;
+
+  /* Brand Secondary Highlights (Logo Warm Gold & Cobalt Arrowhead) */
+  --color-brand-gold:       #e5cd4f;
+  --color-brand-gold-hover: #d4bc3e;
+  --color-brand-gold-light: #fefce8;
+  --color-brand-gold-text:  #854d0e;
+  --color-brand-cobalt:     #4f80ff;
+
+  /* Map indigo utility classes to the brand dark teal ramp so all existing
+   * forms, buttons, cards, and pages re-theme seamlessly to dark teal. */
+  --color-indigo-50:  var(--color-accent-50);
+  --color-indigo-100: var(--color-accent-100);
+  --color-indigo-200: var(--color-accent-200);
+  --color-indigo-300: var(--color-accent-300);
+  --color-indigo-400: var(--color-accent-400);
+  --color-indigo-500: var(--color-accent-500);
+  --color-indigo-600: var(--color-accent-600);
+  --color-indigo-700: var(--color-accent-700);
+  --color-indigo-800: var(--color-accent-800);
+  --color-indigo-900: var(--color-accent-900);
+  --color-indigo-950: var(--color-accent-950);
 
   /* ----- Typography ----------------------------------------------------------
    * Font sizes, weights, line-heights, and tracking all match Tailwind v4
@@ -831,6 +855,12 @@
   --color-chart-9-active: var(--color-chart-9-active);
   --color-chart-agents-bar:        var(--color-chart-agents-bar);
   --color-chart-agents-bar-active: var(--color-chart-agents-bar-active);
+
+  --color-brand-gold:       var(--color-brand-gold);
+  --color-brand-gold-hover: var(--color-brand-gold-hover);
+  --color-brand-gold-light: var(--color-brand-gold-light);
+  --color-brand-gold-text:  var(--color-brand-gold-text);
+  --color-brand-cobalt:     var(--color-brand-cobalt);
 }
 
 /* ---------------------------------------------------------------------------
@@ -890,7 +920,7 @@
   position: relative;
   isolation: isolate;
   background-image: var(--gradient-button-primary-default);
-  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.25), 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 3px 6px -1px rgb(79 70 229 / 0.3);
+  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.25), 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 3px 6px -1px rgb(43 75 81 / 0.35);
   border: 1px solid rgb(255 255 255 / 0.12);
 
   &::before {

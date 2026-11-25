@@ -14,16 +14,16 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "md", ...props }, ref) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] select-none cursor-pointer";
+      "inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] select-none cursor-pointer";
 
     const variants = {
-      default: "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 shadow-sm",
+      default: "bg-button-primary text-text-white shadow-xs",
       primary: "bg-button-primary text-text-white shadow-xs",
       secondary: "bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-white/10",
-      outline: "bg-white/80 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 hover:border-indigo-500/30 shadow-sm",
+      outline: "bg-white/80 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 hover:border-accent-500/30 shadow-sm",
       ghost: "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white",
       destructive: "bg-rose-500 text-white hover:bg-rose-600 shadow-sm shadow-rose-500/20",
-      link: "text-indigo-600 dark:text-indigo-400 underline-offset-4 hover:underline p-0 h-auto",
+      link: "text-accent-600 dark:text-accent-400 underline-offset-4 hover:underline p-0 h-auto",
     };
 
     const sizes = {

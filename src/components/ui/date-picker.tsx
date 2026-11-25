@@ -76,19 +76,19 @@ export function DatePicker({
 
   const formattedDate = calendarDate
     ? `${calendarDate.day.toString().padStart(2, "0")} ${[
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ][calendarDate.month - 1]} ${calendarDate.year}`
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ][calendarDate.month - 1]} ${calendarDate.year}`
     : placeholder;
 
   const content = (
@@ -99,13 +99,13 @@ export function DatePicker({
         id={id}
         disabled={disabled}
         className={cn(
-          "w-full justify-between font-normal text-xs h-9.5 px-3 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm hover:border-indigo-500/40 transition-all",
+          "w-full justify-between font-normal text-xs h-9.5 px-3 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm hover:border-accent-500/40 transition-all",
           !calendarDate && "text-slate-400 dark:text-slate-500",
           buttonClassName
         )}
       >
         <span className="flex items-center gap-2 font-medium truncate">
-          <CalendarIcon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+          <CalendarIcon className="w-3.5 h-3.5 text-accent-500 shrink-0" />
           <span className={calendarDate ? "text-slate-800 dark:text-slate-100 font-bold" : ""}>
             {formattedDate}
           </span>

@@ -234,7 +234,7 @@ export function Calendar({
             <select
               value={viewMonth}
               onChange={(e) => setViewMonth(parseInt(e.target.value, 10))}
-              className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 outline-none cursor-pointer hover:border-indigo-500/40 text-xs sm:text-sm transition-colors shadow-sm"
+              className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 outline-none cursor-pointer hover:border-accent-500/40 text-xs sm:text-sm transition-colors shadow-sm"
             >
               {MONTHS.map((m, idx) => (
                 <option key={m} value={idx + 1}>
@@ -246,7 +246,7 @@ export function Calendar({
             <select
               value={viewYear}
               onChange={(e) => setViewYear(parseInt(e.target.value, 10))}
-              className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-mono font-bold px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 outline-none cursor-pointer hover:border-indigo-500/40 text-xs sm:text-sm transition-colors shadow-sm"
+              className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-mono font-bold px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 outline-none cursor-pointer hover:border-accent-500/40 text-xs sm:text-sm transition-colors shadow-sm"
             >
               {yearOptions.map((y) => (
                 <option key={y} value={y}>
@@ -305,9 +305,9 @@ export function Calendar({
                   "text-rose-500 font-bold",
                 item.isToday &&
                   !item.isSelected &&
-                  "border border-indigo-500/50 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm",
+                  "border border-accent-500/50 text-accent-600 dark:text-accent-400 font-bold shadow-sm",
                 item.isSelected &&
-                  "bg-indigo-600 text-white font-black shadow-lg shadow-indigo-600/30 scale-100"
+                  "bg-button-primary text-white font-black shadow-lg shadow-accent-600/30 scale-100"
               )}
             >
               <span className="font-mono">{item.day}</span>
@@ -333,7 +333,7 @@ export function Calendar({
               setViewMonth(t.month);
               onChange?.(t);
             }}
-            className="text-xs font-black text-indigo-600 dark:text-indigo-400 hover:underline px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors cursor-pointer"
+            className="text-xs font-black text-accent-600 dark:text-accent-400 hover:underline px-2.5 py-1 rounded-lg hover:bg-accent-50 dark:hover:bg-accent-950/30 transition-colors cursor-pointer"
           >
             Today
           </button>

@@ -71,12 +71,12 @@ export function MonthPicker({
       <button
         type="button"
         className={cn(
-          "flex items-center justify-between gap-2.5 bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:border-indigo-500/30 shadow-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap",
+          "flex items-center justify-between gap-2.5 bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold rounded-xl text-accent-600 dark:text-accent-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:border-accent-500/30 shadow-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap",
           buttonClassName
         )}
       >
         <div className="flex items-center gap-2">
-          <CalendarIcon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+          <CalendarIcon className="w-3.5 h-3.5 text-accent-500 shrink-0" />
           <span className="tracking-wide uppercase text-[11px]">{formattedDisplay}</span>
         </div>
       </button>
@@ -121,9 +121,9 @@ export function MonthPicker({
                 className={cn(
                   "py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer select-none text-center",
                   isSelected
-                    ? "bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30 scale-100"
+                    ? "bg-button-primary text-white font-black shadow-md shadow-accent-600/30 scale-100"
                     : isCurrent
-                    ? "border border-indigo-500/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                    ? "border border-accent-500/40 text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-950/40"
                     : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
@@ -143,7 +143,7 @@ export function MonthPicker({
               onChange(mStr);
               setOpen(false);
             }}
-            className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors cursor-pointer"
+            className="text-[11px] font-bold text-accent-600 dark:text-accent-400 hover:underline px-2 py-1 rounded-lg hover:bg-accent-50 dark:hover:bg-accent-950/30 transition-colors cursor-pointer"
           >
             This Month
           </button>

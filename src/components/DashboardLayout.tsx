@@ -376,7 +376,7 @@ export default function DashboardLayout() {
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center p-1 sm:p-2 min-w-[50px] flex-1 rounded-xl transition-all ${
                   isActive
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
+                    ? 'text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-500/10'
                     : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                 }`
               }
@@ -393,7 +393,7 @@ export default function DashboardLayout() {
             onClick={() => setIsMobileSidebarOpen(true)}
             className={`flex flex-col items-center justify-center p-1 sm:p-2 min-w-[50px] flex-1 rounded-xl transition-all ${
               isMobileSidebarOpen
-                ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10'
+                ? 'text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-500/10'
                 : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             }`}
           >
@@ -425,7 +425,7 @@ export default function DashboardLayout() {
 
                   {/* Avatar Preview */}
                   <div className="flex flex-col items-center justify-center gap-2 mb-6">
-                      <div className="bg-indigo-500/10 dark:bg-indigo-500/20 p-2.5 rounded-full border border-indigo-500/20 shadow-inner">
+                      <div className="bg-accent-500/10 dark:bg-accent-500/20 p-2.5 rounded-full border border-accent-500/20 shadow-inner">
                           <img 
                               src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileModal.avatarSeed || 'admin'}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`}
                               alt="Avatar Preview"
@@ -442,7 +442,7 @@ export default function DashboardLayout() {
                               type="text"
                               value={profileModal.displayName}
                               onChange={(e) => setProfileModal(prev => prev ? { ...prev, displayName: e.target.value } : null)}
-                              className="h-9 w-full px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                              className="h-9 w-full px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-950/60 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-accent-500"
                               placeholder="Enter display name"
                           />
                       </div>
@@ -459,7 +459,7 @@ export default function DashboardLayout() {
                                           onClick={() => setProfileModal(prev => prev ? { ...prev, avatarSeed: seed } : null)}
                                           className={`p-1 rounded-lg border-2 transition-all flex items-center justify-center bg-white dark:bg-slate-900 ${
                                               isSelected 
-                                              ? 'border-indigo-600 dark:border-indigo-500 scale-105 shadow-md' 
+                                              ? 'border-accent-600 dark:border-accent-500 scale-105 shadow-md' 
                                               : 'border-transparent hover:border-slate-300 dark:hover:border-slate-700'
                                           }`}
                                       >
@@ -489,7 +489,7 @@ export default function DashboardLayout() {
                                   alert('No push token found on this device. Make sure notifications are allowed.');
                               }
                           }}
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg transition-colors border border-indigo-100 dark:border-indigo-800"
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/20 hover:bg-accent-100 dark:hover:bg-accent-900/40 rounded-lg transition-colors border border-accent-100 dark:border-accent-800"
                       >
                           <Copy className="w-4 h-4" />
                           Copy FCM Token for Testing
@@ -524,7 +524,7 @@ export default function DashboardLayout() {
                               }
                           }}
                           disabled={updatingProfile}
-                          className="flex-1 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50 transition-colors"
+                          className="flex-1 py-2 text-sm font-bold text-white bg-button-primary rounded-lg disabled:opacity-50 transition-colors"
                       >
                           {updatingProfile ? 'Saving...' : 'Save Changes'}
                       </button>
@@ -561,7 +561,7 @@ export default function DashboardLayout() {
 
             {/* Header / Title */}
             <div className="flex items-center gap-3.5 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800 shadow-md shadow-indigo-500/25 flex items-center justify-center shrink-0 ring-1 ring-white/20 p-2.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-700 dark:from-accent-600 dark:to-accent-800 shadow-md shadow-accent-500/25 flex items-center justify-center shrink-0 ring-1 ring-white/20 p-2.5">
                 <LogoIcon className="w-full h-full text-white" />
               </div>
               <div>
@@ -577,7 +577,7 @@ export default function DashboardLayout() {
             {/* Location Info Pill */}
             <div className="mb-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-100 dark:border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-2.5 min-w-0">
-                <MapPin className="w-4 h-4 text-indigo-500 shrink-0" />
+                <MapPin className="w-4 h-4 text-accent-500 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
                     Detected Location
@@ -624,7 +624,7 @@ export default function DashboardLayout() {
                 <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 dark:text-slate-500 mb-1">
                   Latest Server
                 </span>
-                <span className={`text-sm font-black ${updateStatus === 'available' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                <span className={`text-sm font-black ${updateStatus === 'available' ? 'text-accent-600 dark:text-accent-400' : 'text-slate-700 dark:text-slate-300'}`}>
                   v{latestVersion}
                 </span>
               </div>
@@ -642,7 +642,7 @@ export default function DashboardLayout() {
               {updateStatus === 'available' && (
                 <button
                   onClick={handlePerformUpdate}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-button-primary active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-accent-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>Update to v{latestVersion} Now</span>
@@ -650,9 +650,9 @@ export default function DashboardLayout() {
               )}
 
               {updateStatus === 'downloading' && (
-                <div className="w-full py-3.5 px-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 flex items-center justify-center gap-3">
-                  <RefreshCw className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-spin" />
-                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                <div className="w-full py-3.5 px-4 rounded-xl bg-accent-50 dark:bg-accent-950/40 border border-accent-200 dark:border-accent-800/50 flex items-center justify-center gap-3">
+                  <RefreshCw className="w-4 h-4 text-accent-600 dark:text-accent-400 animate-spin" />
+                  <span className="text-xs font-bold text-accent-600 dark:text-accent-400">
                     Downloading & Applying Update...
                   </span>
                 </div>

@@ -300,12 +300,12 @@ export default function LoginPage() {
       <div className="absolute inset-0 z-0 bg-slate-900/40" /> 
       
       {/* Glassy Background Container wrapping the floating rectangles */}
-      <div className="relative z-10 w-full max-w-6xl min-h-[720px] p-6 sm:p-10 rounded-[2.5rem] bg-indigo-900/20 backdrop-blur-xl border border-indigo-300/10 shadow-2xl flex flex-col lg:flex-row items-stretch justify-center gap-8">
+      <div className="relative z-10 w-full max-w-6xl min-h-[720px] p-6 sm:p-10 rounded-[2.5rem] bg-accent-900/20 backdrop-blur-xl border border-accent-300/10 shadow-2xl flex flex-col lg:flex-row items-stretch justify-center gap-8">
         
         {/* Left Rectangle (Floating Content) */}
-        <div className={`${isMobile ? 'hidden' : 'flex'} flex-col justify-center space-y-10 w-full lg:w-[55%] bg-indigo-950/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 shadow-xl relative overflow-hidden min-h-[600px]`}>
+        <div className={`${isMobile ? 'hidden' : 'flex'} flex-col justify-center space-y-10 w-full lg:w-[55%] bg-accent-950/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 shadow-xl relative overflow-hidden min-h-[600px]`}>
             {/* Subtle glows inside the left card */}
-            <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
             
             {/* Top section: Logo */}
@@ -333,8 +333,8 @@ export default function LoginPage() {
 
             {/* Bottom section: Text */}
             <div className="relative z-10">
-              <h2 className="text-2xl font-bold text-indigo-300 mb-4 tracking-tight">Data Monitoring & Tracking</h2>
-              <p className="text-indigo-100/70 font-medium text-base leading-relaxed max-w-md">
+              <h2 className="text-2xl font-bold text-accent-300 mb-4 tracking-tight">Data Monitoring & Tracking</h2>
+              <p className="text-accent-100/70 font-medium text-base leading-relaxed max-w-md">
                  Access real-time branch metrics, operational analytics, and unified data streams in one secure dashboard.
               </p>
             </div>
@@ -564,7 +564,7 @@ export default function LoginPage() {
                  </div>
                  )}
 
-                  <Button type="submit" className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-medium flex items-center justify-center transition-all shadow-md hover:shadow-lg shadow-indigo-600/20" disabled={isLoading}>
+                  <Button type="submit" variant="primary" className="w-full h-11 bg-button-primary text-white font-medium flex items-center justify-center transition-all shadow-md hover:shadow-lg shadow-accent-600/20" disabled={isLoading}>
                     {isLoading ? (
                         <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -583,7 +583,7 @@ export default function LoginPage() {
                     className="relative group text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors py-2"
                 >
                     Customer Data Entry
-                    <span className="absolute -bottom-0.5 left-1/2 w-0 h-[2px] bg-indigo-600 dark:bg-indigo-400 group-hover:w-full group-hover:left-0 transition-all duration-300 ease-out"></span>
+                    <span className="absolute -bottom-0.5 left-1/2 w-0 h-[2px] bg-accent-600 dark:bg-accent-400 group-hover:w-full group-hover:left-0 transition-all duration-300 ease-out"></span>
                 </button>
                 
                 <div className="flex items-center justify-center space-x-4 text-xs text-indigo-600 dark:text-indigo-400 font-medium relative">
@@ -592,9 +592,9 @@ export default function LoginPage() {
                     <a href="#" onClick={handleWittyClick} className="hover:underline opacity-80 hover:opacity-100 transition-opacity">IT Support</a>
                     
                     {wittyMessage && (
-                      <div className="absolute -top-12 whitespace-nowrap bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg animate-in fade-in slide-in-from-bottom-2 zoom-in duration-300 font-semibold tracking-wide">
+                      <div className="absolute -top-12 whitespace-nowrap bg-accent-600 text-white px-4 py-2 rounded-lg shadow-lg animate-in fade-in slide-in-from-bottom-2 zoom-in duration-300 font-semibold tracking-wide">
                         {wittyMessage}
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-indigo-600 rotate-45"></div>
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-accent-600 rotate-45"></div>
                       </div>
                     )}
                 </div>
