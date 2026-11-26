@@ -13,31 +13,34 @@
     <meta http-equiv="Expires" content="0" />
 
     <!-- Favicon & Touch Icons with Cache-Buster -->
-    <link rel="icon" type="image/x-icon" href="./favicon.ico?v=1.2.47" />
-    <link rel="shortcut icon" href="./favicon.ico?v=1.2.47" />
-    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=1.2.47" />
-    <link rel="icon" type="image/png" sizes="16x16" href="./favicon.png?v=1.2.47" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=1.2.47" />
-    <link rel="apple-touch-icon" sizes="180x180" href="./favicon.png?v=1.2.47" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=2" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico?v=2" />
+    <link rel="shortcut icon" href="./favicon.ico?v=2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=2" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <script>
       (function() {
-        // Dynamic absolute favicon injection to guarantee correct resolution across all SPA sub-paths (/dashboard, /entry, etc.)
+        // Force browser to dump any stale cached favicons and load the new logo
         try {
+          var existing = document.querySelectorAll("link[rel*='icon']");
+          for (var eIdx = 0; eIdx < existing.length; eIdx++) {
+            if (existing[eIdx].parentNode) existing[eIdx].parentNode.removeChild(existing[eIdx]);
+          }
           var origin = window.location.origin || '';
           var head = document.head || document.getElementsByTagName('head')[0];
-          var v = '1.2.47-' + Date.now();
+          var v = 'v2-' + Date.now();
           [
+            { rel: 'icon', type: 'image/png', sizes: '32x32', href: origin + '/favicon.png?v=' + v },
             { rel: 'icon', type: 'image/x-icon', href: origin + '/favicon.ico?v=' + v },
             { rel: 'shortcut icon', href: origin + '/favicon.ico?v=' + v },
-            { rel: 'icon', type: 'image/png', href: origin + '/favicon.png?v=' + v },
-            { rel: 'apple-touch-icon', href: origin + '/favicon.png?v=' + v }
+            { rel: 'apple-touch-icon', sizes: '180x180', href: origin + '/apple-touch-icon.png?v=' + v }
           ].forEach(function(item) {
             var link = document.createElement('link');
             link.rel = item.rel;
             if (item.type) link.type = item.type;
+            if (item.sizes) link.sizes = item.sizes;
             link.href = item.href;
             head.appendChild(link);
           });

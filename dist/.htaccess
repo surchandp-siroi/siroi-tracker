@@ -11,10 +11,13 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # 3. Route subfolder favicon requests to root favicon files
-  RewriteRule ^(.*)favicon\.(ico|png|svg)$ favicon.$2 [L]
+  # 3. Permanently redirect old SVG favicon requests to the new PNG icon
+  RewriteRule ^(.*)favicon\.svg$ /favicon.png [L,R=301]
 
-  # 4. Route everything else to index.html for SPA
+  # 4. Route subfolder favicon requests to root favicon files
+  RewriteRule ^(.*)favicon\.(ico|png)$ favicon.$2 [L]
+
+  # 5. Route everything else to index.html for SPA
   RewriteRule ^ index.html [L]
 </IfModule>
 
