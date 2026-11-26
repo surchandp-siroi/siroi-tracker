@@ -6,14 +6,57 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="description" content="Financial dashboard for Siroi Forex — Internal Portal" />
     <title>Siroi Forex Dashboard</title>
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="icon" type="image/png" href="./favicon.png" />
-    <link rel="apple-touch-icon" href="./favicon.png" />
+
+    <!-- Strict Cache Prevention Directives -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, post-check=0, pre-check=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- Favicon & Touch Icons with Cache-Buster -->
+    <link rel="icon" type="image/x-icon" href="./favicon.ico?v=1.2.47" />
+    <link rel="shortcut icon" href="./favicon.ico?v=1.2.47" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=1.2.47" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon.png?v=1.2.47" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=1.2.47" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./favicon.png?v=1.2.47" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <script>
       (function() {
+        // Dynamic absolute favicon injection to guarantee correct resolution across all SPA sub-paths (/dashboard, /entry, etc.)
+        try {
+          var origin = window.location.origin || '';
+          var head = document.head || document.getElementsByTagName('head')[0];
+          var v = '1.2.47-' + Date.now();
+          [
+            { rel: 'icon', type: 'image/x-icon', href: origin + '/favicon.ico?v=' + v },
+            { rel: 'shortcut icon', href: origin + '/favicon.ico?v=' + v },
+            { rel: 'icon', type: 'image/png', href: origin + '/favicon.png?v=' + v },
+            { rel: 'apple-touch-icon', href: origin + '/favicon.png?v=' + v }
+          ].forEach(function(item) {
+            var link = document.createElement('link');
+            link.rel = item.rel;
+            if (item.type) link.type = item.type;
+            link.href = item.href;
+            head.appendChild(link);
+          });
+        } catch (e) {}
+
+        // Proactively unregister any legacy Service Workers & purge CacheStorage
+        try {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for (var i = 0; i < regs.length; i++) { regs[i].unregister(); }
+            });
+          }
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              for (var i = 0; i < keys.length; i++) { caches.delete(keys[i]); }
+            });
+          }
+        } catch (e) {}
+
         if (typeof window !== 'undefined' && window.location.pathname.length > 1 && window.location.pathname.endsWith('/')) {
           var cleanPath = window.location.pathname.replace(/\/+$/, '') + window.location.search + window.location.hash;
           window.location.replace(cleanPath);

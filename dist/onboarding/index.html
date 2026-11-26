@@ -13,10 +13,42 @@
     
     <title>Siroi Forex Consultant Onboarding Portal</title>
     
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <!-- Strict Cache Prevention Directives -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0, post-check=0, pre-check=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- Favicon & Touch Icons with Cache-Buster -->
+    <link rel="icon" type="image/x-icon" href="../favicon.ico?v=1.2.47" />
+    <link rel="shortcut icon" href="../favicon.ico?v=1.2.47" />
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon.png?v=1.2.47" />
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png?v=1.2.47" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=1.2.47" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon.png?v=1.2.47" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        try {
+          var origin = window.location.origin || '';
+          var head = document.head || document.getElementsByTagName('head')[0];
+          var v = '1.2.47-' + Date.now();
+          [
+            { rel: 'icon', type: 'image/x-icon', href: origin + '/favicon.ico?v=' + v },
+            { rel: 'shortcut icon', href: origin + '/favicon.ico?v=' + v },
+            { rel: 'icon', type: 'image/png', href: origin + '/favicon.png?v=' + v },
+            { rel: 'apple-touch-icon', href: origin + '/favicon.png?v=' + v }
+          ].forEach(function(item) {
+            var link = document.createElement('link');
+            link.rel = item.rel;
+            if (item.type) link.type = item.type;
+            link.href = item.href;
+            head.appendChild(link);
+          });
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" crossorigin src="../assets/main-BNve-PeO.js"></script>
     <link rel="stylesheet" crossorigin href="../assets/main-DTQ4Yy4G.css">
   </head>

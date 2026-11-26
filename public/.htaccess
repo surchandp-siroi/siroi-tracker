@@ -11,6 +11,46 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # 3. Route everything else to index.html for SPA
+  # 3. Route subfolder favicon requests to root favicon files
+  RewriteRule ^(.*)favicon\.(ico|png|svg)$ favicon.$2 [L]
+
+  # 4. Route everything else to index.html for SPA
   RewriteRule ^ index.html [L]
+</IfModule>
+
+# ----------------------------------------------------------------------
+# Aggressive Cache Prevention (Ensure site does not load on any cache ever)
+# ----------------------------------------------------------------------
+<IfModule mod_headers.c>
+  # 1. HTML documents must NEVER be cached
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+    Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+  </FilesMatch>
+
+  # 2. JSON & version manifests must NEVER be cached
+  <FilesMatch "\.(json|xml)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # 3. Favicon immediate revalidation
+  <FilesMatch "favicon\.(ico|png|svg)$">
+    Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+  </FilesMatch>
+
+  # Disable ETags to avoid 304 Not Modified when fresh code is deployed
+  Header unset ETag
+  FileETag None
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 0 seconds"
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType application/json "access plus 0 seconds"
 </IfModule>
