@@ -513,7 +513,9 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
     activePerspective,
     activeManagerBranch,
     activeManagerBranchId,
+    activeUserEmail,
     setActivePerspective,
+    setActiveUserEmail,
   } = useAuthStore();
 
   const [selectedTab, setSelectedTab] = useState<'admin' | 'manager' | 'branch'>(
@@ -534,13 +536,17 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
         : branchUsers;
 
   const handleUserClick = (targetUser: AuthorizedUser) => {
+    setActiveUserEmail(targetUser.email);
     if (targetUser.role === 'admin') {
+      setSelectedTab('admin');
       setActivePerspective('admin');
       navigate('/dashboard');
     } else if (targetUser.role === 'manager') {
+      setSelectedTab('manager');
       setActivePerspective('manager', targetUser.branchName || 'Guwahati', targetUser.branchId || 'b1');
       navigate('/dashboard');
     } else {
+      setSelectedTab('branch');
       setActivePerspective('branch', targetUser.branchName, targetUser.branchId);
       navigate('/entry');
     }
@@ -562,6 +568,12 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
           type="button"
           onClick={() => {
             setSelectedTab('admin');
+            const currentEmail = (activeUserEmail || '').toLowerCase().trim();
+            const currentAuth = authorizedUsers.find((u) => u.email.toLowerCase().trim() === currentEmail);
+            if (!currentAuth || currentAuth.role !== 'admin') {
+              const defaultAdmin = authorizedUsers.find((u) => u.role === 'admin');
+              if (defaultAdmin) setActiveUserEmail(defaultAdmin.email);
+            }
             setActivePerspective('admin');
             navigate('/dashboard');
           }}
@@ -584,7 +596,17 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
           type="button"
           onClick={() => {
             setSelectedTab('manager');
-            setActivePerspective('manager', activeManagerBranch || 'Guwahati', activeManagerBranchId || 'b1');
+            const currentEmail = (activeUserEmail || '').toLowerCase().trim();
+            const currentAuth = authorizedUsers.find((u) => u.email.toLowerCase().trim() === currentEmail);
+            if (!currentAuth || currentAuth.role !== 'manager') {
+              const defaultManager = authorizedUsers.find((u) => u.role === 'manager') || authorizedUsers[3];
+              if (defaultManager) {
+                setActiveUserEmail(defaultManager.email);
+                setActivePerspective('manager', defaultManager.branchName || 'Guwahati', defaultManager.branchId || 'b1');
+              }
+            } else {
+              setActivePerspective('manager', activeManagerBranch || 'Guwahati', activeManagerBranchId || 'b1');
+            }
             navigate('/dashboard');
           }}
           className={cx(
@@ -606,6 +628,11 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
           type="button"
           onClick={() => {
             setSelectedTab('branch');
+            const currentEmail = (activeUserEmail || '').toLowerCase().trim();
+            const currentAuth = branchUsers.find((u) => u.email.toLowerCase().trim() === currentEmail);
+            if (!currentAuth) {
+              if (branchUsers[0]) setActiveUserEmail(branchUsers[0].email);
+            }
             setActivePerspective('branch');
           }}
           className={cx(
@@ -628,15 +655,8 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
       {/* Users / Branch Emails List */}
       <div className="flex flex-col gap-1 max-h-[290px] overflow-y-auto px-0.5 py-0.5 custom-scrollbar">
         {currentTabUsers.map((u) => {
-          // For Admin perspective: only Sharju should be marked as selected
-          const isSharju = u.email.toLowerCase().includes('sharju') || u.isSuperAdmin;
-          const isSelected =
-            u.role === 'admin'
-              ? isSharju && activePerspective === 'admin'
-              : u.role === 'manager'
-                ? activePerspective === 'manager' && u.branchName === activeManagerBranch
-                : activePerspective === 'branch' && (selectedTab === 'branch');
-
+          const currentEmail = (activeUserEmail || '').toLowerCase().trim();
+          const isSelected = u.email.toLowerCase().trim() === currentEmail;
           const isBranchTab = selectedTab === 'branch';
 
           return (
@@ -667,8 +687,11 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
                 </div>
               </div>
 
-              {/* Badges - Show Admin label for all admins including Sharju */}
-              <div className="shrink-0 pl-2">
+              {/* Badges & Check indicator */}
+              <div className="shrink-0 pl-2 flex items-center gap-1.5">
+                {isSelected && (
+                  <RiCheckboxCircleFill className="size-4 text-accent-500 shrink-0" />
+                )}
                 {u.role === 'admin' ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#dcfce7] dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-[#15803d] dark:text-emerald-300 border border-emerald-500/20">
                     <RiShieldCheckLine className="size-3" /> Admin

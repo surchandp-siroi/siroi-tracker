@@ -83,13 +83,12 @@ export function LoanFunnelChart({
   const stages = [
     {
       id: "logged",
-      label: "1. Logged Pipeline",
+      label: "Logged Pipeline",
       shortLabel: "Logged",
       value: logged.value,
       count: logged.count,
       countUnit: "Applications",
       pillLabel: "100%",
-      subLabel: "Total Inflow",
       color: "#4fa8b2",
       activeColor: "#38bdf8",
       accentBg: "bg-teal-500/10 dark:bg-teal-500/15",
@@ -97,13 +96,12 @@ export function LoanFunnelChart({
     },
     {
       id: "sanctioned",
-      label: "2. Sanctioned",
+      label: "Sanctioned",
       shortLabel: "Sanctioned",
       value: sanctioned.value,
       count: sanctioned.count,
       countUnit: "Approvals",
       pillLabel: `${sanctioned.conversion}%`,
-      subLabel: "Approval Rate",
       color: "#f2c94c",
       activeColor: "#fbbf24",
       accentBg: "bg-amber-500/10 dark:bg-amber-500/15",
@@ -111,13 +109,12 @@ export function LoanFunnelChart({
     },
     {
       id: "disbursed",
-      label: "3. Disbursed",
+      label: "Disbursed",
       shortLabel: "Disbursed",
       value: disbursed.value,
       count: disbursed.count,
       countUnit: "Funded",
       pillLabel: `${netConversionPct}%`,
-      subLabel: "Net Realization",
       color: "#10b981",
       activeColor: "#34d399",
       accentBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
@@ -245,7 +242,7 @@ export function LoanFunnelChart({
             <div
               key={stage.id}
               className={cx(
-                "flex min-w-0 flex-col justify-between rounded-xl p-4 bg-background-primary-default border transition-all duration-200 ease-out cursor-pointer shadow-xs",
+                "flex min-w-0 flex-col justify-between rounded-2xl p-4 bg-background-primary-default border transition-all duration-200 ease-out cursor-pointer shadow-xs gap-3",
                 active
                   ? "border-text-primary/40 ring-1 ring-border-focus-ring/20 scale-[1.01]"
                   : "border-border-button-default hover:border-border-button-hover"
@@ -254,30 +251,29 @@ export function LoanFunnelChart({
               onMouseEnter={() => setActiveIndex(i)}
               onMouseLeave={() => setActiveIndex(null)}
             >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="size-3 shrink-0 rounded-md transition-colors duration-150 ease-out"
-                    style={{ backgroundColor: active ? stage.activeColor : stage.color }}
-                  />
-                  <span className="text-body-2-medium font-bold text-text-secondary truncate">
-                    {stage.label}
-                  </span>
-                </div>
-                <span className={cx("text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0", stage.accentBg, stage.accentText)}>
-                  {stage.count} {stage.countUnit}
+              {/* Header: Rounded corner square + Stage label */}
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="size-2.5 shrink-0 rounded-[4px] transition-colors duration-150 ease-out"
+                  style={{ backgroundColor: active ? stage.activeColor : stage.color }}
+                />
+                <span className="text-body-medium text-text-secondary truncate">
+                  {stage.label}
                 </span>
               </div>
 
-              <div className="mt-2.5">
-                <span className="text-xl sm:text-2xl font-mono font-black text-text-primary tracking-tight">
+              {/* Value: BoardUI typography (clean, not thick/bold) */}
+              <div className="py-0.5">
+                <span className="text-title-1-medium whitespace-nowrap text-text-primary tabular-nums">
                   ₹{stage.value.toLocaleString("en-IN")}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-caption-2-medium text-text-tertiary mt-2 pt-2 border-t border-separator-border">
-                <span>{stage.subLabel}</span>
-                <span className="font-bold text-text-secondary font-mono">{stage.pillLabel}</span>
+              {/* Footer: Application/Approval tag moved down here */}
+              <div className="flex items-center pt-2.5 border-t border-separator-border">
+                <span className={cx("inline-flex items-center text-caption-2-medium font-medium px-2 py-0.5 rounded-full", stage.accentBg, stage.accentText)}>
+                  {stage.count} {stage.countUnit}
+                </span>
               </div>
             </div>
           );

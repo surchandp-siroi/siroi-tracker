@@ -167,6 +167,55 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
   return profile;
 };
 
+export function resolveUserDisplay(
+  authUser?: AuthorizedUser | null,
+  userProfile?: UserProfile | null
+): { firstName: string; initials: string; color: 'lime' | 'pink' | 'neutral' | 'blue' } {
+  if (authUser) {
+    let firstName = authUser.name.split(' ')[0] || authUser.name;
+    if (firstName.toLowerCase().startsWith('sharju')) {
+      firstName = 'Sharju';
+    }
+    return {
+      firstName,
+      initials: authUser.initials || firstName.slice(0, 2).toUpperCase(),
+      color: authUser.color || 'neutral',
+    };
+  }
+
+  const email = (userProfile?.email || '').toLowerCase().trim();
+  if (email.includes('sharju')) {
+    return { firstName: 'Sharju', initials: 'ST', color: 'pink' };
+  }
+  if (email.includes('surchand')) {
+    return { firstName: 'Surchand', initials: 'SS', color: 'lime' };
+  }
+  if (email.includes('aroop')) {
+    return { firstName: 'Aroop', initials: 'AS', color: 'neutral' };
+  }
+  if (email.includes('ajay')) {
+    return { firstName: 'Ajay', initials: 'AW', color: 'neutral' };
+  }
+  if (email.includes('nobin')) {
+    return { firstName: 'Nobin', initials: 'NN', color: 'neutral' };
+  }
+  if (email.includes('ramesh')) {
+    return { firstName: 'Ramesh', initials: 'RS', color: 'neutral' };
+  }
+
+  const rawName = userProfile?.displayName && userProfile.displayName !== 'Administrator'
+    ? userProfile.displayName
+    : email.split('@')[0] || 'User';
+  let firstName = rawName.split(' ')[0] || rawName;
+  if (firstName.toLowerCase().startsWith('sharju')) firstName = 'Sharju';
+
+  return {
+    firstName,
+    initials: firstName.slice(0, 2).toUpperCase(),
+    color: 'lime',
+  };
+}
+
 interface AuthState {
   user: UserProfile | null;
   supabaseUser: SupabaseUser | null;
@@ -175,8 +224,10 @@ interface AuthState {
   activePerspective: PerspectiveRole;
   activeManagerBranch: string;
   activeManagerBranchId: string;
+  activeUserEmail: string | null;
   authorizedUsers: AuthorizedUser[];
   setActivePerspective: (perspective: PerspectiveRole, branchName?: string, branchId?: string) => void;
+  setActiveUserEmail: (email: string) => void;
   setActiveManagerBranch: (branchName: string, branchId?: string) => void;
   addAuthorizedUser: (user: Omit<AuthorizedUser, 'id'>) => void;
   updateUserRole: (email: string, newRole: 'admin' | 'manager' | 'branch') => void;
@@ -195,7 +246,18 @@ const getStoredAuthorizedUsers = (): AuthorizedUser[] => {
     const raw = localStorage.getItem('siroi_authorized_users');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((user: AuthorizedUser) => {
+          const initial = INITIAL_AUTHORIZED_USERS.find(
+            (iu) => iu.email.toLowerCase().trim() === user.email.toLowerCase().trim()
+          );
+          return {
+            ...user,
+            initials: user.initials || initial?.initials || user.name.slice(0, 2).toUpperCase(),
+            color: user.color || initial?.color || 'neutral',
+          };
+        });
+      }
     }
   } catch (e) {
     console.warn("Could not read authorized users from localStorage", e);
@@ -212,6 +274,15 @@ const getStoredPerspective = (): PerspectiveRole => {
   return 'admin';
 };
 
+const getStoredActiveUserEmail = (): string => {
+  if (typeof window === 'undefined') return 'sharjuthoudam@siroiforex.com';
+  try {
+    const saved = localStorage.getItem('siroi_active_user_email');
+    if (saved) return saved;
+  } catch {}
+  return 'sharjuthoudam@siroiforex.com';
+};
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   supabaseUser: null,
@@ -220,7 +291,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   activePerspective: getStoredPerspective(),
   activeManagerBranch: 'Guwahati',
   activeManagerBranchId: 'b1',
+  activeUserEmail: getStoredActiveUserEmail(),
   authorizedUsers: getStoredAuthorizedUsers(),
+
+  setActiveUserEmail: (email: string) => {
+    const cleanEmail = email.toLowerCase().trim();
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('siroi_active_user_email', cleanEmail);
+      } catch {}
+    }
+    set({ activeUserEmail: cleanEmail });
+  },
 
   setActivePerspective: (perspective, branchName, branchId) => {
     if (typeof window !== 'undefined') {
@@ -548,6 +630,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         sessionStorage.removeItem('siroi_auth_email');
         sessionStorage.clear();
         localStorage.removeItem('siroi_active_perspective');
+        localStorage.removeItem('siroi_active_user_email');
       } catch (err) {
         console.warn('Failed to clear storage on logout', err);
       }
@@ -560,7 +643,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
     await supabase.auth.signOut();
-    set({ user: null, supabaseUser: null, activePerspective: 'admin' });
+    set({ user: null, supabaseUser: null, activePerspective: 'admin', activeUserEmail: null });
   },
 
   initAuth: () => {
