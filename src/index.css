@@ -28,14 +28,11 @@ body {
   color: #0f172a;
 }
 
-/* Dark Theme Styling */
+/* Dark Theme Styling - BoardUI dark background */
 html.dark body {
-  background-color: #081518;
-  background-image: 
-    radial-gradient(circle at 0% 0%, #0f272b 0%, transparent 50%), 
-    radial-gradient(circle at 100% 100%, #163b41 0%, transparent 50%), 
-    radial-gradient(circle at 50% 50%, #143d43 0%, transparent 50%);
-  color: #f1f5f9;
+  background-color: var(--color-background-full, #121212);
+  background-image: none;
+  color: var(--color-text-primary, #f1f5f9);
 }
 
 /* Glassmorphism Classes */
@@ -49,10 +46,10 @@ html.dark body {
 }
 
 .dark .glass {
-  background: rgba(15, 23, 42, 0.65);
+  background: color-mix(in srgb, var(--color-background-primary-default, #262626) 75%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-button-default, rgba(255, 255, 255, 0.08));
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
@@ -65,8 +62,8 @@ html.dark body {
 }
 
 .dark .glass-card {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--color-background-primary-default, #262626) 80%, transparent);
+  border: 1px solid var(--color-border-button-default, rgba(255, 255, 255, 0.08));
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
@@ -77,9 +74,9 @@ html.dark body {
 }
 
 .dark .glass-input {
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #f8fafc;
+  background: color-mix(in srgb, var(--color-background-secondary-default, #171717) 80%, transparent);
+  border: 1px solid var(--color-border-button-default, rgba(255, 255, 255, 0.1));
+  color: var(--color-text-primary, #f8fafc);
 }
 
 .glass-input:focus {

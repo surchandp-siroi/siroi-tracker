@@ -285,7 +285,7 @@ export default function LoginPage() {
       }}
     >
       {/* Background Video */}
-      <div className="absolute inset-0 z-0 bg-[#030816] overflow-hidden">
+      <div className="absolute inset-0 z-0 bg-background-full overflow-hidden">
         <video 
           autoPlay 
           loop 
@@ -297,7 +297,7 @@ export default function LoginPage() {
         </video>
       </div>
       {/* Dark overlay to ensure contrast */}
-      <div className="absolute inset-0 z-0 bg-slate-900/40" /> 
+      <div className="absolute inset-0 z-0 bg-black/40" /> 
       
       {/* Glassy Background Container wrapping the floating rectangles */}
       <div className="relative z-10 w-full max-w-6xl min-h-[720px] p-6 sm:p-10 rounded-[2.5rem] bg-accent-900/20 backdrop-blur-xl border border-accent-300/10 shadow-2xl flex flex-col lg:flex-row items-stretch justify-center gap-8">

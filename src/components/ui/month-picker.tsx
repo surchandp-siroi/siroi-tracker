@@ -81,7 +81,7 @@ export function MonthPicker({
         </div>
       </button>
 
-      <Popover className="w-[280px] p-4 bg-white dark:bg-[#0b1120] rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-2xl z-[9999]" placement="bottom start">
+      <Popover className="w-[280px] p-4 bg-white dark:bg-background-primary-default rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-2xl z-[9999]" placement="bottom start">
         {/* Year Navigation Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/5 mb-3">
           <button

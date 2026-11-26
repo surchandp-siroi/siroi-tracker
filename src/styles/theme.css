@@ -21,6 +21,15 @@
   --color-neutral-200: #ebebeb;
   --color-neutral-925: #121212;
 
+  /* BoardUI neutral dark palette mappings for slate dark utilities:
+   * Maps dark surfaces to BoardUI neutral tokens so all dark backgrounds
+   * resolve to clean BoardUI dark neutrals (#121212, #171717, #262626) instead of dark blue. */
+  --color-slate-800: var(--color-neutral-800);
+  --color-slate-850: color-mix(in srgb, var(--color-neutral-900) 60%, var(--color-neutral-800));
+  --color-slate-900: var(--color-neutral-900);
+  --color-slate-925: var(--color-neutral-925);
+  --color-slate-950: var(--color-neutral-925);
+
   /* ----- Accent ramp (Siroi Signature Luminous Teal & Brand Theme) ----------
    * Calibrated for higher luminosity, premium depth, and vibrant modern contrast:
    *   Light Teal Top / Hover Peak:   #4fa8b2 (accent-400)

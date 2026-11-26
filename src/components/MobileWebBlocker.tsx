@@ -28,7 +28,7 @@ export function MobileWebBlocker() {
   if (!isMobileWeb) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#081518] flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-background-full flex flex-col items-center justify-center p-6 text-center overflow-hidden">
       {/* Background styling to match the brand */}
       <div className="absolute inset-0 z-0">
          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl pointer-events-none" />

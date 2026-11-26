@@ -62,7 +62,7 @@ export function ThemeSelect({
         <div 
             ref={dropdownRef}
             style={dropdownStyle}
-            className="z-[9999] bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-64 overflow-y-auto py-1.5 animate-in fade-in slide-in-from-top-2 duration-150"
+            className="z-[9999] bg-white dark:bg-background-primary-default border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-64 overflow-y-auto py-1.5 animate-in fade-in slide-in-from-top-2 duration-150"
         >
             {options.map(option => (
                 <button

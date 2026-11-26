@@ -371,7 +371,7 @@ export default function DashboardLayout() {
 
       {/* Floating Bottom Navigation (Mobile) */}
       <div className="md:hidden fixed bottom-4 left-4 right-4 z-50">
-        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-lg rounded-2xl border border-slate-200/50 dark:border-white/10 p-2 flex items-center justify-around">
+        <div className="bg-white/90 dark:bg-background-primary-default/90 backdrop-blur-md shadow-lg rounded-2xl border border-slate-200/50 dark:border-white/10 p-2 flex items-center justify-around">
           {navItems.slice(0, 4).map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}

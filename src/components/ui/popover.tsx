@@ -103,7 +103,7 @@ export function Popover({
   return (
     <div
       className={cn(
-        "absolute z-[9999] rounded-2xl bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200",
+        "absolute z-[9999] rounded-2xl bg-white dark:bg-background-primary-default border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200",
         placementClasses[placement] || placementClasses["bottom start"],
         className
       )}

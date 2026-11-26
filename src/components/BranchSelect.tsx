@@ -80,7 +80,7 @@ export function BranchSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 left-0 z-[9999] min-w-[210px] w-full p-1.5 rounded-2xl bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+        <div className="absolute top-full mt-2 left-0 z-[9999] min-w-[210px] w-full p-1.5 rounded-2xl bg-white dark:bg-background-primary-default border border-slate-200 dark:border-white/10 shadow-2xl animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 flex flex-col gap-0.5 max-h-64 overflow-y-auto">
           {includeAllOption && (
             <button
               type="button"

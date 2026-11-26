@@ -214,7 +214,7 @@ export function Calendar({
   return (
     <div
       className={cn(
-        "p-5 sm:p-6 bg-white dark:bg-[#0b1120] rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl select-none w-[clamp(340px,92vw,420px)] max-w-full",
+        "p-5 sm:p-6 bg-white dark:bg-background-primary-default rounded-2xl border border-slate-200 dark:border-white/15 shadow-2xl select-none w-[clamp(340px,92vw,420px)] max-w-full",
         className
       )}
     >
