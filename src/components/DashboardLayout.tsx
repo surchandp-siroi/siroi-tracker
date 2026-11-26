@@ -11,6 +11,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { LogoIcon } from '@/components/LogoIcon';
 import { DashboardSidebar, type DashboardNavItem } from '@/components/application/dashboard/dashboard-sidebar';
+import { toast } from '@/components/base/toast/toast';
 import {
   RiDashboardLine,
   RiBox3Line,
@@ -501,12 +502,17 @@ export default function DashboardLayout() {
                               const token = localStorage.getItem('fcm_token');
                               if (token) {
                                   navigator.clipboard.writeText(token);
-                                  alert('Push token copied to clipboard!');
+                                  toast.saved('Token copied', {
+                                      description: 'Push token copied to clipboard.',
+                                  });
                               } else {
-                                  alert('No push token found on this device. Make sure notifications are allowed.');
+                                  toast('No push token found', {
+                                      description: 'Make sure notifications are allowed on this device.',
+                                      status: 'neutral',
+                                  });
                               }
                           }}
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/20 hover:bg-accent-100 dark:hover:bg-accent-900/40 rounded-lg transition-colors border border-accent-100 dark:border-accent-800"
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/20 hover:bg-accent-100 dark:hover:bg-accent-900/40 rounded-lg transition-colors border border-accent-100 dark:border-accent-800 cursor-pointer"
                       >
                           <Copy className="w-4 h-4" />
                           Copy FCM Token for Testing
@@ -517,14 +523,17 @@ export default function DashboardLayout() {
                   <div className="flex gap-3 mt-6">
                       <button 
                           onClick={() => setProfileModal(null)}
-                          className="flex-1 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          className="flex-1 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                       >
                           Cancel
                       </button>
                       <button 
                           onClick={async () => {
                               if (!profileModal.displayName.trim()) {
-                                  alert('Display name cannot be empty');
+                                  toast('Display name required', {
+                                      description: 'Display name cannot be empty.',
+                                      status: 'neutral',
+                                  });
                                   return;
                               }
                               setUpdatingProfile(true);
@@ -535,13 +544,18 @@ export default function DashboardLayout() {
                               setUpdatingProfile(false);
                               if (success) {
                                   setProfileModal(null);
-                                  alert('Profile updated successfully!');
+                                  toast.saved('Profile updated', {
+                                      description: 'Your changes have been saved.',
+                                  });
                               } else {
-                                  alert('Failed to update profile. Please try again.');
+                                  toast('Update failed', {
+                                      description: 'Failed to update profile. Please try again.',
+                                      status: 'neutral',
+                                  });
                               }
                           }}
                           disabled={updatingProfile}
-                          className="flex-1 py-2 text-sm font-bold text-white bg-button-primary rounded-lg disabled:opacity-50 transition-colors"
+                          className="flex-1 py-2 text-sm font-bold text-white bg-button-primary rounded-lg disabled:opacity-50 transition-colors cursor-pointer"
                       >
                           {updatingProfile ? 'Saving...' : 'Save Changes'}
                       </button>

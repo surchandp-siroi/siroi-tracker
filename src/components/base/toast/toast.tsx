@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import type { ComponentType, ReactNode } from "react";
+import { RiCheckLine } from "@remixicon/react";
 import {
   Notification,
   NotificationViewport,
@@ -101,6 +102,8 @@ export function toast(title: ReactNode, options?: ToastOptions): ToastId {
 toast.success = (title: ReactNode, options?: Omit<ToastOptions, "status">) => show(title, { ...options, status: "success" });
 toast.error = (title: ReactNode, options?: Omit<ToastOptions, "status">) => show(title, { ...options, status: "error" });
 toast.info = (title: ReactNode, options?: Omit<ToastOptions, "status">) => show(title, { ...options, status: "information" });
+toast.saved = (title: ReactNode = "Changes saved", options?: Omit<ToastOptions, "status">) =>
+  show(title, { status: "neutral", icon: RiCheckLine, duration: 3500, ...options });
 
 /** Change a toast that is showing. A new `duration` restarts its countdown. */
 toast.update = (id: ToastId, options: ToastOptions & { title?: ReactNode }) => {
@@ -145,9 +148,9 @@ export interface ToasterProps {
 }
 
 export function Toaster({
-  position = "bottom-end",
+  position = "bottom-right",
   limit = 3,
-  duration = 5000,
+  duration = 3500,
   "aria-label": ariaLabel = "Notifications",
   closeLabel,
   className,

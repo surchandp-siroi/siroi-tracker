@@ -138,7 +138,7 @@ const styles = sortCx({
   actions: "mt-1.5 flex flex-wrap items-center gap-2",
   close: "absolute top-3 end-3",
   status: {
-    neutral: "bg-background-tertiary-default text-text-secondary",
+    neutral: "bg-background-tertiary-default text-text-primary",
     information:
       "bg-notification-information-background text-notification-information-foreground",
     success:
@@ -333,7 +333,10 @@ export function Notification({
             <span
               ref={barRef}
               aria-hidden
-              className="absolute inset-x-0 bottom-0 h-[3px] origin-left rtl:origin-right bg-accent-600"
+              className={cx(
+                "absolute inset-x-0 bottom-0 h-[2px] origin-left rtl:origin-right",
+                status === "neutral" ? "bg-border-button-hover/60" : "bg-accent-600"
+              )}
             />
           ) : null}
         </motion.div>

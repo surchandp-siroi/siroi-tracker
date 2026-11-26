@@ -29,6 +29,7 @@ import {
   RiBuilding4Line,
 } from '@remixicon/react';
 import { cx } from '@/utils/cx';
+import { toast } from '@/components/base/toast/toast';
 const COLORS = ['#20535a', '#34d399', '#3b8c96', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
 
 const BRANCH_COLORS: Record<string, string> = {
@@ -2029,9 +2030,14 @@ export default function DashboardOverview() {
                     setSavingTargets(false);
                     if (success) {
                       setProductTargetModal(null);
-                      alert('Product targets successfully lodged!');
+                      toast.saved('Product targets saved', {
+                        description: 'Monthly targets lodged successfully.',
+                      });
                     } else {
-                      alert('Failed to save targets. Please try again.');
+                      toast('Saving failed', {
+                        description: 'Failed to save targets. Please try again.',
+                        status: 'neutral',
+                      });
                     }
                   }}
                   disabled={savingTargets}

@@ -26,6 +26,7 @@ import { AnimatedSplashScreen } from '@/components/AnimatedSplashScreen';
 import { requestAppPermissions } from '@/utils/PermissionsHelper';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { MobileWebBlocker } from '@/components/MobileWebBlocker';
+import { Toaster } from '@/components/base/toast/toast';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
@@ -43,6 +44,7 @@ export default function App() {
         <MobileWebBlocker />
         {showSplash && <AnimatedSplashScreen onComplete={() => setShowSplash(false)} />}
         <SessionTimer />
+        <Toaster position="bottom-right" />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
