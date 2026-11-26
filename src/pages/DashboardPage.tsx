@@ -29,32 +29,32 @@ import {
   RiBuilding4Line,
 } from '@remixicon/react';
 import { cx } from '@/utils/cx';
-const COLORS = ['#818cf8', '#34d399', '#38bdf8', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
+const COLORS = ['#20535a', '#34d399', '#3b8c96', '#fbbf24', '#f472b6']; // indigo-400, emerald-400, sky-400, amber-400, pink-400
 
 const BRANCH_COLORS: Record<string, string> = {
-  'Guwahati': '#818cf8',
+  'Guwahati': '#20535a',
   'Manipur': '#34d399',
-  'Itanagar': '#38bdf8',
+  'Itanagar': '#3b8c96',
   'Nagaland & Mizoram': '#fbbf24'
 };
 
 const getPatternId = (name: string) => `pattern_${name.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
 const PRODUCT_COLORS: Record<string, { proj: string, ach: string, textDark: string }> = {
-  'Personal Loan': { proj: `url(#${getPatternId('Personal Loan')})`, ach: '#2563eb', textDark: '#1e3a8a' }, // Blue
+  'Personal Loan': { proj: `url(#${getPatternId('Personal Loan')})`, ach: '#20535a', textDark: '#0d282c' }, // Deep Petrol Teal
   'Business Loan': { proj: `url(#${getPatternId('Business Loan')})`, ach: '#ea580c', textDark: '#7c2d12' }, // Orange
   'Housing Loan/LAP': { proj: `url(#${getPatternId('Housing Loan/LAP')})`, ach: '#16a34a', textDark: '#14532d' }, // Green
-  'MSME Working Capital': { proj: `url(#${getPatternId('MSME Working Capital')})`, ach: '#4f46e5', textDark: '#312e81' }, // Indigo
+  'MSME Working Capital': { proj: `url(#${getPatternId('MSME Working Capital')})`, ach: '#2b6d76', textDark: '#143d43' }, // Deep Teal
   'MSME Term Loan': { proj: `url(#${getPatternId('MSME Term Loan')})`, ach: '#d97706', textDark: '#78350f' }, // Amber
   'Life Insurance': { proj: `url(#${getPatternId('Life Insurance')})`, ach: '#dc2626', textDark: '#7f1d1d' }, // Red
-  'General Insurance': { proj: `url(#${getPatternId('General Insurance')})`, ach: '#9333ea', textDark: '#581c87' }, // Purple
+  'General Insurance': { proj: `url(#${getPatternId('General Insurance')})`, ach: '#3b8c96', textDark: '#163b41' }, // Vibrant Teal
   'Livlong Loan Protector': { proj: `url(#${getPatternId('Livlong Loan Protector')})`, ach: '#0891b2', textDark: '#164e63' }, // Cyan
   'Mutual Fund/SIP': { proj: `url(#${getPatternId('Mutual Fund/SIP')})`, ach: '#ca8a04', textDark: '#713f12' }, // Yellow
   'Retail forex sales': { proj: `url(#${getPatternId('Retail forex sales')})`, ach: '#db2777', textDark: '#831843' }, // Pink
   'Retail forex purchase': { proj: `url(#${getPatternId('Retail forex purchase')})`, ach: '#9d174d', textDark: '#4c0519' }, // Dark Pink
   'Student Forex Card': { proj: `url(#${getPatternId('Student Forex Card')})`, ach: '#ec4899', textDark: '#831843' }, // Rose Pink
   'Private Forex Card': { proj: `url(#${getPatternId('Private Forex Card')})`, ach: '#be185d', textDark: '#500724' }, // Deep Rose
-  'Remittance': { proj: `url(#${getPatternId('Remittance')})`, ach: '#0284c7', textDark: '#0c4a6e' }, // Sky Blue
+  'Remittance': { proj: `url(#${getPatternId('Remittance')})`, ach: '#4fa8b2', textDark: '#20535a' }, // Luminous Teal
   'GST filing': { proj: `url(#${getPatternId('GST filing')})`, ach: '#0d9488', textDark: '#134e4a' }, // Teal
   'ITR filing': { proj: `url(#${getPatternId('ITR filing')})`, ach: '#65a30d', textDark: '#3f6212' } // Lime
 };
@@ -1104,8 +1104,8 @@ export default function DashboardOverview() {
             { color: '#20535a', activeColor: '#163b41' },
             { color: '#f2c94c', activeColor: '#ca8a04' },
             { color: '#10b981', activeColor: '#059669' },
-            { color: '#1d4ed8', activeColor: '#1e40af' },
-            { color: '#9333ea', activeColor: '#7e22ce' },
+            { color: '#2b6d76', activeColor: '#20535a' },
+            { color: '#3b8c96', activeColor: '#2b6d76' },
             { color: '#be123c', activeColor: '#9f1239' },
           ];
 
@@ -1554,7 +1554,7 @@ export default function DashboardOverview() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {loanAnalyticsData.products.map(prod => {
                 const Icon = PRODUCT_ICONS[prod.product] || Briefcase;
-                const colorObj = PRODUCT_COLORS[prod.product] || { ach: '#6366f1' };
+                const colorObj = PRODUCT_COLORS[prod.product] || { ach: '#3b8c96' };
 
                 return (
                   <div
@@ -1720,11 +1720,11 @@ export default function DashboardOverview() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           {[
-            { cat: 'Loan', title: 'Loan Portfolio', colorClass: 'text-indigo-600 dark:text-indigo-400' },
+            { cat: 'Loan', title: 'Loan Portfolio', colorClass: 'text-accent-600 dark:text-accent-400' },
             { cat: 'Insurance', title: 'Insurance Plans', colorClass: 'text-amber-600 dark:text-amber-400' },
             { cat: 'Forex', title: 'Forex Services', colorClass: 'text-emerald-600 dark:text-emerald-400' },
             { cat: 'Consultancy', title: 'Consulting', colorClass: 'text-sky-600 dark:text-sky-400' },
-            { cat: 'Investments', title: 'Investments', colorClass: 'text-purple-600 dark:text-purple-400' }
+            { cat: 'Investments', title: 'Investments', colorClass: 'text-accent-600 dark:text-accent-400' }
           ].map(categoryInfo => {
             const catProducts = products.filter(p => p.category === categoryInfo.cat);
             if (catProducts.length === 0) return null;
@@ -1881,9 +1881,9 @@ export default function DashboardOverview() {
                   <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.phone}</span>
                 </div>
 
-                <div className="bg-white dark:bg-slate-950/50 border-b-2 border-purple-200 dark:border-purple-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 mb-2 text-purple-500 dark:text-purple-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                <div className="bg-white dark:bg-slate-950/50 border-b-2 border-accent-200 dark:border-accent-900/30 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-2 text-accent-500 dark:text-accent-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-500"></span>
                     <span className="text-[10px] uppercase font-bold tracking-widest">Customer Address</span>
                   </div>
                   <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200">{dataQuality.missingFields.address}</span>

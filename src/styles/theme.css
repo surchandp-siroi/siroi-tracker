@@ -20,7 +20,6 @@
   --color-neutral-100: #f7f7f7;
   --color-neutral-200: #ebebeb;
   --color-neutral-925: #121212;
-  --color-blue-400:    #3392ff;
 
   /* ----- Accent ramp (Siroi Signature Luminous Teal & Brand Theme) ----------
    * Calibrated for higher luminosity, premium depth, and vibrant modern contrast:
@@ -50,8 +49,20 @@
   --color-brand-gold-text:  #854d0e;
   --color-brand-cobalt:     #4fa8b2;
 
-  /* Map indigo utility classes to the brand dark teal ramp so all existing
-   * forms, buttons, cards, and pages re-theme seamlessly to dark teal. */
+  /* Map blue, indigo, purple, and violet utility classes to the brand teal & dark teal ramp
+   * so all legacy classes across forms, buttons, cards, charts, and pages re-theme to teal seamlessly. */
+  --color-blue-50:   var(--color-accent-50);
+  --color-blue-100:  var(--color-accent-100);
+  --color-blue-200:  var(--color-accent-200);
+  --color-blue-300:  var(--color-accent-300);
+  --color-blue-400:  var(--color-accent-400);
+  --color-blue-500:  var(--color-accent-500);
+  --color-blue-600:  var(--color-accent-600);
+  --color-blue-700:  var(--color-accent-700);
+  --color-blue-800:  var(--color-accent-800);
+  --color-blue-900:  var(--color-accent-900);
+  --color-blue-950:  var(--color-accent-950);
+
   --color-indigo-50:  var(--color-accent-50);
   --color-indigo-100: var(--color-accent-100);
   --color-indigo-200: var(--color-accent-200);
@@ -63,6 +74,30 @@
   --color-indigo-800: var(--color-accent-800);
   --color-indigo-900: var(--color-accent-900);
   --color-indigo-950: var(--color-accent-950);
+
+  --color-purple-50:  var(--color-accent-50);
+  --color-purple-100: var(--color-accent-100);
+  --color-purple-200: var(--color-accent-200);
+  --color-purple-300: var(--color-accent-300);
+  --color-purple-400: var(--color-accent-400);
+  --color-purple-500: var(--color-accent-500);
+  --color-purple-600: var(--color-accent-600);
+  --color-purple-700: var(--color-accent-700);
+  --color-purple-800: var(--color-accent-800);
+  --color-purple-900: var(--color-accent-900);
+  --color-purple-950: var(--color-accent-950);
+
+  --color-violet-50:  var(--color-accent-50);
+  --color-violet-100: var(--color-accent-100);
+  --color-violet-200: var(--color-accent-200);
+  --color-violet-300: var(--color-accent-300);
+  --color-violet-400: var(--color-accent-400);
+  --color-violet-500: var(--color-accent-500);
+  --color-violet-600: var(--color-accent-600);
+  --color-violet-700: var(--color-accent-700);
+  --color-violet-800: var(--color-accent-800);
+  --color-violet-900: var(--color-accent-900);
+  --color-violet-950: var(--color-accent-950);
 
   /* ----- Typography ----------------------------------------------------------
    * Font sizes, weights, line-heights, and tracking all match Tailwind v4
@@ -210,14 +245,14 @@
   --color-background-full:              var(--color-white);
   /* Ticket detail, Figma 4509:12272. The raw #fafafa surface matches neutral/50. */
   --color-ticket-detail-surface: var(--color-white);
-  --color-ticket-detail-low-background: var(--color-indigo-200);
-  --color-ticket-detail-low-hover: var(--color-indigo-300);
+  --color-ticket-detail-low-background: var(--color-accent-100);
+  --color-ticket-detail-low-hover: var(--color-accent-200);
   --color-ticket-detail-medium-hover: var(--color-yellow-300);
   --color-ticket-detail-high-hover: var(--color-orange-300);
   --color-ticket-detail-urgent-hover: var(--color-rose-300);
-  --color-ticket-detail-low-text: var(--color-indigo-800);
-  --color-ticket-detail-resource-background: var(--color-blue-100);
-  --color-ticket-detail-resource-text: var(--color-blue-600);
+  --color-ticket-detail-low-text: var(--color-accent-700);
+  --color-ticket-detail-resource-background: var(--color-accent-100);
+  --color-ticket-detail-resource-text: var(--color-accent-700);
   --color-ticket-detail-favorite: #ffb83c; /* raw Figma fill, no token yet */
   /* Empty-state illustration: raw Figma fills from node 4488:11848. */
   --color-project-board-empty-panel: rgb(242 242 242 / 0.8);
@@ -329,10 +364,10 @@
    * search pills. Dark keeps the default chip. */
   --color-kbd-subtle-background:                 var(--color-neutral-200);
   --color-kbd-foreground:                        var(--color-neutral-500);
-  --color-docs-file-chip-background:             var(--color-purple-50);
-  --color-docs-file-chip-border:                 var(--color-purple-100);
-  --color-docs-file-chip-foreground:             var(--color-purple-500);
-  --color-docs-command-accent:                    var(--color-purple-400);
+  --color-docs-file-chip-background:             var(--color-accent-50);
+  --color-docs-file-chip-border:                 var(--color-accent-100);
+  --color-docs-file-chip-foreground:             var(--color-accent-600);
+  --color-docs-command-accent:                    var(--color-accent-500);
   --color-docs-code-background:                   var(--color-background-primary-default);
   --color-docs-install-rail:                      var(--color-border-button-default);
 
@@ -348,8 +383,8 @@
   --color-pill-tab-blue-hover-background: var(--color-neutral-100);
 
   /* Notification status-icon surfaces. */
-  --color-notification-information-background: var(--color-blue-100);
-  --color-notification-information-foreground: var(--color-blue-600);
+  --color-notification-information-background: var(--color-accent-100);
+  --color-notification-information-foreground: var(--color-accent-700);
   --color-notification-success-background:     var(--color-lime-100);
   --color-notification-success-foreground:     var(--color-lime-600);
   --color-notification-error-background:       var(--color-rose-100);
@@ -368,13 +403,13 @@
   --color-status-cyan-text:         var(--color-cyan-800);
   --color-status-orange-background: var(--color-orange-200);
   --color-status-orange-text: var(--color-orange-800);
-  --color-status-blue-background:   var(--color-blue-200);
-  --color-status-blue-text:         var(--color-blue-800);
-  --color-status-purple-background: var(--color-purple-100);
-  --color-status-purple-text:       var(--color-purple-600);
+  --color-status-blue-background:   var(--color-accent-100);
+  --color-status-blue-text:         var(--color-accent-700);
+  --color-status-purple-background: var(--color-accent-200);
+  --color-status-purple-text:       var(--color-accent-800);
   --color-status-dot-green-halo:    var(--color-green-100);
   --color-status-dot-yellow-halo:   var(--color-yellow-200);
-  --color-status-dot-indigo-halo:   var(--color-indigo-100);
+  --color-status-dot-indigo-halo:   var(--color-accent-100);
 
   /* Date range selection: the connecting band and its start/end caps. */
   --color-date-range-background:      var(--color-accent-100);
@@ -382,15 +417,15 @@
 
   /* Calendar event chips. Title/time stay separate so the original light
    * hierarchy remains intact while dark mode can normalize both to /300. */
-  --color-calendar-event-blue-background:    var(--color-blue-100);
-  --color-calendar-event-blue-title:         var(--color-blue-700);
-  --color-calendar-event-blue-time:          var(--color-blue-700);
+  --color-calendar-event-blue-background:    var(--color-accent-100);
+  --color-calendar-event-blue-title:         var(--color-accent-700);
+  --color-calendar-event-blue-time:          var(--color-accent-700);
   --color-calendar-event-pink-background:    var(--color-pink-100);
   --color-calendar-event-pink-title:         var(--color-pink-700);
   --color-calendar-event-pink-time:          var(--color-pink-700);
-  --color-calendar-event-purple-background:  var(--color-purple-100);
-  --color-calendar-event-purple-title:       var(--color-purple-700);
-  --color-calendar-event-purple-time:        var(--color-purple-700);
+  --color-calendar-event-purple-background:  var(--color-accent-200);
+  --color-calendar-event-purple-title:       var(--color-accent-800);
+  --color-calendar-event-purple-time:        var(--color-accent-800);
   --color-calendar-event-lime-background:    var(--color-lime-100);
   --color-calendar-event-lime-title:         var(--color-lime-800);
   --color-calendar-event-lime-time:          var(--color-lime-700);
@@ -419,18 +454,18 @@
   --color-chart-3-active: var(--color-pink-500);
   --color-chart-4:        var(--color-sky-400);
   --color-chart-4-active: var(--color-sky-500);
-  --color-chart-5:        var(--color-purple-400);
-  --color-chart-5-active: var(--color-purple-500);
-  --color-chart-6:        var(--color-blue-400);
-  --color-chart-6-active: var(--color-blue-500);
+  --color-chart-5:        var(--color-accent-400);
+  --color-chart-5-active: var(--color-accent-500);
+  --color-chart-6:        var(--color-accent-600);
+  --color-chart-6-active: var(--color-accent-700);
   --color-chart-7:        var(--color-emerald-400);
   --color-chart-7-active: var(--color-emerald-500);
   --color-chart-8:        var(--color-yellow-400);
   --color-chart-8-active: var(--color-yellow-500);
-  --color-chart-9:        var(--color-indigo-400);
-  --color-chart-9-active: var(--color-indigo-500);
-  --color-chart-agents-bar:        var(--color-purple-300);
-  --color-chart-agents-bar-active: var(--color-purple-400);
+  --color-chart-9:        var(--color-accent-400);
+  --color-chart-9-active: var(--color-accent-500);
+  --color-chart-agents-bar:        var(--color-accent-300);
+  --color-chart-agents-bar-active: var(--color-accent-400);
 
   /* Button gradients */
   --gradient-button-primary-default:  linear-gradient(180deg, #4fa8b2 0%, #347c86 100%);
@@ -474,14 +509,14 @@
   /* Background */
   --color-background-full:              var(--color-neutral-925);
   --color-ticket-detail-surface: var(--color-neutral-925);
-  --color-ticket-detail-low-background: color-mix(in srgb, var(--color-indigo-950) 60%, transparent);
-  --color-ticket-detail-low-hover: color-mix(in srgb, var(--color-indigo-950) 80%, transparent);
+  --color-ticket-detail-low-background: color-mix(in srgb, var(--color-accent-950) 60%, transparent);
+  --color-ticket-detail-low-hover: color-mix(in srgb, var(--color-accent-950) 80%, transparent);
   --color-ticket-detail-medium-hover: color-mix(in srgb, var(--color-yellow-950) 80%, transparent);
   --color-ticket-detail-high-hover: color-mix(in srgb, var(--color-orange-950) 80%, transparent);
   --color-ticket-detail-urgent-hover: color-mix(in srgb, var(--color-rose-950) 80%, transparent);
-  --color-ticket-detail-low-text: var(--color-indigo-300);
-  --color-ticket-detail-resource-background: color-mix(in srgb, var(--color-blue-950) 60%, transparent);
-  --color-ticket-detail-resource-text: var(--color-blue-300);
+  --color-ticket-detail-low-text: var(--color-accent-300);
+  --color-ticket-detail-resource-background: color-mix(in srgb, var(--color-accent-950) 60%, transparent);
+  --color-ticket-detail-resource-text: var(--color-accent-300);
   --color-project-board-empty-panel: color-mix(in srgb, var(--color-neutral-800) 60%, transparent);
   --color-project-board-empty-front: color-mix(in srgb, var(--color-neutral-800) 75%, var(--color-neutral-700));
   --color-project-board-empty-middle: var(--color-neutral-700);
@@ -532,9 +567,9 @@
   --color-kbd-background:                        var(--color-neutral-700);
   --color-kbd-subtle-background:                 var(--color-neutral-700);
   --color-kbd-foreground:                        var(--color-neutral-400);
-  --color-docs-file-chip-background:             color-mix(in srgb, var(--color-purple-950) 50%, transparent);
-  --color-docs-file-chip-border:                 var(--color-purple-800);
-  --color-docs-file-chip-foreground:             var(--color-purple-400);
+  --color-docs-file-chip-background:             color-mix(in srgb, var(--color-accent-950) 50%, transparent);
+  --color-docs-file-chip-border:                 var(--color-accent-800);
+  --color-docs-file-chip-foreground:             var(--color-accent-400);
   --color-docs-code-background:                  var(--color-background-full);
   --color-docs-install-rail:                     color-mix(in srgb, var(--color-neutral-800) 60%, transparent);
 
@@ -573,8 +608,8 @@
 
   /* Dark status discs use /800 surfaces with /300 foregrounds so the icon
    * remains crisp without reverting to a bright pastel circle. */
-  --color-notification-information-background: color-mix(in srgb, var(--color-blue-800) 50%, transparent);
-  --color-notification-information-foreground: var(--color-blue-300);
+  --color-notification-information-background: color-mix(in srgb, var(--color-accent-800) 50%, transparent);
+  --color-notification-information-foreground: var(--color-accent-300);
   --color-notification-success-background:     color-mix(in srgb, var(--color-lime-800) 50%, transparent);
   --color-notification-success-foreground:     var(--color-lime-300);
   --color-notification-error-background:       color-mix(in srgb, var(--color-rose-800) 50%, transparent);
@@ -609,13 +644,13 @@
   --color-status-cyan-text:         var(--color-cyan-400);
   --color-status-orange-background: color-mix(in srgb, var(--color-orange-950) 60%, transparent);
   --color-status-orange-text: var(--color-orange-500);
-  --color-status-blue-background:   color-mix(in srgb, var(--color-blue-950) 60%, transparent);
-  --color-status-blue-text:         var(--color-blue-300);
-  --color-status-purple-background: color-mix(in srgb, var(--color-purple-900) 50%, transparent);
-  --color-status-purple-text:       var(--color-purple-300);
+  --color-status-blue-background:   color-mix(in srgb, var(--color-accent-950) 60%, transparent);
+  --color-status-blue-text:         var(--color-accent-300);
+  --color-status-purple-background: color-mix(in srgb, var(--color-accent-900) 50%, transparent);
+  --color-status-purple-text:       var(--color-accent-300);
   --color-status-dot-green-halo:    color-mix(in srgb, var(--color-green-800) 40%, transparent);
   --color-status-dot-yellow-halo:   color-mix(in srgb, var(--color-yellow-800) 40%, transparent);
-  --color-status-dot-indigo-halo:   color-mix(in srgb, var(--color-indigo-800) 40%, transparent);
+  --color-status-dot-indigo-halo:   color-mix(in srgb, var(--color-accent-800) 40%, transparent);
 
   --color-date-range-background:      var(--color-accent-950);
   --color-date-range-edge-background: var(--color-accent-800);
@@ -624,15 +659,15 @@
   --color-pill-tab-blue-hover-background: var(--color-neutral-800);
 
   /* Calendar event families share the same dark-mode depth/contrast recipe. */
-  --color-calendar-event-blue-background:    var(--color-blue-950);
-  --color-calendar-event-blue-title:         var(--color-blue-300);
-  --color-calendar-event-blue-time:          var(--color-blue-300);
+  --color-calendar-event-blue-background:    var(--color-accent-950);
+  --color-calendar-event-blue-title:         var(--color-accent-300);
+  --color-calendar-event-blue-time:          var(--color-accent-300);
   --color-calendar-event-pink-background:    var(--color-pink-950);
   --color-calendar-event-pink-title:         var(--color-pink-300);
   --color-calendar-event-pink-time:          var(--color-pink-300);
-  --color-calendar-event-purple-background:  var(--color-purple-950);
-  --color-calendar-event-purple-title:       var(--color-purple-300);
-  --color-calendar-event-purple-time:        var(--color-purple-300);
+  --color-calendar-event-purple-background:  var(--color-accent-950);
+  --color-calendar-event-purple-title:       var(--color-accent-300);
+  --color-calendar-event-purple-time:        var(--color-accent-300);
   --color-calendar-event-lime-background:    var(--color-lime-950);
   --color-calendar-event-lime-title:         var(--color-lime-300);
   --color-calendar-event-lime-time:          var(--color-lime-300);
@@ -656,8 +691,8 @@
   --color-chart-track:   var(--color-neutral-800);
   --color-chart-cursor:  var(--color-neutral-700);
   --color-chart-neutral: #64748b;
-  --color-chart-agents-bar:        var(--color-purple-500);
-  --color-chart-agents-bar-active: var(--color-purple-600);
+  --color-chart-agents-bar:        var(--color-accent-500);
+  --color-chart-agents-bar-active: var(--color-accent-600);
 }
 
 /* Non-default accents (data-accent set by the accent engine) can land on a

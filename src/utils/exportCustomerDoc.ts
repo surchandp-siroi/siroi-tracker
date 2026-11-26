@@ -189,7 +189,7 @@ function createSectionHeader(title: string, iconNumber: string): Paragraph {
                 text: `${iconNumber}. ${title.toUpperCase()}`,
                 bold: true,
                 size: 20,
-                color: '1E3A8A' // Deep Navy
+                color: '163B41' // Brand Dark Teal
             })
         ]
     });
@@ -256,7 +256,7 @@ export async function exportCustomerDocx(data: CustomerExportData): Promise<void
                                 text: 'SIROI FINANCIAL SERVICES',
                                 bold: true,
                                 size: 30,
-                                color: '1E3A8A'
+                                color: '163B41'
                             })
                         ]
                     }),
@@ -378,7 +378,7 @@ export async function exportCustomerDocx(data: CustomerExportData): Promise<void
                                 text: 'DECLARATION & UNDERTAKING',
                                 bold: true,
                                 size: 18,
-                                color: '1E3A8A'
+                                color: '163B41'
                             })
                         ]
                     }),
@@ -507,7 +507,7 @@ export function exportCustomerPdf(data: CustomerExportData): void {
         }
         .header {
             text-align: center;
-            border-bottom: 2px solid #1e3a8a;
+            border-bottom: 2px solid #163b41;
             padding-bottom: 8px;
             margin-bottom: 12px;
         }
@@ -515,7 +515,7 @@ export function exportCustomerPdf(data: CustomerExportData): void {
             margin: 0 0 2px 0;
             font-size: 22px;
             font-weight: 800;
-            color: #1e3a8a;
+            color: #163b41;
             letter-spacing: 0.5px;
         }
         .header h2 {
@@ -530,7 +530,7 @@ export function exportCustomerPdf(data: CustomerExportData): void {
             color: #64748b;
         }
         .section-title {
-            background: #1e3a8a;
+            background: #163b41;
             color: #ffffff;
             font-size: 11px;
             font-weight: 700;
@@ -577,7 +577,7 @@ export function exportCustomerPdf(data: CustomerExportData): void {
         }
         .highlight {
             font-weight: 700;
-            color: #1e3a8a;
+            color: #163b41;
         }
         .declaration {
             margin-top: 10px;

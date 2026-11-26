@@ -28,16 +28,16 @@ export function MobileWebBlocker() {
   if (!isMobileWeb) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#030816] flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-[#081518] flex flex-col items-center justify-center p-6 text-center overflow-hidden">
       {/* Background styling to match the brand */}
       <div className="absolute inset-0 z-0">
-         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-         <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl pointer-events-none" />
+         <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-accent-700/20 rounded-full blur-3xl pointer-events-none" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center max-w-sm">
-        <div className="w-20 h-20 bg-indigo-950/80 rounded-2xl border border-indigo-500/30 flex items-center justify-center mb-6 shadow-xl">
-          <MonitorSmartphone className="w-10 h-10 text-indigo-400" />
+        <div className="w-20 h-20 bg-accent-950/80 rounded-2xl border border-accent-500/30 flex items-center justify-center mb-6 shadow-xl">
+          <MonitorSmartphone className="w-10 h-10 text-accent-400" />
         </div>
         
         <h2 className="text-2xl font-bold text-white mb-3">Desktop Required</h2>

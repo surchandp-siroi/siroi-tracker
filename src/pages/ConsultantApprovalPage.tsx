@@ -309,13 +309,13 @@ export default function ConsultantApprovalPage() {
                                         <tr key={consultant.id} className="group hover:bg-background-secondary-hover transition-colors duration-150">
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-5">
-                                                    <div className="p-2 rounded-full bg-blue-500 dark:bg-blue-600 shrink-0 shadow-sm">
+                                                    <div className="p-2 rounded-full bg-accent-600 dark:bg-accent-500 shrink-0 shadow-sm">
                                                         <UserCircle className="w-5 h-5 text-white" />
                                                     </div>
                                                     <div>
                                                         <div className="font-semibold text-slate-900 dark:text-white text-base">{consultant.name}</div>
                                                         <div className="text-xs text-slate-500 mt-1 flex items-center gap-1.5"><span className="bg-orange-500 rounded-full p-[3px] shadow-sm"><Mail className="w-2.5 h-2.5 text-white" /></span> {consultant.email}</div>
-                                                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><span className="bg-violet-500 rounded-full p-[3px] shadow-sm"><Phone className="w-2.5 h-2.5 text-white" /></span> {consultant.phone}</div>
+                                                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><span className="bg-accent-700 rounded-full p-[3px] shadow-sm"><Phone className="w-2.5 h-2.5 text-white" /></span> {consultant.phone}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -449,13 +449,13 @@ export default function ConsultantApprovalPage() {
                                         <tr key={consultant.id} className="group hover:bg-background-secondary-hover transition-colors duration-150">
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-5">
-                                                    <div className="p-2 rounded-full bg-blue-500 dark:bg-blue-600 shrink-0 shadow-sm">
+                                                    <div className="p-2 rounded-full bg-accent-600 dark:bg-accent-500 shrink-0 shadow-sm">
                                                         <UserCircle className="w-5 h-5 text-white" />
                                                     </div>
                                                     <div>
                                                         <div className="font-semibold text-slate-900 dark:text-white text-base">{consultant.name}</div>
                                                         <div className="text-xs text-slate-500 mt-1 flex items-center gap-1.5"><span className="bg-orange-500 rounded-full p-[3px] shadow-sm"><Mail className="w-2.5 h-2.5 text-white" /></span> {consultant.email}</div>
-                                                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><span className="bg-violet-500 rounded-full p-[3px] shadow-sm"><Phone className="w-2.5 h-2.5 text-white" /></span> {consultant.phone}</div>
+                                                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5"><span className="bg-accent-700 rounded-full p-[3px] shadow-sm"><Phone className="w-2.5 h-2.5 text-white" /></span> {consultant.phone}</div>
                                                     </div>
                                                 </div>
                                             </td>

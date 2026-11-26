@@ -325,7 +325,7 @@ export function PlanArtFlame({ src, className }: { src?: string; className?: str
           className,
         )}
       >
-        <span className="absolute -top-1/4 -left-1/4 size-3/4 rounded-full bg-blue-400/70 blur-2xl" />
+        <span className="absolute -top-1/4 -left-1/4 size-3/4 rounded-full bg-accent-400/70 blur-2xl" />
         <span className="absolute top-1/4 right-0 size-2/3 rounded-full bg-lime-400/70 blur-2xl" />
         <span className="absolute right-1/4 -bottom-1/4 size-3/4 rounded-full bg-orange-400/70 blur-2xl" />
       </div>

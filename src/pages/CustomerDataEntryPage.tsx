@@ -2346,9 +2346,9 @@ export default function CustomerDataEntryPage() {
     return (
         <div className="min-h-screen flex items-center justify-center p-3 sm:p-6 md:p-8 relative overflow-hidden bg-slate-50 dark:bg-slate-900">
             {/* Ambient Lighting Gradients */}
-            <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[50%] bg-indigo-200/50 dark:bg-indigo-900/30 rounded-full blur-[130px] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[50%] bg-blue-200/50 dark:bg-blue-900/30 rounded-full blur-[130px] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
-            <div className="absolute top-[25%] right-[15%] w-[35%] h-[35%] bg-purple-200/40 dark:bg-purple-900/20 rounded-full blur-[110px] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
+            <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[50%] bg-accent-200/40 dark:bg-accent-900/20 rounded-full blur-[130px] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[50%] bg-accent-300/30 dark:bg-accent-950/40 rounded-full blur-[130px] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
+            <div className="absolute top-[25%] right-[15%] w-[35%] h-[35%] bg-accent-100/40 dark:bg-accent-900/15 rounded-full blur-[110px] mix-blend-multiply dark:mix-blend-screen pointer-events-none"></div>
 
             <LiquidGlassCard
                 glowIntensity="md"
@@ -2977,12 +2977,12 @@ export default function CustomerDataEntryPage() {
                                                         {/* 2. PAN Card Upload Box (Placed Directly Below Aadhaar Upload) */}
                                                         <div className={`p-4 rounded-2xl border transition-all ${
                                                             scannedPan 
-                                                                ? 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-200/80 dark:border-blue-800/50' 
+                                                                ? 'bg-accent-50/50 dark:bg-accent-950/20 border-accent-200/80 dark:border-accent-800/50' 
                                                                 : 'bg-white/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/60'
                                                         }`}>
                                                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                                    <div className="w-10 h-10 rounded-xl bg-accent-100 dark:bg-accent-950/80 text-accent-600 dark:text-accent-400 flex items-center justify-center shrink-0">
                                                                         <CreditCard className="w-5 h-5" />
                                                                     </div>
                                                                     <div>
@@ -3013,12 +3013,12 @@ export default function CustomerDataEntryPage() {
                                                                     >
                                                                         {isScanningPan ? (
                                                                             <>
-                                                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                                                                                <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-600 dark:text-accent-400" />
                                                                                 <span>{scanProgressPan.status || 'Scanning...'}</span>
                                                                             </>
                                                                         ) : (
                                                                             <>
-                                                                                <Upload className="w-3.5 h-3.5 text-blue-600" />
+                                                                                <Upload className="w-3.5 h-3.5 text-accent-600 dark:text-accent-400" />
                                                                                 <span>{panFileUrl || panFile ? 'Re-upload PAN' : 'Upload PAN Card'}</span>
                                                                             </>
                                                                         )}
@@ -3547,15 +3547,15 @@ export default function CustomerDataEntryPage() {
                                                     </div>
 
                                                     {/* Step 4 Form Download Banner */}
-                                                    <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-slate-50 dark:from-slate-800/80 dark:via-indigo-950/30 dark:to-slate-800/80 border border-blue-200/80 dark:border-blue-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
+                                                    <div className="p-4 rounded-2xl bg-gradient-to-r from-accent-50/80 via-accent-100/40 to-slate-50 dark:from-slate-800/80 dark:via-accent-950/30 dark:to-slate-800/80 border border-accent-200/80 dark:border-accent-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
                                                         <div className="flex items-start gap-3">
-                                                            <div className="w-9 h-9 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                            <div className="w-9 h-9 rounded-xl bg-accent-600/10 dark:bg-accent-500/20 text-accent-600 dark:text-accent-400 flex items-center justify-center shrink-0">
                                                                 <FileDown className="w-5 h-5 stroke-[2.2]" />
                                                             </div>
                                                             <div>
                                                                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                                                                     <span>Download Completed Application Form</span>
-                                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">Word & PDF</span>
+                                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent-100 dark:bg-accent-900/50 text-accent-700 dark:text-accent-300">Word & PDF</span>
                                                                 </h4>
                                                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                                                                     Need an offline copy or physical signature before proceeding? Download the filled application now.
@@ -3567,10 +3567,10 @@ export default function CustomerDataEntryPage() {
                                                                 type="button"
                                                                 disabled={isExportingDocx}
                                                                 onClick={handleDownloadDocx}
-                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-400 hover:text-blue-600 transition-all cursor-pointer disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-accent-400 hover:text-accent-600 transition-all cursor-pointer disabled:opacity-50"
                                                                 title="Download Word Document (.docx)"
                                                             >
-                                                                {isExportingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <FileText className="w-3.5 h-3.5 text-blue-600" />}
+                                                                {isExportingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-600" /> : <FileText className="w-3.5 h-3.5 text-accent-600" />}
                                                                 <span>Word (.docx)</span>
                                                             </button>
                                                             <button
@@ -4589,15 +4589,15 @@ export default function CustomerDataEntryPage() {
                                                     </div>
 
                                                     {/* Step 6 Form Download Banner */}
-                                                    <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-slate-50 dark:from-slate-800/80 dark:via-indigo-950/30 dark:to-slate-800/80 border border-blue-200/80 dark:border-blue-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-5">
+                                                    <div className="p-4 rounded-2xl bg-gradient-to-r from-accent-50/80 via-accent-100/40 to-slate-50 dark:from-slate-800/80 dark:via-accent-950/30 dark:to-slate-800/80 border border-accent-200/80 dark:border-accent-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-5">
                                                         <div className="flex items-start gap-3">
-                                                            <div className="w-9 h-9 rounded-xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                            <div className="w-9 h-9 rounded-xl bg-accent-600/10 dark:bg-accent-500/20 text-accent-600 dark:text-accent-400 flex items-center justify-center shrink-0">
                                                                 <FileDown className="w-5 h-5 stroke-[2.2]" />
                                                             </div>
                                                             <div>
                                                                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                                                                     <span>Download Pre-Submission Application Form</span>
-                                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">Word & PDF</span>
+                                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent-100 dark:bg-accent-900/50 text-accent-700 dark:text-accent-300">Word & PDF</span>
                                                                 </h4>
                                                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                                                                     Download the complete application including personal, address, banking, and eligibility calculations before final submission.
@@ -4609,10 +4609,10 @@ export default function CustomerDataEntryPage() {
                                                                 type="button"
                                                                 disabled={isExportingDocx}
                                                                 onClick={handleDownloadDocx}
-                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-400 hover:text-blue-600 transition-all cursor-pointer disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-accent-400 hover:text-accent-600 transition-all cursor-pointer disabled:opacity-50"
                                                                 title="Download Word Document (.docx)"
                                                             >
-                                                                {isExportingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <FileText className="w-3.5 h-3.5 text-blue-600" />}
+                                                                {isExportingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-600" /> : <FileText className="w-3.5 h-3.5 text-accent-600" />}
                                                                 <span>Word (.docx)</span>
                                                             </button>
                                                             <button
@@ -5101,13 +5101,13 @@ export default function CustomerDataEntryPage() {
                                                     type="button"
                                                     disabled={isExportingDocx}
                                                     onClick={handleDownloadDocx}
-                                                    className="inline-flex items-center gap-1.5 h-11 px-3.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-400 hover:text-blue-600 transition-all cursor-pointer disabled:opacity-50"
+                                                    className="inline-flex items-center gap-1.5 h-11 px-3.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-accent-400 hover:text-accent-600 transition-all cursor-pointer disabled:opacity-50"
                                                     title="Download filled customer application as Microsoft Word (.docx)"
                                                 >
                                                     {isExportingDocx ? (
-                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-600" />
                                                     ) : (
-                                                        <FileText className="w-3.5 h-3.5 text-blue-600" />
+                                                        <FileText className="w-3.5 h-3.5 text-accent-600" />
                                                     )}
                                                     <span className="hidden sm:inline">Word</span>
                                                     <span className="sm:hidden">Doc</span>

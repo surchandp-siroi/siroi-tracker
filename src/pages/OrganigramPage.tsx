@@ -59,7 +59,7 @@ const COLOR_OPTIONS = [
   { label: 'Rose', value: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800', circle: 'bg-rose-400' },
   { label: 'Sky', value: 'bg-sky-50 dark:bg-sky-950/30 border-sky-200 dark:border-sky-800', circle: 'bg-sky-400' },
   { label: 'Emerald', value: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800', circle: 'bg-emerald-400' },
-  { label: 'Purple', value: 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800', circle: 'bg-purple-400' },
+  { label: 'Dark Teal', value: 'bg-accent-50 dark:bg-accent-950/30 border-accent-200 dark:border-accent-800', circle: 'bg-accent-600' },
   { label: 'Amber', value: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800', circle: 'bg-amber-400' },
 ];
 
@@ -216,8 +216,8 @@ function OrganigramChart() {
           target: n.id,
           type: 'smoothstep',
           animated: true,
-          style: { stroke: '#818cf8', strokeWidth: 2 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#818cf8' }
+          style: { stroke: '#3b8c96', strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#3b8c96' }
         }));
 
       try {

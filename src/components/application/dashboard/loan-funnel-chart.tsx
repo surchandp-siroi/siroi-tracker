@@ -90,7 +90,7 @@ export function LoanFunnelChart({
       countUnit: "Applications",
       pillLabel: "100%",
       color: "#4fa8b2",
-      activeColor: "#38bdf8",
+      activeColor: "#3b8c96",
       accentBg: "bg-teal-500/10 dark:bg-teal-500/15",
       accentText: "text-teal-700 dark:text-teal-300",
     },

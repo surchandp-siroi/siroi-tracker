@@ -58,14 +58,14 @@ const ALERTS: Alert[] = [
   },
   {
     icon: RiCapsuleFill,
-    iconBg: "bg-blue-400",
+    iconBg: "bg-accent-500",
     title: "Medication reminder",
     description: "You missed your 9:00 AM dose of Metoprolol. Take it as soon as possible unless your next dose is near.",
     date: "June, 8",
   },
   {
     icon: RiMoonClearFill,
-    iconBg: "bg-purple-400",
+    iconBg: "bg-accent-700",
     title: "Irregular sleep",
     description: "Your bedtime shifted by more than 2 hours on 3 of the last 7 nights, which can affect your sleep score.",
     date: "June, 6",

@@ -142,7 +142,7 @@ export function DropdownMenuItem({
     emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20",
     amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500/20",
     rose: "bg-rose-500/10 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500/20",
-    purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:bg-purple-500/20",
+    purple: "bg-accent-500/10 text-accent-600 dark:text-accent-400 group-hover:bg-accent-500/20",
     default: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
   };
 

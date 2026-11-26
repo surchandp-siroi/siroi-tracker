@@ -24,16 +24,16 @@ const SIROI_EXECUTIVE_COLORS: Record<string, string> = {
   "Retail forex sales": "#4fa8b2", // Luminous Teal
   "Housing Loan/LAP": "#10b981", // Forest Emerald
   "Retail forex purchase": "#d97706", // Bronze Amber
-  "Private Forex Card": "#1d4ed8", // Sapphire Navy
-  "General Insurance": "#9333ea", // Royal Amethyst
+  "Private Forex Card": "#163b41", // Dark Petrol Teal
+  "General Insurance": "#245d65", // Oceanic Deep Teal
   "Life Insurance": "#be123c", // Cherry Rose
   "Mutual Fund/SIP": "#ca8a04", // Ochre Gold
   "GST filing": "#0f766e", // Pine Teal
   "ITR filing": "#0d9488", // Deep Teal
-  "MSME Working Capital": "#3b82f6", // Azure Blue
+  "MSME Working Capital": "#3b8c96", // Vibrant Brand Teal
   "MSME Term Loan": "#f59e0b", // Amber Gold
   "Student Forex Card": "#ec4899", // Rose Pink
-  "Remittance": "#0284c7", // Sky Blue
+  "Remittance": "#2b6d76", // Deep Teal
   "Livlong Loan Protector": "#0891b2", // Cyan Teal
 };
 
@@ -43,8 +43,8 @@ const FALLBACK_PALETTE = [
   "#4fa8b2",
   "#10b981",
   "#d97706",
-  "#1d4ed8",
-  "#9333ea",
+  "#163b41",
+  "#245d65",
   "#be123c",
 ];
 

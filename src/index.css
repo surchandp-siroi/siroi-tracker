@@ -30,11 +30,11 @@ body {
 
 /* Dark Theme Styling */
 html.dark body {
-  background-color: #0b0f19;
+  background-color: #081518;
   background-image: 
-    radial-gradient(circle at 0% 0%, #1e293b 0%, transparent 50%), 
-    radial-gradient(circle at 100% 100%, #1e3a8a 0%, transparent 50%), 
-    radial-gradient(circle at 50% 50%, #312e81 0%, transparent 50%);
+    radial-gradient(circle at 0% 0%, #0f272b 0%, transparent 50%), 
+    radial-gradient(circle at 100% 100%, #163b41 0%, transparent 50%), 
+    radial-gradient(circle at 50% 50%, #143d43 0%, transparent 50%);
   color: #f1f5f9;
 }
 
@@ -84,14 +84,14 @@ html.dark body {
 
 .glass-input:focus {
   background: rgba(255, 255, 255, 0.95);
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+  border-color: var(--color-border-focus-ring);
+  box-shadow: 0 0 0 3px rgba(59, 140, 150, 0.22);
 }
 
 .dark .glass-input:focus {
   background: rgba(30, 41, 59, 0.8);
-  border-color: #818cf8;
-  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.22);
+  border-color: var(--color-border-focus-ring);
+  box-shadow: 0 0 0 3px rgba(79, 168, 178, 0.28);
 }
 
 /* BoardUI Form Controls Focus Glow */
@@ -100,7 +100,7 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   border-color: var(--color-border-focus-ring);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+  box-shadow: 0 0 0 3px rgba(59, 140, 150, 0.22);
 }
 
 /* Double-Bezel High-End Card Architecture */

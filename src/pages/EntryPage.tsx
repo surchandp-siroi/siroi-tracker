@@ -1872,10 +1872,10 @@ export default function DataEntryTerminal() {
 
     const getFileStatusColor = (status: string) => {
         switch (status) {
-            case 'Sold': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 font-semibold';
+            case 'Sold': return 'bg-accent-100 dark:bg-accent-500/20 text-accent-700 dark:text-accent-400 border-accent-200 dark:border-accent-500/30 font-semibold';
             case 'Login': return 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/30';
-            case 'Processing': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
-            case 'Underwriting': return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+            case 'Processing': return 'bg-accent-100 dark:bg-accent-500/20 text-accent-700 dark:text-accent-400 border-accent-200 dark:border-accent-500/30';
+            case 'Underwriting': return 'bg-accent-100 dark:bg-accent-500/20 text-accent-700 dark:text-accent-400 border-accent-200 dark:border-accent-500/30';
             case 'Sanctioned': return 'bg-amber-100 dark:bg-yellow-500/20 text-amber-700 dark:text-yellow-400 border-amber-200 dark:border-yellow-500/30';
             case 'Disbursed': return 'bg-emerald-100 dark:bg-green-500/20 text-emerald-700 dark:text-green-400 border-emerald-200 dark:border-green-500/30 font-semibold';
             case 'Customer Reject': return 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30 font-semibold';
@@ -2005,7 +2005,7 @@ export default function DataEntryTerminal() {
                                     options={branches.filter(b => b.name !== 'HO' && b.name !== 'Test Branch').map(b => ({
                                         value: b.id,
                                         label: b.name,
-                                        indicatorColor: b.name === 'Guwahati' ? '#818cf8' : b.name === 'Manipur' ? '#34d399' : b.name === 'Itanagar' ? '#38bdf8' : b.name === 'Nagaland & Mizoram' ? '#fbbf24' : '#6366f1'
+                                        indicatorColor: b.name === 'Guwahati' ? '#4fa8b2' : b.name === 'Manipur' ? '#34d399' : b.name === 'Itanagar' ? '#20535a' : b.name === 'Nagaland & Mizoram' ? '#fbbf24' : '#3b8c96'
                                     }))}
                                 />
                             </div>
@@ -2145,11 +2145,11 @@ export default function DataEntryTerminal() {
                                     onChange={setMetricCategory}
                                     options={[
                                         { value: 'All', label: 'All Products' },
-                                        { value: 'Loan', label: 'Loan', indicatorColor: '#6366f1' },
+                                        { value: 'Loan', label: 'Loan', indicatorColor: '#20535a' },
                                         { value: 'Insurance', label: 'Insurance', indicatorColor: '#10b981' },
                                         { value: 'Forex', label: 'Forex', indicatorColor: '#0ea5e9' },
                                         { value: 'Consultancy', label: 'Consulting', indicatorColor: '#f59e0b' },
-                                        { value: 'Investments', label: 'Investments', indicatorColor: '#8b5cf6' }
+                                        { value: 'Investments', label: 'Investments', indicatorColor: '#3b8c96' }
                                     ]}
                                 />
                             </div>
@@ -2749,7 +2749,7 @@ export default function DataEntryTerminal() {
                                                         <option value="" className="bg-slate-800 text-white">Select...</option>
                                                         {item.category === 'Forex' ? (
                                                             <>
-                                                                <option value="Sold" className="bg-slate-800 text-blue-400 font-semibold">Sold</option>
+                                                                <option value="Sold" className="bg-slate-800 text-accent-400 font-semibold">Sold</option>
                                                                 <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
                                                                 <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
                                                                 <option value="Rejected" className="bg-slate-800 text-red-400">Rejected</option>
@@ -2763,7 +2763,7 @@ export default function DataEntryTerminal() {
                                                         ) : item.category === 'Loan' ? (
                                                             <>
                                                                 <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
-                                                                <option value="Underwriting" className="bg-slate-800 text-blue-400">Underwriting</option>
+                                                                <option value="Underwriting" className="bg-slate-800 text-accent-400">Underwriting</option>
                                                                 <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
                                                                 <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
                                                                 <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
@@ -2772,7 +2772,7 @@ export default function DataEntryTerminal() {
                                                         ) : (
                                                             <>
                                                                 <option value="Login" className="bg-slate-800 text-slate-300">Login</option>
-                                                                <option value="Processing" className="bg-slate-800 text-blue-400">Processing</option>
+                                                                <option value="Processing" className="bg-slate-800 text-accent-400">Processing</option>
                                                                 <option value="Sanctioned" className="bg-slate-800 text-yellow-400">Sanctioned</option>
                                                                 <option value="Disbursed" className="bg-slate-800 text-green-400">Disbursed</option>
                                                                 <option value="Customer Reject" className="bg-slate-800 text-amber-400">Customer Reject</option>
@@ -2931,8 +2931,8 @@ export default function DataEntryTerminal() {
                                                 <TableCell className="py-2 px-3 align-middle text-right">
                                                     {isRowFrozen ? (
                                                         isForex ? (
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[11px] font-bold select-none shadow-xs">
-                                                                <Lock className="w-3 h-3 text-blue-600 dark:text-blue-400" /> Sold
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-accent-50 dark:bg-accent-950/40 text-accent-700 dark:text-accent-400 border border-accent-200 dark:border-accent-800 text-[11px] font-bold select-none shadow-xs">
+                                                                <Lock className="w-3 h-3 text-accent-600 dark:text-accent-400" /> Sold
                                                             </span>
                                                         ) : (
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold select-none shadow-xs">
@@ -2963,7 +2963,7 @@ export default function DataEntryTerminal() {
                                                                         handleUpdateItem(originalIndex, 'disbursedDate', item.date || (dateSelectionType === 'range' ? endDateStr : dateStr));
                                                                         handleUpdateItem(originalIndex, '_isSessionEditing', true);
                                                                     }}
-                                                                    className="px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
+                                                                    className="px-2 py-1 bg-accent-50 hover:bg-accent-100 dark:bg-accent-950/50 dark:hover:bg-accent-900/60 text-accent-700 dark:text-accent-400 border border-accent-300 dark:border-accent-700/50 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs hover:scale-[1.02]"
                                                                 >
                                                                     <Check className="w-2.5 h-2.5" /> Sold
                                                                 </button>
@@ -3293,7 +3293,7 @@ export default function DataEntryTerminal() {
                         </div>
                         <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
                             <Button variant="secondary" onClick={() => setIsTransferModalOpen(false)} className="flex-1">Cancel</Button>
-                            <Button onClick={handleTransferToDaily} disabled={!transferDate || isTransferring} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                            <Button onClick={handleTransferToDaily} disabled={!transferDate || isTransferring} className="flex-1 bg-accent-600 hover:bg-accent-700 text-white">
                                 {isTransferring ? 'Transferring...' : 'Confirm Transfer'}
                             </Button>
                         </div>

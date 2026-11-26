@@ -72,7 +72,7 @@ const SERVERS: Record<string, McpServer> = {
     id: "paper",
     name: "paper",
     initial: "P",
-    tileClass: "bg-blue-200 text-blue-700",
+    tileClass: "bg-accent-200 text-accent-800",
     status: "error",
   },
   posthog: {

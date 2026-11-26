@@ -34,10 +34,10 @@ interface FeedAccount {
 }
 
 const SWATCH_STYLES: Record<FeedColor, string> = {
-  blue: "bg-blue-200 text-blue-900",
+  blue: "bg-accent-100 text-accent-900",
   red: "bg-red-200 text-red-700",
   lime: "bg-lime-200 text-lime-700",
-  purple: "bg-purple-200 text-purple-700",
+  purple: "bg-accent-200 text-accent-950",
   teal: "bg-teal-200 text-teal-700",
   pink: "bg-pink-200 text-pink-700",
 };

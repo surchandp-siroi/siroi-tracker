@@ -204,7 +204,7 @@ export default function ProductsPage() {
     {
       id: 'Investments',
       title: 'Investments',
-      colorClass: 'text-purple-600 dark:text-purple-400',
+      colorClass: 'text-accent-600 dark:text-accent-400',
       total: getCategoryTotal('Investments'),
       products: investmentProducts,
     }
