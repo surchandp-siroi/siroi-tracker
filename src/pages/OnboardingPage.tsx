@@ -264,7 +264,7 @@ export default function OnboardingPage() {
                       
                       {/* Mobile Header */}
                       <div className="mb-8 lg:hidden flex flex-col items-center text-center">
-                          <div className="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-600/20">
+                          <div className="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                               <LogoIcon className="w-10 h-10" />
                           </div>
                           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Consultant Portal</h1>
@@ -308,7 +308,7 @@ export default function OnboardingPage() {
                                               return (
                                                   <div key={s.id} className="flex flex-col items-center">
                                                       <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                                                          isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-110' : 
+                                                          isActive ? 'bg-indigo-600 text-white shadow-lg  scale-110' : 
                                                           isCompleted ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-600 dark:border-indigo-400' :
                                                           'bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 text-slate-400'
                                                       }`}>
@@ -484,11 +484,11 @@ export default function OnboardingPage() {
                                               </Button>
                                           )}
                                           {formStep < 4 ? (
-                                              <Button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 h-14 text-base font-bold tracking-wide shadow-lg shadow-indigo-600/20 rounded-xl">
+                                              <Button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 h-14 text-base font-bold tracking-wide shadow-lg rounded-xl">
                                                   Next Step <ChevronRight className="w-5 h-5 ml-2" />
                                               </Button>
                                           ) : (
-                                              <Button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 h-14 text-base font-bold tracking-wide shadow-lg shadow-indigo-600/20 rounded-xl" disabled={isLoading}>
+                                              <Button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 h-14 text-base font-bold tracking-wide shadow-lg rounded-xl" disabled={isLoading}>
                                                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
                                                   {isLoading ? 'Processing...' : 'Submit Application'}
                                               </Button>
@@ -525,7 +525,7 @@ export default function OnboardingPage() {
                                       <Button type="button" variant="secondary" onClick={() => setStep(1)} disabled={isLoading} className="flex-1 h-14 text-base rounded-xl">
                                           Back
                                       </Button>
-                                      <Button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 h-14 text-base rounded-xl shadow-lg shadow-indigo-600/20 font-bold" disabled={isLoading || otp.length < 6}>
+                                      <Button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 h-14 text-base rounded-xl shadow-lg font-bold" disabled={isLoading || otp.length < 6}>
                                           {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify Code'}
                                       </Button>
                                   </div>

@@ -89,8 +89,8 @@ function Collapsible({ collapsed, children }: { collapsed: boolean; children: Re
   return localize((
     <span
       className={cx(
-        "flex min-w-0 items-center overflow-hidden transition-[max-width,opacity,filter] duration-300 ease-in-out",
-        collapsed ? "max-w-0 opacity-0 blur-[3px]" : "max-w-40 opacity-100 blur-0",
+        "flex min-w-0 items-center overflow-hidden transition-[max-width,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100",
       )}
     >
       {children}

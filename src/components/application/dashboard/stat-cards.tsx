@@ -43,7 +43,7 @@ type IconComponent = ComponentType<{
 export type StatCardsVariant = "plain" | "footer";
 
 /** Tint of the footer variant's gradient icon tile. */
-export type StatTone = "blue" | "orange" | "purple" | "pink" | "sky" | "emerald";
+export type StatTone = "teal" | "blue" | "orange" | "purple" | "pink" | "sky" | "emerald";
 
 export type Stat = {
   icon: IconComponent;
@@ -51,7 +51,7 @@ export type Stat = {
   value: string;
   delta: string;
   deltaColor: "lime" | "rose" | "neutral";
-  /** Footer variant: icon tile tint (defaults to blue). */
+  /** Footer variant: icon tile tint (defaults to teal). */
   tone?: StatTone;
   /** Footer variant: comparison caption in the band ("From last month"). */
   caption?: string;
@@ -107,6 +107,7 @@ const DEFAULT_FOOTER_STATS: Stat[] = [
 
 /** Gradient stops for the footer variant's icon tile, keyed by tone. */
 const TILE_TONES: Record<StatTone, string> = {
+  teal: "from-accent-500 to-accent-700 shadow-xs ring-1 ring-white/10",
   blue: "from-blue-500 to-blue-600",
   orange: "from-orange-400 to-orange-500",
   purple: "from-purple-500 to-purple-600",
@@ -183,8 +184,8 @@ function PlainStatCard({ stat }: { stat: Stat }) {
   const localize = useTemplateCopy();
   return localize((
     <section className="flex h-[132px] min-w-0 flex-col items-start justify-between rounded-2xl bg-background-secondary-default p-4">
-      <span className="flex items-center rounded-md bg-stat-card-icon-background p-1.5">
-        <stat.icon className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
+      <span className="flex items-center rounded-xl bg-gradient-to-br from-accent-500 to-accent-700 p-2 text-white shadow-xs ring-1 ring-white/10">
+        <stat.icon className="size-5 shrink-0 text-white" aria-hidden />
       </span>
       <div className="flex w-full flex-col gap-0.5">
         <p className="w-full text-body-medium text-text-secondary">{stat.label}</p>
@@ -207,8 +208,8 @@ function FooterStatCard({ stat }: { stat: Stat }) {
       <div className="flex w-full items-start justify-between gap-2.5 p-2">
         <span
           className={cx(
-            "flex size-10 shrink-0 items-center justify-center rounded-2lg bg-linear-to-b",
-            TILE_TONES[stat.tone ?? "blue"],
+            "flex size-10 shrink-0 items-center justify-center rounded-2lg bg-gradient-to-br",
+            TILE_TONES[stat.tone ?? "teal"],
           )}
         >
           <stat.icon className="size-5 shrink-0 text-white" aria-hidden />

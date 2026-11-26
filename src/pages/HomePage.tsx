@@ -367,12 +367,12 @@ export default function HomePage() {
                 </div>
                 <div className="space-y-2.5 mt-3">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1 h-1 rounded-full bg-accent-500"></div>
+                    <div className="w-1 h-1 rounded-full bg-accent-400"></div>
                     <p className="text-[10px] text-slate-300 flex-1">Personal</p>
                     <p className="text-[10px] text-white font-medium">₹5.2Cr</p>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1 h-1 rounded-full bg-blue-500"></div>
+                    <div className="w-1 h-1 rounded-full bg-accent-600"></div>
                     <p className="text-[10px] text-slate-300 flex-1">Business</p>
                     <p className="text-[10px] text-white font-medium">₹3.5Cr</p>
                   </div>
@@ -388,15 +388,23 @@ export default function HomePage() {
                     </div>
                     <p className="text-[10px] font-semibold text-white">Revenue Growth</p>
                   </div>
-                  <span className="text-[9px] text-green-400 font-medium">+24.5%</span>
+                  <span className="text-[9px] text-accent-300 bg-accent-500/10 border border-accent-500/25 px-1.5 py-0.5 rounded font-medium">+24.5%</span>
                 </div>
 
-                <div className="flex items-end justify-between gap-1 h-16 mt-2">
-                  {[40, 65, 45, 80, 55, 95, 75].map((height, i) => (
-                    <div key={i} className="w-full bg-slate-800 rounded-t-sm relative group-hover:bg-slate-700 transition-colors h-full flex items-end">
+                <div className="flex items-end justify-between gap-1.5 h-16 mt-2">
+                  {[
+                    { height: 40, cls: 'bg-accent-700/70 group-hover:bg-accent-600/90' },
+                    { height: 65, cls: 'bg-accent-600/80 group-hover:bg-accent-500/95' },
+                    { height: 45, cls: 'bg-accent-700/70 group-hover:bg-accent-600/90' },
+                    { height: 80, cls: 'bg-accent-500/85 group-hover:bg-accent-400' },
+                    { height: 55, cls: 'bg-accent-600/80 group-hover:bg-accent-500/95' },
+                    { height: 95, cls: 'bg-accent-400 group-hover:bg-accent-300' },
+                    { height: 75, cls: 'bg-accent-500/85 group-hover:bg-accent-400' },
+                  ].map((bar, i) => (
+                    <div key={i} className="w-full bg-slate-800/80 rounded-t-sm relative group-hover:bg-slate-700/80 transition-colors h-full flex items-end">
                       <div
-                        className={`w-full rounded-t-sm transition-all duration-300 ${i === 5 ? 'bg-accent-500' : 'bg-blue-500/50 group-hover:bg-blue-500/70'}`}
-                        style={{ height: `${height}%` }}
+                        className={`w-full rounded-t-sm transition-all duration-300 ${bar.cls}`}
+                        style={{ height: `${bar.height}%` }}
                       ></div>
                     </div>
                   ))}
@@ -407,7 +415,7 @@ export default function HomePage() {
               </div>
 
               {/* 6. Quick Action Button */}
-              <div className="bg-button-primary backdrop-blur-md p-2.5 rounded-2xl border border-white/10 w-64 flex items-center gap-2.5 shadow-2xl shadow-accent-600/20 animate-in fade-in slide-in-from-bottom-16 duration-300 delay-1000 transform transition-all hover:-translate-y-2 hover:scale-105 cursor-pointer group">
+              <div className="bg-button-primary backdrop-blur-md p-2.5 rounded-2xl border border-white/10 w-64 flex items-center gap-2.5 shadow-md animate-in fade-in slide-in-from-bottom-16 duration-300 delay-1000 transform transition-all hover:-translate-y-2 hover:scale-105 cursor-pointer group">
                 <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
                   <Plus className="w-3 h-3" />
                 </div>
@@ -423,7 +431,7 @@ export default function HomePage() {
               {/* 8. Approval Rate */}
               <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-top-8 duration-300 delay-200 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group self-start flex flex-col justify-center">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <CheckCircle2 className="w-3 h-3 text-green-400" />
+                  <CheckCircle2 className="w-3 h-3 text-accent-400" />
                   <p className="text-[9px] font-semibold text-slate-300">Approval Rate</p>
                 </div>
                 <p className="text-xl font-bold text-white">92.8%</p>
@@ -437,18 +445,18 @@ export default function HomePage() {
                 <div className="flex items-end gap-1 flex-1 mt-2">
                   {[30, 45, 25, 60, 40, 75, 55, 85, 65, 95].map((h, i) => (
                     <div key={i} className="flex-1 bg-slate-800 rounded-t group-hover:bg-slate-700 transition-colors h-full flex items-end">
-                      <div className="w-full rounded-t bg-cyan-400/80 transition-all duration-300" style={{ height: `${h}%` }}></div>
+                      <div className="w-full rounded-t bg-gradient-to-t from-accent-600/90 to-accent-400 transition-all duration-300" style={{ height: `${h}%` }}></div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* 9. Support Satisfaction */}
+              {/* 9. Support Satisfaction (Golden Amber Secondary) */}
               <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-3xl border border-white/10 w-60 h-32 shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-300 delay-400 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex items-center justify-between">
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-1.5">
-                    <div className="p-1.5 bg-orange-500/20 rounded-lg">
-                      <Star className="w-4 h-4 text-orange-400" />
+                    <div className="p-1.5 bg-amber-500/20 rounded-lg">
+                      <Star className="w-4 h-4 text-amber-400 fill-amber-400/20" />
                     </div>
                     <p className="text-[11px] font-semibold text-white">Satisfaction</p>
                   </div>
@@ -457,7 +465,7 @@ export default function HomePage() {
                 <div className="relative w-14 h-14 flex items-center justify-center">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                     <path className="text-slate-800" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path className="text-orange-400" strokeDasharray="85, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path className="text-amber-400" strokeDasharray="85, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                   </svg>
                   <span className="absolute text-sm font-bold text-white">4.8</span>
                 </div>
@@ -465,31 +473,31 @@ export default function HomePage() {
 
               {/* Row for Active Users & System Health */}
               <div className="flex items-center gap-4 self-center">
-                {/* 7. Active Users */}
+                {/* 7. Active Users (Teal) */}
                 <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-600 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
                   <div className="flex items-center gap-1.5">
-                    <div className="p-1 bg-purple-500/20 rounded-md">
-                      <Users className="w-3 h-3 text-purple-400" />
+                    <div className="p-1 bg-accent-600/25 border border-accent-500/30 rounded-md">
+                      <Users className="w-3 h-3 text-accent-300" />
                     </div>
                     <p className="text-[9px] font-semibold text-slate-300">Active Users</p>
                   </div>
                   <div className="flex flex-col gap-0.5">
                     <p className="text-2xl font-bold text-white">8.4k</p>
-                    <span className="text-[8px] text-green-400 font-medium flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> +124 today</span>
+                    <span className="text-[8px] text-accent-400 font-medium flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> +124 today</span>
                   </div>
                 </div>
 
-                {/* 11. System Health */}
+                {/* 11. System Health (Teal) */}
                 <div className="bg-slate-900/60 backdrop-blur-xl p-3 rounded-[20px] border border-white/10 w-28 aspect-square shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-300 delay-700 transform transition-all hover:-translate-y-2 hover:scale-105 hover:bg-slate-900/80 cursor-pointer group flex flex-col justify-between">
                   <div className="flex items-center gap-1.5">
-                    <div className="p-1 bg-teal-500/20 rounded-md">
-                      <ShieldCheck className="w-3 h-3 text-teal-400" />
+                    <div className="p-1 bg-accent-500/20 border border-accent-400/30 rounded-md">
+                      <ShieldCheck className="w-3 h-3 text-accent-400" />
                     </div>
                     <p className="text-[9px] font-semibold text-slate-300">System Health</p>
                   </div>
                   <div className="flex flex-col gap-0.5">
                     <p className="text-2xl font-bold text-white">99.9%</p>
-                    <span className="text-[8px] text-teal-400 font-medium flex items-center">Optimal state</span>
+                    <span className="text-[8px] text-accent-400 font-medium flex items-center">Optimal state</span>
                   </div>
                 </div>
               </div>
@@ -504,8 +512,8 @@ export default function HomePage() {
                   <span className="text-[7px] text-slate-500 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-accent-400 animate-pulse"></div> Live</span>
                 </div>
                 <p className="text-base font-bold text-white mb-1">94%</p>
-                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-2.5">
-                  <div className="w-[94%] h-full bg-gradient-to-r from-accent-400 to-accent-600 rounded-full"></div>
+                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mb-2.5">
+                  <div className="w-[94%] h-full bg-gradient-to-r from-accent-500 via-accent-400 to-accent-300 rounded-full"></div>
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center bg-white/5 rounded-lg p-1.5">
@@ -513,7 +521,7 @@ export default function HomePage() {
                       <Wallet className="w-2.5 h-2.5 text-slate-400" />
                       <span className="text-[8px] text-slate-300">Target Achieved</span>
                     </div>
-                    <span className="text-[8px] text-green-400 flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> 12%</span>
+                    <span className="text-[8px] text-amber-400 bg-amber-500/10 border border-amber-400/25 px-1.5 py-0.5 rounded font-medium flex items-center"><ArrowUpRight className="w-2 h-2 mr-0.5" /> 12%</span>
                   </div>
                 </div>
               </div>
@@ -526,8 +534,8 @@ export default function HomePage() {
                 </div>
                 <div className="space-y-3 flex-1 overflow-hidden">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <Users className="w-3 h-3 text-blue-400" />
+                    <div className="w-7 h-7 rounded-full bg-accent-600/25 border border-accent-500/30 flex items-center justify-center">
+                      <Users className="w-3 h-3 text-accent-300" />
                     </div>
                     <div>
                       <p className="text-[10px] font-medium text-white">New Client Lead</p>
@@ -535,8 +543,8 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <TrendingUp className="w-3 h-3 text-green-400" />
+                    <div className="w-7 h-7 rounded-full bg-accent-500/20 border border-accent-400/30 flex items-center justify-center">
+                      <TrendingUp className="w-3 h-3 text-accent-400" />
                     </div>
                     <div>
                       <p className="text-[10px] font-medium text-white">Target Exceeded</p>
@@ -544,17 +552,17 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-accent-500/20 flex items-center justify-center">
-                      <PieChart className="w-3 h-3 text-accent-400" />
+                    <div className="w-7 h-7 rounded-full bg-accent-700/30 border border-accent-600/40 flex items-center justify-center">
+                      <PieChart className="w-3 h-3 text-accent-300" />
                     </div>
                     <div>
                       <p className="text-[10px] font-medium text-white">Monthly Report</p>
                       <p className="text-[8px] text-slate-400">Generated</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2.5 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center">
-                      <Star className="w-3 h-3 text-orange-400" />
+                  <div className="flex items-center gap-2.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <div className="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400/30 flex items-center justify-center">
+                      <Star className="w-3 h-3 text-amber-400 fill-amber-400/20" />
                     </div>
                     <div>
                       <p className="text-[10px] font-medium text-white">5-Star Review</p>
@@ -569,10 +577,10 @@ export default function HomePage() {
                 <p className="text-[8px] text-slate-400 mb-1">Conversion Rate</p>
                 <div className="flex items-end gap-1.5">
                   <p className="text-lg font-bold text-white">68.4%</p>
-                  <span className="text-[9px] text-green-400 flex items-center mb-0.5"><ArrowUpRight className="w-2 h-2" /> 4.2%</span>
+                  <span className="text-[9px] text-accent-400 flex items-center mb-0.5"><ArrowUpRight className="w-2 h-2" /> 4.2%</span>
                 </div>
-                <div className="mt-2 w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                  <div className="bg-green-400 h-full w-[68%]"></div>
+                <div className="mt-2 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-accent-600 to-accent-400 h-full w-[68%]"></div>
                 </div>
               </div>
             </div>
@@ -592,10 +600,10 @@ export default function HomePage() {
           {/* Fixed height container to prevent layout shifts */}
           <div className="h-[110px] relative w-full max-w-md">
             <div key={activeSlide} className="absolute inset-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <h2 className="text-2xl font-bold text-white mb-2 tracking-tight whitespace-pre-line">
+              <h2 className="text-title-1-bold text-white mb-2 whitespace-pre-line">
                 {contentSlides[activeSlide].title}
               </h2>
-              <p className="text-slate-400 text-xs leading-relaxed max-w-md">
+              <p className="text-caption-1-regular text-slate-300 leading-relaxed max-w-md">
                 {contentSlides[activeSlide].description}
               </p>
             </div>
@@ -612,7 +620,7 @@ export default function HomePage() {
               >
                 {activeSlide === index && (
                   <div
-                    className="absolute top-0 left-0 h-full bg-white"
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-400 to-amber-300 rounded-full"
                     style={{ animation: 'slideProgress 2.5s linear forwards' }}
                   ></div>
                 )}
@@ -646,10 +654,10 @@ export default function HomePage() {
         <div className="w-full max-w-[380px] mx-auto my-auto flex flex-col justify-center min-h-[70vh] animate-in fade-in slide-in-from-right-8 duration-700">
 
           <div className={`mb-10 ${isNative ? 'text-center' : 'text-left'}`}>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">
+            <h1 className="text-display-4-bold text-slate-900 dark:text-white mb-3">
               Secure Gateway
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+            <p className="text-body-regular text-slate-500 dark:text-slate-400 leading-relaxed">
               Please enter your assigned corporate email address to proceed.
             </p>
           </div>
@@ -811,7 +819,8 @@ export default function HomePage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full h-14 text-base font-semibold bg-button-primary text-white rounded-xl shadow-lg shadow-accent-600/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              size="large"
+              className="w-full h-12 text-headline-medium rounded-xl shadow-xs active:scale-[0.98] flex items-center justify-center gap-2"
               disabled={isLoading}
             >
               {buttonText}
@@ -826,7 +835,7 @@ export default function HomePage() {
               href="https://mis.siroiforex.com/onboarding/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-slate-500 hover:text-accent-600 font-medium transition-colors border border-slate-200 dark:border-slate-800 hover:border-accent-600/30 px-4 py-2 rounded-full bg-slate-50 dark:bg-slate-900 shadow-sm hover:shadow inline-flex items-center"
+              className="text-caption-1-medium text-slate-500 hover:text-amber-500 dark:hover:text-amber-400 transition-colors border border-slate-200 dark:border-slate-800 hover:border-amber-400/40 px-4 py-2 rounded-full bg-slate-50 dark:bg-slate-900 shadow-xs inline-flex items-center"
             >
               Are you a vendor?
             </a>

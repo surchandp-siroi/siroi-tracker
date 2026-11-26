@@ -474,7 +474,7 @@ export function EditCustomerDialog({ customer, onClose, onSuccess }: EditCustome
               <Button type="button" variant="secondary" onClick={onClose} className="h-10 px-4 rounded-xl">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading} className="h-10 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-md shadow-indigo-500/20">
+              <Button type="submit" disabled={isLoading} className="h-10 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-md">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
               </Button>
             </div>

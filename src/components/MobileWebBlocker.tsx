@@ -36,7 +36,7 @@ export function MobileWebBlocker() {
       </div>
 
       <div className="relative z-10 flex flex-col items-center max-w-sm">
-        <div className="w-20 h-20 bg-indigo-950/80 rounded-2xl border border-indigo-500/30 flex items-center justify-center mb-6 shadow-xl shadow-indigo-900/20">
+        <div className="w-20 h-20 bg-indigo-950/80 rounded-2xl border border-indigo-500/30 flex items-center justify-center mb-6 shadow-xl">
           <MonitorSmartphone className="w-10 h-10 text-indigo-400" />
         </div>
         

@@ -87,8 +87,8 @@ export const KycDeviationDialog: React.FC<KycDeviationDialogProps> = ({
                         <div className="flex items-start gap-4">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
                                 hasMismatches 
-                                    ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-rose-500/30' 
-                                    : 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-amber-500/30'
+                                    ? 'bg-gradient-to-br from-red-500 to-rose-600 text-white ' 
+                                    : 'bg-gradient-to-br from-amber-500 to-orange-600 text-white '
                             }`}>
                                 {hasMismatches ? (
                                     <ShieldAlert className="w-6 h-6 stroke-[2.2]" />
@@ -281,7 +281,7 @@ export const KycDeviationDialog: React.FC<KycDeviationDialogProps> = ({
                                 onClick={onApplyAllAadhaar}
                                 className={`group relative flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-left border transition-all duration-200 ${
                                     canAutofillAadhaar
-                                        ? 'bg-gradient-to-r from-indigo-50 via-indigo-100/60 to-violet-50 hover:from-indigo-100 hover:via-indigo-200/70 hover:to-violet-100 dark:from-indigo-950/70 dark:via-indigo-900/50 dark:to-violet-950/60 text-indigo-900 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800/80 shadow-xs hover:shadow-md hover:shadow-indigo-500/10 active:scale-[0.98]'
+                                        ? 'bg-gradient-to-r from-indigo-50 via-indigo-100/60 to-violet-50 hover:from-indigo-100 hover:via-indigo-200/70 hover:to-violet-100 dark:from-indigo-950/70 dark:via-indigo-900/50 dark:to-violet-950/60 text-indigo-900 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800/80 shadow-xs hover:shadow-md hover: active:scale-[0.98]'
                                         : 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-slate-800/50 text-slate-400 border-slate-200 dark:border-slate-700'
                                 }`}
                                 title={canAutofillAadhaar ? 'Auto-fill form fields using scanned Aadhaar values' : 'No Aadhaar data scanned'}
@@ -341,8 +341,8 @@ export const KycDeviationDialog: React.FC<KycDeviationDialogProps> = ({
                                 onClick={onConfirmAndProceed}
                                 className={`group h-10 px-5 rounded-xl font-bold text-xs text-white shadow-md hover:shadow-lg active:scale-[0.98] transition-all flex items-center gap-2.5 ${
                                     hasMismatches 
-                                        ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-400 shadow-amber-500/25' 
-                                        : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-indigo-500/25'
+                                        ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 hover:from-amber-500 hover:to-orange-400 ' 
+                                        : 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 '
                                 }`}
                             >
                                 <span>Accept & Proceed</span>

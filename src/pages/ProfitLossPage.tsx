@@ -442,7 +442,7 @@ export default function ProfitLossPage() {
   if (!isAuthorized) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 flex items-center justify-center mb-4 shadow-lg shadow-rose-500/10">
+        <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 flex items-center justify-center mb-4 shadow-lg">
           <ShieldAlert className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-black text-slate-900 dark:text-white">Restricted Access</h2>
@@ -577,7 +577,7 @@ export default function ProfitLossPage() {
               setEditingRecord(null);
               setIsEntryDialogOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md shadow-rose-600/25 active:scale-[0.98] transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md active:scale-[0.98] transition-all cursor-pointer"
           >
             <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
             <span>Add Expense</span>
@@ -1246,7 +1246,7 @@ export default function ProfitLossPage() {
                 </span>
               </div>
               <div className={`px-5 py-3 rounded-2xl font-mono text-2xl font-black shadow-lg ${
-                currentDeepDiveData.netProfit >= 0 ? 'bg-emerald-600 text-white shadow-emerald-600/30' : 'bg-rose-600 text-white shadow-rose-600/30'
+                currentDeepDiveData.netProfit >= 0 ? 'bg-emerald-600 text-white shadow-emerald-600/30' : 'bg-rose-600 text-white '
               }`}>
                 {formatInr(currentDeepDiveData.netProfit)}
               </div>

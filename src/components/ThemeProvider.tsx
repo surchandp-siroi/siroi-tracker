@@ -1,8 +1,17 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import {
+  type ThemeMode,
+  THEME_CHANGE_EVENT,
+  getEffectiveTheme,
+  getScheduledTheme,
+  getNextTransitionTimestamp,
+  clearManualOverride,
+} from '@/utils/themeSchedule';
+import { applyTheme } from '@/components/application/theme/theme-toggle';
 
-export type Theme = 'light' | 'dark';
+export type Theme = ThemeMode;
 
 interface ThemeContextType {
   theme: Theme;
@@ -17,40 +26,21 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      return savedTheme;
-    }
-    return 'light';
-  });
+  const [theme, setThemeState] = useState<Theme>(() => getEffectiveTheme());
   const [mounted, setMounted] = useState(false);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+    applyTheme(newTheme, { persist: true, isManual: true });
   };
 
   const toggleTheme = () => {
-    setThemeState((prev) => {
-      const nextTheme = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('theme', nextTheme);
-      return nextTheme;
-    });
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
   };
 
+  // Synchronize Capacitor Native Status Bar whenever theme changes
   useEffect(() => {
-    setMounted(true);
-    const root = document.documentElement;
-
-    root.classList.remove('light', 'dark');
-
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.add('light');
-    }
-
     if (Capacitor.isNativePlatform()) {
       (async () => {
         try {
@@ -67,8 +57,75 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [theme]);
 
+  // Main lifecycle: initial application, scheduled IST transitions & visibility listeners
+  useEffect(() => {
+    setMounted(true);
+
+    // Initial theme resolution
+    const initial = getEffectiveTheme();
+    setThemeState(initial);
+    applyTheme(initial, { persist: false, isManual: false });
+
+    // Sync state when ThemeToggle in sidebar or elsewhere fires THEME_CHANGE_EVENT
+    const handleThemeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<ThemeMode>;
+      if (customEvent.detail === 'light' || customEvent.detail === 'dark') {
+        setThemeState(customEvent.detail);
+      }
+    };
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+
+    // Schedule exact timeout for next IST transition (17:00 or 06:00)
+    let transitionTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const setupTransitionTimer = () => {
+      if (transitionTimer) clearTimeout(transitionTimer);
+
+      const next = getNextTransitionTimestamp();
+      transitionTimer = setTimeout(() => {
+        // Auto-shift to scheduled theme and clear manual override
+        clearManualOverride();
+        const scheduled = getScheduledTheme();
+        setThemeState(scheduled);
+        applyTheme(scheduled, { persist: true, isManual: false });
+        setupTransitionTimer();
+      }, next.msUntilNext);
+    };
+
+    setupTransitionTimer();
+
+    // Verify theme on wake (tab visibility/focus) and periodically (every 15s)
+    const checkSchedule = () => {
+      const effective = getEffectiveTheme();
+      const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      if (effective !== current) {
+        setThemeState(effective);
+        applyTheme(effective, { persist: true, isManual: false });
+        setupTransitionTimer();
+      }
+    };
+
+    const intervalId = setInterval(checkSchedule, 15000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkSchedule();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', checkSchedule);
+
+    return () => {
+      if (transitionTimer) clearTimeout(transitionTimer);
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', checkSchedule);
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+    };
+  }, []);
+
   if (!mounted) {
-    return <div className="min-h-screen bg-slate-50" />;
+    return <div className="min-h-screen bg-background-full" />;
   }
 
   return (

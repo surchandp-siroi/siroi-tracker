@@ -19,6 +19,34 @@ const withTimeout = <T>(promise: PromiseLike<T>, timeoutMs = 15000, errorMessage
 };
 
 export type UserRole = 'admin' | 'statehead' | 'manager';
+export type PerspectiveRole = 'admin' | 'manager' | 'branch';
+
+export interface AuthorizedUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: 'admin' | 'manager' | 'branch';
+  branchName?: string;
+  branchId?: string;
+  isSuperAdmin?: boolean;
+  initials?: string;
+  color?: 'lime' | 'pink' | 'neutral' | 'blue';
+}
+
+export const INITIAL_AUTHORIZED_USERS: AuthorizedUser[] = [
+  { id: 'u1', name: 'Surchand Singh', email: 'surchanddsingh@siroiforex.com', phone: '+91 81189 25964', role: 'admin', initials: 'SS', color: 'lime' },
+  { id: 'u2', name: 'Sharjubala Thoudam', email: 'sharjuthoudam@siroiforex.com', phone: '+91 97069 94547', role: 'admin', isSuperAdmin: true, initials: 'ST', color: 'pink' },
+  { id: 'u3', name: 'Developer', email: 'executive@siroiforex.com', phone: '+91 98765 43210', role: 'admin', initials: 'DE', color: 'blue' },
+  { id: 'u4', name: 'Ajay Waikhom', email: 'ajay.waikhom@siroiforex.com', phone: '+91 89740 53213', role: 'manager', branchName: 'Manipur', branchId: 'b2', initials: 'AW', color: 'neutral' },
+  { id: 'u5', name: 'Aroop Sharma', email: 'aroop.sharma@siroiforex.com', phone: '+91 94350 12345', role: 'manager', branchName: 'Guwahati', branchId: 'b1', initials: 'AS', color: 'neutral' },
+  { id: 'u6', name: 'Nobin Nani', email: 'nobin.nani@siroiforex.com', phone: '+91 98620 54321', role: 'manager', branchName: 'Itanagar', branchId: 'b3', initials: 'NN', color: 'neutral' },
+  { id: 'u7', name: 'Ramesh Singh', email: 'ramesh@siroiforex.com', phone: '+91 97740 67890', role: 'manager', branchName: 'Nagaland & Mizoram', branchId: 'b4', initials: 'RS', color: 'neutral' },
+  { id: 'u8', name: 'Guwahati Terminal', email: 'mis.ghy@siroiforex.com', role: 'branch', branchName: 'Guwahati', branchId: 'b1', initials: 'GH', color: 'lime' },
+  { id: 'u9', name: 'Imphal Terminal', email: 'mis.manipur@siroiforex.com', role: 'branch', branchName: 'Manipur', branchId: 'b2', initials: 'IM', color: 'neutral' },
+  { id: 'u10', name: 'Itanagar Terminal', email: 'mis.itanagar@siroiforex.com', role: 'branch', branchName: 'Itanagar', branchId: 'b3', initials: 'IT', color: 'pink' },
+  { id: 'u11', name: 'Nagaland & Mizoram Terminal', email: 'mis.mizonaga@siroiforex.com', role: 'branch', branchName: 'Nagaland & Mizoram', branchId: 'b4', initials: 'NM', color: 'neutral' },
+];
 
 export const BRANCH_ACCOUNTS: Record<string, { branchId: string; branchName: string; role: UserRole; managerName: string }> = {
   // Branch Managers (Access Managers Dashboard)
@@ -144,6 +172,15 @@ interface AuthState {
   supabaseUser: SupabaseUser | null;
   isLoading: boolean;
   isInitialized: boolean;
+  activePerspective: PerspectiveRole;
+  activeManagerBranch: string;
+  activeManagerBranchId: string;
+  authorizedUsers: AuthorizedUser[];
+  setActivePerspective: (perspective: PerspectiveRole, branchName?: string, branchId?: string) => void;
+  setActiveManagerBranch: (branchName: string, branchId?: string) => void;
+  addAuthorizedUser: (user: Omit<AuthorizedUser, 'id'>) => void;
+  updateUserRole: (email: string, newRole: 'admin' | 'manager' | 'branch') => void;
+  removeAuthorizedUser: (email: string) => void;
   login: (email: string, password: string, location: string) => Promise<void>;
   requestOtpLogin: (email: string, location: string, phone?: string, channel?: 'whatsapp' | 'sms') => Promise<void>;
   verifyOtpLogin: (email: string, otp: string, location: string, phone?: string) => Promise<void>;
@@ -152,11 +189,119 @@ interface AuthState {
   updateProfile: (displayName: string, avatarSeed: string) => Promise<boolean>;
 }
 
+const getStoredAuthorizedUsers = (): AuthorizedUser[] => {
+  if (typeof window === 'undefined') return INITIAL_AUTHORIZED_USERS;
+  try {
+    const raw = localStorage.getItem('siroi_authorized_users');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn("Could not read authorized users from localStorage", e);
+  }
+  return INITIAL_AUTHORIZED_USERS;
+};
+
+const getStoredPerspective = (): PerspectiveRole => {
+  if (typeof window === 'undefined') return 'admin';
+  try {
+    const saved = localStorage.getItem('siroi_active_perspective') as PerspectiveRole;
+    if (saved === 'admin' || saved === 'manager' || saved === 'branch') return saved;
+  } catch {}
+  return 'admin';
+};
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   supabaseUser: null,
   isLoading: false,
   isInitialized: false,
+  activePerspective: getStoredPerspective(),
+  activeManagerBranch: 'Guwahati',
+  activeManagerBranchId: 'b1',
+  authorizedUsers: getStoredAuthorizedUsers(),
+
+  setActivePerspective: (perspective, branchName, branchId) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('siroi_active_perspective', perspective);
+      } catch {}
+    }
+    set({
+      activePerspective: perspective,
+      ...(branchName ? { activeManagerBranch: branchName } : {}),
+      ...(branchId ? { activeManagerBranchId: branchId } : {}),
+    });
+  },
+
+  setActiveManagerBranch: (branchName, branchId) => {
+    const branchMap: Record<string, string> = {
+      'Guwahati': 'b1',
+      'Manipur': 'b2',
+      'Itanagar': 'b3',
+      'Nagaland & Mizoram': 'b4',
+    };
+    const resolvedId = branchId || branchMap[branchName] || 'b1';
+    set({
+      activeManagerBranch: branchName,
+      activeManagerBranchId: resolvedId,
+    });
+  },
+
+  addAuthorizedUser: (newUser) => {
+    const current = get().authorizedUsers;
+    const initials = newUser.initials || newUser.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'US';
+    const id = `u_${Date.now()}`;
+    const userWithId: AuthorizedUser = {
+      ...newUser,
+      id,
+      initials,
+      color: newUser.color || (newUser.role === 'admin' ? 'lime' : newUser.role === 'manager' ? 'neutral' : 'pink'),
+    };
+    const updated = [...current, userWithId];
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('siroi_authorized_users', JSON.stringify(updated));
+      } catch {}
+    }
+    set({ authorizedUsers: updated });
+  },
+
+  updateUserRole: (email, newRole) => {
+    const current = get().authorizedUsers;
+    const lowerEmail = email.toLowerCase().trim();
+    const updated = current.map((u) => {
+      if (u.email.toLowerCase().trim() === lowerEmail) {
+        return {
+          ...u,
+          role: newRole,
+          isSuperAdmin: u.isSuperAdmin && newRole === 'admin',
+        };
+      }
+      return u;
+    });
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('siroi_authorized_users', JSON.stringify(updated));
+      } catch {}
+    }
+    set({ authorizedUsers: updated });
+  },
+
+  removeAuthorizedUser: (email) => {
+    const current = get().authorizedUsers;
+    const lowerEmail = email.toLowerCase().trim();
+    // Protect Sharjubala (super admin)
+    if (lowerEmail === 'sharjuthoudam@siroiforex.com') return;
+    const updated = current.filter((u) => u.email.toLowerCase().trim() !== lowerEmail);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('siroi_authorized_users', JSON.stringify(updated));
+      } catch {}
+    }
+    set({ authorizedUsers: updated });
+  },
 
   login: async (rawEmail, password, location) => {
     isLoginInProgress = true;
@@ -221,8 +366,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         "Profile synchronization timed out. Please refresh the page or try again."
       );
 
+      const defaultPerspective: PerspectiveRole = profile.role === 'admin' ? 'admin' : profile.role === 'manager' ? 'manager' : 'branch';
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('siroi_active_perspective', defaultPerspective);
+        } catch {}
+      }
+
       useSessionStore.getState().updateActivity();
-      set({ user: profile, supabaseUser: sbUser, isLoading: false, isInitialized: true });
+      set({
+        user: profile,
+        supabaseUser: sbUser,
+        isLoading: false,
+        isInitialized: true,
+        activePerspective: defaultPerspective,
+      });
       setTimeout(() => { isLoginInProgress = false; }, 1500);
     } catch (error: any) {
       isLoginInProgress = false;
@@ -333,9 +491,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       console.log("[Auth] syncUserProfile completed successfully.");
 
+      const defaultPerspective: PerspectiveRole = profile.role === 'admin' ? 'admin' : profile.role === 'manager' ? 'manager' : 'branch';
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('siroi_active_perspective', defaultPerspective);
+        } catch {}
+      }
+
       console.log("[Auth] Setting user profile into Zustand state.");
       useSessionStore.getState().updateActivity();
-      set({ user: profile, supabaseUser: data.user, isLoading: false, isInitialized: true });
+      set({
+        user: profile,
+        supabaseUser: data.user,
+        isLoading: false,
+        isInitialized: true,
+        activePerspective: defaultPerspective,
+      });
       setTimeout(() => { isLoginInProgress = false; }, 1500);
       console.log("[Auth] verifyOtpLogin successfully finished.");
     } catch (error: any) {
@@ -376,8 +547,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       try {
         sessionStorage.removeItem('siroi_auth_email');
         sessionStorage.clear();
+        localStorage.removeItem('siroi_active_perspective');
       } catch (err) {
-        console.warn('Failed to clear sessionStorage on logout', err);
+        console.warn('Failed to clear storage on logout', err);
       }
     }
     if (Capacitor.isNativePlatform()) {
@@ -388,7 +560,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
     await supabase.auth.signOut();
-    set({ user: null, supabaseUser: null });
+    set({ user: null, supabaseUser: null, activePerspective: 'admin' });
   },
 
   initAuth: () => {

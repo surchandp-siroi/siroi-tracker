@@ -84,3 +84,6 @@ export function RecentHiresCard({ className }: { className?: string }) {
     </section>
   ));
 }
+
+export { ProductsCard } from "./products-card";
+

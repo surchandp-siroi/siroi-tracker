@@ -307,7 +307,7 @@ export function Calendar({
                   !item.isSelected &&
                   "border border-accent-500/50 text-accent-600 dark:text-accent-400 font-bold shadow-sm",
                 item.isSelected &&
-                  "bg-button-primary text-white font-black shadow-lg shadow-accent-600/30 scale-100"
+                  "bg-button-primary text-white font-black shadow-lg  scale-100"
               )}
             >
               <span className="font-mono">{item.day}</span>

@@ -390,7 +390,7 @@ export default function ConsultantApprovalPage() {
                                 {filteredApproved.length}
                             </span>
                         </h2>
-                        <div className="flex items-center gap-2 bg-indigo-600 dark:bg-indigo-500 p-1.5 rounded-full shadow-lg shadow-indigo-600/20">
+                        <div className="flex items-center gap-2 bg-indigo-600 dark:bg-indigo-500 p-1.5 rounded-full shadow-lg">
                             <select 
                                 value={filterState} 
                                 onChange={(e) => setFilterState(e.target.value)}

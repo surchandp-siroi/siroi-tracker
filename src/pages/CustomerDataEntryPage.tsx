@@ -2501,8 +2501,10 @@ export default function CustomerDataEntryPage() {
 
                                 <Button 
                                     type="submit" 
+                                    variant="primary"
+                                    size="large"
                                     disabled={isLoading || panNumber.length < 10}
-                                    className="w-full h-12 mt-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-semibold tracking-wide transition-all shadow-md shadow-indigo-500/25 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full h-12 mt-2 text-headline-medium flex items-center justify-center gap-2"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                                         <><span>Verify Customer PAN</span><ArrowRight className="w-4 h-4" /></>
@@ -2554,7 +2556,7 @@ export default function CustomerDataEntryPage() {
                                                             }}
                                                             className={`relative flex items-center justify-center transition-all duration-300 rounded-full select-none ${
                                                                 isActive
-                                                                    ? 'w-9 h-9 bg-indigo-600 text-white font-bold text-xs ring-4 ring-indigo-500/20 dark:ring-indigo-400/25 shadow-md shadow-indigo-500/25 scale-105'
+                                                                    ? 'w-9 h-9 bg-indigo-600 text-white font-bold text-xs ring-4 ring-indigo-500/20 dark:ring-indigo-400/25 shadow-md  scale-105'
                                                                     : isDone
                                                                         ? 'w-8 h-8 bg-indigo-600 dark:bg-indigo-500 text-white font-bold text-xs hover:scale-105 shadow-xs cursor-pointer'
                                                                         : 'w-8 h-8 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-semibold text-xs border border-slate-200/80 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer'
@@ -3275,7 +3277,7 @@ export default function CustomerDataEntryPage() {
                                                         <button
                                                             type="button"
                                                             onClick={handlePullCurrentAddressFromAadhaar}
-                                                            className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-sm shadow-indigo-500/25 hover:shadow-md hover:shadow-indigo-500/35 active:scale-[0.97] transition-all duration-150 self-start sm:self-auto cursor-pointer select-none"
+                                                            className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-sm hover:shadow-md hover: active:scale-[0.97] transition-all duration-150 self-start sm:self-auto cursor-pointer select-none"
                                                             title="Autofill current address & pincode from scanned Aadhaar card"
                                                         >
                                                             <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
@@ -3447,7 +3449,7 @@ export default function CustomerDataEntryPage() {
                                                                 type="button"
                                                                 disabled={isSameAsCurrentAddress}
                                                                 onClick={handlePullPermanentAddressFromAadhaar}
-                                                                className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-sm shadow-indigo-500/25 hover:shadow-md hover:shadow-indigo-500/35 active:scale-[0.97] transition-all duration-150 self-start sm:self-auto cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
+                                                                className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-sm hover:shadow-md hover: active:scale-[0.97] transition-all duration-150 self-start sm:self-auto cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
                                                                 title="Autofill permanent address from scanned Aadhaar card"
                                                             >
                                                                 <span className="w-5 h-5 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-110 group-hover:rotate-6 transition-all duration-200">
@@ -3727,7 +3729,7 @@ export default function CustomerDataEntryPage() {
                                                                             type="button"
                                                                             disabled={slip.isScanning || !slip.file}
                                                                             onClick={() => handleScanSalarySlip(idx)}
-                                                                            className="group w-full h-8 px-2.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/20 active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none cursor-pointer select-none"
+                                                                            className="group w-full h-8 px-2.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none cursor-pointer select-none"
                                                                         >
                                                                             <span className="w-4.5 h-4.5 rounded-md bg-white/20 flex items-center justify-center shrink-0">
                                                                                 {slip.isScanning ? (
@@ -3793,7 +3795,7 @@ export default function CustomerDataEntryPage() {
                                                                             type="button"
                                                                             disabled={combinedSlip.isScanning}
                                                                             onClick={handleScanCombinedSlip}
-                                                                            className="group inline-flex items-center gap-2 h-9 px-4 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/25 active:scale-[0.97] transition-all cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none"
+                                                                            className="group inline-flex items-center gap-2 h-9 px-4 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm active:scale-[0.97] transition-all cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none"
                                                                         >
                                                                             <span className="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                                                                                 {combinedSlip.isScanning ? (
@@ -4285,7 +4287,7 @@ export default function CustomerDataEntryPage() {
                                                     <div className="lg:col-span-5 space-y-4">
                                                         
                                                         {/* 1. HERO SANCTION CARD */}
-                                                        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden space-y-4">
+                                                        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 text-white shadow-xl relative overflow-hidden space-y-4">
                                                             <div className="absolute top-0 right-0 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
                                                             
                                                             <div className="flex items-center justify-between relative z-10">
@@ -4422,7 +4424,7 @@ export default function CustomerDataEntryPage() {
                                                         <button
                                                             type="button"
                                                             onClick={handleAddLoan}
-                                                            className="group inline-flex items-center gap-2 h-8.5 px-3.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm shadow-indigo-500/25 hover:shadow-md hover:shadow-indigo-500/35 active:scale-[0.97] transition-all cursor-pointer select-none"
+                                                            className="group inline-flex items-center gap-2 h-8.5 px-3.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm hover:shadow-md hover: active:scale-[0.97] transition-all cursor-pointer select-none"
                                                         >
                                                             <span className="w-4.5 h-4.5 rounded-md bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                                                                 <Plus className="w-3 h-3 stroke-[2.5]" />
@@ -5147,7 +5149,7 @@ export default function CustomerDataEntryPage() {
                                             <Button 
                                                 type="button" 
                                                 onClick={handleNextSection}
-                                                className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 text-xs font-semibold shadow-md shadow-indigo-500/20"
+                                                className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 text-xs font-semibold shadow-md"
                                             >
                                                 <span>Continue to {sections[activeSectionIndex + 1]?.shortTitle}</span>
                                                 <ChevronRight className="w-4 h-4" />
@@ -5156,7 +5158,7 @@ export default function CustomerDataEntryPage() {
                                             <Button 
                                                 type="submit" 
                                                 disabled={isLoading}
-                                                className="h-11 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs tracking-wide shadow-lg shadow-indigo-500/30 flex items-center gap-2"
+                                                className="h-11 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs tracking-wide shadow-lg flex items-center gap-2"
                                             >
                                                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                                                     <><span>Submit Customer Profile</span><Check className="w-4 h-4" /></>
@@ -5253,21 +5255,23 @@ export default function CustomerDataEntryPage() {
                                 >
                                     Cancel & Continue Form
                                 </Button>
-                                <button
+                                <Button
                                     type="button"
+                                    variant="amber"
+                                    size="medium"
                                     disabled={!entryPersonName || !eligibilitySkipReason.trim() || isLoading}
                                     onClick={() => executeCustomerSave(entryPersonName, eligibilitySkipReason.trim())}
-                                    className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 h-10 px-5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-sm shadow-amber-600/25 active:scale-[0.97] transition-all cursor-pointer select-none disabled:opacity-40 disabled:pointer-events-none"
+                                    className="w-full sm:w-auto h-10 px-5 text-caption-1-semibold flex items-center justify-center gap-2"
                                 >
                                     {isLoading ? (
-                                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                        <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : (
                                         <>
                                             <span>Confirm & Save Profile</span>
                                             <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                                         </>
                                     )}
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>

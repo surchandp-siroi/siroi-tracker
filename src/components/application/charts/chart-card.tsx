@@ -96,7 +96,7 @@ export function ChartCard({ className, children }: { className?: string; childre
   return localize((
     <section
       className={cx(
-        "flex h-[329px] w-full min-w-0 flex-col gap-4 rounded-2xl bg-background-secondary-default px-4 pt-4 pb-3",
+        "flex h-[329px] w-full min-w-0 flex-col gap-4 rounded-2xl bg-background-secondary-default p-4 border border-border-button-default shadow-xs",
         className,
       )}
     >

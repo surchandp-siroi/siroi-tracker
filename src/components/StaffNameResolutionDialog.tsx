@@ -254,7 +254,7 @@ export function StaffNameResolutionDialog({
                     </button>
                     <button
                         onClick={handleApplyAll}
-                        className="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-lg shadow-indigo-600/20 flex items-center gap-2"
+                        className="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-lg flex items-center gap-2"
                     >
                         <CheckCircle2 size={15} />
                         Confirm & Apply to All Rows

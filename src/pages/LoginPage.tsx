@@ -306,7 +306,7 @@ export default function LoginPage() {
         <div className={`${isMobile ? 'hidden' : 'flex'} flex-col justify-center space-y-10 w-full lg:w-[55%] bg-accent-950/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 shadow-xl relative overflow-hidden min-h-[600px]`}>
             {/* Subtle glows inside the left card */}
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-accent-600/15 rounded-full blur-3xl pointer-events-none" />
             
             {/* Top section: Logo */}
             <div className="relative z-10">
@@ -333,8 +333,8 @@ export default function LoginPage() {
 
             {/* Bottom section: Text */}
             <div className="relative z-10">
-              <h2 className="text-2xl font-bold text-accent-300 mb-4 tracking-tight">Data Monitoring & Tracking</h2>
-              <p className="text-accent-100/70 font-medium text-base leading-relaxed max-w-md">
+              <h2 className="text-title-1-bold text-accent-300 mb-4 tracking-tight">Data Monitoring & Tracking</h2>
+              <p className="text-headline-medium text-accent-100/70 leading-relaxed max-w-md">
                  Access real-time branch metrics, operational analytics, and unified data streams in one secure dashboard.
               </p>
             </div>
@@ -345,15 +345,15 @@ export default function LoginPage() {
            <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 p-8 sm:p-10">
               {/* Logo only shows on mobile */}
               <div className="lg:hidden mx-auto flex items-center justify-center gap-3 mb-8">
-                  <div className="text-indigo-600 dark:text-white w-10 h-10 flex items-center justify-center">
+                  <div className="text-accent-600 dark:text-white w-10 h-10 flex items-center justify-center">
                       <LogoIcon className="w-8 h-8" />
                   </div>
                   <h1 className="text-2xl font-bold tracking-tight dark:text-white text-slate-900 m-0">Siroi Financial Consultancy</h1>
               </div>
 
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">Portal Access</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <h2 className="text-title-1-bold tracking-tight text-slate-900 dark:text-white mb-2">Portal Access</h2>
+                <p className="text-body-regular text-slate-500 dark:text-slate-400">
                     Log in and verify your branch location to continue.
                 </p>
               </div>
@@ -375,7 +375,7 @@ export default function LoginPage() {
                        <button
                          type="button"
                          onClick={() => { setOtpSent(true); setError(''); }}
-                         className="text-xs font-semibold underline text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 self-start cursor-pointer mt-1"
+                         className="text-xs font-semibold underline text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300 self-start cursor-pointer mt-1"
                        >
                          Enter OTP anyway
                        </button>
@@ -386,17 +386,18 @@ export default function LoginPage() {
               <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-8">
                   <button
                       type="button"
-                      className={`flex-1 py-2.5 text-xs font-semibold rounded-md transition-all ${loginMode === 'otp' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                      className={`flex-1 py-2.5 text-caption-1-semibold rounded-md transition-all ${loginMode === 'otp' ? 'bg-white dark:bg-slate-700 shadow-sm text-accent-600 dark:text-accent-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                       onClick={() => { setLoginMode('otp'); setOtpSent(false); setTimeLeft(60); setError(''); }}
                   >
                       Branch Login
                   </button>
                   <button
                       type="button"
-                      className={`flex-1 py-2.5 text-xs font-semibold rounded-md transition-all ${loginMode === 'password' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                      className={`flex-1 py-2.5 text-caption-1-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${loginMode === 'password' ? 'bg-white dark:bg-slate-700 shadow-sm text-accent-600 dark:text-accent-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                       onClick={() => { setLoginMode('password'); setError(''); }}
                   >
                       Admin Login
+                      <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-400/30">Secure</span>
                   </button>
               </div>
 
@@ -437,11 +438,11 @@ export default function LoginPage() {
                           disabled={isLoading}
                           className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all ${
                             deliveryChannel === 'sms'
-                              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                              ? 'border-accent-500 bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-400 shadow-sm'
                               : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                           }`}
                         >
-                          <Phone className="w-4 h-4 text-indigo-500" />
+                          <Phone className="w-4 h-4 text-accent-500" />
                           SMS
                         </button>
                       </div>
@@ -456,23 +457,23 @@ export default function LoginPage() {
                              disabled={isLoading || (otpSent && effectiveLoginMode === 'otp')}
                              className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
                                selectedPhone === phone 
-                               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 shadow-sm' 
-                               : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-indigo-300 dark:hover:border-indigo-700/50 hover:bg-slate-50 dark:hover:bg-slate-800'
+                               ? 'border-accent-500 bg-accent-50 dark:bg-accent-500/10 shadow-sm' 
+                               : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-accent-400 dark:hover:border-accent-700/50 hover:bg-slate-50 dark:hover:bg-slate-800'
                              }`}
                            >
                               <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                                 selectedPhone === phone 
-                                ? 'border-indigo-600 dark:border-indigo-400' 
+                                ? 'border-accent-600 dark:border-accent-400' 
                                 : 'border-slate-300 dark:border-slate-600'
                               }`}>
-                                 {selectedPhone === phone && <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />}
+                                 {selectedPhone === phone && <div className="w-2 h-2 rounded-full bg-accent-600 dark:bg-accent-400" />}
                               </div>
                               <Phone className={`w-4 h-4 ${
-                                selectedPhone === phone ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'
+                                selectedPhone === phone ? 'text-accent-600 dark:text-accent-400' : 'text-slate-400'
                               }`} />
                               <span className={`text-sm font-medium tracking-wide ${
                                 selectedPhone === phone 
-                                ? 'text-indigo-700 dark:text-indigo-300' 
+                                ? 'text-accent-700 dark:text-accent-300' 
                                 : 'text-slate-700 dark:text-slate-300'
                               }`}>
                                 {maskPhoneNumber(phone)}
@@ -523,7 +524,7 @@ export default function LoginPage() {
                                   <div className="relative flex items-center justify-center w-5 h-5">
                                      <svg className="w-5 h-5 -rotate-90 transform" viewBox="0 0 36 36">
                                         <path className="text-slate-200 dark:text-slate-800" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                        <path className="text-indigo-500 transition-all duration-1000 ease-linear" strokeDasharray={`${(timeLeft/60)*100}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        <path className="text-accent-500 transition-all duration-1000 ease-linear" strokeDasharray={`${(timeLeft/60)*100}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                      </svg>
                                      <span className="absolute text-[8px] font-bold text-slate-600 dark:text-slate-400">{timeLeft}</span>
                                   </div>
@@ -535,7 +536,7 @@ export default function LoginPage() {
                                    type="button"
                                    onClick={handleResend}
                                    disabled={timeLeft > 0 || isLoading}
-                                   className={`text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all ${timeLeft > 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 active:scale-95'}`}
+                                   className={`text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all ${timeLeft > 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-accent-50 dark:bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-100 dark:hover:bg-accent-500/20 active:scale-95'}`}
                                 >
                                    Resend OTP
                                 </button>
@@ -549,7 +550,7 @@ export default function LoginPage() {
                  <div className="mb-5">
                     <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Active Location</label>
                     <select 
-                        className="flex h-11 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                        className="flex h-11 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-600 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                         value={location}
                         onChange={e => setLocation(e.target.value)}
                         required={!hideLocation}
@@ -564,7 +565,7 @@ export default function LoginPage() {
                  </div>
                  )}
 
-                  <Button type="submit" variant="primary" className="w-full h-11 bg-button-primary text-white font-medium flex items-center justify-center transition-all shadow-md hover:shadow-lg shadow-accent-600/20" disabled={isLoading}>
+                  <Button type="submit" variant="primary" size="large" className="w-full h-11 text-headline-medium shadow-xs" disabled={isLoading}>
                     {isLoading ? (
                         <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -580,16 +581,16 @@ export default function LoginPage() {
                 <button 
                     type="button"
                     onClick={() => navigate('/customer-data')}
-                    className="relative group text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors py-2"
+                    className="relative group text-body-medium text-accent-600 dark:text-accent-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors py-2"
                 >
                     Customer Data Entry
                     <span className="absolute -bottom-0.5 left-1/2 w-0 h-[2px] bg-accent-600 dark:bg-accent-400 group-hover:w-full group-hover:left-0 transition-all duration-300 ease-out"></span>
                 </button>
                 
-                <div className="flex items-center justify-center space-x-4 text-xs text-indigo-600 dark:text-indigo-400 font-medium relative">
-                    <a href="#" onClick={handleWittyClick} className="hover:underline opacity-80 hover:opacity-100 transition-opacity">Forgot Credentials?</a>
+                <div className="flex items-center justify-center space-x-4 text-caption-1-medium text-slate-500 dark:text-slate-400 relative">
+                    <a href="#" onClick={handleWittyClick} className="hover:text-amber-500 dark:hover:text-amber-400 hover:underline transition-colors">Forgot Credentials?</a>
                     <span className="text-slate-300 dark:text-slate-700">•</span>
-                    <a href="#" onClick={handleWittyClick} className="hover:underline opacity-80 hover:opacity-100 transition-opacity">IT Support</a>
+                    <a href="#" onClick={handleWittyClick} className="hover:text-amber-500 dark:hover:text-amber-400 hover:underline transition-colors">IT Support</a>
                     
                     {wittyMessage && (
                       <div className="absolute -top-12 whitespace-nowrap bg-accent-600 text-white px-4 py-2 rounded-lg shadow-lg animate-in fade-in slide-in-from-bottom-2 zoom-in duration-300 font-semibold tracking-wide">

@@ -21,12 +21,12 @@ import {
   RiImageAiLine,
   RiKanbanView2,
   RiMegaphoneLine,
+  RiPushpinFill,
+  RiPushpinLine,
   RiSearchLine,
-  RiSettings4Line,
   RiSideBarFill,
   RiUserSmileLine,
 } from "@remixicon/react";
-import { SettingsModal } from "@/components/application/settings/settings-modal";
 import { ThemeToggle } from "@/components/application/theme/theme-toggle";
 import { Counter } from "@/components/base/badges/counter";
 import { CloseButton } from "@/components/base/buttons/close-button";
@@ -67,10 +67,8 @@ function Collapsible({ collapsed, children, className }: { collapsed: boolean; c
   return localize((
     <span
       className={cx(
-        "flex min-w-0 items-center overflow-hidden transition-[max-width,opacity,filter] duration-300 ease-in-out",
-        // Expanded, the cap is the row itself: a fixed cap (it was 160px)
-        // clipped any label wider than it, "Components and Blocks" included.
-        collapsed ? "max-w-0 opacity-0 blur-[3px]" : "max-w-full opacity-100 blur-0",
+        "flex min-w-0 items-center overflow-hidden transition-[max-width,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        collapsed ? "max-w-0 opacity-0 pointer-events-none" : "max-w-[200px] opacity-100",
         className,
       )}
     >
@@ -119,9 +117,8 @@ function NavItem({
       aria-label={label}
       title={collapsed ? label : undefined}
       className={cx(
-        "flex items-center justify-between overflow-hidden rounded-2lg p-2",
-        "transition-[width,background-color] duration-300 ease-in-out",
-        collapsed ? "w-9" : "w-full",
+        "flex items-center justify-between overflow-hidden rounded-2lg p-2 min-w-0 w-full",
+        "transition-colors duration-150 ease-in-out",
         isSelected
           ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected text-white"
           : "hover:bg-background-secondary-hover",
@@ -201,24 +198,24 @@ function NavRows({
     return localize(<p className="px-2 py-3 text-body-regular text-text-tertiary">No results</p>);
   }
   return shown.map((item) => {
-      const isSelected = selected === item.key;
-      return (
-        <NavItem
-          key={item.key}
-          icon={item.icon}
-          label={item.label}
-          href={item.href}
-          isSelected={isSelected}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-          badge={
-            item.badge !== undefined ? (
-              <Counter color={isSelected ? "primary" : "neutral"}>{item.badge}</Counter>
-            ) : undefined
-          }
-        />
-      );
-    });
+    const isSelected = selected === item.key;
+    return (
+      <NavItem
+        key={item.key}
+        icon={item.icon}
+        label={item.label}
+        href={item.href}
+        isSelected={isSelected}
+        collapsed={collapsed}
+        onNavigate={onNavigate}
+        badge={
+          item.badge !== undefined ? (
+            <Counter color={isSelected ? "primary" : "neutral"}>{item.badge}</Counter>
+          ) : undefined
+        }
+      />
+    );
+  });
 }
 
 export function DashboardSidebar({
@@ -253,19 +250,93 @@ export function DashboardSidebar({
   onNavigate?: (href: string) => void;
 } = {}) {
   const localize = useTemplateCopy();
-  const [collapsedState, setCollapsed] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isPinned, setIsPinned] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem("sidebar_pinned") === "true";
+    } catch {
+      return false;
+    }
+  });
+  // Expands on hover: defaults to collapsed if not pinned
+  const [collapsedState, setCollapsed] = useState(() => !isPinned);
   const [suppressUserHover, setSuppressUserHover] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
   const [query, setQuery] = useState("");
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isHoveredRef = useRef(false);
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const searchFieldRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const collapsed = mobile ? false : collapsedState;
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const matches = (label: string) => label.toLocaleLowerCase().includes(normalizedQuery);
-  const secondaryLabels = ["Support", "Settings"];
+  const secondaryLabels = ["Support"];
   const secondaryMatch = secondaryLabels.some(matches);
+
+  // Auto-minimize after 5 seconds of inactivity when not pinned
+  useEffect(() => {
+    if (isPinned || mobile || collapsedState || searchActive) {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Start 5-second auto-minimize timer
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setCollapsed(true);
+      }
+    }, 5000);
+
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+    };
+  }, [isPinned, mobile, collapsedState, searchActive]);
+
+  const handleMouseEnter = () => {
+    isHoveredRef.current = true;
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    // Expand on hover smoothly
+    if (!mobile && collapsedState) {
+      setCollapsed(false);
+      setSuppressUserHover(false);
+    }
+  };
+
+  const handleMouseMove = () => {
+    isHoveredRef.current = true;
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    // Ensure expanded while user is hovering/moving cursor over sidebar
+    if (!mobile && collapsedState) {
+      setCollapsed(false);
+      setSuppressUserHover(false);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    isHoveredRef.current = false;
+    if (!isPinned && !mobile && !collapsedState && !searchActive) {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(() => {
+        if (!isHoveredRef.current) {
+          setCollapsed(true);
+        }
+      }, 5000);
+    }
+  };
 
   const handleNavigate = (href: string) => {
     if (mobile) onClose?.();
@@ -318,53 +389,30 @@ export function DashboardSidebar({
 
   return localize((
     <aside
+      onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className={cx(
         "flex h-full shrink-0 flex-col justify-between overflow-hidden",
         flat
           ? "bg-background-full"
           : "rounded-3xl border border-border-button-white bg-background-secondary-default shadow-sidebar",
-        "transition-[width] duration-300 ease-in-out",
-        // Collapsed rail keeps the 60px spec: 1px border + 11px padding on each
-        // side leaves an exactly 36px column so the w-9 (36px) icon items center.
+        "transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        // Consistent p-3 ensures no padding jitter during expansion/collapse
         collapsed
-          ? "w-[60px] px-[11px] py-3"
+          ? "w-[60px] p-3"
           : fluid
-            ? "w-full p-3 lg:w-[260px]"
-            : "w-[260px] p-3",
+            ? "w-full p-3 lg:w-[290px]"
+            : "w-[290px] p-3",
         className,
       )}
     >
-      {/* `overflow-y: auto` forces the x axis to clip too, and this box hugs
-          its contents on every side — so the selected item's 1px ring, the
-          profile's hover pill (which outsets 6px) and focus rings all landed
-          outside it. Padding moves the clip edge out; the matching negative
-          margin borrows that space back from the rail's own padding, leaving
-          every child exactly where it was. */}
       <div
-        className="-m-2 flex min-h-0 w-[calc(100%+16px)] flex-col gap-3 overflow-y-auto p-2 [scrollbar-width:none]"
+        className="flex min-h-0 w-full flex-col gap-3 overflow-y-auto overflow-x-hidden [scrollbar-width:none]"
       >
-        {/* Workspace switcher / collapse control */}
-        <div
-          className={cx(
-            "flex w-full transition-[gap] duration-300 ease-in-out",
-            collapsed
-              ? "flex-col-reverse items-start justify-center gap-2.5"
-              : "flex-row items-center justify-between",
-          )}
-        >
-          {/* The clip is here to hide the label as `max-width` animates shut,
-              but it also cropped the trigger's hover pill down to four corner
-              arcs. Same trick as the scroller: pad the clip box out by the
-              pill's 8px reach and pull it back with a negative margin, so the
-              widths below are 16px larger than the footprint they produce. */}
-          <div
-            className={cx(
-              "-m-2 min-w-0 overflow-hidden p-2 transition-[max-width,opacity,transform] duration-300 ease-in-out",
-              mobile && flat && searchActive
-                ? "max-w-0 scale-95 opacity-0"
-                : "max-w-[206px] scale-100 opacity-100",
-            )}
-          >
+        {/* Workspace switcher / collapse control - always flex-row to avoid vertical flipping jerk */}
+        <div className="flex w-full items-center justify-between min-h-9 overflow-hidden">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <DashboardUserMenu
               collapsed={collapsed}
               suppressHover={suppressUserHover}
@@ -380,7 +428,7 @@ export function DashboardSidebar({
             <div
               ref={searchFieldRef}
               className={cx(
-                "flex h-9 items-center overflow-hidden rounded-full bg-background-tertiary-default transition-[width,box-shadow] duration-300 ease-in-out",
+                "flex h-9 items-center overflow-hidden rounded-full bg-background-tertiary-default transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                 searchActive
                   ? "w-full gap-2 pe-2.5 ps-2 ring-2 ring-inset ring-border-button-active"
                   : "w-9 gap-0 px-2",
@@ -437,26 +485,53 @@ export function DashboardSidebar({
               <RiCloseLine className="size-5" aria-hidden />
             </button>
           ) : (
-            <button
-              type="button"
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              aria-expanded={!collapsed}
-              onClick={() => {
-                const isExpanding = collapsedState;
-                if (!isExpanding) deactivateSearch(false);
-                setCollapsed(!collapsedState);
-                setSuppressUserHover(isExpanding);
-              }}
+            <div
               className={cx(
-                "cursor-pointer text-foreground-icon-secondary transition-transform duration-300 ease-in-out",
-                collapsed && "flex w-9 items-center justify-center",
+                "flex items-center gap-1 shrink-0 overflow-hidden transition-[max-width,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                collapsed ? "max-w-0 opacity-0 pointer-events-none" : "max-w-[70px] opacity-100",
               )}
             >
-              <RiSideBarFill
-                className={cx("size-5 transition-transform duration-300 ease-in-out", collapsed ? "rtl:-scale-x-100" : "-scale-x-100 rtl:scale-x-100")}
-                aria-hidden
-              />
-            </button>
+              {/* Pin Icon / Button - NO border, NO faint background, just icon filled with teal when active */}
+              <button
+                type="button"
+                aria-label={isPinned ? "Unpin sidebar (auto-minimizes after 5s)" : "Pin sidebar always open"}
+                title={isPinned ? "Sidebar is pinned open (Click to unpin)" : "Pin sidebar open (default auto-minimizes after 5s)"}
+                onClick={() => {
+                  setIsPinned((prev) => {
+                    const next = !prev;
+                    try {
+                      localStorage.setItem("sidebar_pinned", String(next));
+                    } catch { }
+                    return next;
+                  });
+                }}
+                className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-transparent hover:bg-background-tertiary-hover/60 transition-colors cursor-pointer"
+              >
+                {isPinned ? (
+                  <RiPushpinFill className="size-4 text-accent-500 dark:text-accent-400" aria-hidden />
+                ) : (
+                  <RiPushpinLine className="size-4 text-foreground-icon-tertiary hover:text-foreground-icon-secondary" aria-hidden />
+                )}
+              </button>
+
+              {/* Minimize / Collapse Button */}
+              <button
+                type="button"
+                aria-label="Collapse sidebar"
+                aria-expanded={!collapsed}
+                onClick={() => {
+                  deactivateSearch(false);
+                  setCollapsed(true);
+                  setSuppressUserHover(false);
+                }}
+                className="flex size-7 shrink-0 items-center justify-center rounded-lg text-foreground-icon-secondary hover:text-foreground-icon-primary hover:bg-background-tertiary-hover/60 cursor-pointer transition-colors"
+              >
+                <RiSideBarFill
+                  className="size-5 transition-transform duration-300 ease-in-out -scale-x-100 rtl:scale-x-100"
+                  aria-hidden
+                />
+              </button>
+            </div>
           )}
         </div>
 
@@ -497,13 +572,7 @@ export function DashboardSidebar({
               aria-label="Quick Search"
               title={collapsed ? "Quick Search" : undefined}
               onClick={activateSearch}
-              className={cx(
-                "flex cursor-pointer items-center gap-2 p-2 hover:bg-background-tertiary-hover/55",
-                "transition-[width,border-radius,background-color] duration-300 ease-in-out",
-                collapsed
-                  ? "w-9 rounded-full bg-background-tertiary-default"
-                  : "w-full rounded-full bg-background-tertiary-default",
-              )}
+              className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-full bg-background-tertiary-default p-2 hover:bg-background-tertiary-hover/55 transition-colors duration-150"
             >
               <span className={cx("flex min-w-0 items-center gap-2", !collapsed && "flex-1")}>
                 <RiSearchLine className="size-5 shrink-0 text-foreground-icon-secondary" aria-hidden />
@@ -547,19 +616,11 @@ export function DashboardSidebar({
             />
           ))}
         {/* Secondary nav */}
-        <nav className="flex w-full flex-col gap-1">
-          {matches("Support") && (
+        {matches("Support") && (
+          <nav className="flex w-full flex-col gap-1">
             <NavItem icon={RiCustomerServiceLine} label="Support" collapsed={collapsed} />
-          )}
-          {matches("Settings") && (
-            <NavItem
-              icon={RiSettings4Line}
-              label="Settings"
-              collapsed={collapsed}
-              onClick={() => setSettingsOpen(true)}
-            />
-          )}
-        </nav>
+          </nav>
+        )}
 
         {/* Team card → opens the profile menu next to the sidebar */}
         <DashboardTeamMenu
@@ -567,12 +628,6 @@ export function DashboardSidebar({
           className={flat ? "!bg-background-secondary-default" : undefined}
         />
       </div>
-
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        planArtSrc="/templates/settings-plan-art.png"
-      />
     </aside>
   ));
 }

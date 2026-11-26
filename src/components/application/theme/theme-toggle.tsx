@@ -8,11 +8,16 @@ import { RiMoonLine, RiSunLine } from "@remixicon/react";
 import { Switch as AriaSwitch } from "react-aria-components";
 import { SwitchTrack } from "@/components/base/switch/switch";
 import { cx } from "@/utils/cx";
+import {
+  type ThemeMode,
+  THEME_STORAGE_KEY,
+  THEME_CHANGE_EVENT,
+  getEffectiveTheme,
+  recordManualOverride,
+} from "@/utils/themeSchedule";
 
-export type ThemeMode = "light" | "dark";
-
-export const THEME_STORAGE_KEY = "boardui:theme";
-export const THEME_CHANGE_EVENT = "boardui:theme-change";
+export type { ThemeMode };
+export { THEME_STORAGE_KEY, THEME_CHANGE_EVENT };
 
 const THEME_TRANSITION_DURATION = 820;
 const THEME_TRANSITION_EASING = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -87,20 +92,23 @@ function installThemeTransitionStyle(
 }
 
 function storedTheme(): ThemeMode {
-  if (typeof window === "undefined") return "light";
-  try {
-    return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
-  } catch {
-    return "light";
-  }
+  return getEffectiveTheme();
 }
 
-export function applyTheme(theme: ThemeMode, { persist = true }: { persist?: boolean } = {}) {
+export function applyTheme(
+  theme: ThemeMode,
+  { persist = true, isManual = false }: { persist?: boolean; isManual?: boolean } = {},
+) {
   if (typeof document === "undefined") return;
   document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.classList.toggle("light", theme !== "dark");
   if (persist) {
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+      window.localStorage.setItem("theme", theme);
+      if (isManual) {
+        recordManualOverride(theme);
+      }
     } catch {
       // The control remains usable when storage is blocked or unavailable.
     }
@@ -140,10 +148,12 @@ export async function applyThemeWithTransition(
     origin = null,
     element = null,
     duration = THEME_TRANSITION_DURATION,
+    isManual = true,
   }: {
     origin?: ThemeTransitionOrigin | null;
     element?: HTMLElement | null;
     duration?: number;
+    isManual?: boolean;
   } = {},
 ) {
   if (typeof document === "undefined" || currentTheme() === theme) return;
@@ -151,7 +161,7 @@ export async function applyThemeWithTransition(
   const transitionDocument = document as ViewTransitionDocument;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!transitionDocument.startViewTransition || reduceMotion) {
-    applyTheme(theme);
+    applyTheme(theme, { isManual });
     return;
   }
   if (themeTransitionRunning) return;
@@ -167,14 +177,14 @@ export async function applyThemeWithTransition(
   const transitionStyle = installThemeTransitionStyle({ x, y }, radius, duration);
   try {
     const transition = transitionDocument.startViewTransition(() => {
-      flushSync(() => applyTheme(theme));
+      flushSync(() => applyTheme(theme, { isManual }));
     });
 
     await transition.ready;
     await transition.finished;
   } catch {
     // If the browser aborts a transition mid-flight, the theme still changes.
-    if (currentTheme() !== theme) applyTheme(theme);
+    if (currentTheme() !== theme) applyTheme(theme, { isManual });
   } finally {
     transitionStyle.remove();
     document.documentElement.classList.remove("theme-transitioning");

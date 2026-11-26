@@ -68,12 +68,19 @@ export default function ConsultantsPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const currentUser = useAuthStore(state => state.user);
-  const isAdmin = currentUser?.role === 'admin';
-  const isManager = currentUser?.role === 'manager';
+  const activePerspective = useAuthStore(state => state.activePerspective);
+  const activeManagerBranchId = useAuthStore(state => state.activeManagerBranchId);
+  const activeManagerBranch = useAuthStore(state => state.activeManagerBranch);
+
+  const isRealAdmin = currentUser?.role === 'admin' || ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com', 'executive@siroiforex.com'].includes(currentUser?.email?.toLowerCase() || '');
+  const isRealManager = currentUser?.role === 'manager';
+
+  const isAdmin = isRealAdmin && activePerspective === 'admin';
+  const isManager = isRealManager || (isRealAdmin && activePerspective === 'manager');
 
   const managerBranchAccount = currentUser?.email ? BRANCH_ACCOUNTS[currentUser.email.toLowerCase()] : null;
-  const managerBranchId = currentUser?.branchId || managerBranchAccount?.branchId || '';
-  const managerBranchName = managerBranchAccount?.branchName || currentUser?.latestLocation || 'Branch';
+  const managerBranchId = isRealManager ? (currentUser?.branchId || managerBranchAccount?.branchId || '') : (activeManagerBranchId || 'b1');
+  const managerBranchName = isRealManager ? (managerBranchAccount?.branchName || currentUser?.latestLocation || 'Branch') : (activeManagerBranch || 'Guwahati');
 
   const allowedAliases = useMemo(() => {
     if (!isManager) return null;
@@ -248,7 +255,7 @@ export default function ConsultantsPage() {
           <button
             onClick={handleExportExcel}
             disabled={filteredConsultants.length === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             Export Excel
@@ -259,7 +266,7 @@ export default function ConsultantsPage() {
       {/* Double-Bezel Metrics & Summary Shelf */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Total Active Consultants */}
-        <div className="p-1 rounded-[1.75rem] bg-gradient-to-b from-indigo-500/15 via-indigo-500/5 to-transparent border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+        <div className="p-1 rounded-[1.75rem] bg-gradient-to-b from-indigo-500/15 via-indigo-500/5 to-transparent border border-indigo-500/20 shadow-lg">
           <div className="p-6 rounded-[calc(1.75rem-0.25rem)] bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/40 dark:border-white/5 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <UserCheck className="w-20 h-20 text-indigo-600 dark:text-indigo-400" />

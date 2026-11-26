@@ -44,8 +44,8 @@ import { directionalIconClass } from "@/utils/directional-icon";
  * `variant` to avoid the clash.
  */
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-type ButtonSize = "medium" | "small" | "xs";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "amber" | "default";
+type ButtonSize = "medium" | "small" | "xs" | "large" | "md" | "sm" | "lg";
 
 type IconComponent = ComponentType<{
   className?: string;
@@ -85,8 +85,12 @@ const styles = sortCx({
 
   // Base shape per size (used when label is present OR medium icon-only).
   size: {
+    large:  "h-11 rounded-xl px-5 text-headline-medium",
+    lg:     "h-11 rounded-xl px-5 text-headline-medium",
     medium: "h-9 rounded-2lg p-2 text-body-medium",
+    md:     "h-9 rounded-2lg p-2 text-body-medium",
     small:  "h-8 rounded-lg px-2 py-1.5 text-body-medium",
+    sm:     "h-8 rounded-lg px-2 py-1.5 text-body-medium",
     xs:     "h-6 rounded-sm px-2 text-caption-1-semibold",
   },
 
@@ -97,20 +101,32 @@ const styles = sortCx({
   //   Xs     → forces 24×24, content-centered — used for the calendar
   //            template's edit-icon buttons (timezone/participants/reminder).
   iconOnlySize: {
+    large:  "size-11 p-0",
+    lg:     "size-11 p-0",
     medium: "",                // base size already produces 36×36 with a 20px icon
+    md:     "",
     small:  "size-8 p-0",      // hard 32×32, content-centered
+    sm:     "size-8 p-0",
     xs:     "size-6 p-0",      // hard 24×24, content-centered
   },
 
   icon: {
+    large:  "size-6 shrink-0",
+    lg:     "size-6 shrink-0",
     medium: "size-5 shrink-0",        // 20px
+    md:     "size-5 shrink-0",
     small:  "size-[18px] shrink-0",   // 18px
+    sm:     "size-[18px] shrink-0",
     xs:     "size-3.5 shrink-0",      // 14px
   },
 
   label: {
+    large:  "inline-flex items-center justify-center px-1.5 shrink-0",
+    lg:     "inline-flex items-center justify-center px-1.5 shrink-0",
     medium: "inline-flex items-center justify-center px-1 shrink-0",    // px=4
+    md:     "inline-flex items-center justify-center px-1 shrink-0",
     small:  "inline-flex items-center justify-center px-0.5 shrink-0",  // px=2
+    sm:     "inline-flex items-center justify-center px-0.5 shrink-0",
     xs:     "inline-flex items-center justify-center px-0.5 shrink-0",  // px=2
   },
 
@@ -119,6 +135,17 @@ const styles = sortCx({
       "bg-button-primary text-text-white shadow-xs",
       "disabled:text-button-primary-disabled-foreground disabled:shadow-none",
       "aria-disabled:text-button-primary-disabled-foreground aria-disabled:shadow-none",
+    ].join(" "),
+    default: [
+      "bg-button-primary text-text-white shadow-xs",
+      "disabled:text-button-primary-disabled-foreground disabled:shadow-none",
+      "aria-disabled:text-button-primary-disabled-foreground aria-disabled:shadow-none",
+    ].join(" "),
+    amber: [
+      "bg-button-amber text-amber-950 font-bold shadow-xs",
+      "border border-border-button-default hover:border-amber-400/50",
+      "disabled:opacity-50 disabled:shadow-none",
+      "aria-disabled:opacity-50 aria-disabled:shadow-none",
     ].join(" "),
     danger: [
       "bg-button-danger text-text-white shadow-xs",

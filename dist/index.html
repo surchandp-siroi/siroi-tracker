@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -16,10 +16,44 @@
           var cleanPath = window.location.pathname.replace(/\/+$/, '') + window.location.search + window.location.hash;
           window.location.replace(cleanPath);
         }
+        try {
+          var now = new Date();
+          var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+          var ist = new Date(utc + (330 * 60000));
+          var h = ist.getHours();
+          var scheduled = (h >= 17 || h < 6) ? 'dark' : 'light';
+          
+          var manual = localStorage.getItem('theme_manual_override');
+          var manualTime = parseInt(localStorage.getItem('theme_manual_override_time') || '0', 10);
+          
+          var y = ist.getFullYear(), m = ist.getMonth(), d = ist.getDate();
+          function istToEpoch(year, month, day, hour) {
+            return Date.UTC(year, month, day, hour, 0, 0, 0) - (330 * 60000);
+          }
+          var lastTransition = 0;
+          if (h >= 17) {
+            lastTransition = istToEpoch(y, m, d, 17);
+          } else if (h >= 6) {
+            lastTransition = istToEpoch(y, m, d, 6);
+          } else {
+            var yesterday = new Date(ist.getTime() - 86400000);
+            lastTransition = istToEpoch(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 17);
+          }
+          
+          var theme = (manual && manualTime > lastTransition) ? manual : scheduled;
+          var root = document.documentElement;
+          if (theme === 'dark') {
+            root.classList.add('dark');
+            root.classList.remove('light');
+          } else {
+            root.classList.remove('dark');
+            root.classList.add('light');
+          }
+        } catch (e) {}
       })();
     </script>
-    <script type="module" crossorigin src="./assets/main-BV36tA0X.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/main-CYXSImv1.css">
+    <script type="module" crossorigin src="./assets/main-CZKgFFS7.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/main-QkfWk7R_.css">
   </head>
   <body class="font-sans antialiased min-h-screen flex flex-col">
     <div id="root"></div>

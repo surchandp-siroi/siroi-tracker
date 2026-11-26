@@ -121,7 +121,7 @@ export function MonthPicker({
                 className={cn(
                   "py-2.5 px-2 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer select-none text-center",
                   isSelected
-                    ? "bg-button-primary text-white font-black shadow-md shadow-accent-600/30 scale-100"
+                    ? "bg-button-primary text-white font-black shadow-md  scale-100"
                     : isCurrent
                     ? "border border-accent-500/40 text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-950/40"
                     : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"

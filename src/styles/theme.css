@@ -22,33 +22,33 @@
   --color-neutral-925: #121212;
   --color-blue-400:    #3392ff;
 
-  /* ----- Accent ramp (Siroi Signature Dark Teal & Brand Theme) ---------------
-   * Sourced directly from the Siroi brand logo arrow:
-   *   Light Teal Gradient Top / Hover: #4b7e85 (accent-400)
-   *   Base Slate Teal / Default Stop:  #375e69 (accent-500)
-   *   Deep Petrol Teal / Bottom Stop:  #2b4b51 (accent-600)
-   *   Active Pressed Teal:             #20383d (accent-700)
-   * Primary button gradient: 180° light-to-dark from #375e69 to #2b4b51
-   * with specular top highlight and deep teal ambient drop shadow.
+  /* ----- Accent ramp (Siroi Signature Luminous Teal & Brand Theme) ----------
+   * Calibrated for higher luminosity, premium depth, and vibrant modern contrast:
+   *   Light Teal Top / Hover Peak:   #4fa8b2 (accent-400)
+   *   Base Vibrant Teal Stop:        #3b8c96 (accent-500)
+   *   Deep Petrol Teal / Bottom Stop: #2b6d76 (accent-600)
+   *   Active Pressed Teal:           #20535a (accent-700)
+   * Primary button gradient: 180° light-to-dark from #4fa8b2 to #347c86
+   * with specular top highlight, lift hover animation, and radiant ambient drop shadow.
    * --------------------------------------------------------------------------*/
-  --color-accent-50:  #f0f6f7;
-  --color-accent-100: #dce9eb;
-  --color-accent-200: #bdd5d9;
-  --color-accent-300: #8eb7bf;
-  --color-accent-400: #4b7e85;
-  --color-accent-500: #375e69;
-  --color-accent-600: #2b4b51;
-  --color-accent-700: #20383d;
-  --color-accent-800: #17292d;
-  --color-accent-900: #101c1f;
-  --color-accent-950: #080f11;
+  --color-accent-50:  #f0f8f8;
+  --color-accent-100: #dcf0f1;
+  --color-accent-200: #bee1e4;
+  --color-accent-300: #8cccd1;
+  --color-accent-400: #4fa8b2;
+  --color-accent-500: #3b8c96;
+  --color-accent-600: #2b6d76;
+  --color-accent-700: #20535a;
+  --color-accent-800: #163b41;
+  --color-accent-900: #0f272b;
+  --color-accent-950: #081518;
 
-  /* Brand Secondary Highlights (Logo Warm Gold & Cobalt Arrowhead) */
-  --color-brand-gold:       #e5cd4f;
-  --color-brand-gold-hover: #d4bc3e;
-  --color-brand-gold-light: #fefce8;
+  /* Brand Secondary Highlights (Logo Warm Golden Amber) */
+  --color-brand-gold:       #f2c94c;
+  --color-brand-gold-hover: #e5b93b;
+  --color-brand-gold-light: #fef9c3;
   --color-brand-gold-text:  #854d0e;
-  --color-brand-cobalt:     #4f80ff;
+  --color-brand-cobalt:     #4fa8b2;
 
   /* Map indigo utility classes to the brand dark teal ramp so all existing
    * forms, buttons, cards, and pages re-theme seamlessly to dark teal. */
@@ -433,10 +433,14 @@
   --color-chart-agents-bar-active: var(--color-purple-400);
 
   /* Button gradients */
-  --gradient-button-primary-default:  linear-gradient(180deg, var(--color-accent-500)    0%, var(--color-accent-600)    100%);
-  --gradient-button-primary-hover:    linear-gradient(180deg, var(--color-accent-400)    0%, var(--color-accent-500)    100%);
-  --gradient-button-primary-active:   linear-gradient(180deg, var(--color-accent-600)    0%, var(--color-accent-700)    100%);
+  --gradient-button-primary-default:  linear-gradient(180deg, #4fa8b2 0%, #347c86 100%);
+  --gradient-button-primary-hover:    linear-gradient(180deg, #64bcc6 0%, #3e919c 100%);
+  --gradient-button-primary-active:   linear-gradient(180deg, #2b6d76 0%, #1e5057 100%);
   --gradient-button-primary-disabled: linear-gradient(180deg, var(--color-neutral-200) 0%, var(--color-neutral-300) 100%);
+
+  --gradient-button-amber-default:    linear-gradient(180deg, #f5d166 0%, #e5b93b 100%);
+  --gradient-button-amber-hover:      linear-gradient(180deg, #fbe089 0%, #edc54c 100%);
+  --gradient-button-amber-active:     linear-gradient(180deg, #d4a528 0%, #b88716 100%);
 
   --gradient-button-danger-default:   linear-gradient(180deg, var(--color-red-500) 0%, var(--color-red-600) 100%);
   --gradient-button-danger-hover:     linear-gradient(180deg, var(--color-red-400) 0%, var(--color-red-500) 100%);
@@ -651,7 +655,7 @@
   /* Neutral graph structure; categorical and status colors stay unchanged. */
   --color-chart-track:   var(--color-neutral-800);
   --color-chart-cursor:  var(--color-neutral-700);
-  --color-chart-neutral: var(--color-neutral-800);
+  --color-chart-neutral: #64748b;
   --color-chart-agents-bar:        var(--color-purple-500);
   --color-chart-agents-bar-active: var(--color-purple-600);
 }
@@ -920,8 +924,6 @@
   position: relative;
   isolation: isolate;
   background-image: var(--gradient-button-primary-default);
-  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.25), 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 3px 6px -1px rgb(43 75 81 / 0.35);
-  border: 1px solid rgb(255 255 255 / 0.12);
 
   &::before {
     content: "";
@@ -939,7 +941,6 @@
   }
   &:active:not(:disabled):not([aria-disabled="true"]) {
     background-image: var(--gradient-button-primary-active);
-    box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.2), 0 1px 1px 0 rgb(0 0 0 / 0.05);
   }
   &:active:not(:disabled):not([aria-disabled="true"])::before {
     opacity: 0;
@@ -947,8 +948,41 @@
   &:disabled,
   &[aria-disabled="true"] {
     background-image: var(--gradient-button-primary-disabled);
-    box-shadow: none;
-    border-color: transparent;
+  }
+  &:disabled::before,
+  &[aria-disabled="true"]::before {
+    display: none;
+  }
+}
+
+@utility bg-button-amber {
+  position: relative;
+  isolation: isolate;
+  background-image: var(--gradient-button-amber-default);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background-image: var(--gradient-button-amber-hover);
+    opacity: 0;
+    transition: opacity var(--button-transition-ms) ease;
+  }
+  &:hover:not(:disabled):not([aria-disabled="true"])::before {
+    opacity: 1;
+  }
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    background-image: var(--gradient-button-amber-active);
+  }
+  &:active:not(:disabled):not([aria-disabled="true"])::before {
+    opacity: 0;
+  }
+  &:disabled,
+  &[aria-disabled="true"] {
+    background-image: var(--gradient-button-primary-disabled);
   }
   &:disabled::before,
   &[aria-disabled="true"]::before {

@@ -10,7 +10,7 @@ const BRANCH_ACCENTS: Record<string, { border: string; badge: string; badgeText:
     border: 'border-rose-500/30', 
     badge: 'bg-rose-500/15 text-rose-500 dark:text-rose-400 border-rose-500/30', 
     bar: 'bg-rose-500', 
-    glow: 'shadow-rose-500/10', 
+    glow: '', 
     badgeText: 'text-rose-500 dark:text-rose-400', 
     dot: 'bg-rose-500',
     bgGradient: 'from-rose-500/10 via-rose-500/5 to-transparent'
@@ -19,7 +19,7 @@ const BRANCH_ACCENTS: Record<string, { border: string; badge: string; badgeText:
     border: 'border-violet-500/30', 
     badge: 'bg-violet-500/15 text-violet-500 dark:text-violet-400 border-violet-500/30', 
     bar: 'bg-violet-500', 
-    glow: 'shadow-violet-500/10', 
+    glow: '', 
     badgeText: 'text-violet-500 dark:text-violet-400', 
     dot: 'bg-violet-500',
     bgGradient: 'from-violet-500/10 via-violet-500/5 to-transparent'
@@ -37,7 +37,7 @@ const BRANCH_ACCENTS: Record<string, { border: string; badge: string; badgeText:
     border: 'border-amber-500/30', 
     badge: 'bg-amber-500/15 text-amber-500 dark:text-amber-400 border-amber-500/30', 
     bar: 'bg-amber-500', 
-    glow: 'shadow-amber-500/10', 
+    glow: '', 
     badgeText: 'text-amber-500 dark:text-amber-400', 
     dot: 'bg-amber-500',
     bgGradient: 'from-amber-500/10 via-amber-500/5 to-transparent'
@@ -46,7 +46,7 @@ const BRANCH_ACCENTS: Record<string, { border: string; badge: string; badgeText:
     border: 'border-teal-500/30', 
     badge: 'bg-teal-500/15 text-teal-500 dark:text-teal-400 border-teal-500/30', 
     bar: 'bg-teal-500', 
-    glow: 'shadow-teal-500/10', 
+    glow: '', 
     badgeText: 'text-teal-500 dark:text-teal-400', 
     dot: 'bg-teal-500',
     bgGradient: 'from-teal-500/10 via-teal-500/5 to-transparent'
@@ -66,7 +66,7 @@ const DEFAULT_ACCENT = {
   border: 'border-indigo-500/30', 
   badge: 'bg-indigo-500/15 text-indigo-500 dark:text-indigo-400 border-indigo-500/30', 
   bar: 'bg-indigo-500', 
-  glow: 'shadow-indigo-500/10', 
+  glow: '', 
   badgeText: 'text-indigo-500 dark:text-indigo-400', 
   dot: 'bg-indigo-500',
   bgGradient: 'from-indigo-500/10 via-indigo-500/5 to-transparent'
@@ -99,13 +99,16 @@ function isAchievementWindowOpen(): boolean {
 
 export default function BranchesPage() {
   const { branches, entries } = useDataStore();
-  const { user } = useAuthStore();
+  const { user, activePerspective, activeManagerBranchId, activeManagerBranch } = useAuthStore();
   
-  const isAdmin = user?.role === 'admin';
-  const isManager = user?.role === 'manager';
+  const isRealAdmin = user?.role === 'admin' || ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com', 'executive@siroiforex.com'].includes(user?.email?.toLowerCase() || '');
+  const isRealManager = user?.role === 'manager';
+  
+  const isAdmin = isRealAdmin && activePerspective === 'admin';
+  const isManager = isRealManager || (isRealAdmin && activePerspective === 'manager');
   
   const managerBranchAccount = user?.email ? BRANCH_ACCOUNTS[user.email.toLowerCase()] : null;
-  const managerBranchId = user?.branchId || managerBranchAccount?.branchId || '';
+  const managerBranchId = isRealManager ? (user?.branchId || managerBranchAccount?.branchId || '') : (activeManagerBranchId || 'b1');
 
   // Filter branches strictly for branch managers
   const visibleBranches = useMemo(() => {

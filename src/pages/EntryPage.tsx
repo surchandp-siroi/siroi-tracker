@@ -1957,8 +1957,13 @@ export default function DataEntryTerminal() {
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                    {(user.role === 'admin' || isBackdoor) && (
+                        <Button variant="secondary" className="text-accent-700 dark:text-accent-300 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 rounded-lg border border-accent-500/30 bg-accent-50/50 dark:bg-accent-950/30" onClick={() => navigate('/dashboard')}>
+                            Dashboard Overview
+                        </Button>
+                    )}
                     <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/70 px-3 py-1 rounded-full border border-slate-200/80 dark:border-white/10 shadow-xs mr-1">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <LiveClock />
                     </div>
                     <Button variant="ghost" className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] h-8 px-2.5 bg-slate-100/50 hover:bg-slate-200/50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 rounded-lg" onClick={() => { setIsAuditModalOpen(true); fetchExecutiveAuditLogs(); }}>
@@ -2017,7 +2022,7 @@ export default function DataEntryTerminal() {
                                 </label>
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full w-full md:w-[220px]">
                                     <button
-                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
+                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'monthly' ? 'bg-indigo-600 text-white shadow-md  py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
                                         onClick={() => {
                                             if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
                                             setEntryMode('monthly');
@@ -2028,7 +2033,7 @@ export default function DataEntryTerminal() {
                                         Month
                                     </button>
                                     <button
-                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
+                                        className={`flex-1 text-[10px] font-bold rounded-full uppercase tracking-widest transition-all flex items-center justify-center ${entryMode === 'daily' ? 'bg-indigo-600 text-white shadow-md  py-1.5' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-1.5'}`}
                                         onClick={() => {
                                             if (isDirty && !window.confirm("You have unsaved rows. Switching mode will discard them. Continue?")) return;
                                             setEntryMode('daily');
@@ -2328,7 +2333,7 @@ export default function DataEntryTerminal() {
                                         key={chip.id}
                                         onClick={() => setStatusFilter(chip.id)}
                                         className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 ${isActive
-                                                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 scale-[1.02]'
+                                                ? 'bg-indigo-600 text-white shadow-sm  scale-[1.02]'
                                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                                             }`}
                                     >
@@ -3148,10 +3153,10 @@ export default function DataEntryTerminal() {
                     <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
                         <div className="flex items-center gap-2">
                             <div className="px-3.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/70 flex items-center gap-2">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <span className="text-caption-2-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                     Total Login:
                                 </span>
-                                <span className="font-mono font-bold text-sm md:text-base text-indigo-600 dark:text-indigo-400">
+                                <span className="font-mono text-body-bold text-accent-600 dark:text-accent-400">
                                     ₹ {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('en-IN')}
                                 </span>
                             </div>
@@ -3212,7 +3217,7 @@ export default function DataEntryTerminal() {
                                     setShowDeleteModal(true);
                                 }}
                                 disabled={isDeleting}
-                                className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/50 shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5"
+                                className="h-[38px] px-4 rounded-xl text-caption-1-semibold uppercase tracking-wider text-white bg-button-danger shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5"
                             >
                                 <Trash2 className="w-3.5 h-3.5" />
                                 <span>Delete</span>
@@ -3223,7 +3228,7 @@ export default function DataEntryTerminal() {
                             <button
                                 type="button"
                                 onClick={() => setIsTransferModalOpen(true)}
-                                className="h-[38px] px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800/50 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
+                                className="h-[38px] px-4 rounded-xl text-caption-1-semibold uppercase tracking-wider text-amber-950 dark:text-amber-200 bg-button-amber border border-amber-300 dark:border-amber-700/60 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
                             >
                                 Transfer to Daily
                             </button>
@@ -3241,8 +3246,8 @@ export default function DataEntryTerminal() {
                                 }}
                                 className="h-[38px] px-4 md:px-5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100 bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/90 border border-slate-200 dark:border-slate-700 shadow-xs transition-all active:scale-[0.98] flex items-center gap-1.5"
                             >
-                                <Plus className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
-                                <span>Manual Row</span>
+                                <Plus className="w-4 h-4 text-accent-500 dark:text-accent-400" />
+                                <span className="text-caption-1-semibold uppercase tracking-wider">Manual Row</span>
                             </button>
                         )}
 
@@ -3251,7 +3256,7 @@ export default function DataEntryTerminal() {
                                 type="button"
                                 disabled={isSaving || items.length === 0}
                                 onClick={handleSubmit}
-                                className="h-[38px] px-6 md:px-7 rounded-xl text-xs font-bold uppercase tracking-wider text-white bg-button-primary hover:opacity-95 shadow-md shadow-accent-950/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="h-[38px] px-6 md:px-7 rounded-xl text-caption-1-semibold uppercase tracking-wider text-white bg-button-primary hover:opacity-95 shadow-xs active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />}
                                 <span>{hasExistingEntry ? 'Update Record' : 'Lodge Record'}</span>
@@ -3968,7 +3973,7 @@ export default function DataEntryTerminal() {
                         </div>
                         <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                             <Button variant="secondary" onClick={() => setShowContextModal(false)} className="flex-1">Cancel</Button>
-                            <Button onClick={() => { setShowContextModal(false); if (items.length === 0) handleAddItem(); }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">Start Entry</Button>
+                            <Button onClick={() => { setShowContextModal(false); if (items.length === 0) handleAddItem(); }} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg">Start Entry</Button>
                         </div>
                     </div>
                 </div>
@@ -4036,7 +4041,7 @@ export default function DataEntryTerminal() {
                         </div>
                         <div className="p-5 flex gap-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                             <Button variant="secondary" onClick={() => setIsProjectionModalOpen(false)} className="flex-1">Cancel</Button>
-                            <Button onClick={handleLodgeProjection} disabled={isLodgingProjection || Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0) < 0} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30">
+                            <Button onClick={handleLodgeProjection} disabled={isLodgingProjection || Object.values(projectionInputs).reduce((a, b) => a + (b || 0), 0) < 0} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg">
                                 {isLodgingProjection ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Lodging...</> : 'Lodge Projection'}
                             </Button>
                         </div>

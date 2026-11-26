@@ -239,13 +239,18 @@ export default function DashboardLayout() {
   }, [user]);
 
   const email = user?.email?.toLowerCase() || '';
-  const isSuperAdmin = user?.role === 'admin' || email === 'tomas@siroiforex.com' || email === 'surchanddsingh@siroiforex.com' || email === 'sharjuthoudam@siroiforex.com' || email === 'executive@siroiforex.com';
+  const isSuperAdminEmail = ['tomas@siroiforex.com', 'surchanddsingh@siroiforex.com', 'sharjuthoudam@siroiforex.com', 'executive@siroiforex.com'].includes(email);
+  const isAnyAdmin = user?.role === 'admin' || isSuperAdminEmail;
   const isSharju = email === 'sharjuthoudam@siroiforex.com';
   const isSurchand = email === 'surchanddsingh@siroiforex.com';
-  const isSuperAdminDev = email === 'tomas@siroiforex.com' || email === 'executive@siroiforex.com';
-  const canSeeFinances = isSharju || isSurchand || isSuperAdminDev;
-  const canSeeConsultantOps = isSharju || isSuperAdminDev;
-  const canSeeProfitLoss = isSharju || isSurchand || isSuperAdminDev;
+  
+  // Give complete overview of Surchand to next any admin as Sharju is super admin
+  const canSeeFinances = isAnyAdmin;
+  const canSeeConsultantOps = isAnyAdmin;
+  const canSeeProfitLoss = isAnyAdmin;
+
+  const { activePerspective } = useAuthStore();
+  const isPerspectiveAdmin = activePerspective === 'admin' && isAnyAdmin;
 
   const siroiNavItems: DashboardNavItem[] = useMemo(() => {
     const items: DashboardNavItem[] = [
@@ -256,28 +261,28 @@ export default function DashboardLayout() {
       { key: 'branches', label: 'Branches', icon: RiGitBranchLine, href: '/dashboard/branches' },
     ];
 
-    if (isSuperAdmin) {
+    if (isPerspectiveAdmin) {
       items.push(
         { key: 'organigram', label: 'Organigram', icon: RiNodeTree, href: '/dashboard/organigram' },
         { key: 'audit', label: 'Audit Logs', icon: RiFileShieldLine, href: '/dashboard/audit' }
       );
     }
 
-    if (canSeeConsultantOps) {
+    if (isPerspectiveAdmin && canSeeConsultantOps) {
       items.push(
         { key: 'consultant-approval', label: 'Consultant Approval', icon: RiCheckDoubleLine, href: '/dashboard/consultant-approval' },
         { key: 'consultant-payouts', label: 'Consultant Payouts', icon: RiCoinsLine, href: '/dashboard/consultant-payouts' }
       );
     }
 
-    if (canSeeProfitLoss) {
+    if (isPerspectiveAdmin && canSeeProfitLoss) {
       items.push(
         { key: 'profit-loss', label: 'Branch Profit & Loss', icon: RiScales3Line, href: '/dashboard/profit-loss' }
       );
     }
 
     return items;
-  }, [isSuperAdmin, canSeeConsultantOps, canSeeProfitLoss]);
+  }, [isPerspectiveAdmin, canSeeConsultantOps, canSeeProfitLoss]);
 
   const currentSelectedKey = useMemo(() => {
     const p = location.pathname;
@@ -359,7 +364,7 @@ export default function DashboardLayout() {
           WebkitOverflowScrolling: 'touch'
         }}
       >
-        <div className="w-full max-w-[1680px] mx-auto space-y-6">
+        <div className="w-full max-w-[1200px] mx-auto space-y-6">
           <Outlet />
         </div>
       </main>
@@ -561,7 +566,7 @@ export default function DashboardLayout() {
 
             {/* Header / Title */}
             <div className="flex items-center gap-3.5 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-700 dark:from-accent-600 dark:to-accent-800 shadow-md shadow-accent-500/25 flex items-center justify-center shrink-0 ring-1 ring-white/20 p-2.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-700 dark:from-accent-600 dark:to-accent-800 shadow-sm flex items-center justify-center shrink-0 ring-1 ring-white/20 p-2.5">
                 <LogoIcon className="w-full h-full text-white" />
               </div>
               <div>
@@ -642,7 +647,7 @@ export default function DashboardLayout() {
               {updateStatus === 'available' && (
                 <button
                   onClick={handlePerformUpdate}
-                  className="w-full py-3.5 px-4 rounded-xl bg-button-primary active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-accent-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-button-primary active:scale-[0.99] text-white font-bold text-sm shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>Update to v{latestVersion} Now</span>

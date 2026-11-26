@@ -217,7 +217,7 @@ export function AddFinancialEntryDialog({
                 onClick={() => handleTypeChange('expense')}
                 className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   entryType === 'expense'
-                    ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25'
+                    ? 'bg-rose-600 text-white shadow-md '
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
@@ -238,7 +238,7 @@ export function AddFinancialEntryDialog({
                 value={branchName}
                 onChange={(e) => setBranchName(e.target.value)}
                 required
-                className="w-full h-10 px-3 rounded-xl bg-background-tertiary-default border border-border-button-default text-xs font-semibold text-text-primary outline-none transition-all duration-150 hover:border-border-button-hover focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.18)]"
+                className="w-full h-10 px-3 rounded-xl bg-background-tertiary-default border border-border-button-default text-xs font-semibold text-text-primary outline-none transition-all duration-150 hover:border-border-button-hover focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25"
               >
                 {BRANCH_NAMES.map((b) => (
                   <option key={b} value={b}>
@@ -257,7 +257,7 @@ export function AddFinancialEntryDialog({
                 value={entryDate}
                 onChange={(_d, dateStr) => setEntryDate(dateStr || '')}
                 placeholder="Select date"
-                className="h-10 text-xs bg-background-tertiary-default border-border-button-default text-text-primary rounded-xl hover:border-border-button-hover focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.18)]"
+                className="h-10 text-xs bg-background-tertiary-default border-border-button-default text-text-primary rounded-xl hover:border-border-button-hover focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25"
               />
             </div>
           </div>
@@ -280,7 +280,7 @@ export function AddFinancialEntryDialog({
                 setSubCategory('');
               }}
               required
-              className="w-full h-10 px-3 rounded-xl bg-background-tertiary-default border border-border-button-default text-xs font-semibold text-text-primary outline-none transition-all duration-150 hover:border-border-button-hover focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.18)]"
+              className="w-full h-10 px-3 rounded-xl bg-background-tertiary-default border border-border-button-default text-xs font-semibold text-text-primary outline-none transition-all duration-150 hover:border-border-button-hover focus:border-border-focus-ring focus:ring-2 focus:ring-border-focus-ring/25"
             >
               {entryType === 'income'
                 ? INCOME_CATEGORIES.map((c) => (
@@ -389,7 +389,7 @@ export function AddFinancialEntryDialog({
               className={`h-10 px-6 rounded-xl text-xs font-bold text-white shadow-md transition-all flex items-center gap-2 ${
                 entryType === 'income'
                   ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25'
-                  : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/25'
+                  : 'bg-rose-600 hover:bg-rose-500 '
               }`}
             >
               {isLoading ? (
