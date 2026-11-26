@@ -32,6 +32,7 @@ export interface AuthorizedUser {
   isSuperAdmin?: boolean;
   initials?: string;
   color?: 'lime' | 'pink' | 'neutral' | 'blue';
+  avatarSeed?: string;
 }
 
 export const INITIAL_AUTHORIZED_USERS: AuthorizedUser[] = [
@@ -167,10 +168,28 @@ export const syncUserProfile = async (sbUser: SupabaseUser, location?: string, e
   return profile;
 };
 
+export function getDicebearAvatar(seed?: string | null): string {
+  const effectiveSeed = seed || 'admin';
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(effectiveSeed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`;
+}
+
 export function resolveUserDisplay(
   authUser?: AuthorizedUser | null,
   userProfile?: UserProfile | null
-): { firstName: string; initials: string; color: 'lime' | 'pink' | 'neutral' | 'blue' } {
+): { firstName: string; initials: string; color: 'lime' | 'pink' | 'neutral' | 'blue'; avatarUrl?: string } {
+  const email = (authUser?.email || userProfile?.email || '').toLowerCase().trim();
+
+  // Resolve avatar seed: authUser -> userProfile -> localStorage
+  let avatarSeed: string | undefined = (authUser?.avatarSeed || userProfile?.avatarSeed) ?? undefined;
+  if (!avatarSeed && typeof window !== 'undefined' && email) {
+    avatarSeed = localStorage.getItem(`siroi_avatar_seed_${email}`) ?? undefined;
+  }
+  if (!avatarSeed && typeof window !== 'undefined') {
+    avatarSeed = localStorage.getItem('siroi_avatar_seed_current') ?? undefined;
+  }
+
+  const avatarUrl = avatarSeed ? getDicebearAvatar(avatarSeed) : undefined;
+
   if (authUser) {
     let firstName = authUser.name.split(' ')[0] || authUser.name;
     if (firstName.toLowerCase().startsWith('sharju')) {
@@ -180,27 +199,27 @@ export function resolveUserDisplay(
       firstName,
       initials: authUser.initials || firstName.slice(0, 2).toUpperCase(),
       color: authUser.color || 'neutral',
+      avatarUrl,
     };
   }
 
-  const email = (userProfile?.email || '').toLowerCase().trim();
   if (email.includes('sharju')) {
-    return { firstName: 'Sharju', initials: 'ST', color: 'pink' };
+    return { firstName: 'Sharju', initials: 'ST', color: 'pink', avatarUrl };
   }
   if (email.includes('surchand')) {
-    return { firstName: 'Surchand', initials: 'SS', color: 'lime' };
+    return { firstName: 'Surchand', initials: 'SS', color: 'lime', avatarUrl };
   }
   if (email.includes('aroop')) {
-    return { firstName: 'Aroop', initials: 'AS', color: 'neutral' };
+    return { firstName: 'Aroop', initials: 'AS', color: 'neutral', avatarUrl };
   }
   if (email.includes('ajay')) {
-    return { firstName: 'Ajay', initials: 'AW', color: 'neutral' };
+    return { firstName: 'Ajay', initials: 'AW', color: 'neutral', avatarUrl };
   }
   if (email.includes('nobin')) {
-    return { firstName: 'Nobin', initials: 'NN', color: 'neutral' };
+    return { firstName: 'Nobin', initials: 'NN', color: 'neutral', avatarUrl };
   }
   if (email.includes('ramesh')) {
-    return { firstName: 'Ramesh', initials: 'RS', color: 'neutral' };
+    return { firstName: 'Ramesh', initials: 'RS', color: 'neutral', avatarUrl };
   }
 
   const rawName = userProfile?.displayName && userProfile.displayName !== 'Administrator'
@@ -213,6 +232,7 @@ export function resolveUserDisplay(
     firstName,
     initials: firstName.slice(0, 2).toUpperCase(),
     color: 'lime',
+    avatarUrl,
   };
 }
 
@@ -244,21 +264,28 @@ const getStoredAuthorizedUsers = (): AuthorizedUser[] => {
   if (typeof window === 'undefined') return INITIAL_AUTHORIZED_USERS;
   try {
     const raw = localStorage.getItem('siroi_authorized_users');
+    let list = INITIAL_AUTHORIZED_USERS;
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((user: AuthorizedUser) => {
-          const initial = INITIAL_AUTHORIZED_USERS.find(
-            (iu) => iu.email.toLowerCase().trim() === user.email.toLowerCase().trim()
-          );
-          return {
-            ...user,
-            initials: user.initials || initial?.initials || user.name.slice(0, 2).toUpperCase(),
-            color: user.color || initial?.color || 'neutral',
-          };
-        });
+        list = parsed;
       }
     }
+    return list.map((user: AuthorizedUser) => {
+      const initial = INITIAL_AUTHORIZED_USERS.find(
+        (iu) => iu.email.toLowerCase().trim() === user.email.toLowerCase().trim()
+      );
+      const email = user.email.toLowerCase().trim();
+      const savedSeed = localStorage.getItem(`siroi_avatar_seed_${email}`) || (email.includes('sharju') ? localStorage.getItem('siroi_avatar_seed_current') : null);
+      const savedName = localStorage.getItem(`siroi_display_name_${email}`);
+      return {
+        ...user,
+        name: savedName || user.name,
+        avatarSeed: user.avatarSeed || savedSeed || undefined,
+        initials: user.initials || initial?.initials || user.name.slice(0, 2).toUpperCase(),
+        color: user.color || initial?.color || 'neutral',
+      };
+    });
   } catch (e) {
     console.warn("Could not read authorized users from localStorage", e);
   }
@@ -600,23 +627,57 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   updateProfile: async (displayName, avatarSeed) => {
-    const { user } = get();
-    if (!user) return false;
+    const { user, authorizedUsers, activeUserEmail } = get();
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ displayName, avatarSeed })
-        .eq('id', user.id);
+      const email = (activeUserEmail || user?.email || 'sharjuthoudam@siroiforex.com').toLowerCase().trim();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`siroi_avatar_seed_${email}`, avatarSeed);
+        localStorage.setItem('siroi_avatar_seed_current', avatarSeed);
+        localStorage.setItem(`siroi_display_name_${email}`, displayName);
+      }
 
-      if (error) throw error;
+      const updatedAuthorizedUsers = authorizedUsers.map(u => {
+        if (u.email.toLowerCase().trim() === email) {
+          return { ...u, avatarSeed, name: displayName };
+        }
+        return u;
+      });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('siroi_authorized_users', JSON.stringify(updatedAuthorizedUsers));
+        } catch {}
+      }
 
       set({
-        user: {
-          ...user,
-          displayName,
-          avatarSeed
-        }
+        user: user
+          ? {
+              ...user,
+              displayName,
+              avatarSeed,
+            }
+          : {
+              id: 'local-user',
+              email,
+              role: 'admin',
+              branchId: null,
+              displayName,
+              avatarSeed,
+              createdAt: new Date().toISOString(),
+            },
+        authorizedUsers: updatedAuthorizedUsers,
       });
+
+      if (user?.id && user.id !== 'local-user') {
+        try {
+          await supabase
+            .from('users')
+            .update({ displayName, avatarSeed })
+            .eq('id', user.id);
+        } catch (sbErr) {
+          console.warn("Supabase profile sync warning:", sbErr);
+        }
+      }
+
       return true;
     } catch (err) {
       console.error("Failed to update user profile:", err);

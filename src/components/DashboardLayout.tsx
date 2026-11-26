@@ -221,10 +221,22 @@ export default function DashboardLayout() {
   // Listen for custom events from BoardUI profile menu
   useEffect(() => {
     const onOpenProfile = () => {
+      const { user: currentUser, activeUserEmail, authorizedUsers } = useAuthStore.getState();
+      const currentEmail = (activeUserEmail || currentUser?.email || 'sharjuthoudam@siroiforex.com').toLowerCase().trim();
+      const activeAuthUser = authorizedUsers.find(
+        (u) => u.email.toLowerCase().trim() === currentEmail
+      );
+      const storedSeed = typeof window !== 'undefined'
+        ? localStorage.getItem(`siroi_avatar_seed_${currentEmail}`) || localStorage.getItem('siroi_avatar_seed_current')
+        : null;
+      const storedName = typeof window !== 'undefined' && currentEmail
+        ? localStorage.getItem(`siroi_display_name_${currentEmail}`)
+        : null;
+
       setProfileModal({
         isOpen: true,
-        displayName: user?.displayName || user?.email?.split('@')[0] || 'User',
-        avatarSeed: user?.avatarSeed || user?.email?.split('@')[0] || 'admin'
+        displayName: storedName || activeAuthUser?.name || currentUser?.displayName || currentEmail.split('@')[0] || 'Sharju',
+        avatarSeed: activeAuthUser?.avatarSeed || currentUser?.avatarSeed || storedSeed || 'Aneka'
       });
     };
     const onUpdateApp = () => {

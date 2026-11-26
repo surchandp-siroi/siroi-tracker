@@ -161,7 +161,7 @@ export function DashboardTeamMenu({
     (u) => u.email.toLowerCase().trim() === currentEmail
   );
 
-  const { firstName, initials, color } = resolveUserDisplay(activeAuthUser, user);
+  const { firstName, initials, color, avatarUrl } = resolveUserDisplay(activeAuthUser, user);
 
   const handleLogout = async () => {
     try {
@@ -213,13 +213,13 @@ export function DashboardTeamMenu({
           "transition-[width,background-color,border-color,padding] duration-300 ease-in-out",
           "focus-visible:ring-2 focus-visible:ring-border-focus-ring focus-visible:ring-offset-2",
           collapsed
-            ? "size-9 justify-start rounded-full bg-transparent p-0"
+            ? "size-9 justify-center rounded-full bg-transparent p-0"
             : "w-full justify-between rounded-xl bg-background-tertiary-default py-2.5 pe-4 ps-2.5",
           className,
         )}
       >
-        <span className="flex min-w-0 items-center gap-2.5">
-          <Avatar size="md" color={color} initials={initials} alt={firstName} />
+        <span className={cx("flex min-w-0 items-center", collapsed ? "justify-center" : "gap-2.5")}>
+          <Avatar size="md" color={color} initials={initials} alt={firstName} src={avatarUrl} />
           <Collapsible collapsed={collapsed}>
             <span className="flex min-w-0 flex-col items-start justify-center text-start">
               <span className="text-body-medium whitespace-nowrap text-text-primary font-semibold leading-tight">{firstName}</span>
@@ -249,7 +249,7 @@ export function DashboardTeamMenu({
         <AriaDialog aria-label="User account menu" className="flex flex-col gap-[7px] outline-none">
           {/* Header */}
           <div className="flex w-full items-center gap-2.5 px-2 pt-1 pb-2.5 border-b border-separator-border">
-            <Avatar size="md" color={color} initials={initials} alt={firstName} />
+            <Avatar size="md" color={color} initials={initials} alt={firstName} src={avatarUrl} />
             <div className="flex min-w-0 flex-col items-start justify-center">
               <span className="text-body-medium whitespace-nowrap text-text-primary font-semibold leading-tight">{firstName}</span>
               <span className="text-caption-1-regular text-text-tertiary truncate mt-0.5">
