@@ -18,7 +18,6 @@ import {
   RiShieldUserLine,
   RiUserSettingsLine,
   RiRefreshLine,
-  RiCheckboxCircleFill,
 } from "@remixicon/react";
 import { Capacitor } from "@capacitor/core";
 import {
@@ -153,7 +152,7 @@ export function DashboardTeamMenu({
   const languageSelector = useTemplateLanguageSelector();
   const direction = useDirection();
   const [isOpen, setIsOpen] = useState(false);
-  const { user, activeUserEmail, authorizedUsers, logout, setActiveUserEmail, setActivePerspective } = useAuthStore();
+  const { user, activeUserEmail, authorizedUsers, logout } = useAuthStore();
   const navigate = useNavigate();
   const isMobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, () => false);
 
@@ -163,7 +162,6 @@ export function DashboardTeamMenu({
   );
 
   const { firstName, initials, color } = resolveUserDisplay(activeAuthUser, user);
-  const teamUsers = authorizedUsers.filter((u) => u.role === 'admin' || u.role === 'manager');
 
   const handleLogout = async () => {
     try {
@@ -250,55 +248,17 @@ export function DashboardTeamMenu({
       >
         <AriaDialog aria-label="User account menu" className="flex flex-col gap-[7px] outline-none">
           {/* Header */}
-          <div className="flex w-full items-center gap-2.5 px-2 pt-1 pb-1">
+          <div className="flex w-full items-center gap-2.5 px-2 pt-1 pb-2.5 border-b border-separator-border">
             <Avatar size="md" color={color} initials={initials} alt={firstName} />
             <div className="flex min-w-0 flex-col items-start justify-center">
-              <span className="text-body-medium whitespace-nowrap text-text-primary font-semibold">{firstName}</span>
-            </div>
-          </div>
-
-          {/* Quick User Switcher */}
-          <div className="flex flex-col gap-1 px-1 py-1.5 border-y border-separator-border">
-            <span className="px-1.5 pt-0.5 text-[11px] font-semibold text-text-tertiary uppercase tracking-wider">
-              Switch User
-            </span>
-            <div className="flex flex-col gap-0.5">
-              {teamUsers.map((u) => {
-                const uEmail = u.email.toLowerCase().trim();
-                const isSelected = uEmail === currentEmail;
-                const display = resolveUserDisplay(u);
-                return (
-                  <button
-                    key={u.email}
-                    type="button"
-                    onClick={() => {
-                      setActiveUserEmail(u.email);
-                      if (u.role === 'admin') {
-                        setActivePerspective('admin');
-                      } else if (u.role === 'manager') {
-                        setActivePerspective('manager', u.branchName || 'Guwahati', u.branchId || 'b1');
-                      } else {
-                        setActivePerspective('branch', u.branchName, u.branchId);
-                      }
-                      setIsOpen(false);
-                    }}
-                    className={cx(
-                      "flex items-center justify-between w-full rounded-xl px-2 py-1.5 text-start transition-all cursor-pointer",
-                      isSelected
-                        ? "bg-accent-50/80 dark:bg-accent-950/40 text-text-primary font-semibold ring-1 ring-accent-500/30"
-                        : "hover:bg-background-secondary-hover text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Avatar size="xs" color={display.color} initials={display.initials} />
-                      <span className="text-body-2-medium truncate">{display.firstName}</span>
-                    </div>
-                    {isSelected && (
-                      <RiCheckboxCircleFill className="size-4 text-accent-500 shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
+              <span className="text-body-medium whitespace-nowrap text-text-primary font-semibold leading-tight">{firstName}</span>
+              <span className="text-caption-1-regular text-text-tertiary truncate mt-0.5">
+                {activeAuthUser?.role === 'admin'
+                  ? 'Administrator'
+                  : activeAuthUser?.role === 'manager'
+                    ? `${activeAuthUser.branchName || 'Branch'} Manager`
+                    : activeAuthUser?.email || user?.email || 'Authorized User'}
+              </span>
             </div>
           </div>
 

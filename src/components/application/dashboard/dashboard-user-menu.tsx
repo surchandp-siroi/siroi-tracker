@@ -514,8 +514,6 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
     activeManagerBranch,
     activeManagerBranchId,
     activeUserEmail,
-    setActivePerspective,
-    setActiveUserEmail,
   } = useAuthStore();
 
   const [selectedTab, setSelectedTab] = useState<'admin' | 'manager' | 'branch'>(
@@ -535,23 +533,7 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
         ? authorizedUsers.filter((u) => u.role === 'manager')
         : branchUsers;
 
-  const handleUserClick = (targetUser: AuthorizedUser) => {
-    setActiveUserEmail(targetUser.email);
-    if (targetUser.role === 'admin') {
-      setSelectedTab('admin');
-      setActivePerspective('admin');
-      navigate('/dashboard');
-    } else if (targetUser.role === 'manager') {
-      setSelectedTab('manager');
-      setActivePerspective('manager', targetUser.branchName || 'Guwahati', targetUser.branchId || 'b1');
-      navigate('/dashboard');
-    } else {
-      setSelectedTab('branch');
-      setActivePerspective('branch', targetUser.branchName, targetUser.branchId);
-      navigate('/entry');
-    }
-    onSelect();
-  };
+  // User switching disabled: Users list is read-only information for managing access.
 
   return localize((
     <div className="flex flex-col w-full text-start">
@@ -566,17 +548,7 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
       <div className="p-1 rounded-2lg bg-background-tertiary-default border border-separator-border grid grid-cols-3 gap-1 mb-2.5">
         <button
           type="button"
-          onClick={() => {
-            setSelectedTab('admin');
-            const currentEmail = (activeUserEmail || '').toLowerCase().trim();
-            const currentAuth = authorizedUsers.find((u) => u.email.toLowerCase().trim() === currentEmail);
-            if (!currentAuth || currentAuth.role !== 'admin') {
-              const defaultAdmin = authorizedUsers.find((u) => u.role === 'admin');
-              if (defaultAdmin) setActiveUserEmail(defaultAdmin.email);
-            }
-            setActivePerspective('admin');
-            navigate('/dashboard');
-          }}
+          onClick={() => setSelectedTab('admin')}
           className={cx(
             "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-caption-1-semibold transition-all cursor-pointer",
             selectedTab === 'admin'
@@ -594,21 +566,7 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
         </button>
         <button
           type="button"
-          onClick={() => {
-            setSelectedTab('manager');
-            const currentEmail = (activeUserEmail || '').toLowerCase().trim();
-            const currentAuth = authorizedUsers.find((u) => u.email.toLowerCase().trim() === currentEmail);
-            if (!currentAuth || currentAuth.role !== 'manager') {
-              const defaultManager = authorizedUsers.find((u) => u.role === 'manager') || authorizedUsers[3];
-              if (defaultManager) {
-                setActiveUserEmail(defaultManager.email);
-                setActivePerspective('manager', defaultManager.branchName || 'Guwahati', defaultManager.branchId || 'b1');
-              }
-            } else {
-              setActivePerspective('manager', activeManagerBranch || 'Guwahati', activeManagerBranchId || 'b1');
-            }
-            navigate('/dashboard');
-          }}
+          onClick={() => setSelectedTab('manager')}
           className={cx(
             "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-caption-1-semibold transition-all cursor-pointer",
             selectedTab === 'manager'
@@ -626,15 +584,7 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
         </button>
         <button
           type="button"
-          onClick={() => {
-            setSelectedTab('branch');
-            const currentEmail = (activeUserEmail || '').toLowerCase().trim();
-            const currentAuth = branchUsers.find((u) => u.email.toLowerCase().trim() === currentEmail);
-            if (!currentAuth) {
-              if (branchUsers[0]) setActiveUserEmail(branchUsers[0].email);
-            }
-            setActivePerspective('branch');
-          }}
+          onClick={() => setSelectedTab('branch')}
           className={cx(
             "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-caption-1-semibold transition-all cursor-pointer",
             selectedTab === 'branch'
@@ -662,9 +612,8 @@ export function AccountMenuContent({ onSelect }: { onSelect: () => void }) {
           return (
             <div
               key={u.email}
-              onClick={() => handleUserClick(u)}
               className={cx(
-                "group flex w-full cursor-pointer items-center justify-between rounded-2lg px-2.5 py-2 text-start transition-all",
+                "group flex w-full items-center justify-between rounded-2lg px-2.5 py-2 text-start transition-all",
                 isSelected
                   ? "bg-accent-50/80 dark:bg-accent-950/40 ring-1 ring-accent-500/40 shadow-2xs"
                   : "hover:bg-background-secondary-hover",
